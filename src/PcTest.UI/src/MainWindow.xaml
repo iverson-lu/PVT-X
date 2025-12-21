@@ -272,8 +272,8 @@
                 </DockPanel>
             </ui:Card>
 
-            <ui:Card Grid.Column="1" Padding="20" Margin="16,0,0,0" VerticalAlignment="Top">
-                <ScrollViewer>
+            <ui:Card Grid.Column="1" Padding="0" Margin="16,0,0,0" VerticalAlignment="Top">
+                <ScrollViewer Padding="20">
                     <StackPanel>
                         <TextBlock Text="{Binding SelectedTest.Name}" FontSize="20" FontWeight="SemiBold"/>
                         <TextBlock Text="{Binding SelectedTest.Id}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
