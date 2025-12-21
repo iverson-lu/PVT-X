@@ -11,4 +11,7 @@
     <ProjectReference Include="../../PcTest.Runner/src/PcTest.Runner.csproj" />
     <ProjectReference Include="../../PcTest.Contracts/src/PcTest.Contracts.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="AppLogo.png" />
+  </ItemGroup>
 </Project>

@@ -1,8 +1,9 @@
 <Window x:Class="PcTest.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="PC Test System" Height="900" Width="1400"
+        Title="PVT-X - The Next Gen PC Testing Tool" Height="900" Width="1400"
         Loaded="OnLoaded"
+        Icon="pack://application:,,,/AppLogo.png"
         Background="{DynamicResource WindowBackgroundBrush}"
         FontFamily="{DynamicResource AppFont}">
     <Window.Resources>

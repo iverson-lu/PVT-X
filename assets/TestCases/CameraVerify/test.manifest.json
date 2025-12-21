@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "id": "Hardware.Camera.Verify",
-  "name": "Camera Verification",
+  "name": "📷 Camera Verification",
   "category": "Hardware",
   "description": "Validates camera count and name substrings using PnP device discovery.",
   "version": "1.0.0",
