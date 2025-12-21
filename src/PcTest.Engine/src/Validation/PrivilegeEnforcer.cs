@@ -4,8 +4,16 @@ using PcTest.Contracts.Manifest;
 
 namespace PcTest.Engine.Validation;
 
+/// <summary>
+/// Ensures tests are executed with the required privilege level.
+/// </summary>
 public static class PrivilegeEnforcer
 {
+    /// <summary>
+    /// Validates that the current process satisfies the requested privilege policy.
+    /// </summary>
+    /// <param name="policy">Privilege policy required by the test.</param>
+    /// <exception cref="InvalidOperationException">Thrown when elevation is required but not present.</exception>
     public static void EnsureAllowed(PrivilegePolicy policy)
     {
         var elevated = IsElevated();
@@ -15,6 +23,10 @@ public static class PrivilegeEnforcer
         }
     }
 
+    /// <summary>
+    /// Determines whether the current process is running with administrative privileges.
+    /// </summary>
+    /// <returns>True when elevated, otherwise false.</returns>
     public static bool IsElevated()
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

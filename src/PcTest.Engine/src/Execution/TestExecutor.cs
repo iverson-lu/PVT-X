@@ -5,16 +5,33 @@ using PcTest.Runner.Execution;
 
 namespace PcTest.Engine.Execution;
 
+/// <summary>
+/// Coordinates test discovery and execution.
+/// </summary>
 public class TestExecutor
 {
     private readonly TestDiscoveryService _discovery = new();
     private readonly TestRunner _runner = new();
 
+    /// <summary>
+    /// Discovers tests located under the given root directory.
+    /// </summary>
+    /// <param name="root">Root directory to search for tests.</param>
+    /// <returns>Discovered test metadata entries.</returns>
     public IEnumerable<DiscoveredTest> Discover(string root)
     {
         return _discovery.Discover(root);
     }
 
+    /// <summary>
+    /// Executes a test by id under the specified root.
+    /// </summary>
+    /// <param name="root">Root directory containing test manifests.</param>
+    /// <param name="testId">Identifier of the test to run.</param>
+    /// <param name="parameters">Parameter values supplied by the user.</param>
+    /// <param name="runsRoot">Optional root folder for storing run artifacts.</param>
+    /// <param name="cancellationToken">Cancellation token for the execution.</param>
+    /// <returns>Run response containing artifact paths and result data.</returns>
     public async Task<TestRunResponse> RunAsync(string root, string testId, IDictionary<string, string> parameters, string? runsRoot = null, CancellationToken cancellationToken = default)
     {
         var manifestPath = ResolveManifestPath(root, testId);

@@ -3,6 +3,9 @@ using PcTest.Contracts.Result;
 
 namespace PcTest.Runner.Process;
 
+/// <summary>
+/// Locates a suitable PowerShell executable for running tests.
+/// </summary>
 public class PowerShellLocator
 {
     private static readonly string[] CandidatePaths = new[]
@@ -12,6 +15,11 @@ public class PowerShellLocator
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "PowerShell", "7", "pwsh.exe"),
     };
 
+    /// <summary>
+    /// Attempts to locate PowerShell 7+ and returns information about the executable.
+    /// </summary>
+    /// <returns>Path and version details for the discovered PowerShell installation.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when no compatible PowerShell is found.</exception>
     public PowerShellInfo Locate()
     {
         foreach (var candidate in CandidatePaths)
@@ -95,4 +103,9 @@ public class PowerShellLocator
     }
 }
 
+/// <summary>
+/// Details about a located PowerShell executable.
+/// </summary>
+/// <param name="Path">Absolute path to the executable.</param>
+/// <param name="Version">Version string reported by the executable.</param>
 public record PowerShellInfo(string Path, string Version);
