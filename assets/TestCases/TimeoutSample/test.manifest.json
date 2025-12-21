@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "id": "Sample.Timeout",
+  "name": "Sample Timeout Test",
+  "category": "Demo",
+  "description": "Sleeps longer than timeout to validate enforcement.",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 2,
+  "parameters": []
+}
