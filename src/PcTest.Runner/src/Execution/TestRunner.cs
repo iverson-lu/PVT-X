@@ -31,7 +31,7 @@ public class TestRunner
         var timeout = TimeSpan.FromSeconds(manifest.TimeoutSec ?? 300);
 
         var runContext = _runFolderManager.Create(manifest, request.Parameters, request.RunsRoot);
-        using var events = new EventLogSink(runContext.EventsPath, echoToConsole: true);
+        using IEventSink events = new EventLogSink(runContext.EventsPath, echoToConsole: true);
         var processInvoker = new ProcessInvoker(events);
         var powerShellRunner = new PowerShellRunner(processInvoker);
 
