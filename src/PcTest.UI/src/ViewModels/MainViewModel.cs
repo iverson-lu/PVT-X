@@ -43,8 +43,8 @@ public class MainViewModel : ViewModelBase
         Parameters = new ObservableCollection<ParameterInputViewModel>();
         RunHistory = new ObservableCollection<RunHistoryEntryViewModel>();
 
-        _testRoot = Path.Combine(Environment.CurrentDirectory, "assets", "TestCases");
-        _runsRoot = Path.Combine(Environment.CurrentDirectory, "Runs");
+        _testRoot = ResolveDefaultTestRoot();
+        _runsRoot = ResolveDefaultRunsRoot(_testRoot);
 
         _discoverCommand = new AsyncRelayCommand(DiscoverAsync, () => !IsRunning && !_isDiscovering);
         _runCommand = new AsyncRelayCommand(RunSelectedAsync, () => SelectedTest is not null && !IsRunning);
@@ -407,5 +407,44 @@ public class MainViewModel : ViewModelBase
         _discoverCommand.RaiseCanExecuteChanged();
         _runCommand.RaiseCanExecuteChanged();
         _cancelCommand.RaiseCanExecuteChanged();
+    }
+
+    private static string ResolveDefaultTestRoot()
+    {
+        var candidate = FindRepositoryRootContaining("assets", "TestCases");
+        if (candidate is not null)
+        {
+            return Path.Combine(candidate, "assets", "TestCases");
+        }
+
+        return Path.Combine(Environment.CurrentDirectory, "assets", "TestCases");
+    }
+
+    private static string ResolveDefaultRunsRoot(string testRoot)
+    {
+        var repoRoot = Directory.GetParent(testRoot)?.Parent?.FullName;
+        if (!string.IsNullOrWhiteSpace(repoRoot))
+        {
+            return Path.Combine(repoRoot, "Runs");
+        }
+
+        return Path.Combine(Environment.CurrentDirectory, "Runs");
+    }
+
+    private static string? FindRepositoryRootContaining(params string[] pathSegments)
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            var probe = Path.Combine(new[] { current.FullName }.Concat(pathSegments).ToArray());
+            if (Directory.Exists(probe))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        return null;
     }
 }
