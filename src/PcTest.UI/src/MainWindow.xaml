@@ -6,7 +6,8 @@
         Loaded="OnLoaded"
         Icon="pack://application:,,,/AppLogo.png"
         Background="{DynamicResource ApplicationBackgroundBrush}"
-        FontFamily="{DynamicResource AppFont}">
+        FontFamily="{DynamicResource AppFont}"
+        WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <FontFamily x:Key="AppFont">Segoe UI Variable, Segoe UI</FontFamily>
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1F1F1F"/>
@@ -212,6 +213,7 @@
                 <ui:TextBox Text="{Binding RunsRoot, UpdateSourceTrigger=PropertyChanged}" MinWidth="300"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,8,12,0">
+                <ui:Button Content="Run Selected" Command="{Binding RunBatchCommand}" Appearance="Primary" Margin="0,0,8,0"/>
                 <ui:Button Content="Discover Tests" Command="{Binding DiscoverCommand}" Appearance="Secondary" Margin="0,0,8,0"/>
                 <ui:Button Content="Refresh History" Command="{Binding RefreshHistoryCommand}" Appearance="Secondary"/>
             </StackPanel>
@@ -226,7 +228,8 @@
             <ui:Card Padding="20" VerticalAlignment="Top">
                 <DockPanel>
                     <TextBlock Text="Tests" Style="{StaticResource SectionHeaderStyle}" DockPanel.Dock="Top" Margin="0,0,0,8"/>
-                    <ListBox ItemsSource="{Binding Tests}" SelectedItem="{Binding SelectedTest}" BorderThickness="0" Background="Transparent">
+                    <ListBox ItemsSource="{Binding Tests}" SelectedItem="{Binding SelectedTest}" BorderThickness="0" Background="Transparent"
+                             SelectionMode="Extended" SelectionChanged="OnTestsSelectionChanged">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="Padding" Value="12,8"/>

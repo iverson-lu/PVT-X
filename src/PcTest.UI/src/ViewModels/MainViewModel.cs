@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json;
 using System.IO;
@@ -22,10 +23,12 @@ public class MainViewModel : ViewModelBase
     private readonly TestExecutor _executor = new();
     private readonly AsyncRelayCommand _discoverCommand;
     private readonly AsyncRelayCommand _runCommand;
+    private readonly AsyncRelayCommand _runBatchCommand;
     private readonly RelayCommand _cancelCommand;
     private readonly AsyncRelayCommand _refreshHistoryCommand;
     private CancellationTokenSource? _runCts;
     private TestListItemViewModel? _selectedTest;
+    private readonly List<TestListItemViewModel> _selectedTests = new();
     private string _testRoot;
     private string _runsRoot;
     private string? _statusMessage;
@@ -48,6 +51,7 @@ public class MainViewModel : ViewModelBase
 
         _discoverCommand = new AsyncRelayCommand(DiscoverAsync, () => !IsRunning && !_isDiscovering);
         _runCommand = new AsyncRelayCommand(RunSelectedAsync, () => SelectedTest is not null && !IsRunning);
+        _runBatchCommand = new AsyncRelayCommand(RunBatchAsync, () => _selectedTests.Count > 0 && !IsRunning);
         _cancelCommand = new RelayCommand(CancelRun, () => IsRunning);
         _refreshHistoryCommand = new AsyncRelayCommand(LoadRunHistoryAsync);
     }
@@ -181,6 +185,11 @@ public class MainViewModel : ViewModelBase
     /// Command to run the selected test.
     /// </summary>
     public AsyncRelayCommand RunCommand => _runCommand;
+
+    /// <summary>
+    /// Command to run multiple selected tests sequentially.
+    /// </summary>
+    public AsyncRelayCommand RunBatchCommand => _runBatchCommand;
 
     /// <summary>
     /// Command to cancel an in-flight run.
@@ -319,6 +328,21 @@ public class MainViewModel : ViewModelBase
         _runCts?.Cancel();
     }
 
+    /// <summary>
+    /// Updates the collection of selected tests for batch execution.
+    /// </summary>
+    /// <param name="selectedTests">Tests currently selected in the UI.</param>
+    public void UpdateSelectedTests(IEnumerable<TestListItemViewModel> selectedTests)
+    {
+        _selectedTests.Clear();
+        if (selectedTests is not null)
+        {
+            _selectedTests.AddRange(selectedTests);
+        }
+
+        _runBatchCommand.RaiseCanExecuteChanged();
+    }
+
     private async Task LoadRunHistoryAsync()
     {
         try
@@ -384,6 +408,83 @@ public class MainViewModel : ViewModelBase
         return result;
     }
 
+    private async Task<Dictionary<string, string>> ResolveParametersAsync(TestListItemViewModel test)
+    {
+        if (SelectedTest == test)
+        {
+            return CollectParameters();
+        }
+
+        return await Task.Run(() =>
+        {
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var manifest = ManifestLoader.Load(test.ManifestPath);
+            foreach (var parameter in manifest.Parameters ?? Array.Empty<ParameterDefinition>())
+            {
+                var formattedDefault = FormatDefault(parameter.Default);
+                if (!string.IsNullOrWhiteSpace(formattedDefault))
+                {
+                    parameters[parameter.Name] = formattedDefault;
+                }
+            }
+
+            return parameters;
+        });
+    }
+
+    private async Task RunBatchAsync()
+    {
+        if (_selectedTests.Count == 0)
+        {
+            StatusMessage = "Select at least one test before running.";
+            return;
+        }
+
+        _runCts = new CancellationTokenSource();
+
+        try
+        {
+            IsRunning = true;
+            var total = _selectedTests.Count;
+            for (var index = 0; index < total; index++)
+            {
+                var test = _selectedTests[index];
+                if (_runCts.Token.IsCancellationRequested)
+                {
+                    StatusMessage = "Batch run canceled.";
+                    break;
+                }
+
+                StatusMessage = $"Running {test.Id} ({index + 1}/{total})...";
+                var parameters = await ResolveParametersAsync(test);
+                var response = await _executor.RunAsync(TestRoot, test.Id, parameters, RunsRoot, _runCts.Token);
+                ActiveRunFolder = response.RunFolder;
+                LastResult = response.Result;
+            }
+
+            if (!_runCts.Token.IsCancellationRequested)
+            {
+                StatusMessage = "Batch run completed.";
+            }
+
+            await LoadRunHistoryAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            StatusMessage = "Batch run canceled.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Batch run failed: {ex.Message}";
+        }
+        finally
+        {
+            _runCts?.Dispose();
+            _runCts = null;
+            IsRunning = false;
+        }
+    }
+
     private static string? FormatDefault(object? defaultValue)
     {
         if (defaultValue is null)
@@ -411,6 +512,7 @@ public class MainViewModel : ViewModelBase
     {
         _discoverCommand.RaiseCanExecuteChanged();
         _runCommand.RaiseCanExecuteChanged();
+        _runBatchCommand.RaiseCanExecuteChanged();
         _cancelCommand.RaiseCanExecuteChanged();
     }
 

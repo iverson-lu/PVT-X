@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Linq;
 using PcTest.UI.ViewModels;
 
 namespace PcTest.UI;
@@ -64,5 +65,16 @@ public partial class MainWindow : Window
         {
             MessageBox.Show($"Failed to open run folder: {ex.Message}", "Run Folder", MessageBoxButton.OK, MessageBoxImage.Error);
         }
+    }
+
+    private void OnTestsSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not ListBox listBox)
+        {
+            return;
+        }
+
+        var selected = listBox.SelectedItems.Cast<TestListItemViewModel>();
+        _viewModel.UpdateSelectedTests(selected);
     }
 }
