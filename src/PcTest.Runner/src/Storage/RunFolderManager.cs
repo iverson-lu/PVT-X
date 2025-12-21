@@ -7,7 +7,7 @@ namespace PcTest.Runner.Storage;
 /// <summary>
 /// Creates and manages folders used to store run artifacts.
 /// </summary>
-public class RunFolderWriter
+public class RunFolderManager
 {
     /// <summary>
     /// Creates a new run folder, snapshots the manifest and parameters, and returns context details.
@@ -18,10 +18,11 @@ public class RunFolderWriter
     /// <returns>Context describing the created run folder and artifact paths.</returns>
     public RunContext Create(TestManifest manifest, IReadOnlyDictionary<string, BoundParameterValue> parameters, string runsRoot)
     {
-        Directory.CreateDirectory(runsRoot);
+        var normalizedRunsRoot = Path.GetFullPath(runsRoot);
+        Directory.CreateDirectory(normalizedRunsRoot);
 
         var runId = GenerateRunId();
-        var runFolder = Path.Combine(runsRoot, runId);
+        var runFolder = Path.Combine(normalizedRunsRoot, runId);
         Directory.CreateDirectory(runFolder);
         Directory.CreateDirectory(Path.Combine(runFolder, "artifacts"));
 
@@ -56,8 +57,9 @@ public class RunFolderWriter
     /// <param name="status">Result status of the run.</param>
     public void AppendIndex(string runsRoot, string runId, string testId, DateTimeOffset start, DateTimeOffset end, PcTest.Contracts.Result.TestStatus status)
     {
-        var indexPath = Path.Combine(runsRoot, "index.jsonl");
-        Directory.CreateDirectory(runsRoot);
+        var normalizedRunsRoot = Path.GetFullPath(runsRoot);
+        var indexPath = Path.Combine(normalizedRunsRoot, "index.jsonl");
+        Directory.CreateDirectory(normalizedRunsRoot);
 
         var entry = new PcTest.Contracts.Result.RunIndexEntry(runId, testId, start, end, status);
         var line = JsonSerializer.Serialize(entry, JsonDefaults.Options);

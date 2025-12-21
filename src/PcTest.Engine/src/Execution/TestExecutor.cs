@@ -1,6 +1,7 @@
 using PcTest.Contracts.Manifest;
 using PcTest.Engine.Discovery;
 using PcTest.Engine.Validation;
+using PcTest.Runner.Diagnostics;
 using PcTest.Runner.Execution;
 
 namespace PcTest.Engine.Execution;
@@ -10,8 +11,17 @@ namespace PcTest.Engine.Execution;
 /// </summary>
 public class TestExecutor
 {
-    private readonly TestDiscoveryService _discovery = new();
+    private readonly TestDiscoveryService _discovery;
     private readonly TestRunner _runner = new();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestExecutor"/> class.
+    /// </summary>
+    /// <param name="events">Optional event sink for discovery warnings.</param>
+    public TestExecutor(IEventSink? events = null)
+    {
+        _discovery = new TestDiscoveryService(events);
+    }
 
     /// <summary>
     /// Discovers tests located under the given root directory.
@@ -36,8 +46,7 @@ public class TestExecutor
     {
         var manifestPath = ResolveManifestPath(root, testId);
         var manifest = ManifestLoader.Load(manifestPath);
-        ManifestValidator.Validate(manifest);
-        PrivilegeEnforcer.EnsureAllowed(manifest.Privilege);
+        ManifestValidator.Validate(manifest, manifestPath);
 
         var boundParameters = ParameterBinder.Bind(manifest, parameters);
         var scriptPath = Path.Combine(Path.GetDirectoryName(manifestPath)!, "run.ps1");
