@@ -42,7 +42,7 @@
             <Border BorderBrush="#DDD" BorderThickness="1" Padding="8" CornerRadius="4">
                 <DockPanel>
                     <TextBlock Text="Tests" FontSize="16" FontWeight="Bold" DockPanel.Dock="Top" Margin="0,0,0,8"/>
-                    <ListBox ItemsSource="{Binding Tests}" SelectedItem="{Binding SelectedTest}" DisplayMemberPath="Name">
+                    <ListBox ItemsSource="{Binding Tests}" SelectedItem="{Binding SelectedTest}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>
