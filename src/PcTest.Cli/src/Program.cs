@@ -2,8 +2,16 @@ using PcTest.Engine.Execution;
 
 namespace PcTest.Cli;
 
+/// <summary>
+/// Entry point for the pctest command-line interface.
+/// </summary>
 public static class Program
 {
+    /// <summary>
+    /// Application entry point handling discover and run commands.
+    /// </summary>
+    /// <param name="args">Command-line arguments.</param>
+    /// <returns>Zero on success, non-zero on error.</returns>
     public static async Task<int> Main(string[] args)
     {
         if (args.Length == 0)

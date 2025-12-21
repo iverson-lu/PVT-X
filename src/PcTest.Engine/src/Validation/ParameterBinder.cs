@@ -3,8 +3,18 @@ using PcTest.Contracts.Manifest;
 
 namespace PcTest.Engine.Validation;
 
+/// <summary>
+/// Validates and converts user-provided parameters to their strongly-typed equivalents.
+/// </summary>
 public static class ParameterBinder
 {
+    /// <summary>
+    /// Binds raw parameter strings to their defined types using the manifest definitions.
+    /// </summary>
+    /// <param name="manifest">Manifest containing parameter definitions.</param>
+    /// <param name="provided">Raw user-provided parameter values.</param>
+    /// <returns>Dictionary of parameter names to bound values.</returns>
+    /// <exception cref="InvalidDataException">Thrown when validation fails or unknown parameters are supplied.</exception>
     public static IReadOnlyDictionary<string, BoundParameterValue> Bind(TestManifest manifest, IDictionary<string, string> provided)
     {
         var result = new Dictionary<string, BoundParameterValue>(StringComparer.OrdinalIgnoreCase);

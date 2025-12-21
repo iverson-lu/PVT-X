@@ -3,8 +3,16 @@ using PcTest.Engine.Validation;
 
 namespace PcTest.Engine.Discovery;
 
+/// <summary>
+/// Discovers available tests under a given root folder.
+/// </summary>
 public class TestDiscoveryService
 {
+    /// <summary>
+    /// Enumerates discovered tests beneath the provided root directory.
+    /// </summary>
+    /// <param name="root">Root directory to search for manifest files.</param>
+    /// <returns>A sequence of discovered tests.</returns>
     public IEnumerable<DiscoveredTest> Discover(string root)
     {
         if (string.IsNullOrWhiteSpace(root))

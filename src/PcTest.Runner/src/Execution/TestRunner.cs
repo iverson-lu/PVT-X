@@ -7,12 +7,21 @@ using PcTest.Runner.Storage;
 
 namespace PcTest.Runner.Execution;
 
+/// <summary>
+/// Executes PowerShell-based tests and collects results.
+/// </summary>
 public class TestRunner
 {
     private readonly PowerShellLocator _powerShellLocator = new();
     private readonly PowerShellRunner _powerShellRunner = new();
     private readonly RunFolderWriter _runFolderWriter = new();
 
+    /// <summary>
+    /// Runs the provided test request and returns the result and run folder path.
+    /// </summary>
+    /// <param name="request">Execution request containing manifest, script path, and parameters.</param>
+    /// <param name="cancellationToken">Optional cancellation token for the run.</param>
+    /// <returns>The run folder and structured test result.</returns>
     public async Task<TestRunResponse> RunAsync(TestRunRequest request, CancellationToken cancellationToken = default)
     {
         var manifest = request.Manifest;

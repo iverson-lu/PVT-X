@@ -3,8 +3,24 @@ using PcTest.Runner.Storage;
 
 namespace PcTest.Runner.Process;
 
+/// <summary>
+/// Handles invocation of PowerShell scripts and collection of output.
+/// </summary>
 public class PowerShellRunner
 {
+    /// <summary>
+    /// Executes a PowerShell script with the provided arguments and captures output streams.
+    /// </summary>
+    /// <param name="pwshPath">Path to the PowerShell executable.</param>
+    /// <param name="scriptPath">Path to the script to run.</param>
+    /// <param name="parameterArguments">Formatted parameter arguments.</param>
+    /// <param name="workingDirectory">Working directory for the process.</param>
+    /// <param name="timeout">Maximum allowed execution time.</param>
+    /// <param name="stdoutPath">File path to capture standard output.</param>
+    /// <param name="stderrPath">File path to capture standard error.</param>
+    /// <param name="events">Event writer used for logging process lifecycle events.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>Exit code and timeout information for the run.</returns>
     public async Task<PowerShellRunResult> RunAsync(
         string pwshPath,
         string scriptPath,
@@ -129,4 +145,9 @@ public class PowerShellRunner
     }
 }
 
+/// <summary>
+/// Represents the outcome of a PowerShell invocation.
+/// </summary>
+/// <param name="ExitCode">Process exit code.</param>
+/// <param name="TimedOut">Indicates whether the process exceeded the timeout.</param>
 public record PowerShellRunResult(int ExitCode, bool TimedOut);

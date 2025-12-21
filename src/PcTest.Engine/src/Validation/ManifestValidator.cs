@@ -2,8 +2,16 @@ using PcTest.Contracts.Manifest;
 
 namespace PcTest.Engine.Validation;
 
+/// <summary>
+/// Performs basic validation for test manifest fields and parameter definitions.
+/// </summary>
 public static class ManifestValidator
 {
+    /// <summary>
+    /// Validates the provided manifest and throws when required fields are missing or invalid.
+    /// </summary>
+    /// <param name="manifest">Manifest to validate.</param>
+    /// <exception cref="InvalidDataException">Thrown when the manifest content is invalid.</exception>
     public static void Validate(TestManifest manifest)
     {
         if (string.IsNullOrWhiteSpace(manifest.Id))
