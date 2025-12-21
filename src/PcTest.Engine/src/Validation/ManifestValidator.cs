@@ -1,4 +1,5 @@
 using PcTest.Contracts.Manifest;
+using PcTest.Contracts.Schema;
 
 namespace PcTest.Engine.Validation;
 
@@ -12,8 +13,10 @@ public static class ManifestValidator
     /// </summary>
     /// <param name="manifest">Manifest to validate.</param>
     /// <exception cref="InvalidDataException">Thrown when the manifest content is invalid.</exception>
-    public static void Validate(TestManifest manifest)
+    public static void Validate(TestManifest manifest, string? manifestPath = null)
     {
+        SchemaVersionPolicy.EnsureManifestSupported(manifest.SchemaVersion, manifestPath);
+
         if (string.IsNullOrWhiteSpace(manifest.Id))
         {
             throw new InvalidDataException("Manifest id is required.");
