@@ -2,7 +2,10 @@ using System.Text.Json;
 using PcTest.Contracts.Manifest;
 using PcTest.Contracts.Result;
 using PcTest.Contracts.Serialization;
+using PcTest.Contracts.Schema;
+using PcTest.Runner.Diagnostics;
 using PcTest.Runner.Process;
+using PcTest.Runner.Security;
 using PcTest.Runner.Storage;
 
 namespace PcTest.Runner.Execution;
@@ -13,8 +16,7 @@ namespace PcTest.Runner.Execution;
 public class TestRunner
 {
     private readonly PowerShellLocator _powerShellLocator = new();
-    private readonly PowerShellRunner _powerShellRunner = new();
-    private readonly RunFolderWriter _runFolderWriter = new();
+    private readonly RunFolderManager _runFolderManager = new();
 
     /// <summary>
     /// Runs the provided test request and returns the result and run folder path.
@@ -28,33 +30,39 @@ public class TestRunner
         var powerShell = _powerShellLocator.Locate();
         var timeout = TimeSpan.FromSeconds(manifest.TimeoutSec ?? 300);
 
-        var runContext = _runFolderWriter.Create(manifest, request.Parameters, request.RunsRoot);
-        using var events = new EventLogWriter(runContext.EventsPath);
+        var runContext = _runFolderManager.Create(manifest, request.Parameters, request.RunsRoot);
+        using IEventSink events = new EventLogSink(runContext.EventsPath, echoToConsole: true);
+        var processInvoker = new ProcessInvoker(events);
+        var powerShellRunner = new PowerShellRunner(processInvoker);
 
         var startTime = DateTimeOffset.UtcNow;
-        events.WriteEvent("run.start", $"Starting test {manifest.Id}");
+        events.Info("run.start", $"Starting test {manifest.Id}");
 
         var environment = BuildEnvironmentSnapshot(powerShell);
         File.WriteAllText(runContext.EnvPath, JsonSerializer.Serialize(environment, JsonDefaults.Options));
+
+        PrivilegeEnforcer.EnsureAllowed(manifest.Privilege, events);
 
         var parameterArguments = BuildParameterArguments(request.Parameters);
         PowerShellRunResult processResult;
         try
         {
-            processResult = await _powerShellRunner.RunAsync(
+            using var stdout = File.Open(runContext.StdoutPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+            using var stderr = File.Open(runContext.StderrPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+
+            processResult = await powerShellRunner.RunAsync(
                 powerShell.Path,
                 request.ScriptPath,
                 parameterArguments,
                 runContext.RunFolder,
                 timeout,
-                runContext.StdoutPath,
-                runContext.StderrPath,
-                events,
+                stdout,
+                stderr,
                 cancellationToken);
         }
         catch (Exception ex)
         {
-            events.WriteEvent("run.error", "Runner encountered an exception.", new { ex.Message, ex.StackTrace });
+            events.Error("run.error", "Runner encountered an exception.", new { ex.Message, ex.StackTrace });
             var errorResult = BuildRunnerError(manifest, startTime, ex, powerShell);
             WriteResult(runContext, request.RunsRoot, manifest, startTime, DateTimeOffset.UtcNow, errorResult);
             return new TestRunResponse(runContext.RunFolder, errorResult);
@@ -62,7 +70,7 @@ public class TestRunner
 
         var endTime = DateTimeOffset.UtcNow;
         var result = BuildResult(manifest, processResult, startTime, endTime, powerShell);
-        events.WriteEvent("run.complete", $"Completed with status {result.Status}");
+        events.Info("run.complete", $"Completed with status {result.Status}");
 
         WriteResult(runContext, request.RunsRoot, manifest, startTime, endTime, result);
 
@@ -86,7 +94,8 @@ public class TestRunner
                 continue;
             }
 
-            yield return $"-{def.Name} {FormatValue(value)}";
+            yield return $"-{def.Name}";
+            yield return FormatValue(value);
         }
     }
 
@@ -116,20 +125,8 @@ public class TestRunner
             OsVersion = Environment.OSVersion.ToString(),
             RunnerVersion = GetType().Assembly.GetName().Version?.ToString() ?? "1.0.0",
             PowerShellVersion = powerShell.Version,
-            IsElevated = TryDetectElevation()
+            IsElevated = PrivilegeEnforcer.IsElevated()
         };
-    }
-
-    private static bool TryDetectElevation()
-    {
-        try
-        {
-            return OperatingSystem.IsWindows() && new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     private TestResult BuildRunnerError(TestManifest manifest, DateTimeOffset startTime, Exception ex, PowerShellInfo powerShell)
@@ -137,7 +134,7 @@ public class TestRunner
         var end = DateTimeOffset.UtcNow;
         return new TestResult
         {
-            SchemaVersion = "1.0",
+            SchemaVersion = SchemaVersionPolicy.ResultSchemaVersion(),
             TestId = manifest.Id,
             Status = TestStatus.Error,
             StartTime = startTime,
@@ -172,7 +169,7 @@ public class TestRunner
 
         return new TestResult
         {
-            SchemaVersion = "1.0",
+            SchemaVersion = SchemaVersionPolicy.ResultSchemaVersion(),
             TestId = manifest.Id,
             Status = status,
             StartTime = start,
@@ -208,6 +205,6 @@ public class TestRunner
     private void WriteResult(RunContext context, string runsRoot, TestManifest manifest, DateTimeOffset start, DateTimeOffset end, TestResult result)
     {
         File.WriteAllText(context.ResultPath, JsonSerializer.Serialize(result, JsonDefaults.Options));
-        _runFolderWriter.AppendIndex(runsRoot, context.RunId, manifest.Id, start, end, result.Status);
+        _runFolderManager.AppendIndex(runsRoot, context.RunId, manifest.Id, start, end, result.Status);
     }
 }
