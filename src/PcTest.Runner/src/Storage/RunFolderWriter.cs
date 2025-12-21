@@ -9,6 +9,11 @@ namespace PcTest.Runner.Storage;
 /// </summary>
 public class RunFolderWriter
 {
+    private static readonly JsonSerializerOptions IndexJsonOptions = new(JsonDefaults.Options)
+    {
+        WriteIndented = false
+    };
+
     /// <summary>
     /// Creates a new run folder, snapshots the manifest and parameters, and returns context details.
     /// </summary>
@@ -60,7 +65,7 @@ public class RunFolderWriter
         Directory.CreateDirectory(runsRoot);
 
         var entry = new PcTest.Contracts.Result.RunIndexEntry(runId, testId, start, end, status);
-        var line = JsonSerializer.Serialize(entry, JsonDefaults.Options);
+        var line = JsonSerializer.Serialize(entry, IndexJsonOptions);
         File.AppendAllText(indexPath, line + Environment.NewLine);
     }
 

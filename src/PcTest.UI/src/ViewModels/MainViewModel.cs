@@ -330,18 +330,23 @@ public class MainViewModel : ViewModelBase
                 return;
             }
 
-            var lines = await File.ReadAllLinesAsync(indexPath);
             var entries = new List<RunHistoryEntryViewModel>();
-            foreach (var line in lines)
+            var buffer = await File.ReadAllBytesAsync(indexPath);
+            var reader = new Utf8JsonReader(buffer, new JsonReaderOptions
             {
-                if (string.IsNullOrWhiteSpace(line))
+                CommentHandling = JsonCommentHandling.Skip,
+                AllowMultipleValues = true
+            });
+            while (reader.Read())
+            {
+                if (reader.TokenType != JsonTokenType.StartObject)
                 {
                     continue;
                 }
 
                 try
                 {
-                    var entry = JsonSerializer.Deserialize<RunIndexEntry>(line, JsonDefaults.Options);
+                    var entry = JsonSerializer.Deserialize<RunIndexEntry>(ref reader, JsonDefaults.Options);
                     if (entry is not null)
                     {
                         entries.Add(new RunHistoryEntryViewModel(entry, Path.Combine(RunsRoot, entry.RunId)));
