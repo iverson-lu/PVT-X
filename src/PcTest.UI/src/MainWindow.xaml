@@ -1,10 +1,11 @@
 <Window x:Class="PcTest.UI.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         Title="PVT-X - The Next Gen PC Testing Tool" Height="900" Width="1400"
         Loaded="OnLoaded"
         Icon="pack://application:,,,/AppLogo.png"
-        Background="{DynamicResource WindowBackgroundBrush}"
+        Background="{DynamicResource ApplicationBackgroundBrush}"
         FontFamily="{DynamicResource AppFont}">
     <Window.Resources>
         <FontFamily x:Key="AppFont">Segoe UI Variable, Segoe UI</FontFamily>
@@ -204,15 +205,15 @@
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical" Margin="0,0,12,0">
                 <TextBlock Text="Test Root" FontWeight="SemiBold"/>
-                <TextBox Text="{Binding TestRoot, UpdateSourceTrigger=PropertyChanged}" MinWidth="400"/>
+                <ui:TextBox Text="{Binding TestRoot, UpdateSourceTrigger=PropertyChanged}" MinWidth="400"/>
             </StackPanel>
             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Vertical">
                 <TextBlock Text="Runs Root" FontWeight="SemiBold"/>
-                <TextBox Text="{Binding RunsRoot, UpdateSourceTrigger=PropertyChanged}" MinWidth="300"/>
+                <ui:TextBox Text="{Binding RunsRoot, UpdateSourceTrigger=PropertyChanged}" MinWidth="300"/>
             </StackPanel>
             <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,8,12,0">
-                <Button Content="Discover Tests" Command="{Binding DiscoverCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0"/>
-                <Button Content="Refresh History" Command="{Binding RefreshHistoryCommand}" Style="{StaticResource SecondaryButtonStyle}"/>
+                <ui:Button Content="Discover Tests" Command="{Binding DiscoverCommand}" Appearance="Secondary" Margin="0,0,8,0"/>
+                <ui:Button Content="Refresh History" Command="{Binding RefreshHistoryCommand}" Appearance="Secondary"/>
             </StackPanel>
             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding StatusMessage}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="12,8,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
         </Grid>
@@ -222,10 +223,42 @@
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="3*"/>
             </Grid.ColumnDefinitions>
-            <Border Style="{StaticResource CardBorderStyle}">
+            <ui:Card Padding="20" VerticalAlignment="Top">
                 <DockPanel>
                     <TextBlock Text="Tests" Style="{StaticResource SectionHeaderStyle}" DockPanel.Dock="Top" Margin="0,0,0,8"/>
-                    <ListBox ItemsSource="{Binding Tests}" SelectedItem="{Binding SelectedTest}">
+                    <ListBox ItemsSource="{Binding Tests}" SelectedItem="{Binding SelectedTest}" BorderThickness="0" Background="Transparent">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="12,8"/>
+                                <Setter Property="Margin" Value="0,0,0,4"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="border" 
+                                                    Background="{TemplateBinding Background}" 
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    CornerRadius="6"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="border" Property="Background" Value="#F5F5F5"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="border" Property="Background" Value="#E8F0FE"/>
+                                                    <Setter TargetName="border" Property="BorderBrush" Value="#0078D4"/>
+                                                    <Setter TargetName="border" Property="BorderThickness" Value="1"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>
@@ -237,9 +270,9 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </DockPanel>
-            </Border>
+            </ui:Card>
 
-            <Border Grid.Column="1" Style="{StaticResource CardBorderStyle}" Margin="12,0,0,0">
+            <ui:Card Grid.Column="1" Padding="20" Margin="16,0,0,0" VerticalAlignment="Top">
                 <ScrollViewer>
                     <StackPanel>
                         <TextBlock Text="{Binding SelectedTest.Name}" FontSize="20" FontWeight="SemiBold"/>
@@ -273,8 +306,8 @@
                         </StackPanel>
 
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
-                            <Button Content="Run" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,0" />
-                            <Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                            <ui:Button Content="Run" Command="{Binding RunCommand}" Appearance="Primary" Icon="{ui:SymbolIcon Play24}" Margin="0,0,8,0" />
+                            <ui:Button Content="Cancel" Command="{Binding CancelCommand}" Appearance="Secondary" Icon="{ui:SymbolIcon Dismiss24}" />
                         </StackPanel>
 
                         <TextBlock Text="Parameters" Style="{StaticResource SectionHeaderStyle}" Margin="0,4,0,4"/>
@@ -284,28 +317,28 @@
                                     <StackPanel Margin="0,0,0,8">
                                         <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
                                         <TextBlock Text="{Binding Hint}" Style="{StaticResource CaptionTextStyle}"/>
-                                        <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
+                                        <ui:TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" />
                                         <TextBlock Text="{Binding Definition.Help}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <Border BorderBrush="#E6E6E6" BorderThickness="1" Padding="10" Margin="0,8,0,0" CornerRadius="8" Background="#FBFBFB">
+                        <ui:Card Padding="12" Margin="0,8,0,0">
                             <StackPanel>
-                                <TextBlock Text="Last Result" FontWeight="Bold"/>
+                                <TextBlock Text="Last Result" FontWeight="Bold" Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding LastResultStatus}" />
                                 <TextBlock Text="{Binding LastResultMessage}" TextWrapping="Wrap"/>
                                 <TextBlock Text="Run Folder:" FontWeight="SemiBold" Margin="0,4,0,0"/>
                                 <TextBlock Text="{Binding ActiveRunFolder}" TextWrapping="Wrap" />
                             </StackPanel>
-                        </Border>
+                        </ui:Card>
                     </StackPanel>
                 </ScrollViewer>
-            </Border>
+            </ui:Card>
         </Grid>
 
-        <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}" Margin="0,12,0,0">
+        <ui:Card Grid.Row="3" Padding="16" Margin="0,12,0,0">
             <DockPanel>
                 <TextBlock Text="Run History" Style="{StaticResource SectionHeaderStyle}" DockPanel.Dock="Top" Margin="0,0,0,8"/>
                 <DataGrid ItemsSource="{Binding RunHistory}" AutoGenerateColumns="False" HeadersVisibility="Column" CanUserAddRows="False" RowStyle="{StaticResource RunHistoryRowStyle}">
@@ -319,6 +352,6 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>
-        </Border>
+        </ui:Card>
     </Grid>
 </Window>
