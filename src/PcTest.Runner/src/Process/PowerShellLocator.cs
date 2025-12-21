@@ -83,12 +83,12 @@ public class PowerShellLocator
         var info = new ProcessStartInfo
         {
             FileName = executable,
-            Arguments = "--version",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
+        info.ArgumentList.Add("--version");
 
         using var process = System.Diagnostics.Process.Start(info);
         if (process == null)

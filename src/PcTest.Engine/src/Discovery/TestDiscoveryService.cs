@@ -1,5 +1,6 @@
 using PcTest.Contracts.Manifest;
 using PcTest.Engine.Validation;
+using PcTest.Runner.Diagnostics;
 
 namespace PcTest.Engine.Discovery;
 
@@ -8,6 +9,17 @@ namespace PcTest.Engine.Discovery;
 /// </summary>
 public class TestDiscoveryService
 {
+    private readonly IEventSink _events;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TestDiscoveryService"/> class.
+    /// </summary>
+    /// <param name="events">Event sink used for discovery warnings.</param>
+    public TestDiscoveryService(IEventSink? events = null)
+    {
+        _events = events ?? new NullEventSink();
+    }
+
     /// <summary>
     /// Enumerates discovered tests beneath the provided root directory.
     /// </summary>
@@ -38,10 +50,11 @@ public class TestDiscoveryService
             try
             {
                 manifest = ManifestLoader.Load(manifestPath);
-                ManifestValidator.Validate(manifest);
+                ManifestValidator.Validate(manifest, manifestPath);
             }
-            catch
+            catch (Exception ex)
             {
+                _events.Warn("discover.manifestSkipped", "Failed to load manifest.", new { manifestPath, ex.Message });
                 continue;
             }
 

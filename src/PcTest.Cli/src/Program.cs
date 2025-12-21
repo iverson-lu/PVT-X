@@ -21,7 +21,8 @@ public static class Program
         }
 
         var command = args[0].ToLowerInvariant();
-        var executor = new TestExecutor();
+        using var events = new PcTest.Runner.Diagnostics.ConsoleEventSink();
+        var executor = new TestExecutor(events);
 
         try
         {
