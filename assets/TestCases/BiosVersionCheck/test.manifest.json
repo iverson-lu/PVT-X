@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "id": "Hardware.BIOS.VersionCheck",
+  "name": "💾 BIOS Version Check",
+  "category": "Hardware",
+  "description": "Validates that the system BIOS version contains the specified string.",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 30,
+  "tags": ["bios", "hardware", "version"],
+  "parameters": [
+    { "name": "VersionContains", "type": "string", "required": false }
+  ]
+}
