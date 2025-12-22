@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "id": "Network.Ping.Connectivity",
+  "name": "🌐 Network Ping Test",
+  "category": "Network",
+  "description": "Validates network connectivity by pinging a specified target address.",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 30,
+  "tags": ["network", "ping", "connectivity"],
+  "parameters": [
+    { "name": "TargetAddress", "type": "string", "required": false, "default": "www.google.com" }
+  ]
+}
