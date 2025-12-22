@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "id": "Hardware.Device.HealthCheck",
+  "name": "🔧 Device Health Check",
+  "category": "Hardware",
+  "description": "Validates that devices in Device Manager have no errors or warnings.",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "tags": ["device", "hardware", "health"],
+  "parameters": [
+    { "name": "RestrictedMode", "type": "bool", "required": false, "default": false }
+  ]
+}
