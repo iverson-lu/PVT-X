@@ -9,7 +9,7 @@
   "timeoutSec": 60,
   "tags": ["camera", "hardware", "verify"],
   "parameters": [
-    { "name": "ExpectedCount", "type": "int", "required": true, "default": 1},
+    { "name": "MinExpectedCount", "type": "int", "required": true, "default": 1},
     { "name": "NameContains", "type": "string", "required": false }
   ]
 }

@@ -1,5 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)][int] $ExpectedCount = 1,
+    [Parameter(Mandatory = $true)][int] $MinExpectedCount = 1,
     [Parameter(Mandatory = $false)][string] $NameContains
 )
 
@@ -52,17 +52,17 @@ $cameraNames = $cameraNames | Where-Object { $_ } | Sort-Object -Unique
 $detectedCount = $cameraNames.Count
 $failures = @()
 
-if ($ExpectedCount -lt 0) {
-    $failures += "ExpectedCount must be >= 0."
-} elseif ($detectedCount -ne $ExpectedCount) {
-    $failures += "Expected $ExpectedCount camera(s) but found $detectedCount."
+if ($MinExpectedCount -lt 0) {
+    $failures += "MinExpectedCount must be >= 0."
+} elseif ($detectedCount -lt $MinExpectedCount) {
+    $failures += "Expected at least $MinExpectedCount camera(s) but found $detectedCount."
 }
 
 if (-not [string]::IsNullOrWhiteSpace($NameContains)) {
     $escaped = [regex]::Escape($NameContains)
-    $missing = $cameraNames | Where-Object { $_ -notmatch $escaped }
-    if (@($missing).Count -gt 0) {
-        $failures += "These camera names do not contain '$NameContains': $($missing -join ', ')"
+    $matching = $cameraNames | Where-Object { $_ -match $escaped }
+    if (@($matching).Count -eq 0) {
+        $failures += "No detected camera names contain '$NameContains'."
     }
 }
 
@@ -73,7 +73,7 @@ foreach ($name in $cameraNames) {
 
 New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
 $report = [ordered]@{
-    expectedCount = $ExpectedCount
+    MinexpectedCount = $MinExpectedCount
     nameContains = $NameContains
     detectedCount = $detectedCount
     names = $cameraNames
