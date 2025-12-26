@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.0",
+  "id": "System.EventViewer.LevelCheck",
+  "name": "📋 Event Viewer Level Check",
+  "category": "System",
+  "description": "Checks the most recent N events in Event Viewer to ensure none have a specified severity level.",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "tags": ["eventviewer", "system", "logs", "events"],
+  "parameters": [
+    { "name": "EventCount", "type": "int", "required": false, "default": 100, "description": "Number of recent events to check" },
+    { "name": "ProhibitedLevel", "type": "string", "required": false, "default": "Error", "description": "Event level to check for (Error, Warning, Critical, Information, Verbose)" },
+    { "name": "LogName", "type": "string", "required": false, "default": "System", "description": "Event log name to check (System, Application, Security, etc.)" }
+  ]
+}
