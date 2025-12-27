@@ -1,5 +1,5 @@
 # PC Test System Specification
-## Version 1.4.1
+## Version 1.4.3
 
 > This revision resets the model around Test Suite as the primary execution unit.
 > It removes legacy compatibility constraints and focuses on clarity and correctness.
@@ -226,11 +226,12 @@ Rules:
 - Test Case identity is id + version.
 - Folder name MUST NOT affect identity.
 - parameters define schema and defaults only; no concrete runtime values are stored here.
+- Test Case manifests MUST NOT define environment sections; any such fields MUST be ignored at discovery and execution time.
 
 Example:
 ```json
 {
-  "schemaVersion": "1.4.1",
+  "schemaVersion": "1.4.3",
   "id": "CpuStress",
   "name": "CPU Stress",
   "category": "Thermal",
@@ -299,11 +300,12 @@ Rules:
 - If ref resolution does not land inside ResolvedTestCaseRoot or the manifest is missing, Engine MUST fail validation with code "Suite.TestCaseRef.Invalid" and a message that includes suite path, ref, resolvedPath, expectedRoot, and reason.
 - inputs, when present, MUST only include parameter names declared by the referenced Test Case.
 - Suite manifests MUST NOT embed or copy Test Case content; all Test Case manifests live under ResolvedTestCaseRoot.
+- Suite.environment.env values MUST be strings; empty keys MUST be rejected during validation.
 
 Example:
 ```json
 {
-  "schemaVersion": "1.4.1",
+  "schemaVersion": "1.4.3",
   "id": "ThermalSuite",
   "name": "Thermal Suite",
   "version": "1.0.0",
@@ -336,6 +338,7 @@ Example:
 | description | string | No | Description |
 | version | string | Yes | Plan version |
 | tags | string[] | No | Tags |
+| environment | object | No | Environment injection (env vars only) |
 | suites | string[] | Yes | List of Test Suite folder paths (relative) |
 
 Rules:
@@ -344,11 +347,13 @@ Rules:
 - Order in suites defines execution order.
 - A Plan MUST NOT define or override Test Case inputs, Suite.nodeInputs, or any per-node parameters.
 - A Plan MUST NOT embed Test Suites or Test Cases.
+- If environment is present in the Plan manifest, its env map participates in Effective Environment as defined in section 7.3; values MUST be strings and keys MUST be non-empty.
+- Plan environment MUST NOT introduce per-node mappings; it applies uniformly to all Suites executed under the Plan.
 
 Example:
 ```json
 {
-  "schemaVersion": "1.4.1",
+  "schemaVersion": "1.4.3",
   "id": "SystemValidation",
   "name": "System Validation",
   "version": "1.2.0",
@@ -410,9 +415,30 @@ Rules:
 - The UI SHOULD display the effective defaults based on this resolution order.
 
 ### 7.3 Environment Resolution (Normative)
-- environment.env MUST merge in the following precedence (last wins): Plan RunRequest environmentOverrides.env (when executing a Plan) > Suite RunRequest environmentOverrides.env (for suite-targeted runs) > Suite.environment.env > case-level defaults > system defaults.
-- The merged environment scope applies to all Suites/Test Cases within the current run context (Plan-wide for plans, Suite-wide for suites).
-- Any environment key that is empty or contains whitespace-only MUST cause validation failure.
+- Effective Environment is the single authoritative rule set:
+  - Plan run: Plan RunRequest.environmentOverrides.env > Plan manifest environment.env (if present) > Suite manifest environment.env > OS environment.
+  - Suite run (without Plan): Suite RunRequest.environmentOverrides.env > Suite manifest environment.env > OS environment.
+  - Standalone TestCase run: Case RunRequest.environmentOverrides.env > OS environment.
+- Same-name keys MUST be overwritten by the higher-priority layer. All environment values MUST be strings. Empty keys or whitespace-only keys MUST fail validation. Duplicate keys are resolved deterministically by the precedence above.
+- Test Case manifests MUST NOT define environment blocks; any such fields MUST be ignored.
+
+### 7.4 Environment Variable References (EnvRef)
+- Any input value (Suite.node.inputs, RunRequest.caseInputs, RunRequest.nodeOverrides.inputs) MAY be either a JSON literal (string/number/bool/object/array) or an EnvRef object with the shape:
+  - `$env` (string, required): environment variable name to read; MUST be non-empty.
+  - `default` (any, optional): literal fallback when the env variable is missing or empty.
+  - `required` (bool, optional, default false): if true and the env variable is missing/empty and no default is provided, validation MUST fail before execution.
+  - `secret` (bool, optional, default false): if true, Engine/Runner MUST redact the value in logs, summaries, manifest snapshots, and index entries (e.g., replace with `***`); execution MUST still use the real value.
+- Resolution process:
+  - Engine MUST first compute the Effective Environment (section 7.3) for the run context.
+  - Engine MUST then resolve all EnvRef values into concrete literals before invoking Runner.
+  - If resolution fails (missing required env, parse failure, or type conversion failure), Engine MUST fail validation with a deterministic error (e.g., "EnvRef.ResolveFailed") including the parameter name and nodeId when applicable.
+- Type conversion rules (env values originate as strings):
+  - string: use the env string as-is (after optional redaction for secret).
+  - number/int: MUST parse; on failure MUST fail validation.
+  - boolean: MUST accept true/false/1/0 (case-insensitive); otherwise MUST fail validation.
+  - object/array: MUST parse the env string as JSON; on failure MUST fail validation.
+  - If the target parameter type is not declared, treat as string.
+- EnvRef is a value source only; it MUST NOT introduce new override layers or per-node mappings beyond existing inputs semantics.
 
 ---
 
@@ -439,8 +465,7 @@ Schema:
   },
   "environmentOverrides": {
     "env": { "KEY": "VALUE" }
-  },
-  "sharedParameters": { "name": "jsonValue" }
+  }
 }
 ```
 
@@ -448,9 +473,7 @@ Rules:
 - RunRequest MUST specify exactly one of suite, testCase, or plan.
 - nodeOverrides keys MUST match nodeId values in the target Suite; unknown nodeIds MUST cause validation failure.
 - nodeOverrides MAY be omitted.
-- environmentOverrides.env MAY be present and MUST merge with Suite.environment.env following the precedence: RunRequest.plan-level env (when executing under a plan) > RunRequest.environmentOverrides.env > Suite.environment.env > TestCase-level defaults > system defaults. The merged env applies to all nodes in the Suite execution.
-- sharedParameters is an optional JSON object (values MAY be JSON scalars, arrays, or objects). It represents global shared parameters available to all nodes. Engine MUST validate that keys are non-empty strings. Engine MUST surface the final sharedParameters bag in the run snapshot (manifest.json) and MUST NOT map it to specific nodeInputs unless a future explicit mapping field exists (none in v1).
-- All overrides are runtime-only and MUST NOT modify source manifests.
+- environmentOverrides.env MAY be present; it participates in Effective Environment as defined in section 7.3. Values MUST be strings; empty keys MUST fail validation. All overrides are runtime-only and MUST NOT modify source manifests.
 
 Suite-targeted example:
 ```json
@@ -462,7 +485,6 @@ Suite-targeted example:
   "environmentOverrides": {
     "env": { "LAB_MODE": "2" }
   },
-  "sharedParameters": { "BuildId": "B123" }
 }
 ```
 
@@ -474,26 +496,22 @@ Schema:
   "plan": "planId@version",
   "environmentOverrides": {
     "env": { "KEY": "VALUE" }
-  },
-  "sharedParameters": { "name": "jsonValue" }
+  }
 }
 ```
 
 Rules:
-- Plan RunRequest MUST NOT include nodeOverrides or caseInputs; Plan-level overrides are restricted to environmentOverrides.env and sharedParameters.
-- environmentOverrides.env from the Plan RunRequest MUST apply to all Suites and Test Cases executed under the Plan. Precedence MUST be: Plan.environmentOverrides.env (if provided) > Suite.environment.env > TestCase defaults.
-- sharedParameters from the Plan RunRequest MAY override previously established sharedParameters (e.g., defaults configured by Engine or provided at Suite RunRequest time); merge MUST be last-wins by key with type preserved (scalar vs array vs object). Keys MUST be non-empty strings.
-- Plan RunRequest MUST NOT use sharedParameters to target a specific Suite node input; there is no mapping mechanism in v1, and any attempt to express such mapping MUST be rejected.
+- Plan RunRequest MUST NOT include nodeOverrides or caseInputs; Plan-level overrides are restricted to environmentOverrides.env.
+- environmentOverrides.env from the Plan RunRequest participates in Effective Environment as defined in section 7.3 and applies to all Suites and Test Cases executed under the Plan. Values MUST be strings; empty keys MUST fail validation.
 - All overrides are runtime-only and MUST NOT modify source manifests.
 
-Plan-targeted example (only env/shared overrides; no input overrides):
+Plan-targeted example (env-only override; no input overrides):
 ```json
 {
   "plan": "SystemValidation@1.2.0",
   "environmentOverrides": {
     "env": { "LAB_MODE": "PLAN", "PATH": "C:/tools" }
-  },
-  "sharedParameters": { "BuildId": "B999", "FeatureFlags": ["F1", "F2"] }
+  }
 }
 ```
 
@@ -504,15 +522,13 @@ Schema:
 {
   "testCase": "testId@version",
   "caseInputs": { "...": "..." },
-  "environmentOverrides": { "env": { "KEY": "VALUE" } },
-  "sharedParameters": { "name": "jsonValue" }
+  "environmentOverrides": { "env": { "KEY": "VALUE" } }
 }
 ```
 
 Rules:
 - For standalone TestCase run, caseInputs MAY be omitted and nodeOverrides MUST NOT be present.
-- environmentOverrides.env MAY be present and MUST merge over TestCase defaults.
-- sharedParameters MAY be present and MUST be surfaced in manifest.json; it MUST NOT implicitly populate caseInputs.
+- environmentOverrides.env MAY be present and participates in Effective Environment as defined in section 7.3. Values MUST be strings; empty keys MUST fail validation.
 
 ---
 
@@ -615,7 +631,8 @@ ResolvedRunsRoot/
 
 ### 12.2 Immutability Rules
 - manifest.json is a snapshot generated by Engine/Runner.
-- manifest.json snapshot MUST include at minimum: sourceManifest (full original manifest object), resolvedRef (canonical resolved path or ref), resolvedIdentity (id and version), and the fully effective inputs/environment/sharedParameters used for the run (including Plan-level env/sharedParameters after merges). The snapshot MUST represent the exact inputs used for this run to enable reproduction. It MAY include resolvedAt (timestamp) and engineVersion.
+- manifest.json snapshot MUST include at minimum: sourceManifest (full original manifest object), resolvedRef (canonical resolved path or ref), resolvedIdentity (id and version), effectiveEnvironment (flattened map after applying section 7.3), and effectiveInputs (after EnvRef resolution). The snapshot MUST represent the exact inputs used for this run to enable reproduction. It MAY include inputTemplates (inputs before EnvRef resolution), resolvedAt (timestamp), and engineVersion.
+- If any input was marked secret via EnvRef.secret=true, manifest.json, result.json, and index.jsonl MUST store a redacted value (e.g., `"***"`) while execution uses the real value in memory.
 - For Test Case runs, params.json contains effectiveInputs passed to the script.
 - For Test Suite / Test Plan runs, params.json MUST NOT be generated.
 - For Test Suite / Test Plan runs, manifest.json MUST include the original manifest snapshot and SHOULD include resolved refs.
@@ -646,6 +663,7 @@ Rule:
 - Engine MUST append index entries in an atomic/safe manner (single-threaded append or file lock) to avoid corruption when multiple runs complete concurrently.
 - Runner MUST produce result.json and manifest.json for each Test Case run; Engine MUST consume these artifacts (and env.json when needed) to construct the corresponding index.jsonl entry.
 - When a Test Case or Suite is executed under a Plan run, Engine MUST include planId/planVersion in the index entry and MUST ensure the same fields are present in the corresponding summary result.json.
+- If any recorded value originates from an EnvRef with secret=true, index.jsonl MUST store a redacted value (e.g., `"***"`).
 
 Example: suite-triggered TestCase run
 ```json
@@ -724,11 +742,12 @@ Rules:
 - nodeId MUST NOT be present for standalone TestCase run.
 - For suite-triggered TestCase run, suiteId and suiteVersion MUST be present; if part of a plan run, planId and planVersion MUST be present.
 - For standalone TestCase run, suiteId/suiteVersion/planId/planVersion MUST NOT be present.
+- If any input value was derived from an EnvRef with secret=true, effectiveInputs and any echoed values in result.json MUST be redacted (e.g., `"***"`).
 
 Example: suite-triggered TestCase run
 ```json
 {
-  "schemaVersion": "1.4.1",
+  "schemaVersion": "1.4.3",
   "runType": "TestCase",
   "nodeId": "cpu-quick",
   "testId": "CpuStress",
@@ -748,7 +767,7 @@ Example: suite-triggered TestCase run
 Example: standalone TestCase run
 ```json
 {
-  "schemaVersion": "1.4.1",
+  "schemaVersion": "1.4.3",
   "runType": "TestCase",
   "testId": "CpuStress",
   "testVersion": "2.0.0",
@@ -833,4 +852,4 @@ Rules:
 
 ---
 
-END OF SPEC v1.4.1
+END OF SPEC v1.4.3
