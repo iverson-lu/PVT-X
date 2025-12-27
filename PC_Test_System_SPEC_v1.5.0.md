@@ -578,7 +578,7 @@ Example:
 pwsh.exe run.ps1 -DurationSec 30 -Modes "A" "B"
 ```
 
-This protocol is immutable within schema version 1.4.x.
+This protocol is immutable within schema version 1.5.x.
 
 ---
 
@@ -651,7 +651,9 @@ ResolvedRunsRoot/
 Rules:
 - RunId and GroupRunId MUST be unique at least within ResolvedRunsRoot (SHOULD be globally unique) to avoid folder collisions.
 - RunId and GroupRunId MUST be safe as Windows folder names (no invalid characters, avoid reserved names, and respect practical length limits).
-- Engine MUST handle collisions defensively (e.g., regenerate the id when a target Run Folder already exists) before materializing the folder.
+- The owner of the target Run Folder MUST handle collisions defensively (e.g., regenerate the id when the folder already exists) before materializing the folder:
+  - Runner for {RunId}/ (standalone or suite-triggered TestCase run folders)
+  - Engine for {GroupRunId}/ (Test Suite / Test Plan run folders)
 
 ### 12.1 Ownership Rules
 - Test Case Run Folders are exclusively owned by Runner.
