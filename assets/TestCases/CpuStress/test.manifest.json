@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "CpuStress",
+  "name": "CPU Stress",
+  "category": "Thermal",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 5,
+  "parameters": [
+    { "name": "DurationSec", "type": "int", "required": true, "default": 1 },
+    { "name": "Mode", "type": "enum", "required": false, "enumValues": ["Quick", "Full"] },
+    { "name": "Flags", "type": "string[]", "required": false },
+    { "name": "SecretToken", "type": "string", "required": false }
+  ]
+}
