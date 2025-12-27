@@ -1,0 +1,9 @@
+{
+  "id": "demo.plan",
+  "version": "1.0.0",
+  "name": "Demo Plan",
+  "suites": ["demo.suite@1.0.0"],
+  "environment": {
+    "DEMO_PLAN": "true"
+  }
+}

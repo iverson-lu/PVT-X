@@ -1,0 +1,9 @@
+{
+  "id": "demo.case.b",
+  "version": "1.0.0",
+  "name": "Demo Case B",
+  "script": "run.ps1",
+  "parameters": {
+    "exitCode": { "type": "int", "default": 2 }
+  }
+}
