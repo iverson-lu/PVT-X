@@ -109,12 +109,12 @@ public sealed class RunnerTests
     }
 
     [Fact]
-    public async Task RunnerDoesNotWriteIndexJsonl()
+    public void RunnerDoesNotWriteIndexJsonl()
     {
         using var temp = new TempFolder();
         var runner = new TestCaseRunner(new FakeExecutor(new PowerShellExecutionResult(0, "", "", false, false)));
         var request = CreateRequest(temp.Path);
-        await runner.ExecuteAsync(request, CancellationToken.None);
+        runner.ExecuteAsync(request, CancellationToken.None).GetAwaiter().GetResult();
         Assert.False(File.Exists(Path.Combine(temp.Path, "index.jsonl")));
     }
 
