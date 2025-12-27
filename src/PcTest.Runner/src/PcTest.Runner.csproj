@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <AssemblyName>PcTest.Runner</AssemblyName>
-    <RootNamespace>PcTest.Runner</RootNamespace>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="../../PcTest.Contracts/src/PcTest.Contracts.csproj" />
-  </ItemGroup>
-</Project>
