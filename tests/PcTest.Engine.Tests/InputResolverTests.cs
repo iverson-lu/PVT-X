@@ -222,6 +222,27 @@ public class InputResolverTests
         Assert.False(result.Success);
         Assert.Contains(result.Errors, e => e.Code == ErrorCodes.EnvRefResolveFailed);
     }
+    [Fact]
+    public void ResolveInputs_BooleanParameter_ReturnsNativeBool()
+    {
+        var testCase = CreateTestCase(new[]
+        {
+            new ParameterDefinition { Name = "ShouldPass", Type = "boolean", Required = false }
+        });
+
+        var caseInputs = new Dictionary<string, JsonElement>
+        {
+            ["ShouldPass"] = JsonDocument.Parse("true").RootElement
+        };
+
+        var result = _resolver.ResolveStandaloneInputs(testCase, caseInputs, new Dictionary<string, string>());
+
+        Assert.True(result.Success);
+        var value = result.EffectiveInputs["ShouldPass"];
+        Assert.NotNull(value);
+        Assert.IsType<bool>(value);  // Must be native bool, not JsonElement
+        Assert.True((bool)value);
+    }
 
     private static TestCaseManifest CreateTestCase(ParameterDefinition[] parameters)
     {

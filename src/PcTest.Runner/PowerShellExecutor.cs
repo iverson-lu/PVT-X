@@ -146,8 +146,27 @@ public sealed class PowerShellExecutor
             if (value is null)
                 continue; // Missing optional parameters MUST be omitted
 
-            startInfo.ArgumentList.Add($"-{name}");
-            AddParameterValue(startInfo.ArgumentList, value);
+            // For boolean parameters, we need to use the combined "-Name:$true" or "-Name:$false" syntax
+            // because when using -File mode, separated "-Name $true" passes $true as a literal string.
+            // The colon syntax properly binds the value to the parameter in -File mode.
+            if (value is bool b)
+            {
+                var boolStr = b ? "$true" : "$false";
+                startInfo.ArgumentList.Add($"-{name}:{boolStr}");
+            }
+            else if (value is System.Text.Json.JsonElement jsonEl && 
+                     (jsonEl.ValueKind == System.Text.Json.JsonValueKind.True || 
+                      jsonEl.ValueKind == System.Text.Json.JsonValueKind.False))
+            {
+                // Handle JsonElement boolean (shouldn't normally happen after InputResolver, but be safe)
+                var boolStr = jsonEl.ValueKind == System.Text.Json.JsonValueKind.True ? "$true" : "$false";
+                startInfo.ArgumentList.Add($"-{name}:{boolStr}");
+            }
+            else
+            {
+                startInfo.ArgumentList.Add($"-{name}");
+                AddParameterValue(startInfo.ArgumentList, value);
+            }
         }
 
         // Set environment variables
@@ -307,26 +326,44 @@ public sealed class PowerShellExecutor
 
     /// <summary>
     /// Adds parameter value(s) to argument list per spec section 9.
+    /// Note: Boolean values are handled separately in the parameter loop using -Name:$true syntax.
     /// </summary>
     private static void AddParameterValue(ICollection<string> argumentList, object value)
     {
         switch (value)
         {
             case bool b:
-                // Boolean values: $true / $false
-                argumentList.Add(b ? "$true" : "$false");
-                break;
+                // This case should not be reached as booleans are handled separately,
+                // but keep as fallback with the combined syntax format.
+                throw new InvalidOperationException("Boolean values should be handled separately using -Name:$true syntax");
 
             case int i:
                 argumentList.Add(i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                break;
+
+            case long l:
+                argumentList.Add(l.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 break;
 
             case double d:
                 argumentList.Add(d.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 break;
 
+            case float f:
+                argumentList.Add(f.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                break;
+
+            case decimal m:
+                argumentList.Add(m.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                break;
+
             case string s:
                 argumentList.Add(s);
+                break;
+
+            case System.Text.Json.JsonElement jsonElement:
+                // Handle JsonElement by extracting the actual value
+                AddJsonElementValue(argumentList, jsonElement);
                 break;
 
             case int[] intArray:
@@ -370,6 +407,32 @@ public sealed class PowerShellExecutor
 
             default:
                 argumentList.Add(value.ToString() ?? "");
+                break;
+        }
+    }
+
+    private static void AddJsonElementValue(ICollection<string> argumentList, System.Text.Json.JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case System.Text.Json.JsonValueKind.True:
+            case System.Text.Json.JsonValueKind.False:
+                // Boolean JsonElements should be handled separately in the parameter loop
+                throw new InvalidOperationException("Boolean JsonElement values should be handled separately using -Name:$true syntax");
+            case System.Text.Json.JsonValueKind.Number:
+                argumentList.Add(element.GetRawText());
+                break;
+            case System.Text.Json.JsonValueKind.String:
+                argumentList.Add(element.GetString() ?? "");
+                break;
+            case System.Text.Json.JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray())
+                {
+                    AddJsonElementValue(argumentList, item);
+                }
+                break;
+            default:
+                argumentList.Add(element.ToString());
                 break;
         }
     }

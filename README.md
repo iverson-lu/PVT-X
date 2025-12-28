@@ -46,41 +46,33 @@ pc-test-system/
 ### Discover Test Assets
 
 ```powershell
-# Discover all test assets
-dotnet run --project src/PcTest.Cli -- discover --assets-root ./assets
+# Discover all test assets (from default locations)
+dotnet run --project src/PcTest.Cli -- discover
 
-# Discover specific type
-dotnet run --project src/PcTest.Cli -- discover --assets-root ./assets --type TestCase
-dotnet run --project src/PcTest.Cli -- discover --assets-root ./assets --type TestSuite
-dotnet run --project src/PcTest.Cli -- discover --assets-root ./assets --type TestPlan
+# With custom asset roots
+dotnet run --project src/PcTest.Cli -- discover --casesRoot ./my-cases --suitesRoot ./my-suites --plansRoot ./my-plans
 ```
 
 ### Run Test Case (Standalone)
 
 ```powershell
-dotnet run --project src/PcTest.Cli -- run testcase \
-    --case-ref "CpuStress@1.0.0" \
-    --assets-root ./assets \
-    --runs-root ./Runs \
-    --inputs "{\"Duration\": 5, \"Threads\": 2}"
+# Run with inputs
+dotnet run --project src/PcTest.Cli -- run --target testcase --id "CpuStress@1.0.0" --inputs '{"DurationSec": 5, "ShouldPass": true}'
+
+# Run with custom runs root
+dotnet run --project src/PcTest.Cli -- run --target testcase --id "CpuStress@1.0.0" --runsRoot ./my-runs
 ```
 
 ### Run Test Suite
 
 ```powershell
-dotnet run --project src/PcTest.Cli -- run suite \
-    --suite-ref "Thermal@1.0.0" \
-    --assets-root ./assets \
-    --runs-root ./Runs
+dotnet run --project src/PcTest.Cli -- run --target suite --id "ThermalSuite@1.0.0"
 ```
 
 ### Run Test Plan
 
 ```powershell
-dotnet run --project src/PcTest.Cli -- run plan \
-    --plan-ref "SystemValidation@1.0.0" \
-    --assets-root ./assets \
-    --runs-root ./Runs
+dotnet run --project src/PcTest.Cli -- run --target plan --id "SystemValidation@1.0.0"
 ```
 
 ## Runs Folder Structure
@@ -238,7 +230,8 @@ dotnet test --collect:"XPlat Code Coverage"
 dotnet publish src/PcTest.Cli -c Release -o ./publish
 
 # Run published tool
-./publish/PcTest.Cli discover --assets-root ./assets
+./publish/PcTest.Cli discover
+./publish/PcTest.Cli run --target testcase --id "CpuStress@1.0.0"
 ```
 
 ## License
