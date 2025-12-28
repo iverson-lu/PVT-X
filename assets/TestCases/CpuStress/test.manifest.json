@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "CpuStress",
+  "name": "CPU Stress",
+  "category": "Thermal",
+  "description": "Simple CPU stress placeholder",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 10,
+  "parameters": [
+    { "name": "DurationSec", "type": "int", "required": true, "default": 1 },
+    { "name": "Mode", "type": "enum", "required": false, "enumValues": ["A", "B"] },
+    { "name": "Password", "type": "string", "required": false }
+  ]
+}

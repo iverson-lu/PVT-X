@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>PcTest.Cli</AssemblyName>
+    <RootNamespace>PcTest.Cli</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PcTest.Contracts/PcTest.Contracts.csproj" />
+    <ProjectReference Include="../PcTest.Engine/PcTest.Engine.csproj" />
+  </ItemGroup>
+</Project>
