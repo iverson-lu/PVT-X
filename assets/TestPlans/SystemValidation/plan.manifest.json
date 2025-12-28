@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "SystemValidation",
+  "name": "System Validation",
+  "version": "1.0.0",
+  "suites": [
+    "ThermalSuite@1.0.0"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "ThermalSuite",
+  "name": "Thermal Suite",
+  "version": "1.0.0",
+  "environment": {
+    "env": {
+      "THERMAL_MODE": "LAB"
+    },
+    "workingDir": "work"
+  },
+  "testCases": [
+    {
+      "nodeId": "cpu-quick",
+      "ref": "CpuStress",
+      "inputs": {
+        "DurationSec": 1,
+        "Mode": "Quick"
+      }
+    }
+  ]
+}
