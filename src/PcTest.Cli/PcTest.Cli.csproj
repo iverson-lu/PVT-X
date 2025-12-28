@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../PcTest.Engine/PcTest.Engine.csproj" />
+    <ProjectReference Include="../PcTest.Contracts/PcTest.Contracts.csproj" />
+  </ItemGroup>
+</Project>
