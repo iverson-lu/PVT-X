@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "ThermalSuite",
+  "name": "Thermal Suite",
+  "version": "1.0.0",
+  "controls": { "repeat": 1, "maxParallel": 1, "continueOnFailure": false, "retryOnError": 0 },
+  "environment": { "env": { "LAB_MODE": "1" }, "workingDir": "work" },
+  "testCases": [
+    { "nodeId": "cpu-quick", "ref": "CpuStress", "inputs": { "DurationSec": 2, "Mode": "A" } },
+    { "nodeId": "cpu-long", "ref": "CpuStress", "inputs": { "DurationSec": 3, "Mode": "B" } }
+  ]
+}

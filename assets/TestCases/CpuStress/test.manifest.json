@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "CpuStress",
+  "name": "CPU Stress",
+  "category": "Thermal",
+  "description": "Synthetic CPU load.",
+  "version": "2.0.0",
+  "privilege": "User",
+  "timeoutSec": 30,
+  "parameters": [
+    { "name": "DurationSec", "type": "int", "required": true, "default": 5 },
+    { "name": "Mode", "type": "enum", "required": false, "enumValues": ["A", "B"], "default": "A" },
+    { "name": "Verbose", "type": "boolean", "required": false, "default": false }
+  ]
+}
