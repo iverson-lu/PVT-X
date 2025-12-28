@@ -57,7 +57,7 @@ public sealed class AppSettings
     public int RunRetentionDays { get; set; } = 30;
     
     // UI preferences
-    public string Theme { get; set; } = "Dark";
+    public string Theme { get; set; } = "Light";
     public double FontScale { get; set; } = 1.0;
     public string DefaultLandingPage { get; set; } = "Plan";
     

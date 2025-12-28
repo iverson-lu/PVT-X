@@ -123,3 +123,27 @@ public class StringToBoolConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converts enum to int for ComboBox SelectedIndex binding.
+/// </summary>
+public class EnumToIntConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is Enum enumValue)
+        {
+            return (int)(object)enumValue;
+        }
+        return 0;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int intValue && targetType.IsEnum)
+        {
+            return Enum.ToObject(targetType, intValue);
+        }
+        return Enum.ToObject(targetType, 0);
+    }
+}

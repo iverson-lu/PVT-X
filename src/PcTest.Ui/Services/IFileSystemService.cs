@@ -13,6 +13,11 @@ public interface IFileSystemService
     Task<string> ReadAllTextAsync(string path, CancellationToken cancellationToken = default);
     
     /// <summary>
+    /// Reads all lines from a file.
+    /// </summary>
+    Task<string[]> ReadAllLinesAsync(string path, CancellationToken cancellationToken = default);
+    
+    /// <summary>
     /// Writes all text to a file.
     /// </summary>
     Task WriteAllTextAsync(string path, string content, CancellationToken cancellationToken = default);

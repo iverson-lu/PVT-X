@@ -1,3 +1,5 @@
+using System.IO;
+using System.Text.Json;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
 using PcTest.Engine;
@@ -11,6 +13,7 @@ public sealed class RunService : IRunService
 {
     private readonly TestEngine _engine;
     private readonly ISettingsService _settingsService;
+    private readonly IFileSystemService _fileSystemService;
     private RunExecutionContext? _currentContext;
     private RunExecutionState? _currentState;
 
@@ -19,10 +22,11 @@ public sealed class RunService : IRunService
 
     public RunExecutionState? CurrentState => _currentState;
 
-    public RunService(TestEngine engine, ISettingsService settingsService)
+    public RunService(TestEngine engine, ISettingsService settingsService, IFileSystemService fileSystemService)
     {
         _engine = engine;
         _settingsService = settingsService;
+        _fileSystemService = fileSystemService;
     }
 
     public async Task<RunExecutionContext> ExecuteAsync(RunRequest request, CancellationToken cancellationToken = default)
@@ -43,7 +47,7 @@ public sealed class RunService : IRunService
         
         _currentContext = new RunExecutionContext
         {
-            RunId = GenerateRunId(runType),
+            RunId = string.Empty, // Will be set after execution starts
             RunType = runType,
             TargetIdentity = targetIdentity,
             StartTime = DateTime.UtcNow,
@@ -53,7 +57,7 @@ public sealed class RunService : IRunService
         // Initialize state
         _currentState = new RunExecutionState
         {
-            RunId = _currentContext.RunId,
+            RunId = string.Empty,
             IsRunning = true
         };
         
@@ -64,22 +68,55 @@ public sealed class RunService : IRunService
             // Execute through engine
             var result = await _engine.ExecuteAsync(request, cts.Token);
             
+            // Extract the actual run ID from index.jsonl (most recent entry)
+            var actualRunId = await GetMostRecentRunIdFromIndexAsync();
+            if (!string.IsNullOrEmpty(actualRunId))
+            {
+                _currentContext.RunId = actualRunId;
+                _currentState.RunId = actualRunId;
+                ConsoleOutput?.Invoke(this, $"\n[DEBUG] Extracted RunId from index: {actualRunId}");
+            }
+            else
+            {
+                ConsoleOutput?.Invoke(this, "\n[ERROR] Failed to extract RunId from index.jsonl");
+            }
+            
             // Update final state
             _currentState.IsRunning = false;
             _currentState.FinalStatus = GetStatusFromResult(result);
+            
+            // Load execution details from result artifacts
+            ConsoleOutput?.Invoke(this, $"\n[DEBUG] About to load execution details. RunId={_currentContext.RunId}");
+            if (!string.IsNullOrEmpty(_currentContext.RunId))
+            {
+                await LoadExecutionDetailsAsync(_currentContext.RunId);
+                ConsoleOutput?.Invoke(this, $"[DEBUG] After LoadExecutionDetailsAsync, Nodes.Count={_currentState.Nodes.Count}");
+            }
+            
+            ConsoleOutput?.Invoke(this, $"[DEBUG] Firing StateChanged event with {_currentState.Nodes.Count} nodes");
             StateChanged?.Invoke(this, _currentState);
+            
+            // Load and stream stdout.log if available
+            if (!string.IsNullOrEmpty(_currentContext.RunId))
+            {
+                await LoadConsoleOutputAsync(_currentContext.RunId);
+            }
+            
+            // Notify completion
+            ConsoleOutput?.Invoke(this, $"\nRun completed with status: {_currentState.FinalStatus}");
         }
         catch (OperationCanceledException)
         {
             _currentState.IsRunning = false;
             _currentState.FinalStatus = RunStatus.Aborted;
+            ConsoleOutput?.Invoke(this, "\nRun aborted by user.");
             StateChanged?.Invoke(this, _currentState);
         }
         catch (Exception ex)
         {
             _currentState.IsRunning = false;
             _currentState.FinalStatus = RunStatus.Error;
-            ConsoleOutput?.Invoke(this, $"Error: {ex.Message}");
+            ConsoleOutput?.Invoke(this, $"\nError: {ex.Message}\n{ex.StackTrace}");
             StateChanged?.Invoke(this, _currentState);
         }
         
@@ -104,6 +141,180 @@ public sealed class RunService : IRunService
             _currentContext.CancellationSource.Cancel();
         }
         return Task.CompletedTask;
+    }
+
+    private async Task<string?> GetMostRecentRunIdFromIndexAsync()
+    {
+        try
+        {
+            var settings = _settingsService.CurrentSettings;
+            var indexPath = Path.Combine(settings.ResolvedRunsRoot, "index.jsonl");
+            
+            if (!_fileSystemService.FileExists(indexPath))
+            {
+                return null;
+            }
+            
+            var lines = await _fileSystemService.ReadAllLinesAsync(indexPath);
+            if (lines.Length == 0)
+            {
+                return null;
+            }
+            
+            // Get the last line (most recent entry)
+            var lastLine = lines[^1];
+            if (string.IsNullOrWhiteSpace(lastLine))
+            {
+                return null;
+            }
+            
+            var doc = JsonDocument.Parse(lastLine);
+            var root = doc.RootElement;
+            
+            if (root.TryGetProperty("runId", out var runIdElement))
+            {
+                return runIdElement.GetString();
+            }
+            
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task LoadExecutionDetailsAsync(string runId)
+    {
+        try
+        {
+            var settings = _settingsService.CurrentSettings;
+            var runFolder = Path.Combine(settings.ResolvedRunsRoot, runId);
+            
+            ConsoleOutput?.Invoke(this, $"\n[DEBUG] Loading execution details from: {runFolder}");
+            
+            // Read result.json
+            var resultPath = Path.Combine(runFolder, "result.json");
+            ConsoleOutput?.Invoke(this, $"[DEBUG] Checking result.json at: {resultPath}");
+            ConsoleOutput?.Invoke(this, $"[DEBUG] File exists: {_fileSystemService.FileExists(resultPath)}");
+            
+            if (_fileSystemService.FileExists(resultPath))
+            {
+                var json = await _fileSystemService.ReadAllTextAsync(resultPath);
+                ConsoleOutput?.Invoke(this, $"[DEBUG] Read result.json, length: {json.Length}");
+                var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+                
+                // Extract node information from result
+                var node = new NodeExecutionState
+                {
+                    NodeId = root.TryGetProperty("nodeId", out var nodeId) ? nodeId.GetString() ?? "" : "",
+                    TestId = root.TryGetProperty("testId", out var testId) ? testId.GetString() ?? "" : "",
+                    TestVersion = root.TryGetProperty("testVersion", out var version) ? version.GetString() ?? "" : "",
+                    Status = root.TryGetProperty("status", out var status) 
+                        ? Enum.TryParse<RunStatus>(status.GetString(), true, out var s) ? s : null
+                        : null,
+                    IsRunning = false
+                };
+                
+                // Calculate duration
+                if (root.TryGetProperty("startTime", out var startTime) && 
+                    root.TryGetProperty("endTime", out var endTime))
+                {
+                    if (DateTime.TryParse(startTime.GetString(), out var start) && 
+                        DateTime.TryParse(endTime.GetString(), out var end))
+                    {
+                        node.Duration = end - start;
+                    }
+                }
+                
+                if (_currentState != null)
+                {
+                    ConsoleOutput?.Invoke(this, $"[DEBUG] Adding node to _currentState.Nodes. Current count: {_currentState.Nodes.Count}");
+                    _currentState.Nodes.Clear();
+                    _currentState.Nodes.Add(node);
+                    ConsoleOutput?.Invoke(this, $"[DEBUG] After adding: NodeId={node.NodeId}, TestId={node.TestId}, Status={node.Status}, Count={_currentState.Nodes.Count}");
+                }
+            }
+            
+            // For suite/plan runs, check for children.jsonl
+            var childrenPath = Path.Combine(runFolder, "children.jsonl");
+            if (_fileSystemService.FileExists(childrenPath))
+            {
+                var lines = await _fileSystemService.ReadAllLinesAsync(childrenPath);
+                if (_currentState != null)
+                {
+                    _currentState.Nodes.Clear();
+                    
+                    foreach (var line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        
+                        try
+                        {
+                            var doc = JsonDocument.Parse(line);
+                            var root = doc.RootElement;
+                            
+                            var childNode = new NodeExecutionState
+                            {
+                                NodeId = root.TryGetProperty("nodeId", out var nodeId) ? nodeId.GetString() ?? "" : "",
+                                TestId = root.TryGetProperty("testId", out var testId) ? testId.GetString() ?? "" : "",
+                                TestVersion = root.TryGetProperty("testVersion", out var version) ? version.GetString() ?? "" : "",
+                                Status = root.TryGetProperty("status", out var status) 
+                                    ? Enum.TryParse<RunStatus>(status.GetString(), true, out var s) ? s : null
+                                    : null,
+                                IsRunning = false
+                            };
+                            
+                            // Calculate duration
+                            if (root.TryGetProperty("startTime", out var startTime) && 
+                                root.TryGetProperty("endTime", out var endTime))
+                            {
+                                if (DateTime.TryParse(startTime.GetString(), out var start) && 
+                                    DateTime.TryParse(endTime.GetString(), out var end))
+                                {
+                                    childNode.Duration = end - start;
+                                }
+                            }
+                            
+                            _currentState.Nodes.Add(childNode);
+                        }
+                        catch
+                        {
+                            // Skip malformed lines
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsoleOutput?.Invoke(this, $"\n[ERROR] Failed to load execution details: {ex.Message}");
+            ConsoleOutput?.Invoke(this, $"[ERROR] Stack trace: {ex.StackTrace}");
+        }
+    }
+
+    private async Task LoadConsoleOutputAsync(string runId)
+    {
+        try
+        {
+            var settings = _settingsService.CurrentSettings;
+            var runFolder = Path.Combine(settings.ResolvedRunsRoot, runId);
+            var stdoutPath = Path.Combine(runFolder, "stdout.log");
+            
+            if (_fileSystemService.FileExists(stdoutPath))
+            {
+                var content = await _fileSystemService.ReadAllTextAsync(stdoutPath);
+                if (!string.IsNullOrEmpty(content))
+                {
+                    ConsoleOutput?.Invoke(this, content);
+                }
+            }
+        }
+        catch
+        {
+            // Ignore errors reading log file
+        }
     }
 
     private static string GenerateRunId(RunType runType)

@@ -23,7 +23,22 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <StackPanel Orientation="Horizontal">
+                <!-- Target Selector (shown when navigating directly) -->
+                <StackPanel Orientation="Horizontal" Visibility="{Binding ShowTargetSelector, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="Run Type:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ComboBox SelectedIndex="{Binding RunType, Converter={StaticResource EnumToIntConverter}}" Width="120" Margin="0,0,10,0">
+                        <ComboBoxItem Content="Test Case"/>
+                        <ComboBoxItem Content="Test Suite"/>
+                        <ComboBoxItem Content="Test Plan"/>
+                    </ComboBox>
+                    <TextBlock Text="Target:" VerticalAlignment="Center" Margin="10,0,10,0"/>
+                    <ComboBox ItemsSource="{Binding AvailableTargets}" 
+                             SelectedItem="{Binding TargetIdentity}" 
+                             Width="300"/>
+                </StackPanel>
+                
+                <!-- Target Display (shown when coming from Plan page) -->
+                <StackPanel Orientation="Horizontal" Visibility="{Binding ShowTargetSelector, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                     <TextBlock Text="Target:" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <TextBlock Text="{Binding TargetIdentity}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     <ui:Badge Content="{Binding RunType}" Margin="10,0,0,0" VerticalAlignment="Center"/>

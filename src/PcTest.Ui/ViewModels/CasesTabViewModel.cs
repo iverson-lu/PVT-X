@@ -15,6 +15,7 @@ public partial class CasesTabViewModel : ViewModelBase
 {
     private readonly IDiscoveryService _discoveryService;
     private readonly IFileSystemService _fileSystemService;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private ObservableCollection<TestCaseItemViewModel> _cases = new();
@@ -28,10 +29,11 @@ public partial class CasesTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDiscovering;
 
-    public CasesTabViewModel(IDiscoveryService discoveryService, IFileSystemService fileSystemService)
+    public CasesTabViewModel(IDiscoveryService discoveryService, IFileSystemService fileSystemService, INavigationService navigationService)
     {
         _discoveryService = discoveryService;
         _fileSystemService = fileSystemService;
+        _navigationService = navigationService;
     }
 
     partial void OnSearchTextChanged(string value)
@@ -92,6 +94,10 @@ public partial class CasesTabViewModel : ViewModelBase
         
         foreach (var tc in discovery.TestCases.Values.OrderBy(c => c.Manifest.Name))
         {
+            var paramWrappers = tc.Manifest.Parameters?
+                .Select(p => new ParameterViewModel(p))
+                .ToList() ?? new();
+            
             _allCases.Add(new TestCaseItemViewModel
             {
                 Id = tc.Manifest.Id,
@@ -102,13 +108,38 @@ public partial class CasesTabViewModel : ViewModelBase
                 Privilege = tc.Manifest.Privilege.ToString(),
                 TimeoutSec = tc.Manifest.TimeoutSec,
                 Tags = tc.Manifest.Tags?.ToList() ?? new(),
-                Parameters = tc.Manifest.Parameters?.ToList() ?? new(),
+                ParameterWrappers = paramWrappers,
                 FolderPath = tc.FolderPath,
                 ManifestPath = tc.ManifestPath
             });
         }
         
         ApplyFilter();
+    }
+
+    [RelayCommand]
+    private void Run()
+    {
+        if (SelectedCase is null) return;
+
+        // Build parameter overrides from edited values
+        var overrides = new Dictionary<string, object?>();
+        foreach (var param in SelectedCase.ParameterWrappers)
+        {
+            if (!string.IsNullOrEmpty(param.CurrentValue))
+            {
+                overrides[param.Name] = param.CurrentValue;
+            }
+        }
+
+        var navParam = new RunNavigationParameter
+        {
+            TargetIdentity = SelectedCase.Identity,
+            RunType = PcTest.Contracts.RunType.TestCase,
+            ParameterOverrides = overrides.Count > 0 ? overrides : null
+        };
+
+        _navigationService.NavigateTo("Run", navParam);
     }
 
     [RelayCommand]
@@ -134,11 +165,59 @@ public partial class TestCaseItemViewModel : ViewModelBase
     [ObservableProperty] private string _privilege = "User";
     [ObservableProperty] private int? _timeoutSec;
     [ObservableProperty] private List<string> _tags = new();
-    [ObservableProperty] private List<ParameterDefinition> _parameters = new();
+    [ObservableProperty] private List<ParameterViewModel> _parameterWrappers = new();
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
-    public bool HasParameters => Parameters.Count > 0;
+    public bool HasParameters => ParameterWrappers.Count > 0;
+    
+    // Expose parameters for binding - allows both get and set
+    public List<ParameterViewModel> Parameters
+    {
+        get => ParameterWrappers;
+        set => ParameterWrappers = value;
+    }
+}
+
+/// <summary>
+/// Wrapper for parameter definition with editable value.
+/// </summary>
+public partial class ParameterViewModel : ViewModelBase
+{
+    private readonly ParameterDefinition _definition;
+    
+    [ObservableProperty] private string _currentValue = string.Empty;
+    
+    public ParameterViewModel(ParameterDefinition definition)
+    {
+        _definition = definition;
+        
+        // Initialize with default value
+        if (definition.Default.HasValue)
+        {
+            try
+            {
+                _currentValue = definition.Default.Value.ValueKind switch
+                {
+                    JsonValueKind.String => definition.Default.Value.GetString() ?? string.Empty,
+                    JsonValueKind.Number => definition.Default.Value.ToString(),
+                    JsonValueKind.True => "true",
+                    JsonValueKind.False => "false",
+                    _ => definition.Default.Value.ToString()
+                };
+            }
+            catch
+            {
+                _currentValue = string.Empty;
+            }
+        }
+    }
+    
+    public string Name => _definition.Name;
+    public string Type => _definition.Type;
+    public bool Required => _definition.Required;
+    public string? Help => _definition.Help;
+    public string Default => CurrentValue;  // For binding in XAML
 }

@@ -124,12 +124,16 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
 
         foreach (var tc in discovery.TestCases.Values.OrderBy(c => c.Manifest.Name))
         {
+            var paramWrappers = tc.Manifest.Parameters?
+                .Select(p => new ParameterViewModel(p))
+                .ToList() ?? new();
+                
             AvailableTestCases.Add(new TestCaseItemViewModel
             {
                 Id = tc.Manifest.Id,
                 Name = tc.Manifest.Name,
                 Version = tc.Manifest.Version,
-                Parameters = tc.Manifest.Parameters?.ToList() ?? new()
+                ParameterWrappers = paramWrappers
             });
         }
     }

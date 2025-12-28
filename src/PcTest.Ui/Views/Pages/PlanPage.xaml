@@ -33,6 +33,11 @@
                                           Icon="{ui:SymbolIcon ArrowSync24}"
                                           Command="{Binding CasesTab.DiscoverCommand}"
                                           IsEnabled="{Binding CasesTab.IsDiscovering, Converter={StaticResource InverseBoolConverter}}"/>
+                                <ui:Button Content="Run" 
+                                          Icon="{ui:SymbolIcon Play24}"
+                                          Command="{Binding CasesTab.RunCommand}"
+                                          Appearance="Primary"
+                                          Margin="5,0,0,0"/>
                                 <ui:Button Content="Open Folder" 
                                           Icon="{ui:SymbolIcon FolderOpen24}"
                                           Command="{Binding CasesTab.OpenInExplorerCommand}"
@@ -111,40 +116,60 @@
                                 <TextBlock Text="{Binding Description}" TextWrapping="Wrap"/>
                             </ui:CardExpander>
                             
-                            <ui:CardExpander Header="Parameters" IsExpanded="True" Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <ItemsControl ItemsSource="{Binding Parameters}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" 
-                                                   BorderThickness="0,0,0,1" 
-                                                   Padding="5" 
-                                                   Margin="0,0,0,5">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="150"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
-                                                    
-                                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold"/>
-                                                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
-                                                        <ui:Badge Content="{Binding Type}" Appearance="Primary" Margin="0,0,5,0"/>
-                                                        <ui:Badge Content="Required" Appearance="Danger" Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                                    </StackPanel>
-                                                    
-                                                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" 
-                                                              Text="{Binding Help}" 
-                                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                              TextWrapping="Wrap"
-                                                              Margin="0,5,0,0"/>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                            <ui:CardExpander Header="Parameters" IsExpanded="True" Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,10">
+                                <StackPanel>
+                                    <TextBlock Text="Edit parameter values before running:" 
+                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                              Margin="0,0,0,10"/>
+                                    <ItemsControl ItemsSource="{Binding Parameters}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" 
+                                                       BorderThickness="0,0,0,1" 
+                                                       Padding="10" 
+                                                       Margin="0,0,0,10">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="150"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        
+                                                        <!-- Parameter name and badges -->
+                                                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                                                                  Text="{Binding Name}" 
+                                                                  FontWeight="SemiBold" 
+                                                                  VerticalAlignment="Center"/>
+                                                        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                                                            <ui:Badge Content="{Binding Type}" Appearance="Primary" Margin="0,0,5,0"/>
+                                                            <ui:Badge Content="Required" Appearance="Danger" Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                        </StackPanel>
+                                                        
+                                                        <!-- Help text -->
+                                                        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" 
+                                                                  Text="{Binding Help}" 
+                                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                                  TextWrapping="Wrap"
+                                                                  Margin="0,5,0,5"
+                                                                  Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
+                                                        
+                                                        <!-- Input field -->
+                                                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                                            <TextBlock Text="Value:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                            <TextBox Width="300" 
+                                                                    Text="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                    ToolTip="Default value (can be edited before running)"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </ui:CardExpander>
                         </StackPanel>
                     </ScrollViewer>

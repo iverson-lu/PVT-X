@@ -13,6 +13,11 @@ public sealed class FileSystemService : IFileSystemService
         return await File.ReadAllTextAsync(path, cancellationToken);
     }
 
+    public async Task<string[]> ReadAllLinesAsync(string path, CancellationToken cancellationToken = default)
+    {
+        return await File.ReadAllLinesAsync(path, cancellationToken);
+    }
+
     public async Task WriteAllTextAsync(string path, string content, CancellationToken cancellationToken = default)
     {
         var directory = Path.GetDirectoryName(path);

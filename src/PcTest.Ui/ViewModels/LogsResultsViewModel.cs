@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -23,9 +24,23 @@ public partial class LogsResultsViewModel : ViewModelBase
     [ObservableProperty] private string? _runId;
     [ObservableProperty] private RunDetails? _runDetails;
 
+    // Computed properties for UI binding
+    public bool IsRunSelected => RunDetails is not null;
+    public string RunStatus => RunDetails?.IndexEntry.Status.ToString() ?? string.Empty;
+    public string RunDisplayName => RunDetails?.IndexEntry.DisplayName ?? string.Empty;
+    public string StartTimeDisplay => RunDetails?.IndexEntry.StartTime.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty;
+    public string EndTimeDisplay => RunDetails?.IndexEntry.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty;
+    public string DurationDisplay => RunDetails?.IndexEntry.Duration?.ToString(@"hh\:mm\:ss") ?? string.Empty;
+    public int? ExitCode => GetExitCodeFromResult();
+    public string ErrorMessage => GetErrorMessageFromResult();
+
+    // Observable properties for stdout/stderr content (loaded asynchronously)
+    [ObservableProperty] private string _stdoutContent = string.Empty;
+    [ObservableProperty] private string _stderrContent = string.Empty;
+
     // Artifacts
     [ObservableProperty]
-    private ObservableCollection<ArtifactNodeViewModel> _artifactTree = new();
+    private ObservableCollection<ArtifactNodeViewModel> _artifacts = new();
 
     [ObservableProperty]
     private ArtifactNodeViewModel? _selectedArtifact;
@@ -45,10 +60,19 @@ public partial class LogsResultsViewModel : ViewModelBase
 
     // Event filters
     [ObservableProperty] private string _eventSearchText = string.Empty;
+    [ObservableProperty] private string _eventFilterText = string.Empty;
+    [ObservableProperty] private string? _eventTypeFilter;
+    [ObservableProperty] private string? _eventLevelFilter;
     [ObservableProperty] private bool _errorsOnly;
     [ObservableProperty] private string? _nodeIdFilter;
+    [ObservableProperty] private string _stdoutSearchText = string.Empty;
     [ObservableProperty]
     private ObservableCollection<string> _selectedLevels = new() { "info", "warning", "error" };
+
+    public ObservableCollection<StructuredEventViewModel> FilteredEvents => Events;
+    public string SelectedEventJson => EventDetailsJson;
+    public IEnumerable<string> EventTypeOptions => new[] { "All", "TestStarted", "TestCompleted", "TestFailed", "Custom" };
+    public IEnumerable<string> EventLevelOptions => new[] { "All", "Trace", "Debug", "Info", "Warning", "Error" };
 
     // Run picker
     [ObservableProperty]
@@ -178,11 +202,24 @@ public partial class LogsResultsViewModel : ViewModelBase
             // Load artifacts tree
             await LoadArtifactsAsync();
 
+            // Load stdout/stderr logs
+            await LoadStdoutStderrAsync();
+
             // Load events
             await LoadEventsAsync();
 
             IsRunPickerVisible = false;
             IsContentVisible = true;
+
+            // Notify UI of computed property changes
+            OnPropertyChanged(nameof(IsRunSelected));
+            OnPropertyChanged(nameof(RunStatus));
+            OnPropertyChanged(nameof(RunDisplayName));
+            OnPropertyChanged(nameof(StartTimeDisplay));
+            OnPropertyChanged(nameof(EndTimeDisplay));
+            OnPropertyChanged(nameof(DurationDisplay));
+            OnPropertyChanged(nameof(ExitCode));
+            OnPropertyChanged(nameof(ErrorMessage));
         }
         finally
         {
@@ -194,12 +231,12 @@ public partial class LogsResultsViewModel : ViewModelBase
     {
         if (RunId is null) return;
 
-        ArtifactTree.Clear();
+        Artifacts.Clear();
         var artifacts = await _runRepository.GetArtifactsAsync(RunId);
 
         foreach (var artifact in artifacts)
         {
-            ArtifactTree.Add(CreateArtifactNode(artifact));
+            Artifacts.Add(CreateArtifactNode(artifact));
         }
     }
 
@@ -255,10 +292,12 @@ public partial class LogsResultsViewModel : ViewModelBase
         _allEvents.Clear();
         Events.Clear();
 
+        var hasAnyEvents = false;
         await foreach (var batch in _runRepository.StreamEventsAsync(RunId))
         {
             foreach (var evt in batch.Events)
             {
+                hasAnyEvents = true;
                 var evtVm = new StructuredEventViewModel
                 {
                     Timestamp = evt.Timestamp,
@@ -278,19 +317,43 @@ public partial class LogsResultsViewModel : ViewModelBase
             }
         }
 
+        if (!hasAnyEvents)
+        {
+            // Add a placeholder message when no events are found
+            _allEvents.Add(new StructuredEventViewModel
+            {
+                Timestamp = DateTime.Now,
+                Level = "info",
+                Message = "(No structured events found for this run. The test may not have generated an events.jsonl file.)",
+                RawJson = "{}"
+            });
+        }
+
         ApplyEventFilter();
     }
 
     [RelayCommand]
-    private void ShowRunPicker()
+    private void ClearRun()
     {
+        RunId = null;
+        RunDetails = null;
+        StdoutContent = string.Empty;
+        StderrContent = string.Empty;
         IsRunPickerVisible = true;
         IsContentVisible = false;
         _ = RunPicker.LoadRecentRunsAsync();
+        OnPropertyChanged(nameof(IsRunSelected));
+        OnPropertyChanged(nameof(RunStatus));
+        OnPropertyChanged(nameof(RunDisplayName));
+        OnPropertyChanged(nameof(StartTimeDisplay));
+        OnPropertyChanged(nameof(EndTimeDisplay));
+        OnPropertyChanged(nameof(DurationDisplay));
+        OnPropertyChanged(nameof(ExitCode));
+        OnPropertyChanged(nameof(ErrorMessage));
     }
 
     [RelayCommand]
-    private void OpenRunFolder()
+    private void OpenFolder()
     {
         if (RunId is null) return;
 
@@ -299,6 +362,12 @@ public partial class LogsResultsViewModel : ViewModelBase
         {
             _fileSystemService.OpenInExplorer(folderPath);
         }
+    }
+
+    [RelayCommand]
+    private async Task RefreshEventsAsync()
+    {
+        await LoadEventsAsync();
     }
 
     [RelayCommand]
@@ -318,6 +387,83 @@ public partial class LogsResultsViewModel : ViewModelBase
         NodeIdFilter = null;
         SelectedLevels = new ObservableCollection<string> { "info", "warning", "error" };
         ApplyEventFilter();
+    }
+
+    private int? GetExitCodeFromResult()
+    {
+        if (RunDetails?.ResultJson is null) return null;
+
+        try
+        {
+            var doc = JsonDocument.Parse(RunDetails.ResultJson);
+            if (doc.RootElement.TryGetProperty("exitCode", out var exitCodeProp))
+            {
+                return exitCodeProp.GetInt32();
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    private string GetErrorMessageFromResult()
+    {
+        if (RunDetails?.ResultJson is null) return string.Empty;
+
+        try
+        {
+            var doc = JsonDocument.Parse(RunDetails.ResultJson);
+            if (doc.RootElement.TryGetProperty("error", out var errorProp))
+            {
+                return errorProp.GetString() ?? string.Empty;
+            }
+        }
+        catch { }
+
+        return string.Empty;
+    }
+
+    private async Task LoadStdoutStderrAsync()
+    {
+        if (RunId is null) return;
+
+        var runFolder = _runRepository.GetRunFolderPath(RunId);
+
+        // Load stdout.log
+        var stdoutPath = Path.Combine(runFolder, "stdout.log");
+        if (_fileSystemService.FileExists(stdoutPath))
+        {
+            try
+            {
+                StdoutContent = await _fileSystemService.ReadAllTextAsync(stdoutPath);
+            }
+            catch (Exception ex)
+            {
+                StdoutContent = $"Error reading stdout.log: {ex.Message}";
+            }
+        }
+        else
+        {
+            StdoutContent = "(No stdout.log found)";
+        }
+
+        // Load stderr.log
+        var stderrPath = Path.Combine(runFolder, "stderr.log");
+        if (_fileSystemService.FileExists(stderrPath))
+        {
+            try
+            {
+                StderrContent = await _fileSystemService.ReadAllTextAsync(stderrPath);
+            }
+            catch (Exception ex)
+            {
+                StderrContent = $"Error reading stderr.log: {ex.Message}";
+            }
+        }
+        else
+        {
+            StderrContent = "(No stderr.log found)";
+        }
     }
 
     public IEnumerable<string> AvailableLevels => new[] { "trace", "debug", "info", "warning", "error" };
