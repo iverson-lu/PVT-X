@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>PcTest.Engine</RootNamespace>
+    <AssemblyName>PcTest.Engine</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PcTest.Contracts\PcTest.Contracts.csproj" />
+    <ProjectReference Include="..\PcTest.Runner\PcTest.Runner.csproj" />
+  </ItemGroup>
+</Project>

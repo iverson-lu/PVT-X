@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "SystemSuite",
+  "name": "System Validation Suite",
+  "description": "Basic system validation tests",
+  "version": "1.0.0",
+  "tags": ["system", "validation"],
+  "controls": {
+    "repeat": 1,
+    "continueOnFailure": true
+  },
+  "testCases": [
+    {
+      "nodeId": "memory-check",
+      "ref": "MemoryCheck",
+      "inputs": {
+        "MinMemoryMB": 50
+      }
+    }
+  ]
+}
