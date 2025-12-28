@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "ThermalSuite",
+  "name": "Thermal Suite",
+  "version": "1.0.0",
+  "testCases": [
+    {
+      "nodeId": "cpu-quick",
+      "ref": "CpuStress",
+      "inputs": {
+        "DurationSec": 1,
+        "Mode": "Pass"
+      }
+    }
+  ]
+}

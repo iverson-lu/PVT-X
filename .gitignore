@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+Runs/index.jsonl
+Runs/*/
+!Runs/.gitkeep

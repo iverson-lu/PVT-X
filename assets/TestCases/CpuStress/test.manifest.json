@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "CpuStress",
+  "name": "CPU Stress",
+  "category": "Thermal",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 30,
+  "parameters": [
+    { "name": "DurationSec", "type": "int", "required": true, "default": 2 },
+    { "name": "Mode", "type": "enum", "required": false, "default": "Pass", "enumValues": ["Pass", "Fail"] }
+  ]
+}
