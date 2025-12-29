@@ -1,0 +1,260 @@
+<Page x:Class="PcTest.Ui.Views.Pages.LogsResultsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:PcTest.Ui.ViewModels"
+      Title="Logs &amp; Results"
+      d:DataContext="{d:DesignInstance vm:LogsResultsViewModel}"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d">
+    
+    <Grid>
+        <!-- Run Picker (shown when no run selected) -->
+        <Grid Visibility="{Binding IsRunSelected, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Search/Filter Bar -->
+            <Border Grid.Row="0" Background="{DynamicResource ControlFillColorDefaultBrush}" Padding="15">
+                <WrapPanel>
+                    <ui:TextBox PlaceholderText="Search runs..." 
+                               Text="{Binding RunPickerViewModel.SearchText, UpdateSourceTrigger=PropertyChanged}"
+                               Width="250" Margin="0,0,10,0"
+                               Icon="{ui:SymbolIcon Search24}"/>
+                    <ComboBox ItemsSource="{Binding RunPickerViewModel.StatusOptions}"
+                             SelectedItem="{Binding RunPickerViewModel.StatusFilter}"
+                             Width="120" Margin="0,0,10,0"/>
+                    <ComboBox ItemsSource="{Binding RunPickerViewModel.RunTypeOptions}"
+                             SelectedItem="{Binding RunPickerViewModel.RunTypeFilter}"
+                             Width="120" Margin="0,0,10,0"/>
+                    <DatePicker SelectedDate="{Binding RunPickerViewModel.StartTimeFrom}" Width="120" Margin="0,0,10,0"/>
+                    <DatePicker SelectedDate="{Binding RunPickerViewModel.StartTimeTo}" Width="120" Margin="0,0,10,0"/>
+                </WrapPanel>
+            </Border>
+            
+            <!-- Runs Grid -->
+            <DataGrid Grid.Row="1" 
+                     ItemsSource="{Binding RunPickerViewModel.FilteredRuns}"
+                     SelectedItem="{Binding RunPickerViewModel.SelectedRun}"
+                     AutoGenerateColumns="False"
+                     IsReadOnly="True"
+                     SelectionMode="Single"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     EnableRowVirtualization="True"
+                     MouseDoubleClick="RunsGrid_MouseDoubleClick">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Run ID" Binding="{Binding RunId}" Width="200"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding RunType}" Width="80"/>
+                    <DataGridTextColumn Header="Target" Binding="{Binding DisplayName}" Width="200"/>
+                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80"/>
+                    <DataGridTextColumn Header="Start Time" Binding="{Binding StartTimeDisplay}" Width="150"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+        
+        <!-- Logs/Results Viewer (shown when run is selected) -->
+        <Grid Visibility="{Binding IsRunSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Header -->
+            <Border Grid.Row="0" Background="{DynamicResource ControlFillColorDefaultBrush}" Padding="15">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <ui:Button Grid.Column="0" Content="Back" Icon="{ui:SymbolIcon ArrowLeft24}" 
+                              Command="{Binding ClearRunCommand}" Margin="0,0,15,0"/>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <TextBlock Text="Run:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding RunId}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <ui:Badge Content="{Binding RunStatus}" Margin="10,0"/>
+                        <TextBlock Text="Target:" VerticalAlignment="Center" Margin="10,0,5,0"/>
+                        <TextBlock Text="{Binding RunDisplayName}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <ui:Button Grid.Column="2" Content="Open Folder" Icon="{ui:SymbolIcon FolderOpen24}" 
+                              Command="{Binding OpenFolderCommand}"/>
+                </Grid>
+            </Border>
+            
+            <!-- Content Tabs -->
+            <TabControl Grid.Row="1" Margin="0">
+                <!-- Summary Tab -->
+                <TabItem Header="Summary">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="15">
+                        <StackPanel>
+                            <ui:CardExpander Header="Result Summary" IsExpanded="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Status:" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunStatus}"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Start Time:" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding StartTimeDisplay}"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="End Time:" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EndTimeDisplay}"/>
+                                    
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Duration:" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurationDisplay}"/>
+                                    
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Exit Code:" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ExitCode}"/>
+                                    
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Error:" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorMessage}" TextWrapping="Wrap"/>
+                                </Grid>
+                            </ui:CardExpander>
+                            
+                            <ui:CardExpander Header="Artifacts" IsExpanded="True" Margin="0,10,0,0">
+                                <TreeView ItemsSource="{Binding Artifacts}" VirtualizingStackPanel.IsVirtualizing="True">
+                                    <TreeView.ItemTemplate>
+                                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="{Binding Icon}" Margin="0,0,5,0"/>
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </StackPanel>
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.ItemTemplate>
+                                </TreeView>
+                            </ui:CardExpander>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+                
+                <!-- Stdout Tab -->
+                <TabItem Header="Stdout">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="15">
+                            <ui:TextBox PlaceholderText="Search logs..." Width="200" 
+                                       Text="{Binding StdoutSearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                       Icon="{ui:SymbolIcon Search24}"/>
+                        </StackPanel>
+                        
+                        <Border Grid.Row="1" Margin="15,0,15,15" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="4">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <TextBox Text="{Binding StdoutContent, Mode=OneWay}" 
+                                        IsReadOnly="True" 
+                                        FontFamily="Consolas" 
+                                        FontSize="12"
+                                        BorderThickness="0"
+                                        Background="Transparent"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </TabItem>
+                
+                <!-- Stderr Tab -->
+                <TabItem Header="Stderr">
+                    <Border Margin="15" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="4">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <TextBox Text="{Binding StderrContent, Mode=OneWay}" 
+                                    IsReadOnly="True" 
+                                    FontFamily="Consolas" 
+                                    FontSize="12"
+                                    BorderThickness="0"
+                                    Background="Transparent"
+                                    Foreground="#EF4444"/>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+                
+                <!-- Events Tab -->
+                <TabItem Header="Structured Events">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Filters -->
+                        <Border Grid.Row="0" Background="{DynamicResource ControlFillColorDefaultBrush}" Padding="15">
+                            <WrapPanel>
+                                <ui:TextBox PlaceholderText="Filter events..." 
+                                           Text="{Binding EventFilterText, UpdateSourceTrigger=PropertyChanged}"
+                                           Width="200" Margin="0,0,10,0"
+                                           Icon="{ui:SymbolIcon Filter24}"/>
+                                <ComboBox ItemsSource="{Binding EventTypeOptions}"
+                                         SelectedItem="{Binding EventTypeFilter}"
+                                         Width="150" Margin="0,0,10,0"/>
+                                <ComboBox ItemsSource="{Binding EventLevelOptions}"
+                                         SelectedItem="{Binding EventLevelFilter}"
+                                         Width="100" Margin="0,0,10,0"/>
+                                <ui:Button Content="Refresh" Icon="{ui:SymbolIcon ArrowSync24}" 
+                                          Command="{Binding RefreshEventsCommand}"/>
+                            </WrapPanel>
+                        </Border>
+                        
+                        <!-- Events Grid -->
+                        <DataGrid Grid.Row="1" 
+                                 ItemsSource="{Binding FilteredEvents}"
+                                 SelectedItem="{Binding SelectedEvent}"
+                                 AutoGenerateColumns="False"
+                                 IsReadOnly="True"
+                                 SelectionMode="Single"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                 EnableRowVirtualization="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Timestamp" Binding="{Binding TimestampDisplay}" Width="120"/>
+                                <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="60"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding EventType}" Width="120"/>
+                                <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        
+                        <!-- Event Details -->
+                        <ui:CardExpander Grid.Row="2" Header="Event Details" IsExpanded="True" MaxHeight="200">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <TextBox Text="{Binding SelectedEventJson, Mode=OneWay}" 
+                                        IsReadOnly="True" 
+                                        FontFamily="Consolas" 
+                                        FontSize="11"
+                                        BorderThickness="0"
+                                        Background="Transparent"/>
+                            </ScrollViewer>
+                        </ui:CardExpander>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+        
+        <!-- Busy Overlay -->
+        <Border Background="#80000000" 
+               Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ui:ProgressRing IsIndeterminate="True"/>
+                <TextBlock Text="{Binding BusyMessage}" Margin="0,10,0,0" Foreground="White"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "ThermalSuite",
+  "name": "Thermal Test Suite",
+  "description": "Suite of thermal validation tests",
+  "version": "1.0.0",
+  "tags": ["thermal", "validation"],
+  "controls": {
+    "repeat": 1,
+    "maxParallel": 1,
+    "continueOnFailure": false,
+    "retryOnError": 0
+  },
+  "environment": {
+    "env": {
+      "TEST_MODE": "thermal"
+    }
+  },
+  "testCases": [
+    {
+      "nodeId": "cpu-quick",
+      "ref": "CpuStress",
+      "inputs": {
+        "DurationSec": 2,
+        "Mode": "Normal"
+      }
+    },
+    {
+      "nodeId": "cpu-intensive",
+      "ref": "CpuStress",
+      "inputs": {
+        "DurationSec": 3,
+        "Mode": "Intensive"
+      }
+    }
+  ]
+}

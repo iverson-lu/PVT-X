@@ -1,0 +1,153 @@
+<Page x:Class="PcTest.Ui.Views.Pages.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:vm="clr-namespace:PcTest.Ui.ViewModels"
+      Title="Settings"
+      d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+            <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20"/>
+            
+            <!-- Path Configuration -->
+            <ui:CardExpander Header="Path Configuration" IsExpanded="True" Margin="0,0,0,15">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="Assets Root:" VerticalAlignment="Center"/>
+                        <ui:TextBox Grid.Column="1" Text="{Binding AssetsRoot, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
+                        <ui:Button Grid.Column="2" Content="Browse" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding BrowseAssetsRootCommand}"/>
+                    </Grid>
+                    
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="Runs Directory:" VerticalAlignment="Center"/>
+                        <ui:TextBox Grid.Column="1" Text="{Binding RunsDirectory, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
+                        <ui:Button Grid.Column="2" Content="Browse" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding BrowseRunsDirectoryCommand}"/>
+                    </Grid>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="Runner Executable:" VerticalAlignment="Center"/>
+                        <ui:TextBox Grid.Column="1" Text="{Binding RunnerExecutable, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
+                        <ui:Button Grid.Column="2" Content="Browse" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding BrowseRunnerExecutableCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </ui:CardExpander>
+            
+            <!-- Appearance -->
+            <ui:CardExpander Header="Appearance" IsExpanded="True" Margin="0,0,0,15">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="Theme:" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding ThemeOptions}" 
+                                 SelectedItem="{Binding SelectedTheme}" Width="150" HorizontalAlignment="Left"/>
+                    </Grid>
+                    
+                    <CheckBox Content="Show console window during execution" IsChecked="{Binding ShowConsoleWindow}"/>
+                </StackPanel>
+            </ui:CardExpander>
+            
+            <!-- Execution -->
+            <ui:CardExpander Header="Execution" IsExpanded="True" Margin="0,0,0,15">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="Default Timeout:" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <ui:NumberBox Value="{Binding DefaultTimeout}" Width="100" Minimum="0" Maximum="3600"/>
+                            <TextBlock Text="seconds" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Text="Max Retry Count:" VerticalAlignment="Center"/>
+                        <ui:NumberBox Grid.Column="1" Value="{Binding MaxRetryCount}" Width="100" Minimum="0" Maximum="10"/>
+                    </Grid>
+                    
+                    <CheckBox Content="Auto-refresh run history" IsChecked="{Binding AutoRefreshHistory}"/>
+                </StackPanel>
+            </ui:CardExpander>
+            
+            <!-- Import/Export -->
+            <ui:CardExpander Header="Import/Export Settings" IsExpanded="True" Margin="0,0,0,15">
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button Content="Import Settings" 
+                              Icon="{ui:SymbolIcon ArrowDownload24}"
+                              Command="{Binding ImportSettingsCommand}"
+                              Margin="0,0,10,0"/>
+                    <ui:Button Content="Export Settings" 
+                              Icon="{ui:SymbolIcon ArrowUpload24}"
+                              Command="{Binding ExportSettingsCommand}"
+                              Margin="0,0,10,0"/>
+                    <ui:Button Content="Reset to Defaults" 
+                              Icon="{ui:SymbolIcon ArrowReset24}"
+                              Command="{Binding ResetSettingsCommand}"
+                              Appearance="Caution"/>
+                </StackPanel>
+            </ui:CardExpander>
+            
+            <!-- Save -->
+            <Grid Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value=""/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
+                                    <Setter Property="Text" Value="You have unsaved changes."/>
+                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                
+                <ui:Button Grid.Column="1" 
+                          Content="Save Changes" 
+                          Icon="{ui:SymbolIcon Save24}"
+                          Command="{Binding SaveCommand}"
+                          Appearance="Primary"
+                          IsEnabled="{Binding HasUnsavedChanges}"/>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
