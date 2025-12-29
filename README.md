@@ -237,7 +237,7 @@ dotnet publish src/PcTest.Cli -c Release -o ./publish
 ### Building UI Application
 
 ```powershell
-dotnet publish .\src\PcTest.Ui\PcTest.Ui.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishReadyToRun=true
+dotnet publish .\src\PcTest.Ui\PcTest.Ui.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=false /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishReadyToRun=true
 ```
 
 
