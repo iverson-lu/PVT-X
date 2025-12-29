@@ -56,7 +56,18 @@
                                     ItemsSource="{Binding CasesTab.Cases}"
                                     SelectedItem="{Binding CasesTab.SelectedCase}"
                                     VirtualizingPanel.IsVirtualizing="True"
-                                    VirtualizingPanel.VirtualizationMode="Recycling">
+                                    VirtualizingPanel.VirtualizationMode="Recycling"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Margin="{StaticResource ListItemPadding}">
@@ -100,15 +111,15 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="ID:" 
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" 
                                               Style="{StaticResource LabelTextStyle}"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Id}" 
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}" 
                                               Style="{StaticResource BodyTextStyle}"/>
                                     
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" 
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="ID:" 
                                               Style="{StaticResource LabelTextStyle}" 
                                               Margin="{StaticResource SectionItemMargin}"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Name}" 
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Id}" 
                                               Style="{StaticResource BodyTextStyle}" 
                                               Margin="{StaticResource SectionItemMargin}"/>
                                     
@@ -266,13 +277,30 @@
                             <ListBox Grid.Row="2" 
                                     ItemsSource="{Binding SuitesTab.Suites}"
                                     SelectedItem="{Binding SuitesTab.SelectedSuite}"
-                                    VirtualizingPanel.IsVirtualizing="True">
+                                    VirtualizingPanel.IsVirtualizing="True"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Margin="5">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Identity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"/>
-                                            <TextBlock Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="10">
+                                        <StackPanel Margin="{StaticResource ListItemPadding}">
+                                            <TextBlock Text="{Binding Name}" 
+                                                      FontWeight="{StaticResource FontWeightSemiBold}"
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Identity}" 
+                                                      Foreground="{StaticResource TextSecondaryBrush}" 
+                                                      FontSize="{StaticResource FontSizeS}"/>
+                                            <TextBlock Foreground="{StaticResource TextTertiaryBrush}" 
+                                                      FontSize="{StaticResource FontSizeXS}">
                                                 <Run Text="{Binding NodeCount}"/> nodes
                                             </TextBlock>
                                         </StackPanel>
@@ -465,30 +493,57 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             
-                            <WrapPanel Grid.Row="0" Margin="10">
-                                <ui:Button Content="New" Icon="{ui:SymbolIcon Add24}" Command="{Binding PlansTab.CreateCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Duplicate" Icon="{ui:SymbolIcon Copy24}" Command="{Binding PlansTab.DuplicateCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Delete" Icon="{ui:SymbolIcon Delete24}" Command="{Binding PlansTab.DeleteCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Import" Icon="{ui:SymbolIcon ArrowDownload24}" Command="{Binding PlansTab.ImportCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Export" Icon="{ui:SymbolIcon ArrowUpload24}" Command="{Binding PlansTab.ExportCommand}" Margin="0,0,5,5"/>
+                            <WrapPanel Grid.Row="0" Margin="{StaticResource ThicknessM}">
+                                <ui:Button Content="New" Icon="{ui:SymbolIcon Add24}" 
+                                          Command="{Binding PlansTab.CreateCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Duplicate" Icon="{ui:SymbolIcon Copy24}" 
+                                          Command="{Binding PlansTab.DuplicateCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Delete" Icon="{ui:SymbolIcon Delete24}" 
+                                          Command="{Binding PlansTab.DeleteCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Import" Icon="{ui:SymbolIcon ArrowDownload24}" 
+                                          Command="{Binding PlansTab.ImportCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Export" Icon="{ui:SymbolIcon ArrowUpload24}" 
+                                          Command="{Binding PlansTab.ExportCommand}" 
+                                          Margin="0,0,8,8"/>
                             </WrapPanel>
                             
                             <ui:TextBox Grid.Row="1" 
                                        PlaceholderText="Search plans..." 
                                        Text="{Binding PlansTab.SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                       Margin="10,0,10,10"
+                                       Margin="12,0,12,12"
                                        Icon="{ui:SymbolIcon Search24}"/>
                             
                             <ListBox Grid.Row="2" 
                                     ItemsSource="{Binding PlansTab.Plans}"
                                     SelectedItem="{Binding PlansTab.SelectedPlan}"
-                                    VirtualizingPanel.IsVirtualizing="True">
+                                    VirtualizingPanel.IsVirtualizing="True"
+                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Margin="5">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Identity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"/>
-                                            <TextBlock Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="10">
+                                        <StackPanel Margin="{StaticResource ListItemPadding}">
+                                            <TextBlock Text="{Binding Name}" 
+                                                      FontWeight="{StaticResource FontWeightSemiBold}"
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Identity}" 
+                                                      Foreground="{StaticResource TextSecondaryBrush}" 
+                                                      FontSize="{StaticResource FontSizeS}"/>
+                                            <TextBlock Foreground="{StaticResource TextTertiaryBrush}" 
+                                                      FontSize="{StaticResource FontSizeXS}">
                                                 <Run Text="{Binding SuiteCount}"/> suites
                                             </TextBlock>
                                         </StackPanel>

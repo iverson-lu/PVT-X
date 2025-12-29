@@ -32,27 +32,37 @@
             <!-- Navigation Menu -->
             <Border Grid.Column="0" Background="{StaticResource NavBackgroundBrush}" 
                     BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
-                <StackPanel Margin="{StaticResource ThicknessS}">
+                <StackPanel Margin="12,8">
                     <ui:Button Content="Plan" Icon="{ui:SymbolIcon Clipboard24}" 
                               Tag="Plan" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" 
-                              Margin="{StaticResource SectionItemMargin}"/>
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Left"
+                              Padding="12,8"
+                              Margin="0,0,0,4"/>
                     <ui:Button Content="Run" Icon="{ui:SymbolIcon Play24}" 
                               Tag="Run" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" 
-                              Margin="{StaticResource SectionItemMargin}"/>
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Left"
+                              Padding="12,8"
+                              Margin="0,0,0,4"/>
                     <ui:Button Content="History" Icon="{ui:SymbolIcon History24}" 
                               Tag="History" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" 
-                              Margin="{StaticResource SectionItemMargin}"/>
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Left"
+                              Padding="12,8"
+                              Margin="0,0,0,4"/>
                     <ui:Button Content="Logs &amp; Results" Icon="{ui:SymbolIcon DocumentSearch24}" 
                               Tag="LogsResults" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" 
-                              Margin="{StaticResource SectionItemMargin}"/>
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Left"
+                              Padding="12,8"
+                              Margin="0,0,0,4"/>
                     <Separator Margin="0,16,0,16"/>
                     <ui:Button Content="Settings" Icon="{ui:SymbolIcon Settings24}" 
                               Tag="Settings" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" 
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Left"
+                              Padding="12,8" 
                               Margin="{StaticResource SectionItemMargin}"/>
                 </StackPanel>
             </Border>

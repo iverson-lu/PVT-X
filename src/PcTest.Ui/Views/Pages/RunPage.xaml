@@ -117,7 +117,18 @@
                     <ListBox Grid.Row="1" 
                             ItemsSource="{Binding Nodes}"
                             SelectedItem="{Binding SelectedNode}"
-                            VirtualizingPanel.IsVirtualizing="True">
+                            VirtualizingPanel.IsVirtualizing="True"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="10,5">
