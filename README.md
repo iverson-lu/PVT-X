@@ -237,9 +237,10 @@ dotnet publish src/PcTest.Cli -c Release -o ./publish
 ### Building UI Application
 
 ```powershell
-dotnet publish .\src\PcTest.Ui\PcTest.Ui.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=false /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishReadyToRun=true
+dotnet publish .\src\PcTest.Ui\PcTest.Ui.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=false
 ```
 
+Note: `assets` folder will be copied to the publish directory. .NET runtime is not bundled as self-contained and user will see a prompt to install .NET runtime if not already installed.
 
 ## License
 
