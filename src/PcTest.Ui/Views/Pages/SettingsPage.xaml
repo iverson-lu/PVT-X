@@ -98,7 +98,8 @@
                         <ui:NumberBox Grid.Column="1" Value="{Binding MaxRetryCount}" Width="100" Minimum="0" Maximum="10"/>
                     </Grid>
                     
-                    <CheckBox Content="Auto-refresh run history" IsChecked="{Binding AutoRefreshHistory}"/>
+                    <CheckBox Content="Auto-refresh run history" IsChecked="{Binding AutoRefreshHistory}" Margin="0,0,0,10"/>
+                    <CheckBox Content="Show debug output in console" IsChecked="{Binding ShowDebugOutput}"/>
                 </StackPanel>
             </ui:CardExpander>
             

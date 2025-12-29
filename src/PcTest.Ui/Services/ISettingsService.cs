@@ -60,6 +60,7 @@ public sealed class AppSettings
     public string Theme { get; set; } = "Light";
     public double FontScale { get; set; } = 1.0;
     public string DefaultLandingPage { get; set; } = "Plan";
+    public bool ShowDebugOutput { get; set; } = false;
     
     // Resolved paths
     public string ResolvedTestCasesRoot => Path.IsPathRooted(TestCasesRoot) 

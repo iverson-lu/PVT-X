@@ -100,9 +100,13 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
                                     
-                                    <!-- Status Icon -->
-                                    <Ellipse Grid.Column="0" Width="12" Height="12" Margin="0,0,10,0" VerticalAlignment="Center">
+                                    <!-- Status Icon - aligned to first row only -->
+                                    <Ellipse Grid.Row="0" Grid.Column="0" Width="12" Height="12" Margin="0,4,10,0" VerticalAlignment="Top">
                                         <Ellipse.Style>
                                             <Style TargetType="Ellipse">
                                                 <Setter Property="Fill" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
@@ -124,15 +128,44 @@
                                         </Ellipse.Style>
                                     </Ellipse>
                                     
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="{Binding NodeId}" FontWeight="SemiBold"/>
-                                        <TextBlock Text="{Binding Identity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"/>
-                                    </StackPanel>
+                                    <!-- First row: NodeId or Identity -->
+                                    <TextBlock Grid.Row="0" Grid.Column="1" FontWeight="SemiBold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{Binding NodeId}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding NodeId}" Value="">
+                                                        <Setter Property="Text" Value="{Binding Identity}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
                                     
-                                    <StackPanel Grid.Column="2" HorizontalAlignment="Right">
-                                        <TextBlock Text="{Binding StatusDisplay}" FontSize="11"/>
-                                        <TextBlock Text="{Binding DurationDisplay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="10"/>
-                                    </StackPanel>
+                                    <!-- Second row: Identity (only visible if NodeId is not empty) -->
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="{Binding Identity}"/>
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding NodeId}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    
+                                    <!-- Status column - spans both rows -->
+                                    <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" HorizontalAlignment="Right">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Text="{Binding StatusDisplay}" FontSize="11"/>
+                                        <TextBlock Grid.Row="1" Text="{Binding DurationDisplay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="10"/>
+                                    </Grid>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

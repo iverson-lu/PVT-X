@@ -74,6 +74,12 @@ public partial class RunViewModel : ViewModelBase
             _parameterOverrides = navParam.ParameterOverrides;
             StatusText = $"Ready to run {RunType}: {TargetIdentity}";
             ShowTargetSelector = false;
+            
+            // Auto-start if requested
+            if (navParam.AutoStart)
+            {
+                await StartAsync();
+            }
         }
         else
         {

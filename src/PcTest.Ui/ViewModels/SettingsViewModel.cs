@@ -25,6 +25,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string _theme = "Dark";
     [ObservableProperty] private double _fontScale = 1.0;
     [ObservableProperty] private string _defaultLandingPage = "Plan";
+    [ObservableProperty] private bool _showDebugOutput = false;
 
     [ObservableProperty] private bool _hasChanges;
 
@@ -50,6 +51,7 @@ public partial class SettingsViewModel : ViewModelBase
     partial void OnThemeChanged(string value) => HasChanges = true;
     partial void OnFontScaleChanged(double value) => HasChanges = true;
     partial void OnDefaultLandingPageChanged(string value) => HasChanges = true;
+    partial void OnShowDebugOutputChanged(bool value) => HasChanges = true;
 
     public void Load()
     {
@@ -66,6 +68,7 @@ public partial class SettingsViewModel : ViewModelBase
         Theme = settings.Theme;
         FontScale = settings.FontScale;
         DefaultLandingPage = settings.DefaultLandingPage;
+        ShowDebugOutput = settings.ShowDebugOutput;
 
         HasChanges = false;
     }
@@ -86,6 +89,7 @@ public partial class SettingsViewModel : ViewModelBase
         settings.Theme = Theme;
         settings.FontScale = FontScale;
         settings.DefaultLandingPage = DefaultLandingPage;
+        settings.ShowDebugOutput = ShowDebugOutput;
 
         await _settingsService.SaveAsync();
         

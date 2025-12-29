@@ -280,7 +280,13 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         }
 
         var identity = $"{Id}@{Version}";
-        _navigationService.NavigateToRun(identity, RunType.TestSuite);
+        var navParam = new RunNavigationParameter
+        {
+            TargetIdentity = identity,
+            RunType = RunType.TestSuite,
+            AutoStart = true
+        };
+        _navigationService.NavigateTo("Run", navParam);
     }
 
     private TestSuiteManifest BuildManifest()

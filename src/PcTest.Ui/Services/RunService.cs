@@ -29,6 +29,14 @@ public sealed class RunService : IRunService
         _fileSystemService = fileSystemService;
     }
 
+    private void LogDebug(string message)
+    {
+        if (_settingsService.CurrentSettings.ShowDebugOutput)
+        {
+            ConsoleOutput?.Invoke(this, message);
+        }
+    }
+
     public async Task<RunExecutionContext> ExecuteAsync(RunRequest request, CancellationToken cancellationToken = default)
     {
         var settings = _settingsService.CurrentSettings;
@@ -74,7 +82,7 @@ public sealed class RunService : IRunService
             {
                 _currentContext.RunId = actualRunId;
                 _currentState.RunId = actualRunId;
-                ConsoleOutput?.Invoke(this, $"\n[DEBUG] Extracted RunId from index: {actualRunId}");
+                LogDebug($"\n[DEBUG] Extracted RunId from index: {actualRunId}");
             }
             else
             {
@@ -86,14 +94,14 @@ public sealed class RunService : IRunService
             _currentState.FinalStatus = GetStatusFromResult(result);
             
             // Load execution details from result artifacts
-            ConsoleOutput?.Invoke(this, $"\n[DEBUG] About to load execution details. RunId={_currentContext.RunId}");
+            LogDebug($"\n[DEBUG] About to load execution details. RunId={_currentContext.RunId}");
             if (!string.IsNullOrEmpty(_currentContext.RunId))
             {
                 await LoadExecutionDetailsAsync(_currentContext.RunId);
-                ConsoleOutput?.Invoke(this, $"[DEBUG] After LoadExecutionDetailsAsync, Nodes.Count={_currentState.Nodes.Count}");
+                LogDebug($"[DEBUG] After LoadExecutionDetailsAsync, Nodes.Count={_currentState.Nodes.Count}");
             }
             
-            ConsoleOutput?.Invoke(this, $"[DEBUG] Firing StateChanged event with {_currentState.Nodes.Count} nodes");
+            LogDebug($"[DEBUG] Firing StateChanged event with {_currentState.Nodes.Count} nodes");
             StateChanged?.Invoke(this, _currentState);
             
             // Load and stream stdout.log if available
@@ -191,17 +199,17 @@ public sealed class RunService : IRunService
             var settings = _settingsService.CurrentSettings;
             var runFolder = Path.Combine(settings.ResolvedRunsRoot, runId);
             
-            ConsoleOutput?.Invoke(this, $"\n[DEBUG] Loading execution details from: {runFolder}");
+            LogDebug($"\n[DEBUG] Loading execution details from: {runFolder}");
             
             // Read result.json
             var resultPath = Path.Combine(runFolder, "result.json");
-            ConsoleOutput?.Invoke(this, $"[DEBUG] Checking result.json at: {resultPath}");
-            ConsoleOutput?.Invoke(this, $"[DEBUG] File exists: {_fileSystemService.FileExists(resultPath)}");
+            LogDebug($"[DEBUG] Checking result.json at: {resultPath}");
+            LogDebug($"[DEBUG] File exists: {_fileSystemService.FileExists(resultPath)}");
             
             if (_fileSystemService.FileExists(resultPath))
             {
                 var json = await _fileSystemService.ReadAllTextAsync(resultPath);
-                ConsoleOutput?.Invoke(this, $"[DEBUG] Read result.json, length: {json.Length}");
+                LogDebug($"[DEBUG] Read result.json, length: {json.Length}");
                 var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
                 
@@ -230,10 +238,10 @@ public sealed class RunService : IRunService
                 
                 if (_currentState != null)
                 {
-                    ConsoleOutput?.Invoke(this, $"[DEBUG] Adding node to _currentState.Nodes. Current count: {_currentState.Nodes.Count}");
+                    LogDebug($"[DEBUG] Adding node to _currentState.Nodes. Current count: {_currentState.Nodes.Count}");
                     _currentState.Nodes.Clear();
                     _currentState.Nodes.Add(node);
-                    ConsoleOutput?.Invoke(this, $"[DEBUG] After adding: NodeId={node.NodeId}, TestId={node.TestId}, Status={node.Status}, Count={_currentState.Nodes.Count}");
+                    LogDebug($"[DEBUG] After adding: NodeId={node.NodeId}, TestId={node.TestId}, Status={node.Status}, Count={_currentState.Nodes.Count}");
                 }
             }
             
@@ -255,25 +263,56 @@ public sealed class RunService : IRunService
                             var doc = JsonDocument.Parse(line);
                             var root = doc.RootElement;
                             
+                            // For Plan runs, children have SuiteId/SuiteVersion instead of TestId/TestVersion
+                            var testId = root.TryGetProperty("testId", out var testIdProp) ? testIdProp.GetString() ?? "" : "";
+                            var testVersion = root.TryGetProperty("testVersion", out var testVersionProp) ? testVersionProp.GetString() ?? "" : "";
+                            
+                            // If no TestId, try SuiteId (for Plan runs)
+                            if (string.IsNullOrEmpty(testId))
+                            {
+                                testId = root.TryGetProperty("suiteId", out var suiteIdProp) ? suiteIdProp.GetString() ?? "" : "";
+                                testVersion = root.TryGetProperty("suiteVersion", out var suiteVersionProp) ? suiteVersionProp.GetString() ?? "" : "";
+                            }
+                            
                             var childNode = new NodeExecutionState
                             {
                                 NodeId = root.TryGetProperty("nodeId", out var nodeId) ? nodeId.GetString() ?? "" : "",
-                                TestId = root.TryGetProperty("testId", out var testId) ? testId.GetString() ?? "" : "",
-                                TestVersion = root.TryGetProperty("testVersion", out var version) ? version.GetString() ?? "" : "",
+                                TestId = testId,
+                                TestVersion = testVersion,
                                 Status = root.TryGetProperty("status", out var status) 
                                     ? Enum.TryParse<RunStatus>(status.GetString(), true, out var s) ? s : null
                                     : null,
                                 IsRunning = false
                             };
                             
-                            // Calculate duration
-                            if (root.TryGetProperty("startTime", out var startTime) && 
-                                root.TryGetProperty("endTime", out var endTime))
+                            // Try to get duration from the child run's result.json
+                            if (root.TryGetProperty("runId", out var childRunId) && !string.IsNullOrEmpty(childRunId.GetString()))
                             {
-                                if (DateTime.TryParse(startTime.GetString(), out var start) && 
-                                    DateTime.TryParse(endTime.GetString(), out var end))
+                                var childRunFolder = Path.Combine(settings.ResolvedRunsRoot, childRunId.GetString()!);
+                                var childResultPath = Path.Combine(childRunFolder, "result.json");
+                                
+                                if (_fileSystemService.FileExists(childResultPath))
                                 {
-                                    childNode.Duration = end - start;
+                                    try
+                                    {
+                                        var childJson = await _fileSystemService.ReadAllTextAsync(childResultPath);
+                                        var childDoc = JsonDocument.Parse(childJson);
+                                        var childRoot = childDoc.RootElement;
+                                        
+                                        if (childRoot.TryGetProperty("startTime", out var childStartTime) && 
+                                            childRoot.TryGetProperty("endTime", out var childEndTime))
+                                        {
+                                            if (DateTime.TryParse(childStartTime.GetString(), out var start) && 
+                                                DateTime.TryParse(childEndTime.GetString(), out var end))
+                                            {
+                                                childNode.Duration = end - start;
+                                            }
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // Ignore errors reading child result
+                                    }
                                 }
                             }
                             

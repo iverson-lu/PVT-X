@@ -136,7 +136,8 @@ public partial class CasesTabViewModel : ViewModelBase
         {
             TargetIdentity = SelectedCase.Identity,
             RunType = PcTest.Contracts.RunType.TestCase,
-            ParameterOverrides = overrides.Count > 0 ? overrides : null
+            ParameterOverrides = overrides.Count > 0 ? overrides : null,
+            AutoStart = true
         };
 
         _navigationService.NavigateTo("Run", navParam);

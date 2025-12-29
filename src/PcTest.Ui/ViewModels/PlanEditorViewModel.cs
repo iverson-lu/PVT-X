@@ -246,7 +246,13 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         }
 
         var identity = $"{Id}@{Version}";
-        _navigationService.NavigateToRun(identity, RunType.TestPlan);
+        var navParam = new RunNavigationParameter
+        {
+            TargetIdentity = identity,
+            RunType = RunType.TestPlan,
+            AutoStart = true
+        };
+        _navigationService.NavigateTo("Run", navParam);
     }
 
     private TestPlanManifest BuildManifest()

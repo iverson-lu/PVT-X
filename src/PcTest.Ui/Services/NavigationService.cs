@@ -72,4 +72,5 @@ public sealed class RunNavigationParameter
     public string TargetIdentity { get; set; } = string.Empty;
     public RunType RunType { get; set; }
     public Dictionary<string, object?>? ParameterOverrides { get; set; }
+    public bool AutoStart { get; set; }
 }
