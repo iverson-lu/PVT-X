@@ -118,7 +118,7 @@ public class LogsResultsViewModelTests
             _navigationMock.Object);
 
         // Assert
-        vm.ArtifactTree.Should().BeEmpty();
+        vm.Artifacts.Should().BeEmpty();
     }
 
     [Fact]
