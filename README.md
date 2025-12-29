@@ -234,6 +234,13 @@ dotnet publish src/PcTest.Cli -c Release -o ./publish
 ./publish/PcTest.Cli run --target testcase --id "CpuStress@1.0.0"
 ```
 
+### Building UI Application
+
+```powershell
+dotnet publish .\src\PcTest.Ui\PcTest.Ui.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:PublishReadyToRun=true
+```
+
+
 ## License
 
 MIT License

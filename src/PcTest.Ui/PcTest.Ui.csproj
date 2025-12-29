@@ -24,4 +24,12 @@
     <None Remove="Assets\**" />
     <Resource Include="Assets\**" />
   </ItemGroup>
+
+  <!-- Copy assets folder to publish directory only -->
+  <ItemGroup>
+    <None Include="..\..\assets\**\*">
+      <Link>assets\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
 </Project>

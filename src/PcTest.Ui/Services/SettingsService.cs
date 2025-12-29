@@ -33,24 +33,25 @@ public sealed class SettingsService : ISettingsService
 
     private void DetectWorkspace()
     {
-        // Try to detect workspace from current directory
-        var currentDir = Directory.GetCurrentDirectory();
+        // Prioritize exe directory (for published apps)
+        var exeDir = AppContext.BaseDirectory;
         
         // Look for typical project markers
         var markers = new[] { "pc-test-system.sln", "assets", "Runs" };
         
+        // 1. First check exe directory
         foreach (var marker in markers)
         {
-            if (File.Exists(Path.Combine(currentDir, marker)) || 
-                Directory.Exists(Path.Combine(currentDir, marker)))
+            if (File.Exists(Path.Combine(exeDir, marker)) || 
+                Directory.Exists(Path.Combine(exeDir, marker)))
             {
-                _currentSettings.WorkspaceRoot = currentDir;
+                _currentSettings.WorkspaceRoot = exeDir;
                 return;
             }
         }
         
-        // Try parent directories
-        var dir = new DirectoryInfo(currentDir);
+        // 2. Check parent directories of exe (supports bin/Debug development scenario)
+        var dir = new DirectoryInfo(exeDir);
         while (dir?.Parent != null)
         {
             dir = dir.Parent;
@@ -65,8 +66,20 @@ public sealed class SettingsService : ISettingsService
             }
         }
         
-        // Default to current directory
-        _currentSettings.WorkspaceRoot = currentDir;
+        // 3. Finally try current working directory
+        var currentDir = Directory.GetCurrentDirectory();
+        foreach (var marker in markers)
+        {
+            if (File.Exists(Path.Combine(currentDir, marker)) || 
+                Directory.Exists(Path.Combine(currentDir, marker)))
+            {
+                _currentSettings.WorkspaceRoot = currentDir;
+                return;
+            }
+        }
+        
+        // Default to exe directory
+        _currentSettings.WorkspaceRoot = exeDir;
     }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default)
