@@ -1,9 +1,0 @@
-bin/
-obj/
-Runs/
-runs/
-!Runs/.gitkeep
-!runs/.gitkeep
-*.user
-*.suo
-/.vs
