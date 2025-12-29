@@ -16,7 +16,9 @@
         </Grid.RowDefinitions>
         
         <!-- Filters -->
-        <Border Grid.Row="0" Background="{DynamicResource ControlFillColorDefaultBrush}" Padding="15">
+        <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
+                Padding="{StaticResource CardPadding}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -26,12 +28,14 @@
                 <WrapPanel>
                     <ui:TextBox PlaceholderText="Search..." 
                                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                               Width="200" Margin="0,0,10,5"
+                               Width="200" 
+                               Margin="{StaticResource ControlMarginMedium}"
                                Icon="{ui:SymbolIcon Search24}"/>
                     
                     <ComboBox ItemsSource="{Binding StatusOptions}" 
                              SelectedItem="{Binding StatusFilter}"
-                             Width="120" Margin="0,0,10,5">
+                             Width="120" 
+                             Margin="{StaticResource ControlMarginMedium}">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding}"/>
@@ -41,7 +45,8 @@
                     
                     <ComboBox ItemsSource="{Binding RunTypeOptions}" 
                              SelectedItem="{Binding RunTypeFilter}"
-                             Width="120" Margin="0,0,10,5">
+                             Width="120" 
+                             Margin="{StaticResource ControlMarginMedium}">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding}"/>
@@ -49,15 +54,27 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                     
-                    <CheckBox Content="Top-level only" IsChecked="{Binding TopLevelOnly}" VerticalAlignment="Center" Margin="0,0,10,5"/>
+                    <CheckBox Content="Top-level only" 
+                             IsChecked="{Binding TopLevelOnly}" 
+                             VerticalAlignment="Center" 
+                             Margin="{StaticResource ControlMarginMedium}"/>
                     
-                    <DatePicker SelectedDate="{Binding StartTimeFrom}" Width="120" Margin="0,0,10,5"/>
-                    <DatePicker SelectedDate="{Binding StartTimeTo}" Width="120" Margin="0,0,10,5"/>
+                    <DatePicker SelectedDate="{Binding StartTimeFrom}" 
+                               Width="120" 
+                               Margin="{StaticResource ControlMarginMedium}"/>
+                    <DatePicker SelectedDate="{Binding StartTimeTo}" 
+                               Width="120" 
+                               Margin="{StaticResource ControlMarginMedium}"/>
                 </WrapPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <ui:Button Content="Refresh" Icon="{ui:SymbolIcon ArrowSync24}" Command="{Binding RefreshCommand}" Margin="0,0,5,0"/>
-                    <ui:Button Content="Clear" Icon="{ui:SymbolIcon Dismiss24}" Command="{Binding ClearFiltersCommand}"/>
+                    <ui:Button Content="Refresh" 
+                              Icon="{ui:SymbolIcon ArrowSync24}" 
+                              Command="{Binding RefreshCommand}" 
+                              Margin="{StaticResource ControlMarginSmall}"/>
+                    <ui:Button Content="Clear" 
+                              Icon="{ui:SymbolIcon Dismiss24}" 
+                              Command="{Binding ClearFiltersCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -92,10 +109,13 @@
             </DataGrid>
             
             <!-- Details Panel -->
-            <Border Grid.Column="1" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1,0,0,0">
+            <Border Grid.Column="1" 
+                    Background="{StaticResource SurfaceBackgroundBrush}"
+                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1,0,0,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="15" DataContext="{Binding SelectedRun}">
-                        <TextBlock Text="Run Details" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,15"/>
+                    <StackPanel Margin="{StaticResource CardPadding}" DataContext="{Binding SelectedRun}">
+                        <TextBlock Text="Run Details" 
+                                  Style="{StaticResource SectionTitleStyle}"/>
                         
                         <Grid Visibility="{Binding DataContext.SelectedRun, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource NullToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
@@ -113,44 +133,74 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Run ID:" FontWeight="SemiBold"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunId}" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Run ID:" 
+                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunId}" 
+                                      Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
                             
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RunType}" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" 
+                                      Style="{StaticResource LabelTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RunType}" 
+                                      Style="{StaticResource BodyTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Target:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DisplayName}" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Target:" 
+                                      Style="{StaticResource LabelTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DisplayName}" 
+                                      Style="{StaticResource BodyTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Status:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Status}" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Status:" 
+                                      Style="{StaticResource LabelTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Status}" 
+                                      Style="{StaticResource BodyTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Start:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding StartTimeDisplay}" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Start:" 
+                                      Style="{StaticResource LabelTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding StartTimeDisplay}" 
+                                      Style="{StaticResource BodyTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Duration:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding DurationDisplay}" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Duration:" 
+                                      Style="{StaticResource LabelTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding DurationDisplay}" 
+                                      Style="{StaticResource BodyTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Test ID:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding TestId}" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Test ID:" 
+                                      Style="{StaticResource LabelTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding TestId}" 
+                                      Style="{StaticResource BodyTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             
-                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Suite ID:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SuiteId}" Margin="0,5,0,0"/>
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Suite ID:" 
+                                      Style="{StaticResource LabelTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SuiteId}" 
+                                      Style="{StaticResource BodyTextStyle}" 
+                                      Margin="{StaticResource SectionItemMargin}"/>
                         </Grid>
                         
                         <!-- Actions -->
-                        <StackPanel Margin="0,20,0,0">
+                        <StackPanel Margin="{StaticResource SectionMargin}">
                             <ui:Button Content="View Logs &amp; Results" 
                                       Icon="{ui:SymbolIcon DocumentSearch24}"
                                       Command="{Binding DataContext.ViewLogsResultsCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                       Appearance="Primary"
                                       HorizontalAlignment="Stretch"
-                                      Margin="0,0,0,5"/>
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             <ui:Button Content="Open Folder" 
                                       Icon="{ui:SymbolIcon FolderOpen24}"
                                       Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                       HorizontalAlignment="Stretch"
-                                      Margin="0,0,0,5"/>
+                                      Margin="{StaticResource SectionItemMargin}"/>
                             <ui:Button Content="Rerun" 
                                       Icon="{ui:SymbolIcon ArrowRepeatAll24}"
                                       Command="{Binding DataContext.RerunCommand, RelativeSource={RelativeSource AncestorType=Page}}"

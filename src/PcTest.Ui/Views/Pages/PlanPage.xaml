@@ -20,7 +20,9 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Cases List -->
-                    <Border Grid.Column="0" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="0,0,1,0">
+                    <Border Grid.Column="0" 
+                            Background="{StaticResource SurfaceBackgroundBrush}"
+                            BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -28,26 +30,26 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             
-                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="{StaticResource ThicknessM}">
                                 <ui:Button Content="Discover" 
                                           Icon="{ui:SymbolIcon ArrowSync24}"
                                           Command="{Binding CasesTab.DiscoverCommand}"
-                                          IsEnabled="{Binding CasesTab.IsDiscovering, Converter={StaticResource InverseBoolConverter}}"/>
+                                          IsEnabled="{Binding CasesTab.IsDiscovering, Converter={StaticResource InverseBoolConverter}}"
+                                          Margin="{StaticResource ControlMarginSmall}"/>
                                 <ui:Button Content="Run" 
                                           Icon="{ui:SymbolIcon Play24}"
                                           Command="{Binding CasesTab.RunCommand}"
                                           Appearance="Primary"
-                                          Margin="5,0,0,0"/>
+                                          Margin="{StaticResource ControlMarginSmall}"/>
                                 <ui:Button Content="Open Folder" 
                                           Icon="{ui:SymbolIcon FolderOpen24}"
-                                          Command="{Binding CasesTab.OpenInExplorerCommand}"
-                                          Margin="5,0,0,0"/>
+                                          Command="{Binding CasesTab.OpenInExplorerCommand}"/>
                             </StackPanel>
                             
                             <ui:TextBox Grid.Row="1" 
                                        PlaceholderText="Search cases..." 
                                        Text="{Binding CasesTab.SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                       Margin="10,0,10,10"
+                                       Margin="12,0,12,12"
                                        Icon="{ui:SymbolIcon Search24}"/>
                             
                             <ListBox Grid.Row="2" 
@@ -57,10 +59,17 @@
                                     VirtualizingPanel.VirtualizationMode="Recycling">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Margin="5">
-                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Identity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11"/>
-                                            <TextBlock Text="{Binding Category}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="10"/>
+                                        <StackPanel Margin="{StaticResource ListItemPadding}">
+                                            <TextBlock Text="{Binding Name}" 
+                                                      FontWeight="{StaticResource FontWeightSemiBold}"
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{StaticResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Identity}" 
+                                                      Foreground="{StaticResource TextSecondaryBrush}" 
+                                                      FontSize="{StaticResource FontSizeS}"/>
+                                            <TextBlock Text="{Binding Category}" 
+                                                      Foreground="{StaticResource TextTertiaryBrush}" 
+                                                      FontSize="{StaticResource FontSizeXS}"/>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -70,10 +79,12 @@
                     
                     <!-- Case Details -->
                     <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="20" DataContext="{Binding CasesTab.SelectedCase}">
-                            <TextBlock Text="Test Case Details" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,0,0,15"/>
+                        <StackPanel Margin="{StaticResource PagePadding}" DataContext="{Binding CasesTab.SelectedCase}">
+                            <TextBlock Text="Test Case Details" 
+                                      Style="{StaticResource PageTitleStyle}"/>
                             
-                            <ui:CardExpander Header="Basic Information" IsExpanded="True" Margin="0,0,0,10">
+                            <ui:CardExpander Header="Basic Information" IsExpanded="True" 
+                                            Margin="{StaticResource CardMargin}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="120"/>
@@ -89,45 +100,75 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="ID:" FontWeight="SemiBold"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Id}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="ID:" 
+                                              Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Id}" 
+                                              Style="{StaticResource BodyTextStyle}"/>
                                     
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Name}" Margin="0,5,0,0"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" 
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Name}" 
+                                              Style="{StaticResource BodyTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Version}" Margin="0,5,0,0"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Version:" 
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Version}" 
+                                              Style="{StaticResource BodyTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Category:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Category}" Margin="0,5,0,0"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Category:" 
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Category}" 
+                                              Style="{StaticResource BodyTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Privilege:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Privilege}" Margin="0,5,0,0"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Privilege:" 
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Privilege}" 
+                                              Style="{StaticResource BodyTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Timeout:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding TimeoutSec, StringFormat={}{0}s}" Margin="0,5,0,0"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Timeout:" 
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding TimeoutSec, StringFormat={}{0}s}" 
+                                              Style="{StaticResource BodyTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     
-                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Tags:" FontWeight="SemiBold" Margin="0,5,0,0"/>
-                                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding TagsDisplay}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                    <TextBlock Grid.Row="6" Grid.Column="0" Text="Tags:" 
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
+                                    <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding TagsDisplay}" 
+                                              Style="{StaticResource BodyTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}" TextWrapping="Wrap"/>
                                 </Grid>
                             </ui:CardExpander>
                             
-                            <ui:CardExpander Header="Description" IsExpanded="True" Margin="0,0,0,10">
-                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap"/>
+                            <ui:CardExpander Header="Description" IsExpanded="True" 
+                                            Margin="{StaticResource CardMargin}">
+                                <TextBlock Text="{Binding Description}" 
+                                          Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
                             </ui:CardExpander>
                             
-                            <ui:CardExpander Header="Parameters" IsExpanded="True" Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibilityConverter}}" Margin="0,0,0,10">
+                            <ui:CardExpander Header="Parameters" IsExpanded="True" 
+                                            Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibilityConverter}}" 
+                                            Margin="{StaticResource CardMargin}">
                                 <StackPanel>
                                     <TextBlock Text="Edit parameter values before running:" 
-                                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                              Margin="0,0,0,10"/>
+                                              Style="{StaticResource SecondaryTextStyle}"
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     <ItemsControl ItemsSource="{Binding Parameters}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border BorderBrush="{DynamicResource ControlElevationBorderBrush}" 
+                                                <Border BorderBrush="{StaticResource BorderSubtleBrush}" 
                                                        BorderThickness="0,0,0,1" 
-                                                       Padding="10" 
-                                                       Margin="0,0,0,10">
+                                                       Padding="{StaticResource ThicknessM}" 
+                                                       Margin="{StaticResource SectionItemMargin}">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="150"/>
@@ -142,7 +183,7 @@
                                                         <!-- Parameter name and badges -->
                                                         <TextBlock Grid.Row="0" Grid.Column="0" 
                                                                   Text="{Binding Name}" 
-                                                                  FontWeight="SemiBold" 
+                                                                  Style="{StaticResource LabelTextStyle}" 
                                                                   VerticalAlignment="Center"/>
                                                         <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
                                                             <ui:Badge Content="{Binding Type}" Appearance="Primary" Margin="0,0,5,0"/>
@@ -152,14 +193,17 @@
                                                         <!-- Help text -->
                                                         <TextBlock Grid.Row="1" Grid.ColumnSpan="2" 
                                                                   Text="{Binding Help}" 
-                                                                  Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                                  Style="{StaticResource SecondaryTextStyle}"
                                                                   TextWrapping="Wrap"
-                                                                  Margin="0,5,0,5"
+                                                                  Margin="{StaticResource SectionItemMargin}"
                                                                   Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
                                                         
                                                         <!-- Input field -->
                                                         <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
-                                                            <TextBlock Text="Value:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                            <TextBlock Text="Value:" 
+                                                                      VerticalAlignment="Center" 
+                                                                      Style="{StaticResource LabelTextStyle}"
+                                                                      Margin="{StaticResource ControlMarginMedium}"/>
                                                             <TextBox Width="300" 
                                                                     Text="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                     ToolTip="Default value (can be edited before running)"/>
@@ -185,7 +229,9 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Suites List -->
-                    <Border Grid.Column="0" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="0,0,1,0">
+                    <Border Grid.Column="0" 
+                            Background="{StaticResource SurfaceBackgroundBrush}"
+                            BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -193,18 +239,28 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             
-                            <WrapPanel Grid.Row="0" Margin="10">
-                                <ui:Button Content="New" Icon="{ui:SymbolIcon Add24}" Command="{Binding SuitesTab.CreateCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Duplicate" Icon="{ui:SymbolIcon Copy24}" Command="{Binding SuitesTab.DuplicateCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Delete" Icon="{ui:SymbolIcon Delete24}" Command="{Binding SuitesTab.DeleteCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Import" Icon="{ui:SymbolIcon ArrowDownload24}" Command="{Binding SuitesTab.ImportCommand}" Margin="0,0,5,5"/>
-                                <ui:Button Content="Export" Icon="{ui:SymbolIcon ArrowUpload24}" Command="{Binding SuitesTab.ExportCommand}" Margin="0,0,5,5"/>
+                            <WrapPanel Grid.Row="0" Margin="{StaticResource ThicknessM}">
+                                <ui:Button Content="New" Icon="{ui:SymbolIcon Add24}" 
+                                          Command="{Binding SuitesTab.CreateCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Duplicate" Icon="{ui:SymbolIcon Copy24}" 
+                                          Command="{Binding SuitesTab.DuplicateCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Delete" Icon="{ui:SymbolIcon Delete24}" 
+                                          Command="{Binding SuitesTab.DeleteCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Import" Icon="{ui:SymbolIcon ArrowDownload24}" 
+                                          Command="{Binding SuitesTab.ImportCommand}" 
+                                          Margin="0,0,8,8"/>
+                                <ui:Button Content="Export" Icon="{ui:SymbolIcon ArrowUpload24}" 
+                                          Command="{Binding SuitesTab.ExportCommand}" 
+                                          Margin="0,0,8,8"/>
                             </WrapPanel>
                             
                             <ui:TextBox Grid.Row="1" 
                                        PlaceholderText="Search suites..." 
                                        Text="{Binding SuitesTab.SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                       Margin="10,0,10,10"
+                                       Margin="12,0,12,12"
                                        Icon="{ui:SymbolIcon Search24}"/>
                             
                             <ListBox Grid.Row="2" 
@@ -229,24 +285,32 @@
                     <!-- Suite Editor Panel -->
                     <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" 
                                  Visibility="{Binding SuitesTab.IsEditorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <StackPanel Margin="20" DataContext="{Binding SuitesTab.Editor}">
+                        <StackPanel Margin="{StaticResource PagePadding}" DataContext="{Binding SuitesTab.Editor}">
                             <!-- Header with dirty indicator -->
-                            <Grid Margin="0,0,0,15">
+                            <Grid Margin="{StaticResource SectionHeaderMargin}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Edit Suite" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                    <TextBlock Text="Edit Suite" 
+                                              Style="{StaticResource PageTitleStyle}"/>
                                     <ui:Badge Content="Unsaved" Appearance="Caution" 
                                              Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibilityConverter}}"
-                                             Margin="10,0,0,0"/>
+                                             Margin="{StaticResource ControlMarginMedium}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <ui:Button Content="Save" Icon="{ui:SymbolIcon Save24}" Command="{Binding SaveSuiteCommand}" Margin="0,0,5,0"/>
-                                    <ui:Button Content="Discard" Icon="{ui:SymbolIcon Dismiss24}" Command="{Binding DiscardChangesCommand}" Margin="0,0,5,0"/>
-                                    <ui:Button Content="Validate" Icon="{ui:SymbolIcon Checkmark24}" Command="{Binding ValidateSuiteCommand}" Margin="0,0,5,0"/>
-                                    <ui:Button Content="Run" Icon="{ui:SymbolIcon Play24}" Command="{Binding RunSuiteCommand}" Appearance="Primary"/>
+                                    <ui:Button Content="Save" Icon="{ui:SymbolIcon Save24}" 
+                                              Command="{Binding SaveSuiteCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
+                                    <ui:Button Content="Discard" Icon="{ui:SymbolIcon Dismiss24}" 
+                                              Command="{Binding DiscardChangesCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
+                                    <ui:Button Content="Validate" Icon="{ui:SymbolIcon Checkmark24}" 
+                                              Command="{Binding ValidateSuiteCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
+                                    <ui:Button Content="Run" Icon="{ui:SymbolIcon Play24}" 
+                                              Command="{Binding RunSuiteCommand}" Appearance="Primary"/>
                                 </StackPanel>
                             </Grid>
                             
@@ -277,7 +341,8 @@
                             </ui:CardExpander>
                             
                             <!-- Controls -->
-                            <ui:CardExpander Header="Controls" IsExpanded="False" Margin="0,0,0,10">
+                            <ui:CardExpander Header="Controls" IsExpanded="False" 
+                                            Margin="{StaticResource CardMargin}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -288,12 +353,18 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
-                                        <TextBlock Text="Repeat" Margin="0,0,0,5"/>
+                                    <StackPanel Grid.Row="0" Grid.Column="0" 
+                                               Margin="{StaticResource SectionItemMargin}">
+                                        <TextBlock Text="Repeat" 
+                                                  Style="{StaticResource LabelTextStyle}" 
+                                                  Margin="0,0,0,4"/>
                                         <ui:NumberBox Value="{Binding Repeat}" Minimum="1" Maximum="100"/>
                                     </StackPanel>
-                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,10">
-                                        <TextBlock Text="Retry on Error" Margin="0,0,0,5"/>
+                                    <StackPanel Grid.Row="0" Grid.Column="1" 
+                                               Margin="{StaticResource SectionItemMargin}">
+                                        <TextBlock Text="Retry on Error" 
+                                                  Style="{StaticResource LabelTextStyle}" 
+                                                  Margin="0,0,0,4"/>
                                         <ui:NumberBox Value="{Binding RetryOnError}" Minimum="0" Maximum="10"/>
                                     </StackPanel>
                                     <CheckBox Grid.Row="1" Grid.Column="0" Content="Continue on Failure" IsChecked="{Binding ContinueOnFailure}"/>
@@ -301,7 +372,8 @@
                             </ui:CardExpander>
                             
                             <!-- Pipeline Nodes -->
-                            <ui:CardExpander Header="Pipeline Nodes" IsExpanded="True" Margin="0,0,0,10">
+                            <ui:CardExpander Header="Pipeline Nodes" IsExpanded="True" 
+                                            Margin="{StaticResource CardMargin}">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -321,30 +393,45 @@
                                             SelectedItem="{Binding SelectedNode}">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <StackPanel Margin="5">
-                                                    <TextBlock Text="{Binding NodeId}" FontWeight="SemiBold"/>
-                                                    <TextBlock Text="{Binding Ref}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                                <StackPanel Margin="{StaticResource ListItemPadding}">
+                                                    <TextBlock Text="{Binding NodeId}" 
+                                                              FontWeight="{StaticResource FontWeightSemiBold}"
+                                                              FontSize="{StaticResource FontSizeM}"
+                                                              Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding Ref}" 
+                                                              Foreground="{StaticResource TextSecondaryBrush}"
+                                                              FontSize="{StaticResource FontSizeS}"/>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
                                     
                                     <!-- Node Editor -->
-                                    <Border Grid.Row="2" Margin="0,10,0,0" Padding="10" 
-                                           Background="{DynamicResource ControlFillColorDefaultBrush}"
-                                           CornerRadius="4"
+                                    <Border Grid.Row="2" 
+                                           Margin="{StaticResource SectionMargin}" 
+                                           Padding="{StaticResource CardPadding}" 
+                                           Background="{StaticResource ControlBackgroundSecondaryBrush}"
+                                           BorderBrush="{StaticResource BorderSubtleBrush}"
+                                           BorderThickness="1"
+                                           CornerRadius="{StaticResource RadiusM}"
                                            DataContext="{Binding SelectedNode}"
                                            Visibility="{Binding DataContext.SelectedNode, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource NullToVisibilityConverter}}">
                                         <StackPanel>
-                                            <StackPanel Margin="0,0,0,10">
-                                                <TextBlock Text="Node ID" Margin="0,0,0,5"/>
+                                            <StackPanel Margin="{StaticResource SectionItemMargin}">
+                                                <TextBlock Text="Node ID" 
+                                                          Style="{StaticResource LabelTextStyle}" 
+                                                          Margin="0,0,0,4"/>
                                                 <ui:TextBox Text="{Binding NodeId, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <StackPanel Margin="0,0,0,10">
-                                                <TextBlock Text="Test Case Reference" Margin="0,0,0,5"/>
+                                            <StackPanel Margin="{StaticResource SectionItemMargin}">
+                                                <TextBlock Text="Test Case Reference" 
+                                                          Style="{StaticResource LabelTextStyle}" 
+                                                          Margin="0,0,0,4"/>
                                                 <ui:TextBox Text="{Binding Ref, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <TextBlock Text="Inputs (JSON)" Margin="0,0,0,5"/>
+                                            <TextBlock Text="Inputs (JSON)" 
+                                                      Style="{StaticResource LabelTextStyle}" 
+                                                      Margin="0,0,0,4"/>
                                             <TextBox Text="{Binding InputsJson, UpdateSourceTrigger=PropertyChanged}" 
                                                     AcceptsReturn="True" 
                                                     Height="100" 
@@ -368,7 +455,9 @@
                     </Grid.ColumnDefinitions>
                     
                     <!-- Plans List -->
-                    <Border Grid.Column="0" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="0,0,1,0">
+                    <Border Grid.Column="0" 
+                            Background="{StaticResource SurfaceBackgroundBrush}"
+                            BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>

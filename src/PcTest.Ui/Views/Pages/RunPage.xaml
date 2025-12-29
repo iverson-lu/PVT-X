@@ -16,7 +16,9 @@
         </Grid.RowDefinitions>
         
         <!-- Control Bar -->
-        <Border Grid.Row="0" Background="{DynamicResource ControlFillColorDefaultBrush}" Padding="15">
+        <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
+                Padding="{StaticResource CardPadding}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -25,13 +27,19 @@
                 
                 <!-- Target Selector (shown when navigating directly) -->
                 <StackPanel Orientation="Horizontal" Visibility="{Binding ShowTargetSelector, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <TextBlock Text="Run Type:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <ComboBox SelectedIndex="{Binding RunType, Converter={StaticResource EnumToIntConverter}}" Width="120" Margin="0,0,10,0">
+                    <TextBlock Text="Run Type:" VerticalAlignment="Center" 
+                              FontSize="{StaticResource FontSizeM}"
+                              Foreground="{StaticResource TextPrimaryBrush}"
+                              Margin="{StaticResource ControlMarginMedium}"/>
+                    <ComboBox SelectedIndex="{Binding RunType, Converter={StaticResource EnumToIntConverter}}" Width="120" Margin="{StaticResource ControlMarginMedium}">
                         <ComboBoxItem Content="Test Case"/>
                         <ComboBoxItem Content="Test Suite"/>
                         <ComboBoxItem Content="Test Plan"/>
                     </ComboBox>
-                    <TextBlock Text="Target:" VerticalAlignment="Center" Margin="10,0,10,0"/>
+                    <TextBlock Text="Target:" VerticalAlignment="Center" 
+                              FontSize="{StaticResource FontSizeM}"
+                              Foreground="{StaticResource TextPrimaryBrush}"
+                              Margin="{StaticResource ControlMarginMedium}"/>
                     <ComboBox ItemsSource="{Binding AvailableTargets}" 
                              SelectedItem="{Binding TargetIdentity}" 
                              Width="300"/>
@@ -39,11 +47,25 @@
                 
                 <!-- Target Display (shown when coming from Plan page) -->
                 <StackPanel Orientation="Horizontal" Visibility="{Binding ShowTargetSelector, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                    <TextBlock Text="Target:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBlock Text="{Binding TargetIdentity}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <ui:Badge Content="{Binding RunType}" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                    <TextBlock Text="Status:" VerticalAlignment="Center" Margin="20,0,10,0"/>
-                    <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Text="Target:" VerticalAlignment="Center" 
+                              FontSize="{StaticResource FontSizeM}" 
+                              Foreground="{StaticResource TextSecondaryBrush}"
+                              Margin="{StaticResource ControlMarginMedium}"/>
+                    <TextBlock Text="{Binding TargetIdentity}" 
+                              FontWeight="{StaticResource FontWeightSemiBold}" 
+                              FontSize="{StaticResource FontSizeM}"
+                              Foreground="{StaticResource TextPrimaryBrush}"
+                              VerticalAlignment="Center"/>
+                    <ui:Badge Content="{Binding RunType}" Margin="{StaticResource ControlMarginMedium}" VerticalAlignment="Center"/>
+                    <TextBlock Text="Status:" VerticalAlignment="Center" 
+                              FontSize="{StaticResource FontSizeM}" 
+                              Foreground="{StaticResource TextSecondaryBrush}"
+                              Margin="16,0,8,0"/>
+                    <TextBlock Text="{Binding StatusText}" 
+                              FontWeight="{StaticResource FontWeightSemiBold}" 
+                              FontSize="{StaticResource FontSizeM}"
+                              Foreground="{StaticResource TextPrimaryBrush}"
+                              VerticalAlignment="Center"/>
                 </StackPanel>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -52,18 +74,18 @@
                               Command="{Binding StartCommand}"
                               Appearance="Primary"
                               IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}"
-                              Margin="0,0,5,0"/>
+                              Margin="{StaticResource ControlMarginSmall}"/>
                     <ui:Button Content="Stop" 
                               Icon="{ui:SymbolIcon Stop24}"
                               Command="{Binding StopCommand}"
                               IsEnabled="{Binding IsRunning}"
-                              Margin="0,0,5,0"/>
+                              Margin="{StaticResource ControlMarginSmall}"/>
                     <ui:Button Content="Abort" 
                               Icon="{ui:SymbolIcon Dismiss24}"
                               Command="{Binding AbortCommand}"
                               IsEnabled="{Binding IsRunning}"
                               Appearance="Danger"
-                              Margin="0,0,5,0"/>
+                              Margin="{StaticResource ControlMarginSmall}"/>
                     <ui:Button Content="View Logs" 
                               Icon="{ui:SymbolIcon DocumentSearch24}"
                               Command="{Binding ViewLogsCommand}"/>
@@ -79,14 +101,18 @@
             </Grid.ColumnDefinitions>
             
             <!-- Node List -->
-            <Border Grid.Column="0" BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" 
+                    Background="{StaticResource SurfaceBackgroundBrush}"
+                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="Execution Pipeline" FontWeight="SemiBold" Margin="15,15,15,10"/>
+                    <TextBlock Grid.Row="0" Text="Execution Pipeline" 
+                              Style="{StaticResource SectionTitleStyle}"
+                              Margin="{StaticResource CardPadding}"/>
                     
                     <ListBox Grid.Row="1" 
                             ItemsSource="{Binding Nodes}"
@@ -106,22 +132,23 @@
                                     </Grid.RowDefinitions>
                                     
                                     <!-- Status Icon - aligned to first row only -->
-                                    <Ellipse Grid.Row="0" Grid.Column="0" Width="12" Height="12" Margin="0,4,10,0" VerticalAlignment="Top">
+                                    <Ellipse Grid.Row="0" Grid.Column="0" Width="12" Height="12" 
+                                            Margin="0,4,10,0" VerticalAlignment="Top">
                                         <Ellipse.Style>
                                             <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                                <Setter Property="Fill" Value="{StaticResource StatusPendingBrush}"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                        <Setter Property="Fill" Value="{DynamicResource SystemAccentColorSecondaryBrush}"/>
+                                                        <Setter Property="Fill" Value="{StaticResource StatusRunningBrush}"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Status}" Value="Passed">
-                                                        <Setter Property="Fill" Value="#10B981"/>
+                                                        <Setter Property="Fill" Value="{StaticResource StatusSuccessBrush}"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Status}" Value="Failed">
-                                                        <Setter Property="Fill" Value="#EF4444"/>
+                                                        <Setter Property="Fill" Value="{StaticResource StatusErrorBrush}"/>
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Status}" Value="Error">
-                                                        <Setter Property="Fill" Value="#F59E0B"/>
+                                                        <Setter Property="Fill" Value="{StaticResource StatusWarningBrush}"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -129,7 +156,10 @@
                                     </Ellipse>
                                     
                                     <!-- First row: NodeId or Identity -->
-                                    <TextBlock Grid.Row="0" Grid.Column="1" FontWeight="SemiBold">
+                                    <TextBlock Grid.Row="0" Grid.Column="1" 
+                                              FontWeight="{StaticResource FontWeightSemiBold}"
+                                              FontSize="{StaticResource FontSizeM}"
+                                              Foreground="{StaticResource TextPrimaryBrush}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="{Binding NodeId}"/>
@@ -143,7 +173,9 @@
                                     </TextBlock>
                                     
                                     <!-- Second row: Identity (only visible if NodeId is not empty) -->
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="11">
+                                    <TextBlock Grid.Row="1" Grid.Column="1" 
+                                              Foreground="{StaticResource TextSecondaryBrush}" 
+                                              FontSize="{StaticResource FontSizeS}">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="{Binding Identity}"/>
@@ -163,8 +195,12 @@
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Text="{Binding StatusDisplay}" FontSize="11"/>
-                                        <TextBlock Grid.Row="1" Text="{Binding DurationDisplay}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="10"/>
+                                        <TextBlock Grid.Row="0" Text="{Binding StatusDisplay}" 
+                                                  FontSize="{StaticResource FontSizeS}"
+                                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                        <TextBlock Grid.Row="1" Text="{Binding DurationDisplay}" 
+                                                  Foreground="{StaticResource TextTertiaryBrush}" 
+                                                  FontSize="{StaticResource FontSizeXS}"/>
                                     </Grid>
                                 </Grid>
                             </DataTemplate>
@@ -187,17 +223,26 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="Console Output" FontWeight="SemiBold" Margin="15,15,15,10"/>
+                    <TextBlock Grid.Row="0" Text="Console Output" 
+                              Style="{StaticResource SectionTitleStyle}"
+                              Margin="{StaticResource CardPadding}"/>
                     
-                    <Border Grid.Row="1" Margin="15,0,15,15" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="4">
+                    <Border Grid.Row="1" 
+                           Margin="16,0,16,16" 
+                           Background="{StaticResource ControlBackgroundSecondaryBrush}" 
+                           BorderBrush="{StaticResource BorderSubtleBrush}"
+                           BorderThickness="1"
+                           CornerRadius="{StaticResource RadiusM}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                             <TextBox Text="{Binding ConsoleOutput, Mode=OneWay}" 
                                     IsReadOnly="True" 
                                     FontFamily="Consolas" 
-                                    FontSize="12"
+                                    FontSize="{StaticResource FontSizeM}"
+                                    Foreground="{StaticResource TextPrimaryBrush}"
                                     BorderThickness="0"
                                     Background="Transparent"
-                                    TextWrapping="NoWrap"/>
+                                    TextWrapping="NoWrap"
+                                    Padding="{StaticResource ThicknessM}"/>
                         </ScrollViewer>
                     </Border>
                 </Grid>
@@ -209,17 +254,26 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     
-                    <TextBlock Grid.Row="0" Text="Events (Simplified)" FontWeight="SemiBold" Margin="15,15,15,10"/>
+                    <TextBlock Grid.Row="0" Text="Events (Simplified)" 
+                              Style="{StaticResource SectionTitleStyle}"
+                              Margin="{StaticResource CardPadding}"/>
                     
-                    <Border Grid.Row="1" Margin="15,0,15,15" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="4">
+                    <Border Grid.Row="1" 
+                           Margin="16,0,16,16" 
+                           Background="{StaticResource ControlBackgroundSecondaryBrush}" 
+                           BorderBrush="{StaticResource BorderSubtleBrush}"
+                           BorderThickness="1"
+                           CornerRadius="{StaticResource RadiusM}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                             <TextBox Text="{Binding EventsOutput, Mode=OneWay}" 
                                     IsReadOnly="True" 
                                     FontFamily="Consolas" 
-                                    FontSize="12"
+                                    FontSize="{StaticResource FontSizeM}"
+                                    Foreground="{StaticResource TextPrimaryBrush}"
                                     BorderThickness="0"
                                     Background="Transparent"
-                                    TextWrapping="NoWrap"/>
+                                    TextWrapping="NoWrap"
+                                    Padding="{StaticResource ThicknessM}"/>
                         </ScrollViewer>
                     </Border>
                 </Grid>

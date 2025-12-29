@@ -30,24 +30,30 @@
             </Grid.ColumnDefinitions>
             
             <!-- Navigation Menu -->
-            <Border Grid.Column="0" Background="{DynamicResource ApplicationBackgroundBrush}">
-                <StackPanel>
+            <Border Grid.Column="0" Background="{StaticResource NavBackgroundBrush}" 
+                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
+                <StackPanel Margin="{StaticResource ThicknessS}">
                     <ui:Button Content="Plan" Icon="{ui:SymbolIcon Clipboard24}" 
                               Tag="Plan" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" Margin="5"/>
+                              HorizontalAlignment="Stretch" 
+                              Margin="{StaticResource SectionItemMargin}"/>
                     <ui:Button Content="Run" Icon="{ui:SymbolIcon Play24}" 
                               Tag="Run" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" Margin="5"/>
+                              HorizontalAlignment="Stretch" 
+                              Margin="{StaticResource SectionItemMargin}"/>
                     <ui:Button Content="History" Icon="{ui:SymbolIcon History24}" 
                               Tag="History" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" Margin="5"/>
+                              HorizontalAlignment="Stretch" 
+                              Margin="{StaticResource SectionItemMargin}"/>
                     <ui:Button Content="Logs &amp; Results" Icon="{ui:SymbolIcon DocumentSearch24}" 
                               Tag="LogsResults" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" Margin="5"/>
-                    <Separator Margin="5,20,5,20"/>
+                              HorizontalAlignment="Stretch" 
+                              Margin="{StaticResource SectionItemMargin}"/>
+                    <Separator Margin="0,16,0,16"/>
                     <ui:Button Content="Settings" Icon="{ui:SymbolIcon Settings24}" 
                               Tag="Settings" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch" Margin="5"/>
+                              HorizontalAlignment="Stretch" 
+                              Margin="{StaticResource SectionItemMargin}"/>
                 </StackPanel>
             </Border>
                 
@@ -56,15 +62,21 @@
         </Grid>
         
         <!-- Status Bar -->
-        <Border Grid.Row="2" Background="{DynamicResource ControlFillColorDefaultBrush}" Padding="10,5">
+        <Border Grid.Row="2" Background="{StaticResource ControlBackgroundSecondaryBrush}" 
+                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
+                Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding StatusMessage}" 
+                          VerticalAlignment="Center"
+                          FontSize="{StaticResource FontSizeM}"
+                          Foreground="{StaticResource TextSecondaryBrush}"/>
                 <TextBlock Grid.Column="1" Text="{Binding CurrentPageName}" 
-                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                          Foreground="{StaticResource TextTertiaryBrush}"
+                          FontSize="{StaticResource FontSizeS}"
                           VerticalAlignment="Center"/>
             </Grid>
         </Border>

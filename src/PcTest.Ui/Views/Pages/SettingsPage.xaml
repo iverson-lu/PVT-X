@@ -10,34 +10,49 @@
       mc:Ignorable="d">
     
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="20">
-            <TextBlock Text="Settings" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20"/>
+        <StackPanel Margin="{StaticResource PagePadding}">
+            <TextBlock Text="Settings" 
+                      Style="{StaticResource PageTitleStyle}" 
+                      Margin="{StaticResource SectionHeaderMargin}"/>
             
             <!-- Path Configuration -->
-            <ui:CardExpander Header="Path Configuration" IsExpanded="True" Margin="0,0,0,15">
+            <ui:CardExpander Header="Path Configuration" IsExpanded="True" 
+                            Margin="{StaticResource CardMargin}">
                 <StackPanel>
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="{StaticResource SectionItemMargin}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBlock Grid.Column="0" Text="Assets Root:" VerticalAlignment="Center"/>
-                        <ui:TextBox Grid.Column="1" Text="{Binding AssetsRoot, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
-                        <ui:Button Grid.Column="2" Content="Browse" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding BrowseAssetsRootCommand}"/>
+                        <TextBlock Grid.Column="0" Text="Assets Root:" 
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource LabelTextStyle}"/>
+                        <ui:TextBox Grid.Column="1" 
+                                   Text="{Binding AssetsRoot, UpdateSourceTrigger=PropertyChanged}" 
+                                   Margin="{StaticResource ControlMarginMedium}"/>
+                        <ui:Button Grid.Column="2" Content="Browse" 
+                                  Icon="{ui:SymbolIcon FolderOpen24}" 
+                                  Command="{Binding BrowseAssetsRootCommand}"/>
                     </Grid>
                     
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="{StaticResource SectionItemMargin}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBlock Grid.Column="0" Text="Runs Directory:" VerticalAlignment="Center"/>
-                        <ui:TextBox Grid.Column="1" Text="{Binding RunsDirectory, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
-                        <ui:Button Grid.Column="2" Content="Browse" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding BrowseRunsDirectoryCommand}"/>
+                        <TextBlock Grid.Column="0" Text="Runs Directory:" 
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource LabelTextStyle}"/>
+                        <ui:TextBox Grid.Column="1" 
+                                   Text="{Binding RunsDirectory, UpdateSourceTrigger=PropertyChanged}" 
+                                   Margin="{StaticResource ControlMarginMedium}"/>
+                        <ui:Button Grid.Column="2" Content="Browse" 
+                                  Icon="{ui:SymbolIcon FolderOpen24}" 
+                                  Command="{Binding BrowseRunsDirectoryCommand}"/>
                     </Grid>
                     
                     <Grid>
@@ -47,25 +62,36 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBlock Grid.Column="0" Text="Runner Executable:" VerticalAlignment="Center"/>
-                        <ui:TextBox Grid.Column="1" Text="{Binding RunnerExecutable, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
-                        <ui:Button Grid.Column="2" Content="Browse" Icon="{ui:SymbolIcon FolderOpen24}" Command="{Binding BrowseRunnerExecutableCommand}"/>
+                        <TextBlock Grid.Column="0" Text="Runner Executable:" 
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource LabelTextStyle}"/>
+                        <ui:TextBox Grid.Column="1" 
+                                   Text="{Binding RunnerExecutable, UpdateSourceTrigger=PropertyChanged}" 
+                                   Margin="{StaticResource ControlMarginMedium}"/>
+                        <ui:Button Grid.Column="2" Content="Browse" 
+                                  Icon="{ui:SymbolIcon FolderOpen24}" 
+                                  Command="{Binding BrowseRunnerExecutableCommand}"/>
                     </Grid>
                 </StackPanel>
             </ui:CardExpander>
             
             <!-- Appearance -->
-            <ui:CardExpander Header="Appearance" IsExpanded="True" Margin="0,0,0,15">
+            <ui:CardExpander Header="Appearance" IsExpanded="True" 
+                            Margin="{StaticResource CardMargin}">
                 <StackPanel>
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="{StaticResource SectionItemMargin}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBlock Grid.Column="0" Text="Theme:" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding ThemeOptions}" 
-                                 SelectedItem="{Binding SelectedTheme}" Width="150" HorizontalAlignment="Left"/>
+                        <TextBlock Grid.Column="0" Text="Theme:" 
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource LabelTextStyle}"/>
+                        <ComboBox Grid.Column="1" 
+                                 ItemsSource="{Binding ThemeOptions}" 
+                                 SelectedItem="{Binding SelectedTheme}" 
+                                 Width="150" HorizontalAlignment="Left"/>
                     </Grid>
                     
                     <CheckBox Content="Show console window during execution" IsChecked="{Binding ShowConsoleWindow}"/>
@@ -73,47 +99,62 @@
             </ui:CardExpander>
             
             <!-- Execution -->
-            <ui:CardExpander Header="Execution" IsExpanded="True" Margin="0,0,0,15">
+            <ui:CardExpander Header="Execution" IsExpanded="True" 
+                            Margin="{StaticResource CardMargin}">
                 <StackPanel>
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="{StaticResource SectionItemMargin}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBlock Grid.Column="0" Text="Default Timeout:" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Text="Default Timeout:" 
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource LabelTextStyle}"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <ui:NumberBox Value="{Binding DefaultTimeout}" Width="100" Minimum="0" Maximum="3600"/>
-                            <TextBlock Text="seconds" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                            <TextBlock Text="seconds" 
+                                      VerticalAlignment="Center" 
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                      Margin="{StaticResource ControlMarginMedium}"/>
                         </StackPanel>
                     </Grid>
                     
-                    <Grid Margin="0,0,0,10">
+                    <Grid Margin="{StaticResource SectionItemMargin}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         
-                        <TextBlock Grid.Column="0" Text="Max Retry Count:" VerticalAlignment="Center"/>
-                        <ui:NumberBox Grid.Column="1" Value="{Binding MaxRetryCount}" Width="100" Minimum="0" Maximum="10"/>
+                        <TextBlock Grid.Column="0" Text="Max Retry Count:" 
+                                  VerticalAlignment="Center"
+                                  Style="{StaticResource LabelTextStyle}"/>
+                        <ui:NumberBox Grid.Column="1" 
+                                     Value="{Binding MaxRetryCount}" 
+                                     Width="100" Minimum="0" Maximum="10"/>
                     </Grid>
                     
-                    <CheckBox Content="Auto-refresh run history" IsChecked="{Binding AutoRefreshHistory}" Margin="0,0,0,10"/>
-                    <CheckBox Content="Show debug output in console" IsChecked="{Binding ShowDebugOutput}"/>
+                    <CheckBox Content="Auto-refresh run history" 
+                             IsChecked="{Binding AutoRefreshHistory}" 
+                             Margin="{StaticResource SectionItemMargin}"/>
+                    <CheckBox Content="Show debug output in console" 
+                             IsChecked="{Binding ShowDebugOutput}"/>
                 </StackPanel>
             </ui:CardExpander>
             
             <!-- Import/Export -->
-            <ui:CardExpander Header="Import/Export Settings" IsExpanded="True" Margin="0,0,0,15">
+            <ui:CardExpander Header="Import/Export Settings" IsExpanded="True" 
+                            Margin="{StaticResource CardMargin}">
                 <StackPanel Orientation="Horizontal">
                     <ui:Button Content="Import Settings" 
                               Icon="{ui:SymbolIcon ArrowDownload24}"
                               Command="{Binding ImportSettingsCommand}"
-                              Margin="0,0,10,0"/>
+                              Margin="{StaticResource ControlMarginMedium}"/>
                     <ui:Button Content="Export Settings" 
                               Icon="{ui:SymbolIcon ArrowUpload24}"
                               Command="{Binding ExportSettingsCommand}"
-                              Margin="0,0,10,0"/>
+                              Margin="{StaticResource ControlMarginMedium}"/>
                     <ui:Button Content="Reset to Defaults" 
                               Icon="{ui:SymbolIcon ArrowReset24}"
                               Command="{Binding ResetSettingsCommand}"
@@ -122,7 +163,7 @@
             </ui:CardExpander>
             
             <!-- Save -->
-            <Grid Margin="0,10,0,0">
+            <Grid Margin="{StaticResource SectionMargin}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -135,7 +176,8 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
                                     <Setter Property="Text" Value="You have unsaved changes."/>
-                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}"/>
+                                    <Setter Property="Foreground" Value="{StaticResource StatusWarningBrush}"/>
+                                    <Setter Property="FontSize" Value="{StaticResource FontSizeM}"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
