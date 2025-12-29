@@ -109,6 +109,7 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" 
@@ -157,13 +158,15 @@
                                     <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding TagsDisplay}" 
                                               Style="{StaticResource BodyTextStyle}" 
                                               Margin="{StaticResource SectionItemMargin}" TextWrapping="Wrap"/>
+                                    
+                                    <TextBlock Grid.Row="7" Grid.Column="0" Text="Description:" 
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"
+                                              VerticalAlignment="Top"/>
+                                    <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding Description}" 
+                                              Style="{StaticResource BodyTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}" TextWrapping="Wrap"/>
                                 </Grid>
-                            </ui:CardExpander>
-                            
-                            <ui:CardExpander Header="Description" IsExpanded="True" 
-                                            Margin="{StaticResource CardMargin}">
-                                <TextBlock Text="{Binding Description}" 
-                                          Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
                             </ui:CardExpander>
                             
                             <ui:CardExpander Header="Parameters" IsExpanded="True" 
@@ -321,13 +324,16 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Edit Suite" 
+                                    <TextBlock Text="Suite Details" 
                                               Style="{StaticResource PageTitleStyle}"/>
                                     <ui:Badge Content="Unsaved" Appearance="Caution" 
                                              Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibilityConverter}}"
                                              Margin="{StaticResource ControlMarginMedium}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ui:Button Content="Edit" Icon="{ui:SymbolIcon Edit24}" 
+                                              Command="{Binding EditSuiteCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
                                     <ui:Button Content="Save" Icon="{ui:SymbolIcon Save24}" 
                                               Command="{Binding SaveSuiteCommand}" 
                                               Margin="{StaticResource ControlMarginSmall}"/>
@@ -556,24 +562,35 @@
                     <!-- Plan Editor Panel -->
                     <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"
                                  Visibility="{Binding PlansTab.IsEditorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
-                        <StackPanel Margin="20" DataContext="{Binding PlansTab.Editor}">
+                        <StackPanel Margin="{StaticResource PagePadding}" DataContext="{Binding PlansTab.Editor}">
                             <!-- Header -->
-                            <Grid Margin="0,0,0,15">
+                            <Grid Margin="{StaticResource SectionHeaderMargin}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Edit Plan" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                    <TextBlock Text="Plan Details" 
+                                              Style="{StaticResource PageTitleStyle}"/>
                                     <ui:Badge Content="Unsaved" Appearance="Caution" 
                                              Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibilityConverter}}"
-                                             Margin="10,0,0,0"/>
+                                             Margin="{StaticResource ControlMarginMedium}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <ui:Button Content="Save" Icon="{ui:SymbolIcon Save24}" Command="{Binding SavePlanCommand}" Margin="0,0,5,0"/>
-                                    <ui:Button Content="Discard" Icon="{ui:SymbolIcon Dismiss24}" Command="{Binding DiscardChangesCommand}" Margin="0,0,5,0"/>
-                                    <ui:Button Content="Validate" Icon="{ui:SymbolIcon Checkmark24}" Command="{Binding ValidatePlanCommand}" Margin="0,0,5,0"/>
-                                    <ui:Button Content="Run" Icon="{ui:SymbolIcon Play24}" Command="{Binding RunPlanCommand}" Appearance="Primary"/>
+                                    <ui:Button Content="Edit" Icon="{ui:SymbolIcon Edit24}" 
+                                              Command="{Binding EditPlanCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
+                                    <ui:Button Content="Save" Icon="{ui:SymbolIcon Save24}" 
+                                              Command="{Binding SavePlanCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
+                                    <ui:Button Content="Discard" Icon="{ui:SymbolIcon Dismiss24}" 
+                                              Command="{Binding DiscardChangesCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
+                                    <ui:Button Content="Validate" Icon="{ui:SymbolIcon Checkmark24}" 
+                                              Command="{Binding ValidatePlanCommand}" 
+                                              Margin="{StaticResource ControlMarginSmall}"/>
+                                    <ui:Button Content="Run" Icon="{ui:SymbolIcon Play24}" 
+                                              Command="{Binding RunPlanCommand}" Appearance="Primary"/>
                                 </StackPanel>
                             </Grid>
                             

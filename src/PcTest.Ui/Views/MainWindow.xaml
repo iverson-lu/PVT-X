@@ -7,6 +7,7 @@
         xmlns:vm="clr-namespace:PcTest.Ui.ViewModels"
         mc:Ignorable="d"
         Title="{Binding AppTitle}"
+        Icon="pack://application:,,,/Resources/hp_logo.png"
         Height="800" Width="1400"
         MinHeight="600" MinWidth="1000"
         WindowStartupLocation="CenterScreen"
@@ -20,7 +21,11 @@
         </Grid.RowDefinitions>
         
         <!-- Title Bar -->
-        <ui:TitleBar Grid.Row="0" Title="{Binding AppTitle}" ShowMaximize="True" ShowMinimize="True"/>
+        <ui:TitleBar Grid.Row="0" Title="{Binding AppTitle}" ShowMaximize="True" ShowMinimize="True">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="/Resources/hp_logo.png" Width="16" Height="16"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
         
         <!-- Main Content -->
         <Grid Grid.Row="1">

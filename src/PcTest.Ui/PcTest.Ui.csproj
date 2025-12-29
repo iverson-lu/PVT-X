@@ -23,6 +23,7 @@
   <ItemGroup>
     <None Remove="Assets\**" />
     <Resource Include="Assets\**" />
+    <Resource Include="Resources\**" />
   </ItemGroup>
 
   <!-- Copy assets folder to publish directory only -->
