@@ -77,6 +77,12 @@ public partial class SuitesTabViewModel : ViewModelBase
         {
             Suites.Add(s);
         }
+        
+        // Select first item by default if available and nothing is selected
+        if (Suites.Count > 0 && SelectedSuite is null)
+        {
+            SelectedSuite = Suites[0];
+        }
     }
 
     public async Task LoadAsync()

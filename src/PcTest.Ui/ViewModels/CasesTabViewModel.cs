@@ -58,6 +58,12 @@ public partial class CasesTabViewModel : ViewModelBase
         {
             Cases.Add(c);
         }
+        
+        // Select first item by default if available and nothing is selected
+        if (Cases.Count > 0 && SelectedCase is null)
+        {
+            SelectedCase = Cases[0];
+        }
     }
 
     public async Task LoadAsync()

@@ -660,7 +660,8 @@
                                         </ListBox.ItemContainerStyle>
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding SuiteIdentity}" Margin="5"/>
+                                                <TextBlock Text="{Binding SuiteIdentity}" 
+                                                          Margin="{StaticResource ListItemPadding}"/>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>

@@ -80,6 +80,12 @@ public partial class PlansTabViewModel : ViewModelBase
         {
             Plans.Add(p);
         }
+        
+        // Select first item by default if available and nothing is selected
+        if (Plans.Count > 0 && SelectedPlan is null)
+        {
+            SelectedPlan = Plans[0];
+        }
     }
 
     public async Task LoadAsync()
