@@ -34,13 +34,13 @@ jobs:
 
       - name: Zip publish output
         run: |
-          Compress-Archive -Path publish\* -DestinationPath PcTest-win-x64.zip
+          Compress-Archive -Path publish\* -DestinationPath PVT-X_win_x64.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PcTest-win-x64
-          path: PcTest-win-x64.zip
+          name: PVT-X_win_x64
+          path: PVT-X_win_x64.zip
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
