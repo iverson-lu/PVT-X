@@ -170,7 +170,8 @@
                                     <TextBlock Grid.Row="0" Grid.Column="1" 
                                               FontWeight="{StaticResource FontWeightSemiBold}"
                                               FontSize="{StaticResource FontSizeM}"
-                                              Foreground="{StaticResource TextPrimaryBrush}">
+                                              Foreground="{StaticResource TextPrimaryBrush}"
+                                              Margin="0,0,10,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="{Binding NodeId}"/>
@@ -186,7 +187,8 @@
                                     <!-- Second row: Identity (only visible if NodeId is not empty) -->
                                     <TextBlock Grid.Row="1" Grid.Column="1" 
                                               Foreground="{StaticResource TextSecondaryBrush}" 
-                                              FontSize="{StaticResource FontSizeS}">
+                                              FontSize="{StaticResource FontSizeS}"
+                                              Margin="0,0,10,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Text" Value="{Binding Identity}"/>
