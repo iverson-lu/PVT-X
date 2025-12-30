@@ -182,12 +182,15 @@
                                                     <DataTrigger Binding="{Binding NodeId}" Value="">
                                                         <Setter Property="Text" Value="{Binding Identity}"/>
                                                     </DataTrigger>
+                                                    <DataTrigger Binding="{Binding NodeId}" Value="standalone">
+                                                        <Setter Property="Text" Value="{Binding Identity}"/>
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
                                     
-                                    <!-- Second row: Identity (only visible if NodeId is not empty) -->
+                                    <!-- Second row: Identity (only visible if NodeId is not empty and not standalone) -->
                                     <TextBlock Grid.Row="1" Grid.Column="1" 
                                               Foreground="{StaticResource TextSecondaryBrush}" 
                                               FontSize="{StaticResource FontSizeS}"
@@ -198,6 +201,9 @@
                                                 <Setter Property="Visibility" Value="Visible"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding NodeId}" Value="">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding NodeId}" Value="standalone">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
