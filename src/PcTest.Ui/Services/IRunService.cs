@@ -76,4 +76,5 @@ public sealed class NodeExecutionState
     public TimeSpan? Duration { get; set; }
     public int RetryCount { get; set; }
     public bool IsRunning { get; set; }
+    public string? ParentNodeId { get; set; } // For test cases under a suite in plan execution
 }

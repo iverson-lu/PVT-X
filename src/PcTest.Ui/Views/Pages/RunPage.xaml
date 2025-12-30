@@ -134,7 +134,18 @@
                         </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="10,5">
+                                <Grid>
+                                    <Grid.Style>
+                                        <Style TargetType="Grid">
+                                            <Setter Property="Margin" Value="10,5"/>
+                                            <Style.Triggers>
+                                                <!-- Indent nested items (IndentLevel = 1) -->
+                                                <DataTrigger Binding="{Binding IndentLevel}" Value="1">
+                                                    <Setter Property="Margin" Value="30,5,10,5"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>

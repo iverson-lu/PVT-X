@@ -146,7 +146,8 @@ public sealed class PlanOrchestrator
                     suiteRunRequest,
                     plan.Manifest.Id,
                     plan.Manifest.Version,
-                    groupRunId);
+                    groupRunId,
+                    suiteIdentity);
 
                 childResults.Add(suiteResult);
                 childRunIds.AddRange(suiteResult.ChildRunIds);

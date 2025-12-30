@@ -47,22 +47,67 @@ public sealed class RunService : IRunService, IExecutionReporter
     {
         if (_currentState is null) return;
 
-        _currentState.RunId = runId;
-        _nodesDict.Clear();
-        _consoleLoadingTasks.Clear();
+        // Only clear if this is a new run (different runId)
+        if (_currentState.RunId != runId)
+        {
+            _currentState.RunId = runId;
+            _nodesDict.Clear();
+            _consoleLoadingTasks.Clear();
+            _currentState.Nodes.Clear();
+        }
 
         foreach (var planned in plannedNodes)
         {
+            // Skip if node already exists (avoid duplicates)
+            if (_nodesDict.ContainsKey(planned.NodeId))
+                continue;
+
             var node = new NodeExecutionState
             {
                 NodeId = planned.NodeId,
                 TestId = planned.TestId,
                 TestVersion = planned.TestVersion,
                 Status = null, // Pending
-                IsRunning = false
+                IsRunning = false,
+                ParentNodeId = planned.ParentNodeId
             };
             _nodesDict[planned.NodeId] = node;
-            _currentState.Nodes.Add(node);
+            
+            // If this node has a parent, insert it after the parent (or after the last child of that parent)
+            if (!string.IsNullOrEmpty(planned.ParentNodeId))
+            {
+                // Find the insertion index - after parent and all its existing children
+                int insertIndex = -1;
+                for (int i = _currentState.Nodes.Count - 1; i >= 0; i--)
+                {
+                    // Check if this is a sibling (same parent) or the parent itself
+                    if (_currentState.Nodes[i].ParentNodeId == planned.ParentNodeId)
+                    {
+                        // Found a sibling, insert after it
+                        insertIndex = i + 1;
+                        break;
+                    }
+                    else if (_currentState.Nodes[i].NodeId == planned.ParentNodeId)
+                    {
+                        // Found the parent, insert after it
+                        insertIndex = i + 1;
+                        break;
+                    }
+                }
+                
+                if (insertIndex >= 0 && insertIndex <= _currentState.Nodes.Count)
+                {
+                    _currentState.Nodes.Insert(insertIndex, node);
+                }
+                else
+                {
+                    _currentState.Nodes.Add(node);
+                }
+            }
+            else
+            {
+                _currentState.Nodes.Add(node);
+            }
         }
 
         LogDebug($"[REPORTER] OnRunPlanned: runId={runId}, runType={runType}, nodes={plannedNodes.Count}");
@@ -178,7 +223,7 @@ public sealed class RunService : IRunService, IExecutionReporter
                 {
                     _currentContext.RunId = actualRunId;
                     _currentState.RunId = actualRunId;
-                    LogDebug($"\n[DEBUG] Extracted RunId from index: {actualRunId}");
+                    LogDebug($"Extracted RunId from index: {actualRunId}");
                 }
             }
             
@@ -303,17 +348,17 @@ public sealed class RunService : IRunService, IExecutionReporter
             var settings = _settingsService.CurrentSettings;
             var runFolder = Path.Combine(settings.ResolvedRunsRoot, runId);
             
-            LogDebug($"\n[DEBUG] Loading execution details from: {runFolder}");
+            LogDebug($"Loading execution details from: {runFolder}");
             
             // Read result.json
             var resultPath = Path.Combine(runFolder, "result.json");
-            LogDebug($"[DEBUG] Checking result.json at: {resultPath}");
-            LogDebug($"[DEBUG] File exists: {_fileSystemService.FileExists(resultPath)}");
+            LogDebug($"Checking result.json at: {resultPath}");
+            LogDebug($"File exists: {_fileSystemService.FileExists(resultPath)}");
             
             if (_fileSystemService.FileExists(resultPath))
             {
                 var json = await _fileSystemService.ReadAllTextAsync(resultPath);
-                LogDebug($"[DEBUG] Read result.json, length: {json.Length}");
+                LogDebug($"Read result.json, length: {json.Length}");
                 var doc = JsonDocument.Parse(json);
                 var root = doc.RootElement;
                 
@@ -342,10 +387,10 @@ public sealed class RunService : IRunService, IExecutionReporter
                 
                 if (_currentState != null)
                 {
-                    LogDebug($"[DEBUG] Adding node to _currentState.Nodes. Current count: {_currentState.Nodes.Count}");
+                    LogDebug($"Adding node to _currentState.Nodes. Current count: {_currentState.Nodes.Count}");
                     _currentState.Nodes.Clear();
                     _currentState.Nodes.Add(node);
-                    LogDebug($"[DEBUG] After adding: NodeId={node.NodeId}, TestId={node.TestId}, Status={node.Status}, Count={_currentState.Nodes.Count}");
+                    LogDebug($"After adding: NodeId={node.NodeId}, TestId={node.TestId}, Status={node.Status}, Count={_currentState.Nodes.Count}");
                 }
             }
             

@@ -140,8 +140,10 @@ public partial class RunViewModel : ViewModelBase
 
             // Incremental node update - avoid clearing/rebuilding the collection
             // to prevent UI flicker and losing selection
-            foreach (var nodeState in state.Nodes)
+            for (int i = 0; i < state.Nodes.Count; i++)
             {
+                var nodeState = state.Nodes[i];
+                
                 if (_nodeViewModelDict.TryGetValue(nodeState.NodeId, out var existingVm))
                 {
                     // Update existing node in place
@@ -149,10 +151,20 @@ public partial class RunViewModel : ViewModelBase
                     existingVm.Duration = nodeState.Duration;
                     existingVm.RetryCount = nodeState.RetryCount;
                     existingVm.IsRunning = nodeState.IsRunning;
+                    
+                    // Ensure the node is at the correct position in the collection
+                    int currentIndex = Nodes.IndexOf(existingVm);
+                    if (currentIndex != i && currentIndex >= 0)
+                    {
+                        Nodes.Move(currentIndex, i);
+                    }
                 }
                 else
                 {
-                    // Add new node
+                    // Determine indent level (1 if has parent, 0 otherwise)
+                    int indentLevel = string.IsNullOrEmpty(nodeState.ParentNodeId) ? 0 : 1;
+                    
+                    // Add new node at the correct position
                     var newVm = new NodeExecutionStateViewModel
                     {
                         NodeId = nodeState.NodeId,
@@ -161,10 +173,21 @@ public partial class RunViewModel : ViewModelBase
                         Status = nodeState.Status,
                         Duration = nodeState.Duration,
                         RetryCount = nodeState.RetryCount,
-                        IsRunning = nodeState.IsRunning
+                        IsRunning = nodeState.IsRunning,
+                        ParentNodeId = nodeState.ParentNodeId,
+                        IndentLevel = indentLevel
                     };
                     _nodeViewModelDict[nodeState.NodeId] = newVm;
-                    Nodes.Add(newVm);
+                    
+                    // Insert at the correct position to match state.Nodes order
+                    if (i < Nodes.Count)
+                    {
+                        Nodes.Insert(i, newVm);
+                    }
+                    else
+                    {
+                        Nodes.Add(newVm);
+                    }
                 }
             }
         });
@@ -284,6 +307,8 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
     [ObservableProperty] private TimeSpan? _duration;
     [ObservableProperty] private int _retryCount;
     [ObservableProperty] private bool _isRunning;
+    [ObservableProperty] private string? _parentNodeId;
+    [ObservableProperty] private int _indentLevel; // 0 for top-level, 1 for nested
 
     public string StatusDisplay => Status?.ToString() ?? (IsRunning ? "Running..." : "Pending");
     public string DurationDisplay => Duration?.ToString(@"mm\:ss\.fff") ?? "-";

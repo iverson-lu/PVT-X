@@ -40,7 +40,8 @@ public sealed class SuiteOrchestrator
         RunRequest runRequest,
         string? planId = null,
         string? planVersion = null,
-        string? parentPlanRunId = null)
+        string? parentPlanRunId = null,
+        string? parentNodeId = null)
     {
         var startTime = DateTime.UtcNow;
         var groupRunId = GroupRunFolderManager.GenerateGroupRunId("S");
@@ -102,23 +103,24 @@ public sealed class SuiteOrchestrator
             var retryOnError = Math.Max(0, controls.RetryOnError);
 
             // Report planned nodes (only report once for first iteration)
-            // Only report if we're the top-level suite (not called from PlanOrchestrator)
-            if (string.IsNullOrEmpty(parentPlanRunId))
+            // When under a plan, report with parent suite information for nested display
+            var plannedNodes = new List<PlannedNode>();
+            foreach (var node in suite.Manifest.TestCases)
             {
-                var plannedNodes = new List<PlannedNode>();
-                foreach (var node in suite.Manifest.TestCases)
+                var (testCaseManifest, _, _) = refResolver.ResolveRef(suite.ManifestPath, node.Ref);
+                plannedNodes.Add(new PlannedNode
                 {
-                    var (testCaseManifest, _, _) = refResolver.ResolveRef(suite.ManifestPath, node.Ref);
-                    plannedNodes.Add(new PlannedNode
-                    {
-                        NodeId = node.NodeId,
-                        TestId = testCaseManifest?.Id ?? "unknown",
-                        TestVersion = testCaseManifest?.Version ?? "unknown",
-                        NodeType = RunType.TestCase
-                    });
-                }
-                _reporter.OnRunPlanned(groupRunId, RunType.TestSuite, plannedNodes);
+                    NodeId = node.NodeId,
+                    TestId = testCaseManifest?.Id ?? "unknown",
+                    TestVersion = testCaseManifest?.Version ?? "unknown",
+                    NodeType = RunType.TestCase,
+                    ParentNodeId = parentNodeId
+                });
             }
+            _reporter.OnRunPlanned(
+                string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId, 
+                RunType.TestSuite, 
+                plannedNodes);
 
             for (var iteration = 0; iteration < repeat; iteration++)
             {
@@ -144,18 +146,18 @@ public sealed class SuiteOrchestrator
                         childResults.Add(errorResult);
                         UpdateCounts(statusCounts, errorResult.Status);
 
-                        // Report node finished with error (if top-level suite)
-                        if (string.IsNullOrEmpty(parentPlanRunId))
-                        {
-                            _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                        // Report node finished with error
+                        _reporter.OnNodeFinished(
+                            string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
+                            new NodeFinishedState
                             {
                                 NodeId = node.NodeId,
                                 Status = RunStatus.Error,
                                 StartTime = DateTime.UtcNow,
                                 EndTime = DateTime.UtcNow,
-                                Message = refError?.Message ?? "Ref resolution failed"
+                                Message = refError?.Message ?? "Ref resolution failed",
+                                ParentNodeId = parentNodeId
                             });
-                        }
 
                         if (!continueOnFailure)
                             break;
@@ -176,18 +178,18 @@ public sealed class SuiteOrchestrator
                         childResults.Add(errorResult);
                         UpdateCounts(statusCounts, errorResult.Status);
 
-                        // Report node finished with error (if top-level suite)
-                        if (string.IsNullOrEmpty(parentPlanRunId))
-                        {
-                            _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                        // Report node finished with error
+                        _reporter.OnNodeFinished(
+                            string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
+                            new NodeFinishedState
                             {
                                 NodeId = node.NodeId,
                                 Status = RunStatus.Error,
                                 StartTime = DateTime.UtcNow,
                                 EndTime = DateTime.UtcNow,
-                                Message = string.Join("; ", inputResult.Errors.Select(e => e.Message))
+                                Message = string.Join("; ", inputResult.Errors.Select(e => e.Message)),
+                                ParentNodeId = parentNodeId
                             });
-                        }
 
                         if (!continueOnFailure)
                             break;
@@ -198,11 +200,10 @@ public sealed class SuiteOrchestrator
                     TestCaseResult? nodeResult = null;
                     var attempts = 1 + retryOnError;
 
-                    // Report node started (if top-level suite)
-                    if (string.IsNullOrEmpty(parentPlanRunId))
-                    {
-                        _reporter.OnNodeStarted(groupRunId, node.NodeId);
-                    }
+                    // Report node started
+                    _reporter.OnNodeStarted(
+                        string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
+                        node.NodeId);
 
                     var nodeStartTime = DateTime.UtcNow;
 
@@ -283,19 +284,19 @@ public sealed class SuiteOrchestrator
                         childResults.Add(nodeResult);
                         UpdateCounts(statusCounts, nodeResult.Status);
 
-                        // Report node finished (if top-level suite)
-                        if (string.IsNullOrEmpty(parentPlanRunId))
-                        {
-                            _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                        // Report node finished
+                        _reporter.OnNodeFinished(
+                            string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
+                            new NodeFinishedState
                             {
                                 NodeId = node.NodeId,
                                 Status = nodeResult.Status,
                                 StartTime = nodeStartTime,
                                 EndTime = nodeEndTime,
                                 Message = nodeResult.Error?.Message,
-                                RetryCount = Math.Max(0, childRunIds.Count - 1)
+                                RetryCount = Math.Max(0, childRunIds.Count - 1),
+                                ParentNodeId = parentNodeId
                             });
-                        }
 
                         // Check continue on failure
                         if (!continueOnFailure && nodeResult.Status != RunStatus.Passed)

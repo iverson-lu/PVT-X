@@ -62,6 +62,11 @@ public sealed class PlannedNode
     /// Type of the node (TestCase for suite nodes, TestSuite for plan nodes).
     /// </summary>
     public RunType NodeType { get; init; }
+
+    /// <summary>
+    /// Parent node ID if this is a nested node (e.g., test case under suite in plan).
+    /// </summary>
+    public string? ParentNodeId { get; init; }
 }
 
 /// <summary>
@@ -103,6 +108,11 @@ public sealed class NodeFinishedState
     /// Retry attempt number (0 for first attempt).
     /// </summary>
     public int RetryCount { get; init; }
+
+    /// <summary>
+    /// Parent node ID if this is a nested node (e.g., test case under suite in plan).
+    /// </summary>
+    public string? ParentNodeId { get; init; }
 }
 
 /// <summary>
