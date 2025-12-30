@@ -113,9 +113,11 @@
                                     </Grid.RowDefinitions>
                                     
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" 
-                                              Style="{StaticResource LabelTextStyle}"/>
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Name}" 
-                                              Style="{StaticResource BodyTextStyle}"/>
+                                              Style="{StaticResource LabelTextStyle}" 
+                                              Margin="{StaticResource SectionItemMargin}"/>
                                     
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="ID:" 
                                               Style="{StaticResource LabelTextStyle}" 
