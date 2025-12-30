@@ -46,4 +46,4 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: PcTest-win-x64.zip
+          files: PVT-X_win-x64.zip
