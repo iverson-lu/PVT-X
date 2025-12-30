@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
 using PcTest.Engine;
@@ -18,6 +19,7 @@ public sealed class RunService : IRunService, IExecutionReporter
     private RunExecutionContext? _currentContext;
     private RunExecutionState? _currentState;
     private readonly Dictionary<string, NodeExecutionState> _nodesDict = new();
+    private readonly List<Task> _consoleLoadingTasks = new();
 
     public event EventHandler<RunExecutionState>? StateChanged;
     public event EventHandler<string>? ConsoleOutput;
@@ -47,6 +49,7 @@ public sealed class RunService : IRunService, IExecutionReporter
 
         _currentState.RunId = runId;
         _nodesDict.Clear();
+        _consoleLoadingTasks.Clear();
 
         foreach (var planned in plannedNodes)
         {
@@ -91,6 +94,13 @@ public sealed class RunService : IRunService, IExecutionReporter
             node.Status = nodeState.Status;
             node.Duration = nodeState.Duration;
             node.RetryCount = nodeState.RetryCount;
+        }
+
+        // Load and display console output for this node in background
+        var task = Task.Run(async () => await LoadNodeConsoleOutputAsync(runId, nodeState.NodeId, nodeState.Status));
+        lock (_consoleLoadingTasks)
+        {
+            _consoleLoadingTasks.Add(task);
         }
 
         LogDebug($"[REPORTER] OnNodeFinished: runId={runId}, nodeId={nodeState.NodeId}, status={nodeState.Status}");
@@ -176,6 +186,17 @@ public sealed class RunService : IRunService, IExecutionReporter
             if (!string.IsNullOrEmpty(_currentContext.RunId))
             {
                 await LoadConsoleOutputAsync(_currentContext.RunId);
+            }
+            
+            // Wait for all background console loading tasks to complete
+            Task[] tasksToWait;
+            lock (_consoleLoadingTasks)
+            {
+                tasksToWait = _consoleLoadingTasks.ToArray();
+            }
+            if (tasksToWait.Length > 0)
+            {
+                await Task.WhenAll(tasksToWait);
             }
             
             // Notify completion
@@ -437,6 +458,105 @@ public sealed class RunService : IRunService, IExecutionReporter
         {
             // Ignore errors reading log file
         }
+    }
+
+    private async Task LoadNodeConsoleOutputAsync(string parentRunId, string nodeId, RunStatus status)
+    {
+        try
+        {
+            var settings = _settingsService.CurrentSettings;
+            var parentRunFolder = Path.Combine(settings.ResolvedRunsRoot, parentRunId);
+            var childrenPath = Path.Combine(parentRunFolder, "children.jsonl");
+            
+            // Retry logic to wait for file to be written
+            string? childRunId = null;
+            for (int attempt = 0; attempt < 10; attempt++)
+            {
+                if (_fileSystemService.FileExists(childrenPath))
+                {
+                    // Read children.jsonl to find the run ID for this node
+                    var lines = await _fileSystemService.ReadAllLinesAsync(childrenPath);
+                    
+                    foreach (var line in lines.Reverse()) // Start from most recent
+                    {
+                        if (string.IsNullOrWhiteSpace(line))
+                            continue;
+                            
+                        try
+                        {
+                            var child = JsonSerializer.Deserialize<ChildEntry>(line);
+                            if (child?.NodeId == nodeId)
+                            {
+                                childRunId = child.RunId;
+                                break;
+                            }
+                        }
+                        catch
+                        {
+                            continue;
+                        }
+                    }
+                    
+                    if (!string.IsNullOrEmpty(childRunId))
+                        break;
+                }
+                
+                await Task.Delay(100);
+            }
+            
+            if (string.IsNullOrEmpty(childRunId))
+            {
+                return;
+            }
+            
+            // Load stdout.log from the child run folder
+            var childRunFolder = Path.Combine(settings.ResolvedRunsRoot, childRunId);
+            var stdoutPath = Path.Combine(childRunFolder, "stdout.log");
+            
+            // Wait for stdout.log to exist
+            for (int attempt = 0; attempt < 10; attempt++)
+            {
+                if (_fileSystemService.FileExists(stdoutPath))
+                {
+                    break;
+                }
+                await Task.Delay(100);
+            }
+            
+            if (_fileSystemService.FileExists(stdoutPath))
+            {
+                var content = await _fileSystemService.ReadAllTextAsync(stdoutPath);
+                
+                // Format output with clear separation
+                var separator = new string('=', 80);
+                var header = $"Node: {nodeId} | Status: {status} | RunId: {childRunId}";
+                var output = $"\n{separator}\n{header}\n{separator}\n{content}\n{separator}\n";
+                
+                ConsoleOutput?.Invoke(this, output);
+            }
+        }
+        catch
+        {
+            // Silently fail - output loading is best-effort
+        }
+    }
+
+    private class ChildEntry
+    {
+        [JsonPropertyName("runId")]
+        public string RunId { get; set; } = string.Empty;
+        
+        [JsonPropertyName("nodeId")]
+        public string NodeId { get; set; } = string.Empty;
+        
+        [JsonPropertyName("testId")]
+        public string TestId { get; set; } = string.Empty;
+        
+        [JsonPropertyName("testVersion")]
+        public string TestVersion { get; set; } = string.Empty;
+        
+        [JsonPropertyName("status")]
+        public string Status { get; set; } = string.Empty;
     }
 
     private static string GenerateRunId(RunType runType)

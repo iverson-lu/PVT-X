@@ -57,64 +57,47 @@ try {
         IsDaylightSavingTime = $timezone.IsDaylightSavingTime([DateTime]::Now)
     }
     
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "   Timezone Verification" -ForegroundColor Cyan
-    Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Timezone ID:       $($timezone.Id)" -ForegroundColor White
-    Write-Host "Display Name:      $($timezone.DisplayName)" -ForegroundColor White
-    Write-Host "Standard Name:     $($timezone.StandardName)" -ForegroundColor White
-    Write-Host "Current UTC Offset: $currentUtcOffsetString" -ForegroundColor White
-    Write-Host "Base UTC Offset:   $($timezone.BaseUtcOffset)" -ForegroundColor White
-    Write-Host "Supports DST:      $($timezone.SupportsDaylightSavingTime)" -ForegroundColor White
-    Write-Host "Is DST Active:     $($timezone.IsDaylightSavingTime([DateTime]::Now))" -ForegroundColor White
+    Write-Host "Timezone Information:"
+    Write-Host "  ID: $($timezone.Id)"
+    Write-Host "  Display Name: $($timezone.DisplayName)"
+    Write-Host "  Current UTC Offset: $currentUtcOffsetString"
     Write-Host ""
     
     # Validate expected UTC offset
-    if ([string]::IsNullOrWhiteSpace($ExpectedUtcOffset)) {
-        Write-Host "✓ No expected UTC offset specified - verification skipped" -ForegroundColor Yellow
-    }
-    else {
-        Write-Host "Expected UTC Offset: $ExpectedUtcOffset" -ForegroundColor White
-        
+    if (-not [string]::IsNullOrWhiteSpace($ExpectedUtcOffset)) {
         if ($currentUtcOffsetString -eq $ExpectedUtcOffset) {
-            Write-Host "✓ Timezone UTC offset matches expected value" -ForegroundColor Green
+            Write-Host "✓ Timezone UTC offset matches expected value: $ExpectedUtcOffset"
         }
         else {
             $message = "Timezone UTC offset mismatch. Expected: $ExpectedUtcOffset, Actual: $currentUtcOffsetString"
-            Write-Host "✗ $message" -ForegroundColor Red
             $failures += $message
         }
     }
     
 } catch {
     $message = "Failed to retrieve timezone information: $($_.Exception.Message)"
-    Write-Host "✗ $message" -ForegroundColor Red
     $failures += $message
+    Write-Host "Error: $message"
 }
 
-Write-Host ""
-Write-Host "========================================" -ForegroundColor Cyan
-
-# Output result metadata
-$result = @{
-    TimezoneInfo = $timezoneInfo
+New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
+$report = @{
     ExpectedUtcOffset = $ExpectedUtcOffset
-    ValidationPassed = $failures.Count -eq 0
+    TimezoneInfo = $timezoneInfo
     Failures = $failures
 }
+$report | ConvertTo-Json -Depth 4 | Set-Content -Path "artifacts/timezone-check.json"
 
-$resultJson = $result | ConvertTo-Json -Depth 10
-Write-Host ""
-Write-Host "Result Metadata:" -ForegroundColor Gray
-Write-Host $resultJson -ForegroundColor Gray
-Write-Host ""
-
-# Return appropriate exit code
 if ($failures.Count -gt 0) {
-    Write-Host "Test FAILED with $($failures.Count) error(s)" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Result: FAIL"
+    foreach ($failure in $failures) {
+        Write-Host "  ✗ $failure"
+    }
     exit 1
-} else {
-    Write-Host "Test PASSED" -ForegroundColor Green
-    exit 0
 }
+
+Write-Host ""
+Write-Host "Result: PASS"
+Write-Host "  ✓ Timezone validated successfully."
+exit 0

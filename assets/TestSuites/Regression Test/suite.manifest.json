@@ -13,13 +13,6 @@
   },
   "testCases": [
     {
-      "nodeId": "NetworkPing",
-      "ref": "NetworkPing",
-      "inputs": {
-        "TargetAddress": "www.google.com"
-      }
-    },
-    {
       "nodeId": "CameraVerify",
       "ref": "CameraVerify",
       "inputs": {
@@ -31,6 +24,13 @@
       "ref": "WindowsUpdateHistoryVerify",
       "inputs": {
         "MinExpectedCount": "1"
+      }
+    },
+    {
+      "nodeId": "TimezoneCheck",
+      "ref": "TimezoneCheck",
+      "inputs": {
+        "ExpectedUtcOffset": "\u002B08:00"
       }
     }
   ]
