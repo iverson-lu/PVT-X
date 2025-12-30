@@ -3,19 +3,21 @@ using System.Text.Json;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
 using PcTest.Engine;
+using PcTest.Engine.Execution;
 
 namespace PcTest.Ui.Services;
 
 /// <summary>
 /// Service for executing test runs.
 /// </summary>
-public sealed class RunService : IRunService
+public sealed class RunService : IRunService, IExecutionReporter
 {
     private readonly TestEngine _engine;
     private readonly ISettingsService _settingsService;
     private readonly IFileSystemService _fileSystemService;
     private RunExecutionContext? _currentContext;
     private RunExecutionState? _currentState;
+    private readonly Dictionary<string, NodeExecutionState> _nodesDict = new();
 
     public event EventHandler<RunExecutionState>? StateChanged;
     public event EventHandler<string>? ConsoleOutput;
@@ -37,6 +39,78 @@ public sealed class RunService : IRunService
         }
     }
 
+    #region IExecutionReporter Implementation
+
+    public void OnRunPlanned(string runId, RunType runType, IReadOnlyList<PlannedNode> plannedNodes)
+    {
+        if (_currentState is null) return;
+
+        _currentState.RunId = runId;
+        _nodesDict.Clear();
+
+        foreach (var planned in plannedNodes)
+        {
+            var node = new NodeExecutionState
+            {
+                NodeId = planned.NodeId,
+                TestId = planned.TestId,
+                TestVersion = planned.TestVersion,
+                Status = null, // Pending
+                IsRunning = false
+            };
+            _nodesDict[planned.NodeId] = node;
+            _currentState.Nodes.Add(node);
+        }
+
+        LogDebug($"[REPORTER] OnRunPlanned: runId={runId}, runType={runType}, nodes={plannedNodes.Count}");
+        StateChanged?.Invoke(this, _currentState);
+    }
+
+    public void OnNodeStarted(string runId, string nodeId)
+    {
+        if (_currentState is null) return;
+
+        _currentState.CurrentNodeId = nodeId;
+
+        if (_nodesDict.TryGetValue(nodeId, out var node))
+        {
+            node.IsRunning = true;
+        }
+
+        LogDebug($"[REPORTER] OnNodeStarted: runId={runId}, nodeId={nodeId}");
+        StateChanged?.Invoke(this, _currentState);
+    }
+
+    public void OnNodeFinished(string runId, NodeFinishedState nodeState)
+    {
+        if (_currentState is null) return;
+
+        if (_nodesDict.TryGetValue(nodeState.NodeId, out var node))
+        {
+            node.IsRunning = false;
+            node.Status = nodeState.Status;
+            node.Duration = nodeState.Duration;
+            node.RetryCount = nodeState.RetryCount;
+        }
+
+        LogDebug($"[REPORTER] OnNodeFinished: runId={runId}, nodeId={nodeState.NodeId}, status={nodeState.Status}");
+        StateChanged?.Invoke(this, _currentState);
+    }
+
+    public void OnRunFinished(string runId, RunStatus finalStatus)
+    {
+        if (_currentState is null) return;
+
+        _currentState.IsRunning = false;
+        _currentState.FinalStatus = finalStatus;
+        _currentState.CurrentNodeId = string.Empty;
+
+        LogDebug($"[REPORTER] OnRunFinished: runId={runId}, finalStatus={finalStatus}");
+        StateChanged?.Invoke(this, _currentState);
+    }
+
+    #endregion
+
     public async Task<RunExecutionContext> ExecuteAsync(RunRequest request, CancellationToken cancellationToken = default)
     {
         var settings = _settingsService.CurrentSettings;
@@ -48,6 +122,9 @@ public sealed class RunService : IRunService
             settings.ResolvedTestPlansRoot,
             settings.ResolvedRunsRoot);
         
+        // Set reporter for progress events
+        _engine.SetReporter(this);
+        
         // Create execution context
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var runType = request.TargetType ?? RunType.TestCase;
@@ -55,7 +132,7 @@ public sealed class RunService : IRunService
         
         _currentContext = new RunExecutionContext
         {
-            RunId = string.Empty, // Will be set after execution starts
+            RunId = string.Empty, // Will be set by OnRunPlanned
             RunType = runType,
             TargetIdentity = targetIdentity,
             StartTime = DateTime.UtcNow,
@@ -63,46 +140,37 @@ public sealed class RunService : IRunService
         };
         
         // Initialize state
+        _nodesDict.Clear();
         _currentState = new RunExecutionState
         {
             RunId = string.Empty,
-            IsRunning = true
+            IsRunning = true,
+            Nodes = new List<NodeExecutionState>()
         };
         
         StateChanged?.Invoke(this, _currentState);
         
         try
         {
-            // Execute through engine
+            // Execute through engine - reporter events will update state in real-time
             var result = await _engine.ExecuteAsync(request, cts.Token);
             
-            // Extract the actual run ID from index.jsonl (most recent entry)
-            var actualRunId = await GetMostRecentRunIdFromIndexAsync();
-            if (!string.IsNullOrEmpty(actualRunId))
+            // Update context with the run ID (should already be set by OnRunPlanned)
+            if (!string.IsNullOrEmpty(_currentState.RunId))
             {
-                _currentContext.RunId = actualRunId;
-                _currentState.RunId = actualRunId;
-                LogDebug($"\n[DEBUG] Extracted RunId from index: {actualRunId}");
+                _currentContext.RunId = _currentState.RunId;
             }
             else
             {
-                ConsoleOutput?.Invoke(this, "\n[ERROR] Failed to extract RunId from index.jsonl");
+                // Fallback: extract from index.jsonl
+                var actualRunId = await GetMostRecentRunIdFromIndexAsync();
+                if (!string.IsNullOrEmpty(actualRunId))
+                {
+                    _currentContext.RunId = actualRunId;
+                    _currentState.RunId = actualRunId;
+                    LogDebug($"\n[DEBUG] Extracted RunId from index: {actualRunId}");
+                }
             }
-            
-            // Update final state
-            _currentState.IsRunning = false;
-            _currentState.FinalStatus = GetStatusFromResult(result);
-            
-            // Load execution details from result artifacts
-            LogDebug($"\n[DEBUG] About to load execution details. RunId={_currentContext.RunId}");
-            if (!string.IsNullOrEmpty(_currentContext.RunId))
-            {
-                await LoadExecutionDetailsAsync(_currentContext.RunId);
-                LogDebug($"[DEBUG] After LoadExecutionDetailsAsync, Nodes.Count={_currentState.Nodes.Count}");
-            }
-            
-            LogDebug($"[DEBUG] Firing StateChanged event with {_currentState.Nodes.Count} nodes");
-            StateChanged?.Invoke(this, _currentState);
             
             // Load and stream stdout.log if available
             if (!string.IsNullOrEmpty(_currentContext.RunId))
@@ -117,6 +185,21 @@ public sealed class RunService : IRunService
         {
             _currentState.IsRunning = false;
             _currentState.FinalStatus = RunStatus.Aborted;
+            
+            // Mark remaining pending nodes as Aborted
+            foreach (var node in _nodesDict.Values)
+            {
+                if (node.Status is null && !node.IsRunning)
+                {
+                    node.Status = RunStatus.Aborted;
+                }
+                else if (node.IsRunning)
+                {
+                    node.IsRunning = false;
+                    node.Status = RunStatus.Aborted;
+                }
+            }
+            
             ConsoleOutput?.Invoke(this, "\nRun aborted by user.");
             StateChanged?.Invoke(this, _currentState);
         }

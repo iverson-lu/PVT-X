@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "RegressionTest",
+  "name": "Regression Test",
+  "description": "New test suite",
+  "version": "1.0.0",
+  "controls": {
+    "repeat": 1,
+    "maxParallel": 1,
+    "continueOnFailure": false,
+    "retryOnError": 0,
+    "timeoutPolicy": "AbortOnTimeout"
+  },
+  "testCases": [
+    {
+      "nodeId": "NetworkPing",
+      "ref": "NetworkPing"
+    },
+    {
+      "nodeId": "CameraVerify",
+      "ref": "CameraVerify"
+    },
+    {
+      "nodeId": "WindowsUpdateHistoryVerify",
+      "ref": "WindowsUpdateHistoryVerify"
+    }
+  ]
+}

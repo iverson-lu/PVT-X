@@ -17,15 +17,18 @@ public sealed class StandaloneCaseExecutor
 {
     private readonly DiscoveryResult _discovery;
     private readonly string _runsRoot;
+    private readonly IExecutionReporter _reporter;
     private readonly CancellationToken _cancellationToken;
 
     public StandaloneCaseExecutor(
         DiscoveryResult discovery,
         string runsRoot,
+        IExecutionReporter reporter,
         CancellationToken cancellationToken = default)
     {
         _discovery = discovery;
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _reporter = reporter ?? NullExecutionReporter.Instance;
         _cancellationToken = cancellationToken;
     }
 
@@ -44,6 +47,23 @@ public sealed class StandaloneCaseExecutor
                 "Standalone TestCase run must not include nodeOverrides");
         }
 
+        // Generate runId early so we can report it
+        var runId = TestCaseRunner.GenerateRunId();
+        var nodeId = "standalone";
+
+        // Report planned nodes (single node for standalone case)
+        var plannedNodes = new List<PlannedNode>
+        {
+            new PlannedNode
+            {
+                NodeId = nodeId,
+                TestId = testCase.Manifest.Id,
+                TestVersion = testCase.Manifest.Version,
+                NodeType = RunType.TestCase
+            }
+        };
+        _reporter.OnRunPlanned(runId, RunType.TestCase, plannedNodes);
+
         // Compute effective environment
         var envResolver = new EnvironmentResolver();
         var effectiveEnv = envResolver.ComputeStandaloneEnvironment(runRequest.EnvironmentOverrides);
@@ -61,8 +81,12 @@ public sealed class StandaloneCaseExecutor
                 inputResult.Errors.ForEach(r.AddError)));
         }
 
+        // Report node started
+        _reporter.OnNodeStarted(runId, nodeId);
+
+        var startTime = DateTime.UtcNow;
+
         // Execute
-        var runId = TestCaseRunner.GenerateRunId();
         var runner = new TestCaseRunner(_cancellationToken);
 
         var context = new RunContext
@@ -81,6 +105,18 @@ public sealed class StandaloneCaseExecutor
 
         var result = await runner.ExecuteAsync(context);
 
+        var endTime = DateTime.UtcNow;
+
+        // Report node finished
+        _reporter.OnNodeFinished(runId, new NodeFinishedState
+        {
+            NodeId = nodeId,
+            Status = result.Status,
+            StartTime = startTime,
+            EndTime = endTime,
+            Message = result.Error?.Message
+        });
+
         // Append to index.jsonl (Engine is the single writer)
         var folderManager = new GroupRunFolderManager(_runsRoot);
         folderManager.AppendIndexEntry(new IndexEntry
@@ -96,6 +132,9 @@ public sealed class StandaloneCaseExecutor
             EndTime = result.EndTime,
             Status = result.Status
         });
+
+        // Report run finished
+        _reporter.OnRunFinished(runId, result.Status);
 
         return result;
     }

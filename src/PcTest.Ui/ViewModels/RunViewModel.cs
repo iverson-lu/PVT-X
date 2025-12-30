@@ -21,6 +21,7 @@ public partial class RunViewModel : ViewModelBase
 
     private CancellationTokenSource? _runCts;
     private Dictionary<string, object?>? _parameterOverrides;
+    private readonly Dictionary<string, NodeExecutionStateViewModel> _nodeViewModelDict = new();
 
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private bool _showTargetSelector = true;
@@ -137,20 +138,34 @@ public partial class RunViewModel : ViewModelBase
                 ? $"Running... Node: {state.CurrentNodeId}"
                 : state.FinalStatus?.ToString() ?? "Completed";
 
-            // Update nodes
-            Nodes.Clear();
-            foreach (var node in state.Nodes)
+            // Incremental node update - avoid clearing/rebuilding the collection
+            // to prevent UI flicker and losing selection
+            foreach (var nodeState in state.Nodes)
             {
-                Nodes.Add(new NodeExecutionStateViewModel
+                if (_nodeViewModelDict.TryGetValue(nodeState.NodeId, out var existingVm))
                 {
-                    NodeId = node.NodeId,
-                    TestId = node.TestId,
-                    TestVersion = node.TestVersion,
-                    Status = node.Status,
-                    Duration = node.Duration,
-                    RetryCount = node.RetryCount,
-                    IsRunning = node.IsRunning
-                });
+                    // Update existing node in place
+                    existingVm.Status = nodeState.Status;
+                    existingVm.Duration = nodeState.Duration;
+                    existingVm.RetryCount = nodeState.RetryCount;
+                    existingVm.IsRunning = nodeState.IsRunning;
+                }
+                else
+                {
+                    // Add new node
+                    var newVm = new NodeExecutionStateViewModel
+                    {
+                        NodeId = nodeState.NodeId,
+                        TestId = nodeState.TestId,
+                        TestVersion = nodeState.TestVersion,
+                        Status = nodeState.Status,
+                        Duration = nodeState.Duration,
+                        RetryCount = nodeState.RetryCount,
+                        IsRunning = nodeState.IsRunning
+                    };
+                    _nodeViewModelDict[nodeState.NodeId] = newVm;
+                    Nodes.Add(newVm);
+                }
             }
         });
     }
@@ -185,6 +200,9 @@ public partial class RunViewModel : ViewModelBase
         _eventsBuffer.Clear();
         ConsoleOutput = string.Empty;
         EventsOutput = "(Events are available in Logs & Results after execution completes)";
+        
+        // Clear previous nodes for new run
+        _nodeViewModelDict.Clear();
         Nodes.Clear();
 
         _runCts = new CancellationTokenSource();
@@ -269,5 +287,9 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
 
     public string StatusDisplay => Status?.ToString() ?? (IsRunning ? "Running..." : "Pending");
     public string DurationDisplay => Duration?.ToString(@"mm\:ss\.fff") ?? "-";
+
+    partial void OnStatusChanged(RunStatus? value) => OnPropertyChanged(nameof(StatusDisplay));
+    partial void OnIsRunningChanged(bool value) => OnPropertyChanged(nameof(StatusDisplay));
+    partial void OnDurationChanged(TimeSpan? value) => OnPropertyChanged(nameof(DurationDisplay));
     public string Identity => $"{TestId}@{TestVersion}";
 }

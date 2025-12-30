@@ -16,15 +16,18 @@ public sealed class PlanOrchestrator
 {
     private readonly DiscoveryResult _discovery;
     private readonly string _runsRoot;
+    private readonly IExecutionReporter _reporter;
     private readonly CancellationToken _cancellationToken;
 
     public PlanOrchestrator(
         DiscoveryResult discovery,
         string runsRoot,
+        IExecutionReporter reporter,
         CancellationToken cancellationToken = default)
     {
         _discovery = discovery;
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _reporter = reporter ?? NullExecutionReporter.Instance;
         _cancellationToken = cancellationToken;
     }
 
@@ -78,11 +81,31 @@ public sealed class PlanOrchestrator
 
             await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
 
+            // Report planned nodes - plan level shows suites as nodes
+            var plannedNodes = new List<PlannedNode>();
+            foreach (var suiteIdentity in plan.Manifest.Suites)
+            {
+                var parseResult = IdentityParser.Parse(suiteIdentity);
+                plannedNodes.Add(new PlannedNode
+                {
+                    NodeId = suiteIdentity,
+                    TestId = parseResult.Success ? parseResult.Id : suiteIdentity,
+                    TestVersion = parseResult.Success ? parseResult.Version : "unknown",
+                    NodeType = RunType.TestSuite
+                });
+            }
+            _reporter.OnRunPlanned(groupRunId, RunType.TestPlan, plannedNodes);
+
             // Execute each Suite in order per spec section 6.4
             foreach (var suiteIdentity in plan.Manifest.Suites)
             {
                 if (_cancellationToken.IsCancellationRequested)
                     break;
+
+                // Report node started
+                _reporter.OnNodeStarted(groupRunId, suiteIdentity);
+
+                var suiteStartTime = DateTime.UtcNow;
 
                 // Resolve Suite
                 if (!_discovery.TestSuites.TryGetValue(suiteIdentity, out var suite))
@@ -92,6 +115,16 @@ public sealed class PlanOrchestrator
                         suiteIdentity, plan.Manifest, $"Suite '{suiteIdentity}' not found");
                     childResults.Add(errorResult);
                     UpdateCounts(statusCounts, errorResult.Status);
+
+                    // Report node finished with error
+                    _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                    {
+                        NodeId = suiteIdentity,
+                        Status = RunStatus.Error,
+                        StartTime = suiteStartTime,
+                        EndTime = DateTime.UtcNow,
+                        Message = $"Suite '{suiteIdentity}' not found"
+                    });
                     continue;
                 }
 
@@ -107,7 +140,7 @@ public sealed class PlanOrchestrator
                 };
 
                 // Execute Suite
-                var suiteOrchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _cancellationToken);
+                var suiteOrchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _reporter, _cancellationToken);
                 var suiteResult = await suiteOrchestrator.ExecuteAsync(
                     suite,
                     suiteRunRequest,
@@ -118,6 +151,16 @@ public sealed class PlanOrchestrator
                 childResults.Add(suiteResult);
                 childRunIds.AddRange(suiteResult.ChildRunIds);
                 UpdateCounts(statusCounts, suiteResult.Status);
+
+                // Report node finished
+                _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                {
+                    NodeId = suiteIdentity,
+                    Status = suiteResult.Status,
+                    StartTime = suiteStartTime,
+                    EndTime = DateTime.UtcNow,
+                    Message = suiteResult.Message
+                });
 
                 // Append to children.jsonl
                 await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
@@ -162,6 +205,9 @@ public sealed class PlanOrchestrator
                 Status = result.Status
             });
 
+            // Report run finished
+            _reporter.OnRunFinished(groupRunId, aggregateStatus);
+
             return result;
         }
         catch (Exception ex)
@@ -181,6 +227,10 @@ public sealed class PlanOrchestrator
             };
 
             await folderManager.WriteResultAsync(groupRunFolder, result);
+
+            // Report run finished with error
+            _reporter.OnRunFinished(groupRunId, RunStatus.Error);
+
             return result;
         }
     }

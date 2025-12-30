@@ -17,15 +17,18 @@ public sealed class SuiteOrchestrator
 {
     private readonly DiscoveryResult _discovery;
     private readonly string _runsRoot;
+    private readonly IExecutionReporter _reporter;
     private readonly CancellationToken _cancellationToken;
 
     public SuiteOrchestrator(
         DiscoveryResult discovery,
         string runsRoot,
+        IExecutionReporter reporter,
         CancellationToken cancellationToken = default)
     {
         _discovery = discovery;
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _reporter = reporter ?? NullExecutionReporter.Instance;
         _cancellationToken = cancellationToken;
     }
 
@@ -98,6 +101,25 @@ public sealed class SuiteOrchestrator
             var continueOnFailure = controls.ContinueOnFailure;
             var retryOnError = Math.Max(0, controls.RetryOnError);
 
+            // Report planned nodes (only report once for first iteration)
+            // Only report if we're the top-level suite (not called from PlanOrchestrator)
+            if (string.IsNullOrEmpty(parentPlanRunId))
+            {
+                var plannedNodes = new List<PlannedNode>();
+                foreach (var node in suite.Manifest.TestCases)
+                {
+                    var (testCaseManifest, _, _) = refResolver.ResolveRef(suite.ManifestPath, node.Ref);
+                    plannedNodes.Add(new PlannedNode
+                    {
+                        NodeId = node.NodeId,
+                        TestId = testCaseManifest?.Id ?? "unknown",
+                        TestVersion = testCaseManifest?.Version ?? "unknown",
+                        NodeType = RunType.TestCase
+                    });
+                }
+                _reporter.OnRunPlanned(groupRunId, RunType.TestSuite, plannedNodes);
+            }
+
             for (var iteration = 0; iteration < repeat; iteration++)
             {
                 foreach (var node in suite.Manifest.TestCases)
@@ -122,6 +144,19 @@ public sealed class SuiteOrchestrator
                         childResults.Add(errorResult);
                         UpdateCounts(statusCounts, errorResult.Status);
 
+                        // Report node finished with error (if top-level suite)
+                        if (string.IsNullOrEmpty(parentPlanRunId))
+                        {
+                            _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                            {
+                                NodeId = node.NodeId,
+                                Status = RunStatus.Error,
+                                StartTime = DateTime.UtcNow,
+                                EndTime = DateTime.UtcNow,
+                                Message = refError?.Message ?? "Ref resolution failed"
+                            });
+                        }
+
                         if (!continueOnFailure)
                             break;
                         continue;
@@ -141,6 +176,19 @@ public sealed class SuiteOrchestrator
                         childResults.Add(errorResult);
                         UpdateCounts(statusCounts, errorResult.Status);
 
+                        // Report node finished with error (if top-level suite)
+                        if (string.IsNullOrEmpty(parentPlanRunId))
+                        {
+                            _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                            {
+                                NodeId = node.NodeId,
+                                Status = RunStatus.Error,
+                                StartTime = DateTime.UtcNow,
+                                EndTime = DateTime.UtcNow,
+                                Message = string.Join("; ", inputResult.Errors.Select(e => e.Message))
+                            });
+                        }
+
                         if (!continueOnFailure)
                             break;
                         continue;
@@ -149,6 +197,14 @@ public sealed class SuiteOrchestrator
                     // Execute with retry
                     TestCaseResult? nodeResult = null;
                     var attempts = 1 + retryOnError;
+
+                    // Report node started (if top-level suite)
+                    if (string.IsNullOrEmpty(parentPlanRunId))
+                    {
+                        _reporter.OnNodeStarted(groupRunId, node.NodeId);
+                    }
+
+                    var nodeStartTime = DateTime.UtcNow;
 
                     for (var attempt = 0; attempt < attempts; attempt++)
                     {
@@ -220,10 +276,26 @@ public sealed class SuiteOrchestrator
                         }
                     }
 
+                    var nodeEndTime = DateTime.UtcNow;
+
                     if (nodeResult is not null)
                     {
                         childResults.Add(nodeResult);
                         UpdateCounts(statusCounts, nodeResult.Status);
+
+                        // Report node finished (if top-level suite)
+                        if (string.IsNullOrEmpty(parentPlanRunId))
+                        {
+                            _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
+                            {
+                                NodeId = node.NodeId,
+                                Status = nodeResult.Status,
+                                StartTime = nodeStartTime,
+                                EndTime = nodeEndTime,
+                                Message = nodeResult.Error?.Message,
+                                RetryCount = Math.Max(0, childRunIds.Count - 1)
+                            });
+                        }
 
                         // Check continue on failure
                         if (!continueOnFailure && nodeResult.Status != RunStatus.Passed)
@@ -272,6 +344,12 @@ public sealed class SuiteOrchestrator
                 EndTime = result.EndTime,
                 Status = result.Status
             });
+
+            // Report run finished (if top-level suite)
+            if (string.IsNullOrEmpty(parentPlanRunId))
+            {
+                _reporter.OnRunFinished(groupRunId, aggregateStatus);
+            }
 
             return result;
         }
