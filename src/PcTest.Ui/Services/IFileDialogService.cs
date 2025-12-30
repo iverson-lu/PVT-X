@@ -44,4 +44,14 @@ public interface IFileDialogService
     /// Shows a yes/no/cancel dialog.
     /// </summary>
     bool? ShowYesNoCancel(string title, string message);
+    
+    /// <summary>
+    /// Shows a test case picker dialog for multi-selection.
+    /// </summary>
+    /// <param name="discovery">The discovery result containing available test cases.</param>
+    /// <param name="excludeRefs">Optional list of test case refs to exclude (already in suite).</param>
+    /// <returns>List of selected test case info (id, name, version, folderName) or empty if cancelled.</returns>
+    IReadOnlyList<(string Id, string Name, string Version, string FolderName)> ShowTestCasePicker(
+        PcTest.Engine.Discovery.DiscoveryResult discovery,
+        IEnumerable<string>? excludeRefs = null);
 }

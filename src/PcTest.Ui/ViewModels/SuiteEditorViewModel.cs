@@ -139,19 +139,55 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     }
 
     [RelayCommand]
-    private void AddNode()
+    private async Task AddNodeAsync()
     {
-        var nodeId = $"node_{Nodes.Count + 1}";
-        var nodeVm = new TestCaseNodeViewModel
+        // Get current discovery
+        var discovery = _discoveryService.CurrentDiscovery;
+        if (discovery is null)
         {
-            NodeId = nodeId,
-            Ref = string.Empty,
-            InputsJson = "{}"
-        };
-        nodeVm.PropertyChanged += (s, e) => MarkDirty();
-        Nodes.Add(nodeVm);
-        SelectedNode = nodeVm;
+            discovery = await _discoveryService.DiscoverAsync();
+        }
+
+        // Get existing refs to exclude from picker
+        var existingRefs = Nodes.Select(n => n.Ref).Where(r => !string.IsNullOrEmpty(r)).ToList();
+
+        // Show picker dialog
+        var selected = _fileDialogService.ShowTestCasePicker(discovery, existingRefs);
+        
+        if (selected.Count == 0)
+            return;
+
+        // Add nodes for each selected test case
+        foreach (var tc in selected)
+        {
+            var nodeId = GenerateUniqueNodeId(tc.Id);
+            var nodeVm = new TestCaseNodeViewModel
+            {
+                NodeId = nodeId,
+                Ref = tc.FolderName,
+                InputsJson = "{}"
+            };
+            nodeVm.PropertyChanged += (s, e) => MarkDirty();
+            Nodes.Add(nodeVm);
+        }
+
+        // Select the last added node
+        SelectedNode = Nodes.LastOrDefault();
         MarkDirty();
+    }
+
+    private string GenerateUniqueNodeId(string baseId)
+    {
+        var nodeId = baseId;
+        var counter = 1;
+        
+        while (Nodes.Any(n => n.NodeId.Equals(nodeId, StringComparison.OrdinalIgnoreCase)))
+        {
+            nodeId = $"{baseId}_{counter}";
+            counter++;
+        }
+        
+        return nodeId;
     }
 
     [RelayCommand]
@@ -172,6 +208,7 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         Nodes.Move(index, index - 1);
         MarkDirty();
     }
+
 
     [RelayCommand]
     private void MoveNodeDown()

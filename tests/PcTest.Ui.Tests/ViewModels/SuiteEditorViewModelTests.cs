@@ -175,4 +175,78 @@ public class SuiteEditorViewModelTests
         // Assert
         vm.AvailableTestCases.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task AddNodeCommand_ShouldAddNodes_WhenTestCasesSelected()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var discovery = new DiscoveryResult();
+        
+        _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+        _fileDialogMock
+            .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
+            .Returns(new List<(string Id, string Name, string Version, string FolderName)>
+            {
+                ("TestCase1", "Test Case 1", "1.0.0", "TestCase1"),
+                ("TestCase2", "Test Case 2", "1.0.0", "TestCase2")
+            });
+
+        // Act
+        await vm.AddNodeCommand.ExecuteAsync(null);
+
+        // Assert
+        vm.Nodes.Should().HaveCount(2);
+        vm.Nodes[0].NodeId.Should().Be("TestCase1");
+        vm.Nodes[0].Ref.Should().Be("TestCase1");
+        vm.Nodes[1].NodeId.Should().Be("TestCase2");
+        vm.Nodes[1].Ref.Should().Be("TestCase2");
+        vm.IsDirty.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AddNodeCommand_ShouldNotAddNodes_WhenDialogCancelled()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var discovery = new DiscoveryResult();
+        
+        _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+        _fileDialogMock
+            .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
+            .Returns(Array.Empty<(string, string, string, string)>());
+
+        // Act
+        await vm.AddNodeCommand.ExecuteAsync(null);
+
+        // Assert
+        vm.Nodes.Should().BeEmpty();
+        vm.IsDirty.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AddNodeCommand_ShouldGenerateUniqueNodeIds_WhenDuplicateIds()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var discovery = new DiscoveryResult();
+        
+        // Add existing node with ID "TestCase1"
+        vm.Nodes.Add(new TestCaseNodeViewModel { NodeId = "TestCase1", Ref = "TestCase1" });
+        
+        _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+        _fileDialogMock
+            .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
+            .Returns(new List<(string Id, string Name, string Version, string FolderName)>
+            {
+                ("TestCase1", "Test Case 1", "1.0.0", "TestCase1")
+            });
+
+        // Act
+        await vm.AddNodeCommand.ExecuteAsync(null);
+
+        // Assert
+        vm.Nodes.Should().HaveCount(2);
+        vm.Nodes[1].NodeId.Should().Be("TestCase1_1"); // Should have unique suffix
+    }
 }

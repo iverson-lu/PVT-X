@@ -83,4 +83,27 @@ public sealed class FileDialogService : IFileDialogService
             _ => null
         };
     }
+
+    public IReadOnlyList<(string Id, string Name, string Version, string FolderName)> ShowTestCasePicker(
+        PcTest.Engine.Discovery.DiscoveryResult discovery,
+        IEnumerable<string>? excludeRefs = null)
+    {
+        var viewModel = new ViewModels.TestCasePickerViewModel();
+        viewModel.LoadTestCases(discovery, excludeRefs);
+
+        var dialog = new Views.Dialogs.TestCasePickerDialog
+        {
+            Owner = Application.Current.MainWindow,
+            ViewModel = viewModel
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            return dialog.SelectedTestCases
+                .Select(tc => (tc.Id, tc.Name, tc.Version, tc.FolderName))
+                .ToList();
+        }
+
+        return Array.Empty<(string, string, string, string)>();
+    }
 }
