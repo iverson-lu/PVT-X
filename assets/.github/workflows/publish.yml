@@ -1,0 +1,49 @@
+name: Publish PVT-X
+
+on:
+  push:
+    branches: [ "main" ]
+  tags:
+    - "v*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore .\pc-test-system.sln
+
+      - name: Publish UI
+        run: |
+          dotnet publish .\src\PcTest.Ui\PcTest.Ui.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained false `
+            /p:PublishSingleFile=false `
+            -o publish
+
+      - name: Zip publish output
+        run: |
+          Compress-Archive -Path publish\* -DestinationPath PcTest-win-x64.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PcTest-win-x64
+          path: PcTest-win-x64.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PcTest-win-x64.zip
