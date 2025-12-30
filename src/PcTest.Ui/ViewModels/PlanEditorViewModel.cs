@@ -103,22 +103,30 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     }
 
     [RelayCommand]
-    private void AddSuiteReference(SuiteListItemViewModel? suite)
+    private async Task AddSuiteReferenceAsync()
     {
-        if (suite is null && AvailableSuites.Count > 0)
+        // Get existing suite identities to exclude from picker
+        var existingIdentities = SuiteReferences.Select(r => r.SuiteIdentity).ToList();
+
+        // Show picker dialog
+        var selected = _fileDialogService.ShowSuitePicker(AvailableSuites, existingIdentities);
+        
+        if (selected.Count == 0)
+            return;
+
+        // Add suite references for each selected suite
+        foreach (var identity in selected)
         {
-            suite = AvailableSuites[0];
+            var refVm = new SuiteReferenceViewModel
+            {
+                SuiteIdentity = identity
+            };
+            refVm.PropertyChanged += (s, e) => MarkDirty();
+            SuiteReferences.Add(refVm);
         }
 
-        if (suite is null) return;
-
-        var refVm = new SuiteReferenceViewModel
-        {
-            SuiteIdentity = suite.Identity
-        };
-        refVm.PropertyChanged += (s, e) => MarkDirty();
-        SuiteReferences.Add(refVm);
-        SelectedSuiteReference = refVm;
+        // Select the last added suite reference
+        SelectedSuiteReference = SuiteReferences.LastOrDefault();
         MarkDirty();
     }
 

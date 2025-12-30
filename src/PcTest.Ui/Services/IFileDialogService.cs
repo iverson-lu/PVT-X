@@ -54,4 +54,14 @@ public interface IFileDialogService
     IReadOnlyList<(string Id, string Name, string Version, string FolderName)> ShowTestCasePicker(
         PcTest.Engine.Discovery.DiscoveryResult discovery,
         IEnumerable<string>? excludeRefs = null);
+    
+    /// <summary>
+    /// Shows a test suite picker dialog for multi-selection.
+    /// </summary>
+    /// <param name="suites">List of available test suites.</param>
+    /// <param name="excludeIdentities">Optional list of suite identities to exclude (already in plan).</param>
+    /// <returns>List of selected suite identities (id@version) or empty if cancelled.</returns>
+    IReadOnlyList<string> ShowSuitePicker(
+        IEnumerable<PcTest.Ui.ViewModels.SuiteListItemViewModel> suites,
+        IEnumerable<string>? excludeIdentities = null);
 }

@@ -106,4 +106,27 @@ public sealed class FileDialogService : IFileDialogService
 
         return Array.Empty<(string, string, string, string)>();
     }
+
+    public IReadOnlyList<string> ShowSuitePicker(
+        IEnumerable<ViewModels.SuiteListItemViewModel> suites,
+        IEnumerable<string>? excludeIdentities = null)
+    {
+        var viewModel = new ViewModels.SuitePickerViewModel();
+        viewModel.LoadSuites(suites, excludeIdentities);
+
+        var dialog = new Views.Dialogs.SuitePickerDialog
+        {
+            Owner = Application.Current.MainWindow,
+            ViewModel = viewModel
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            return dialog.SelectedSuites
+                .Select(s => s.Identity)
+                .ToList();
+        }
+
+        return Array.Empty<string>();
+    }
 }
