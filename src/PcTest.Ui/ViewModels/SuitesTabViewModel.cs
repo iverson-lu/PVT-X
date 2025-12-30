@@ -135,7 +135,20 @@ public partial class SuitesTabViewModel : ViewModelBase
 
     private async void OnEditorSaved(object? sender, EventArgs e)
     {
+        // Store the current selection identity before reloading
+        var currentIdentity = SelectedSuite?.Identity;
+        
         await LoadAsync();
+        
+        // Restore selection after reload
+        if (!string.IsNullOrEmpty(currentIdentity))
+        {
+            var matchingSuite = Suites.FirstOrDefault(s => s.Identity == currentIdentity);
+            if (matchingSuite is not null)
+            {
+                SelectedSuite = matchingSuite;
+            }
+        }
     }
 
     [RelayCommand]

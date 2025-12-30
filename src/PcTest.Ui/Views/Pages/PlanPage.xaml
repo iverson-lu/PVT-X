@@ -475,14 +475,77 @@
                                                           Margin="0,0,0,4"/>
                                                 <ui:TextBox Text="{Binding Ref, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
-                                            <TextBlock Text="Inputs (JSON)" 
-                                                      Style="{StaticResource LabelTextStyle}" 
-                                                      Margin="0,0,0,4"/>
-                                            <TextBox Text="{Binding InputsJson, UpdateSourceTrigger=PropertyChanged}" 
-                                                    AcceptsReturn="True" 
-                                                    Height="100" 
-                                                    FontFamily="Consolas"
-                                                    VerticalScrollBarVisibility="Auto"/>
+                                            
+                                            <!-- Parameters Section -->
+                                            <StackPanel Margin="{StaticResource SectionItemMargin}"
+                                                       Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <TextBlock Text="Parameters" 
+                                                          Style="{StaticResource LabelTextStyle}" 
+                                                          Margin="0,0,0,8"/>
+                                                <ItemsControl ItemsSource="{Binding Parameters}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Border BorderBrush="{StaticResource BorderSubtleBrush}" 
+                                                                   BorderThickness="0,0,0,1" 
+                                                                   Padding="0,8" 
+                                                                   Margin="0,0,0,8">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="150"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <Grid.RowDefinitions>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                        <RowDefinition Height="Auto"/>
+                                                                    </Grid.RowDefinitions>
+                                                                    
+                                                                    <!-- Parameter name and badges -->
+                                                                    <TextBlock Grid.Row="0" Grid.Column="0" 
+                                                                              Text="{Binding Name}" 
+                                                                              Style="{StaticResource LabelTextStyle}" 
+                                                                              VerticalAlignment="Center"/>
+                                                                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                                                                        <ui:Badge Content="{Binding Type}" Appearance="Primary" Margin="0,0,5,0"/>
+                                                                        <ui:Badge Content="Required" Appearance="Danger" Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                    </StackPanel>
+                                                                    
+                                                                    <!-- Help text -->
+                                                                    <TextBlock Grid.Row="1" Grid.ColumnSpan="2" 
+                                                                              Text="{Binding Help}" 
+                                                                              Style="{StaticResource SecondaryTextStyle}"
+                                                                              TextWrapping="Wrap"
+                                                                              Margin="0,4,0,4"
+                                                                              Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
+                                                                    
+                                                                    <!-- Input field -->
+                                                                    <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                                                        <TextBlock Text="Value:" 
+                                                                                  VerticalAlignment="Center" 
+                                                                                  Margin="0,0,8,0"/>
+                                                                        <ui:TextBox Text="{Binding CurrentValue, UpdateSourceTrigger=PropertyChanged}" 
+                                                                                   MinWidth="300" 
+                                                                                   PlaceholderText="{Binding Default}"/>
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                            
+                                            <!-- JSON Fallback (only shown if no parameters) -->
+                                            <StackPanel Margin="{StaticResource SectionItemMargin}"
+                                                       Visibility="{Binding HasParameters, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                                <TextBlock Text="Inputs (JSON)" 
+                                                          Style="{StaticResource LabelTextStyle}" 
+                                                          Margin="0,0,0,4"/>
+                                                <TextBox Text="{Binding InputsJson, UpdateSourceTrigger=PropertyChanged}" 
+                                                        AcceptsReturn="True" 
+                                                        Height="100" 
+                                                        FontFamily="Consolas"
+                                                        VerticalScrollBarVisibility="Auto"/>
+                                            </StackPanel>
                                         </StackPanel>
                                     </Border>
                                 </Grid>

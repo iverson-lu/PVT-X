@@ -249,4 +249,235 @@ public class SuiteEditorViewModelTests
         vm.Nodes.Should().HaveCount(2);
         vm.Nodes[1].NodeId.Should().Be("TestCase1_1"); // Should have unique suffix
     }
+
+    [Fact]
+    public async Task AddNodeCommand_ShouldLoadParameters_WhenTestCaseHasParameters()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var discovery = new DiscoveryResult();
+        
+        // Setup a test case with parameters
+        var testCase = new DiscoveredTestCase
+        {
+            FolderPath = "TestCases\\SampleCase",
+            Manifest = new PcTest.Contracts.Manifests.TestCaseManifest
+            {
+                Id = "SampleCase",
+                Name = "Sample Case",
+                Version = "1.0.0",
+                Parameters = new List<PcTest.Contracts.Manifests.ParameterDefinition>
+                {
+                    new()
+                    {
+                        Name = "TestParam",
+                        Type = "string",
+                        Required = true,
+                        Help = "A test parameter"
+                    },
+                    new()
+                    {
+                        Name = "Count",
+                        Type = "integer",
+                        Required = false,
+                        Default = System.Text.Json.JsonSerializer.SerializeToElement(10)
+                    }
+                }
+            }
+        };
+        
+        discovery.TestCases["SampleCase@1.0.0"] = testCase;
+        
+        _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+        _fileDialogMock
+            .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
+            .Returns(new List<(string Id, string Name, string Version, string FolderName)>
+            {
+                ("SampleCase", "Sample Case", "1.0.0", "SampleCase")
+            });
+
+        // Act
+        await vm.AddNodeCommand.ExecuteAsync(null);
+
+        // Assert
+        vm.Nodes.Should().HaveCount(1);
+        var node = vm.Nodes[0];
+        node.Parameters.Should().HaveCount(2);
+        node.Parameters[0].Name.Should().Be("TestParam");
+        node.Parameters[0].Type.Should().Be("string");
+        node.Parameters[0].Required.Should().BeTrue();
+        node.Parameters[1].Name.Should().Be("Count");
+        node.Parameters[1].Type.Should().Be("integer");
+        node.Parameters[1].Required.Should().BeFalse();
+        node.HasParameters.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task LoadAsync_ShouldLoadParametersWithExistingValues()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var discovery = new DiscoveryResult();
+        
+        // Setup a test case with parameters
+        var testCase = new DiscoveredTestCase
+        {
+            FolderPath = "TestCases\\SampleCase",
+            Manifest = new PcTest.Contracts.Manifests.TestCaseManifest
+            {
+                Id = "SampleCase",
+                Name = "Sample Case",
+                Version = "1.0.0",
+                Parameters = new List<PcTest.Contracts.Manifests.ParameterDefinition>
+                {
+                    new()
+                    {
+                        Name = "TestParam",
+                        Type = "string",
+                        Required = true
+                    }
+                }
+            }
+        };
+        
+        discovery.TestCases["SampleCase@1.0.0"] = testCase;
+        _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+        _discoveryMock.Setup(d => d.DiscoverAsync()).ReturnsAsync(discovery);
+        
+        // Create suite info with existing parameter values
+        var suiteInfo = new PcTest.Ui.Services.SuiteInfo
+        {
+            Manifest = new PcTest.Contracts.Manifests.TestSuiteManifest
+            {
+                Id = "TestSuite",
+                Name = "Test Suite",
+                Version = "1.0.0",
+                TestCases = new List<PcTest.Contracts.Manifests.TestCaseNode>
+                {
+                    new()
+                    {
+                        NodeId = "node1",
+                        Ref = "SampleCase",
+                        Inputs = new Dictionary<string, System.Text.Json.JsonElement>
+                        {
+                            ["TestParam"] = System.Text.Json.JsonSerializer.SerializeToElement("ExistingValue")
+                        }
+                    }
+                }
+            }
+        };
+
+        // Act
+        await vm.LoadAsync(suiteInfo);
+
+        // Assert
+        vm.Nodes.Should().HaveCount(1);
+        var node = vm.Nodes[0];
+        node.Parameters.Should().HaveCount(1);
+        node.Parameters[0].Name.Should().Be("TestParam");
+        node.Parameters[0].CurrentValue.Should().Be("ExistingValue");
+    }
+
+    [Fact]
+    public void BuildManifest_ShouldSerializeParametersToInputs()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        
+        // Create a node with parameters
+        var node = new TestCaseNodeViewModel
+        {
+            NodeId = "node1",
+            Ref = "TestCase1"
+        };
+        
+        node.Parameters.Add(new ParameterViewModel(
+            new PcTest.Contracts.Manifests.ParameterDefinition
+            {
+                Name = "StringParam",
+                Type = "string",
+                Required = true
+            })
+        {
+            CurrentValue = "TestValue"
+        });
+        
+        node.Parameters.Add(new ParameterViewModel(
+            new PcTest.Contracts.Manifests.ParameterDefinition
+            {
+                Name = "IntParam",
+                Type = "integer",
+                Required = false
+            })
+        {
+            CurrentValue = "42"
+        });
+        
+        node.Parameters.Add(new ParameterViewModel(
+            new PcTest.Contracts.Manifests.ParameterDefinition
+            {
+                Name = "BoolParam",
+                Type = "boolean",
+                Required = false
+            })
+        {
+            CurrentValue = "true"
+        });
+        
+        vm.Nodes.Add(node);
+        vm.Id = "TestSuite";
+        vm.Name = "Test Suite";
+        vm.Version = "1.0.0";
+
+        // Act
+        var manifest = typeof(SuiteEditorViewModel)
+            .GetMethod("BuildManifest", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.Invoke(vm, null) as PcTest.Contracts.Manifests.TestSuiteManifest;
+
+        // Assert
+        manifest.Should().NotBeNull();
+        manifest!.TestCases.Should().HaveCount(1);
+        var testCaseNode = manifest.TestCases[0];
+        testCaseNode.Inputs.Should().NotBeNull();
+        testCaseNode.Inputs.Should().HaveCount(3);
+        testCaseNode.Inputs!["StringParam"].GetString().Should().Be("TestValue");
+        testCaseNode.Inputs["IntParam"].GetInt32().Should().Be(42);
+        testCaseNode.Inputs["BoolParam"].GetBoolean().Should().BeTrue();
+    }
+
+    [Fact]
+    public void TestCaseNodeViewModel_HasParameters_ShouldReturnFalse_WhenNoParameters()
+    {
+        // Arrange
+        var node = new TestCaseNodeViewModel
+        {
+            NodeId = "node1",
+            Ref = "TestCase1"
+        };
+
+        // Assert
+        node.HasParameters.Should().BeFalse();
+    }
+
+    [Fact]
+    public void TestCaseNodeViewModel_HasParameters_ShouldReturnTrue_WhenParametersExist()
+    {
+        // Arrange
+        var node = new TestCaseNodeViewModel
+        {
+            NodeId = "node1",
+            Ref = "TestCase1"
+        };
+        
+        node.Parameters.Add(new ParameterViewModel(
+            new PcTest.Contracts.Manifests.ParameterDefinition
+            {
+                Name = "TestParam",
+                Type = "string",
+                Required = true
+            }));
+
+        // Assert
+        node.HasParameters.Should().BeTrue();
+    }
 }

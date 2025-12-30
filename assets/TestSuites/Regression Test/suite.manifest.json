@@ -14,15 +14,24 @@
   "testCases": [
     {
       "nodeId": "NetworkPing",
-      "ref": "NetworkPing"
+      "ref": "NetworkPing",
+      "inputs": {
+        "TargetAddress": "www.google.com"
+      }
     },
     {
       "nodeId": "CameraVerify",
-      "ref": "CameraVerify"
+      "ref": "CameraVerify",
+      "inputs": {
+        "MinExpectedCount": "1"
+      }
     },
     {
       "nodeId": "WindowsUpdateHistoryVerify",
-      "ref": "WindowsUpdateHistoryVerify"
+      "ref": "WindowsUpdateHistoryVerify",
+      "inputs": {
+        "MinExpectedCount": "1"
+      }
     }
   ]
 }

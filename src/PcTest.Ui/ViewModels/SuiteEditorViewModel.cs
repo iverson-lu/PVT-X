@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -91,6 +92,10 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
 
         // Load nodes
         Nodes.Clear();
+        
+        // Load available test cases first (needed for parameter discovery)
+        await LoadAvailableTestCasesAsync();
+        
         foreach (var node in m.TestCases)
         {
             var nodeVm = new TestCaseNodeViewModel
@@ -101,12 +106,13 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
                     ? JsonSerializer.Serialize(node.Inputs, new JsonSerializerOptions { WriteIndented = true }) 
                     : "{}"
             };
+            
+            // Load parameters for this test case
+            await LoadNodeParametersAsync(nodeVm, node.Inputs);
+            
             nodeVm.PropertyChanged += (s, e) => MarkDirty();
             Nodes.Add(nodeVm);
         }
-
-        // Load available test cases
-        await LoadAvailableTestCasesAsync();
 
         // Clear dirty state after loading
         ClearDirty();
@@ -135,6 +141,49 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
                 Version = tc.Manifest.Version,
                 ParameterWrappers = paramWrappers
             });
+        }
+    }
+    
+    private async Task LoadNodeParametersAsync(TestCaseNodeViewModel nodeVm, Dictionary<string, JsonElement>? inputs)
+    {
+        var discovery = _discoveryService.CurrentDiscovery;
+        if (discovery is null)
+        {
+            discovery = await _discoveryService.DiscoverAsync();
+        }
+        
+        // Find the test case by ref
+        var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
+            Path.GetFileName(tc.FolderPath).Equals(nodeVm.Ref, StringComparison.OrdinalIgnoreCase));
+            
+        if (testCase?.Manifest.Parameters is null)
+            return;
+            
+        nodeVm.Parameters.Clear();
+        
+        foreach (var paramDef in testCase.Manifest.Parameters)
+        {
+            var paramVm = new ParameterViewModel(paramDef);
+            
+            // If there's an existing input value, use it
+            if (inputs?.TryGetValue(paramDef.Name, out var value) == true)
+            {
+                try
+                {
+                    paramVm.CurrentValue = value.ValueKind switch
+                    {
+                        JsonValueKind.String => value.GetString() ?? string.Empty,
+                        JsonValueKind.Number => value.ToString(),
+                        JsonValueKind.True => "true",
+                        JsonValueKind.False => "false",
+                        _ => value.ToString()
+                    };
+                }
+                catch { }
+            }
+            
+            paramVm.PropertyChanged += (s, e) => MarkDirty();
+            nodeVm.Parameters.Add(paramVm);
         }
     }
 
@@ -167,6 +216,10 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
                 Ref = tc.FolderName,
                 InputsJson = "{}"
             };
+            
+            // Load parameters for this test case
+            await LoadNodeParametersAsync(nodeVm, null);
+            
             nodeVm.PropertyChanged += (s, e) => MarkDirty();
             Nodes.Add(nodeVm);
         }
@@ -355,8 +408,42 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
                 Ref = nodeVm.Ref
             };
 
-            if (!string.IsNullOrWhiteSpace(nodeVm.InputsJson) && nodeVm.InputsJson != "{}")
+            // Build inputs from parameters if any
+            if (nodeVm.Parameters.Count > 0)
             {
+                var inputs = new Dictionary<string, JsonElement>();
+                foreach (var param in nodeVm.Parameters)
+                {
+                    if (!string.IsNullOrWhiteSpace(param.CurrentValue))
+                    {
+                        // Parse the value based on type
+                        try
+                        {
+                            JsonElement element = param.Type.ToLowerInvariant() switch
+                            {
+                                "boolean" => JsonSerializer.SerializeToElement(bool.Parse(param.CurrentValue)),
+                                "integer" => JsonSerializer.SerializeToElement(int.Parse(param.CurrentValue)),
+                                "number" => JsonSerializer.SerializeToElement(double.Parse(param.CurrentValue)),
+                                _ => JsonSerializer.SerializeToElement(param.CurrentValue)
+                            };
+                            inputs[param.Name] = element;
+                        }
+                        catch
+                        {
+                            // If parsing fails, store as string
+                            inputs[param.Name] = JsonSerializer.SerializeToElement(param.CurrentValue);
+                        }
+                    }
+                }
+                
+                if (inputs.Count > 0)
+                {
+                    node.Inputs = inputs;
+                }
+            }
+            else if (!string.IsNullOrWhiteSpace(nodeVm.InputsJson) && nodeVm.InputsJson != "{}")
+            {
+                // Fallback to JSON if no parameters (backward compatibility)
                 try
                 {
                     var inputs = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(nodeVm.InputsJson);
@@ -383,6 +470,13 @@ public partial class TestCaseNodeViewModel : ViewModelBase
     [ObservableProperty] private string _nodeId = string.Empty;
     [ObservableProperty] private string _ref = string.Empty;
     [ObservableProperty] private string _inputsJson = "{}";
+    [ObservableProperty] private ObservableCollection<ParameterViewModel> _parameters = new();
+
+    public TestCaseNodeViewModel()
+    {
+        Parameters.CollectionChanged += (s, e) => OnPropertyChanged(nameof(HasParameters));
+    }
 
     public string DisplayName => string.IsNullOrEmpty(Ref) ? NodeId : $"{NodeId} ({Ref})";
+    public bool HasParameters => Parameters.Count > 0;
 }
