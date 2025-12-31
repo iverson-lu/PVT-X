@@ -266,6 +266,8 @@ public sealed class TestCaseRunner
     /// </summary>
     public static string GenerateRunId()
     {
-        return $"R-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}"[..32];
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var shortGuid = Guid.NewGuid().ToString("N")[..8];
+        return $"R-{timestamp}-{shortGuid}";
     }
 }

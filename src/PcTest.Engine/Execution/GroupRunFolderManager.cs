@@ -137,6 +137,8 @@ public sealed class GroupRunFolderManager
     /// </summary>
     public static string GenerateGroupRunId(string prefix)
     {
-        return $"{prefix}-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}"[..36];
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var shortGuid = Guid.NewGuid().ToString("N")[..8];
+        return $"{prefix}-{timestamp}-{shortGuid}";
     }
 }
