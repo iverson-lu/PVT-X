@@ -246,10 +246,10 @@ public class RunStatusToIconConverter : IValueConverter
                 PcTest.Contracts.RunStatus.Error => "ErrorCircle20",
                 PcTest.Contracts.RunStatus.Timeout => "Clock20",
                 PcTest.Contracts.RunStatus.Aborted => "RecordStop20",
-                _ => "Question20"
+                _ => "Hourglass20"
             };
         }
-        return "Question20";
+        return "Hourglass20";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

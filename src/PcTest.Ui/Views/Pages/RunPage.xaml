@@ -102,7 +102,8 @@
                               IsEnabled="{Binding IsRunning}"
                               Appearance="Danger"
                               Margin="0,0,8,0"/>
-                    <ui:Button Icon="{ui:SymbolIcon DocumentSearch24}"
+                    <ui:Button 
+                              Icon="{ui:SymbolIcon DocumentSearch24}"
                               Command="{Binding ViewLogsCommand}"
                               ToolTip="View Logs"/>
                 </StackPanel>
@@ -197,28 +198,20 @@
                                     </Grid.RowDefinitions>
                                     
                                     <!-- Status Icon - aligned to first row only -->
-                                    <Ellipse Grid.Row="0" Grid.Column="0" Width="12" Height="12" 
-                                            Margin="0,4,10,0" VerticalAlignment="Top">
-                                        <Ellipse.Style>
-                                            <Style TargetType="Ellipse">
-                                                <Setter Property="Fill" Value="{StaticResource StatusPendingBrush}"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                        <Setter Property="Fill" Value="{StaticResource StatusRunningBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Passed">
-                                                        <Setter Property="Fill" Value="{StaticResource StatusSuccessBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Failed">
-                                                        <Setter Property="Fill" Value="{StaticResource StatusErrorBrush}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding Status}" Value="Error">
-                                                        <Setter Property="Fill" Value="{StaticResource StatusWarningBrush}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Ellipse.Style>
-                                    </Ellipse>
+                                    <Grid Grid.Row="0" Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Top">
+                                        <!-- Running state icon -->
+                                        <ui:SymbolIcon Symbol="Play20" 
+                                                      Foreground="{StaticResource StatusRunningBrush}"
+                                                      FontSize="20" 
+                                                      ToolTip="Running"
+                                                      Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        <!-- Other status icons -->
+                                        <ui:SymbolIcon Symbol="{Binding Status, Converter={StaticResource RunStatusToIconConverter}}" 
+                                                      Foreground="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                                      FontSize="20" 
+                                                      ToolTip="{Binding Status}"
+                                                      Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                    </Grid>
                                     
                                     <!-- First row: NodeId or Identity -->
                                     <TextBlock Grid.Row="0" Grid.Column="1" 
@@ -324,7 +317,24 @@
                                         BorderThickness="0"
                                         Background="Transparent"
                                         TextWrapping="NoWrap"
-                                        Padding="12"/>
+                                        Padding="12"
+                                        Cursor="Arrow">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                               BorderBrush="{TemplateBinding BorderBrush}"
+                                                               BorderThickness="{TemplateBinding BorderThickness}">
+                                                            <ScrollViewer x:Name="PART_ContentHost" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
                             </ScrollViewer>
                         </Border>
                     </Grid>
@@ -364,7 +374,24 @@
                                         BorderThickness="0"
                                         Background="Transparent"
                                         TextWrapping="NoWrap"
-                                        Padding="12"/>
+                                        Padding="12"
+                                        Cursor="Arrow">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}"
+                                                               BorderBrush="{TemplateBinding BorderBrush}"
+                                                               BorderThickness="{TemplateBinding BorderThickness}">
+                                                            <ScrollViewer x:Name="PART_ContentHost" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
                             </ScrollViewer>
                         </Border>
                     </Grid>
