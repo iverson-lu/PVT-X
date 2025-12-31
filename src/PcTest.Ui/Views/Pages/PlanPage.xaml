@@ -15,7 +15,7 @@
                     Style="{StaticResource SegmentedControlTabControl}">
             <!-- Cases Tab -->
             <TabItem Header="Cases" Style="{StaticResource SegmentedControlTabItem}">
-                <Grid Margin="0,16,0,0">
+                <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="380"/>
                         <ColumnDefinition Width="16"/>
@@ -348,7 +348,7 @@
             
             <!-- Suites Tab -->
             <TabItem Header="Suites" Style="{StaticResource SegmentedControlTabItem}">
-                <Grid Margin="0,16,0,0">
+                <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="380"/>
                         <ColumnDefinition Width="16"/>
@@ -836,7 +836,7 @@
             
             <!-- Plans Tab -->
             <TabItem Header="Plans" Style="{StaticResource SegmentedControlTabItem}">
-                <Grid Margin="0,16,0,0">
+                <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="380"/>
                         <ColumnDefinition Width="16"/>
