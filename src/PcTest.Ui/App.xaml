@@ -12,6 +12,7 @@
                 <!-- HP-Inspired Design System -->
                 <ResourceDictionary Source="Resources/Colors.xaml"/>
                 <ResourceDictionary Source="Resources/DesignTokens.xaml"/>
+                <ResourceDictionary Source="Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
             <!-- Converters -->

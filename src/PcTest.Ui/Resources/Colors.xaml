@@ -60,9 +60,13 @@
     
     <!-- Navigation -->
     <SolidColorBrush x:Key="NavBackgroundBrush" Color="{StaticResource NeutralWhiteColor}"/>
-    <SolidColorBrush x:Key="NavItemHoverBrush" Color="{StaticResource NeutralLightColor}"/>
+    <SolidColorBrush x:Key="NavItemHoverBrush" Color="#08000000"/><!-- 3% opacity black -->
     <SolidColorBrush x:Key="NavItemSelectedBrush" Color="{StaticResource BrandPrimaryColor}"/>
     <SolidColorBrush x:Key="NavItemSelectedTextBrush" Color="{StaticResource NeutralWhiteColor}"/>
+    <SolidColorBrush x:Key="NavItemSelectedBackgroundBrush" Color="#10174AD8"/><!-- 6% opacity brand blue -->
+    <SolidColorBrush x:Key="NavItemSelectedHoverBrush" Color="#18174AD8"/><!-- 9% opacity brand blue -->
+    <SolidColorBrush x:Key="NavIconNormalBrush" Color="#99000000"/><!-- 60% opacity for muted gray -->
+    <SolidColorBrush x:Key="NavIconHoverBrush" Color="#CC000000"/><!-- 80% opacity for darker gray -->
     
     <!-- Status Colors -->
     <SolidColorBrush x:Key="StatusSuccessBrush" Color="{StaticResource SuccessGreenColor}"/>

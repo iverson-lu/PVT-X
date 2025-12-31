@@ -30,40 +30,56 @@
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="56"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
             <!-- Navigation Menu -->
             <Border Grid.Column="0" Background="{StaticResource NavBackgroundBrush}" 
                     BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
-                <StackPanel Margin="12,8">
-                    <ui:Button Content="Plan" Icon="{ui:SymbolIcon Clipboard24}" 
-                              Tag="Plan" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Left"
-                              Padding="12,8"
-                              Margin="0,0,0,4"/>
-                    <ui:Button Content="Run" Icon="{ui:SymbolIcon Play24}" 
-                              Tag="Run" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Left"
-                              Padding="12,8"
-                              Margin="0,0,0,4"/>
-                    <ui:Button Content="Runs" Icon="{ui:SymbolIcon History24}" 
-                              Tag="Runs" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Left"
-                              Padding="12,8"
-                              Margin="0,0,0,4"/>
-                    <Separator Margin="0,16,0,16"/>
-                    <ui:Button Content="Settings" Icon="{ui:SymbolIcon Settings24}" 
-                              Tag="Settings" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Left"
-                              Padding="12,8" 
-                              Margin="{StaticResource SectionItemMargin}"/>
-                </StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Main Navigation Items (Top) -->
+                    <StackPanel Grid.Row="0" VerticalAlignment="Top" Margin="0,8,0,0">
+                        <ui:Button x:Name="PlanNavButton"
+                                  Icon="{ui:SymbolIcon Clipboard24}" 
+                                  Tag="Plan" 
+                                  Click="NavButton_Click"
+                                  Style="{StaticResource CompactNavButtonStyle}"
+                                  ToolTip="Plan"
+                                  KeyboardNavigation.TabIndex="0"/>
+                        <ui:Button x:Name="RunNavButton"
+                                  Icon="{ui:SymbolIcon Play24}" 
+                                  Tag="Run" 
+                                  Click="NavButton_Click"
+                                  Style="{StaticResource CompactNavButtonStyle}"
+                                  ToolTip="Run"
+                                  KeyboardNavigation.TabIndex="1"/>
+                        <ui:Button x:Name="RunsNavButton"
+                                  Icon="{ui:SymbolIcon History24}" 
+                                  Tag="Runs" 
+                                  Click="NavButton_Click"
+                                  Style="{StaticResource CompactNavButtonStyle}"
+                                  ToolTip="Runs"
+                                  KeyboardNavigation.TabIndex="2"/>
+                    </StackPanel>
+                    
+                    <!-- Settings (Bottom) -->
+                    <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Margin="0,0,0,8">
+                        <Separator Margin="8,12" Background="{StaticResource BorderSubtleBrush}"/>
+                        <ui:Button x:Name="SettingsNavButton"
+                                  Icon="{ui:SymbolIcon Settings24}" 
+                                  Tag="Settings" 
+                                  Click="NavButton_Click"
+                                  Style="{StaticResource CompactNavButtonStyle}"
+                                  ToolTip="Settings"
+                                  KeyboardNavigation.TabIndex="3"/>
+                    </StackPanel>
+                </Grid>
             </Border>
                 
             <!-- Page Content Frame -->

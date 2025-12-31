@@ -13,6 +13,7 @@ public partial class MainWindow : FluentWindow
 {
     private readonly MainWindowViewModel _viewModel;
     private readonly INavigationService _navigationService;
+    private Wpf.Ui.Controls.Button? _currentSelectedButton;
 
     public MainWindow(
         MainWindowViewModel viewModel,
@@ -27,6 +28,7 @@ public partial class MainWindow : FluentWindow
         
         // Set up navigation
         _navigationService.SetFrame(ContentFrame);
+        _navigationService.Navigated += OnNavigated;
         
         Loaded += MainWindow_Loaded;
     }
@@ -44,6 +46,39 @@ public partial class MainWindow : FluentWindow
         if (sender is Wpf.Ui.Controls.Button button && button.Tag is string pageName)
         {
             _navigationService.NavigateTo(pageName);
+        }
+    }
+
+    private void OnNavigated(object? sender, NavigationEventArgs e)
+    {
+        // Update selected state for navigation buttons
+        UpdateSelectedNavButton(e.PageName);
+    }
+
+    private void UpdateSelectedNavButton(string pageName)
+    {
+        // Clear previous selection
+        if (_currentSelectedButton != null)
+        {
+            _currentSelectedButton.Style = (Style)FindResource("CompactNavButtonStyle");
+        }
+
+        // Set new selection based on page name
+        _currentSelectedButton = pageName switch
+        {
+            "Plan" => PlanNavButton,
+            "Run" => RunNavButton,
+            "Runs" => RunsNavButton,
+            "History" => RunsNavButton,  // Backward compatibility
+            "LogsResults" => RunsNavButton,  // Backward compatibility
+            "Settings" => SettingsNavButton,
+            _ => PlanNavButton
+        };
+
+        // Apply selected style
+        if (_currentSelectedButton != null)
+        {
+            _currentSelectedButton.Style = (Style)FindResource("CompactNavButtonSelectedStyle");
         }
     }
 }
