@@ -153,6 +153,15 @@ public sealed class PlanOrchestrator
                 childRunIds.AddRange(suiteResult.ChildRunIds);
                 UpdateCounts(statusCounts, suiteResult.Status);
 
+                // Append to children.jsonl
+                await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
+                {
+                    RunId = suiteResult.ChildRunIds.FirstOrDefault() ?? "",
+                    SuiteId = suite.Manifest.Id,
+                    SuiteVersion = suite.Manifest.Version,
+                    Status = suiteResult.Status
+                });
+
                 // Report node finished
                 _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
                 {
@@ -161,15 +170,6 @@ public sealed class PlanOrchestrator
                     StartTime = suiteStartTime,
                     EndTime = DateTime.UtcNow,
                     Message = suiteResult.Message
-                });
-
-                // Append to children.jsonl
-                await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
-                {
-                    RunId = suiteResult.ChildRunIds.FirstOrDefault() ?? "",
-                    SuiteId = suite.Manifest.Id,
-                    SuiteVersion = suite.Manifest.Version,
-                    Status = suiteResult.Status
                 });
             }
 
@@ -228,6 +228,18 @@ public sealed class PlanOrchestrator
             };
 
             await folderManager.WriteResultAsync(groupRunFolder, result);
+
+            // Append Plan run to index
+            folderManager.AppendIndexEntry(new IndexEntry
+            {
+                RunId = groupRunId,
+                RunType = RunType.TestPlan,
+                PlanId = plan.Manifest.Id,
+                PlanVersion = plan.Manifest.Version,
+                StartTime = result.StartTime,
+                EndTime = result.EndTime,
+                Status = result.Status
+            });
 
             // Report run finished with error
             _reporter.OnRunFinished(groupRunId, RunStatus.Error);

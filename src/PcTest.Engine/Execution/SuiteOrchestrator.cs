@@ -373,6 +373,28 @@ public sealed class SuiteOrchestrator
             };
 
             await folderManager.WriteResultAsync(groupRunFolder, result);
+
+            // Append Suite run to index
+            folderManager.AppendIndexEntry(new IndexEntry
+            {
+                RunId = groupRunId,
+                RunType = RunType.TestSuite,
+                SuiteId = suite.Manifest.Id,
+                SuiteVersion = suite.Manifest.Version,
+                PlanId = planId,
+                PlanVersion = planVersion,
+                ParentRunId = parentPlanRunId,
+                StartTime = result.StartTime,
+                EndTime = result.EndTime,
+                Status = result.Status
+            });
+
+            // Report run finished (if top-level suite)
+            if (string.IsNullOrEmpty(parentPlanRunId))
+            {
+                _reporter.OnRunFinished(groupRunId, RunStatus.Error);
+            }
+
             return result;
         }
     }
