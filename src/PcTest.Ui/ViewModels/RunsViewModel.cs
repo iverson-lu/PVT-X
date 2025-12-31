@@ -54,6 +54,7 @@ public partial class RunsViewModel : ViewModelBase
     // Computed properties for UI binding
     public bool IsRunSelected => RunDetails is not null;
     public string RunStatus => RunDetails?.IndexEntry.Status.ToString() ?? string.Empty;
+    public RunStatus? RunStatusEnum => RunDetails?.IndexEntry.Status;
     public string RunDisplayName => RunDetails?.IndexEntry.DisplayName ?? string.Empty;
     public string StartTimeDisplay => RunDetails?.IndexEntry.StartTime.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty;
     public string EndTimeDisplay => RunDetails?.IndexEntry.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? string.Empty;
@@ -266,6 +267,7 @@ public partial class RunsViewModel : ViewModelBase
             // Notify UI of computed property changes
             OnPropertyChanged(nameof(IsRunSelected));
             OnPropertyChanged(nameof(RunStatus));
+            OnPropertyChanged(nameof(RunStatusEnum));
             OnPropertyChanged(nameof(RunDisplayName));
             OnPropertyChanged(nameof(StartTimeDisplay));
             OnPropertyChanged(nameof(EndTimeDisplay));
@@ -290,6 +292,7 @@ public partial class RunsViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(IsRunSelected));
         OnPropertyChanged(nameof(RunStatus));
+        OnPropertyChanged(nameof(RunStatusEnum));
         OnPropertyChanged(nameof(RunDisplayName));
         OnPropertyChanged(nameof(StartTimeDisplay));
         OnPropertyChanged(nameof(EndTimeDisplay));
