@@ -11,7 +11,7 @@
       Background="{StaticResource SurfaceBackgroundBrush}">
     
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Margin="16" MaxWidth="900" HorizontalAlignment="Left">
+        <StackPanel Margin="32,24" MaxWidth="1040" HorizontalAlignment="Center">
             <!-- Page Header -->
             <TextBlock Text="Settings" 
                       Style="{StaticResource PageTitleStyle}" 
