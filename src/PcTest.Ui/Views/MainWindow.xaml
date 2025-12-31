@@ -64,7 +64,7 @@
                                   Tag="Runs" 
                                   Click="NavButton_Click"
                                   Style="{StaticResource CompactNavButtonStyle}"
-                                  ToolTip="Runs"
+                                  ToolTip="History"
                                   KeyboardNavigation.TabIndex="2"/>
                     </StackPanel>
                     

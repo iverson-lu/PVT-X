@@ -172,8 +172,8 @@ public partial class RunsViewModel : ViewModelBase
 
     public async Task LoadAsync()
     {
-        SetBusy(true, "Loading run history...");
-
+        // Don't use global busy state to avoid UI flicker on page load
+        // Use inline loading indicators if needed
         try
         {
             var filter = new RunFilter
@@ -213,9 +213,9 @@ public partial class RunsViewModel : ViewModelBase
 
             ApplyFilter();
         }
-        finally
+        catch (Exception ex)
         {
-            SetBusy(false);
+            _fileDialogService.ShowError("Error Loading History", $"Failed to load run history: {ex.Message}");
         }
     }
 
@@ -242,8 +242,8 @@ public partial class RunsViewModel : ViewModelBase
 
     private async Task LoadRunDetailsAsync(string runId)
     {
-        SetBusy(true, "Loading run details...");
-
+        // Don't use global busy state for detail loading to avoid UI flicker
+        // The detail panel will show loading indicators as needed
         try
         {
             RunDetails = await _runRepository.GetRunDetailsAsync(runId);
@@ -273,9 +273,9 @@ public partial class RunsViewModel : ViewModelBase
             OnPropertyChanged(nameof(ExitCode));
             OnPropertyChanged(nameof(ErrorMessage));
         }
-        finally
+        catch (Exception ex)
         {
-            SetBusy(false);
+            _fileDialogService.ShowError("Error Loading Run", $"Failed to load run details: {ex.Message}");
         }
     }
 
