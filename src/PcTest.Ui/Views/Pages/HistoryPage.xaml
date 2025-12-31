@@ -7,18 +7,26 @@
       d:DataContext="{d:DesignInstance vm:HistoryViewModel}"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      mc:Ignorable="d">
+      mc:Ignorable="d"
+      Background="{StaticResource SurfaceBackgroundBrush}">
     
-    <Grid>
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="16"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
-        <!-- Filters -->
-        <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
-                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
-                Padding="{StaticResource CardPadding}">
+        <!-- Filters Card -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource CardBackgroundBrush}" 
+                BorderBrush="{StaticResource BorderSubtleBrush}" 
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusM}"
+                Padding="20">
+            <Border.Effect>
+                <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+            </Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -70,24 +78,34 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <ui:Button Content="Refresh" 
                               Icon="{ui:SymbolIcon ArrowSync24}" 
-                              Command="{Binding RefreshCommand}" 
-                              Margin="{StaticResource ControlMarginSmall}"/>
-                    <ui:Button Content="Clear" 
-                              Icon="{ui:SymbolIcon Dismiss24}" 
-                              Command="{Binding ClearFiltersCommand}"/>
+                              Command="{Binding RefreshCommand}"
+                              Appearance="Primary"
+                              Margin="0,0,8,0"/>
+                    <ui:Button Icon="{ui:SymbolIcon Dismiss24}" 
+                              Command="{Binding ClearFiltersCommand}"
+                              ToolTip="Clear Filters"/>
                 </StackPanel>
             </Grid>
         </Border>
         
         <!-- Runs List -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="350"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="380"/>
             </Grid.ColumnDefinitions>
             
-            <!-- Data Grid -->
-            <DataGrid Grid.Column="0" 
+            <!-- Data Grid Card -->
+            <Border Grid.Column="0"
+                   Background="{StaticResource CardBackgroundBrush}"
+                   BorderBrush="{StaticResource BorderSubtleBrush}"
+                   BorderThickness="1"
+                   CornerRadius="{StaticResource RadiusM}">
+                <Border.Effect>
+                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                </Border.Effect>
+                <DataGrid 
                      ItemsSource="{Binding Runs}"
                      SelectedItem="{Binding SelectedRun}"
                      AutoGenerateColumns="False"
@@ -107,19 +125,26 @@
                     <DataGridTextColumn Header="Duration" Binding="{Binding DurationDisplay}" Width="100"/>
                 </DataGrid.Columns>
             </DataGrid>
+            </Border>
             
-            <!-- Details Panel -->
-            <Border Grid.Column="1" 
-                    Background="{StaticResource SurfaceBackgroundBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="1,0,0,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="{StaticResource CardPadding}" DataContext="{Binding SelectedRun}">
+            <!-- Details Panel Card -->
+            <Border Grid.Column="2" 
+                    Background="{StaticResource CardBackgroundBrush}"
+                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusM}">
+                <Border.Effect>
+                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                </Border.Effect>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+                    <StackPanel DataContext="{Binding SelectedRun}">
                         <TextBlock Text="Run Details" 
-                                  Style="{StaticResource SectionTitleStyle}"/>
+                                  Style="{StaticResource PageTitleStyle}"
+                                  Margin="0,0,0,24"/>
                         
                         <Grid Visibility="{Binding DataContext.SelectedRun, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource NullToVisibilityConverter}}">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="90"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -133,74 +158,91 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Run ID:" 
-                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Run ID" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Margin="0,0,0,12"/>
                             <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunId}" 
-                                      Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      TextWrapping="Wrap"
+                                      Margin="0,0,0,12"/>
                             
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" 
-                                      Style="{StaticResource LabelTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Margin="0,0,0,12"/>
                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RunType}" 
-                                      Style="{StaticResource BodyTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      Margin="0,0,0,12"/>
                             
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Target:" 
-                                      Style="{StaticResource LabelTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Target" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Margin="0,0,0,12"/>
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DisplayName}" 
-                                      Style="{StaticResource BodyTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      Margin="0,0,0,12"/>
                             
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Status:" 
-                                      Style="{StaticResource LabelTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Status" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Margin="0,0,0,12"/>
                             <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Status}" 
-                                      Style="{StaticResource BodyTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      Margin="0,0,0,12"/>
                             
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Start:" 
-                                      Style="{StaticResource LabelTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Start" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Margin="0,0,0,12"/>
                             <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding StartTimeDisplay}" 
-                                      Style="{StaticResource BodyTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      Margin="0,0,0,12"/>
                             
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Duration:" 
-                                      Style="{StaticResource LabelTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Duration" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Margin="0,0,0,12"/>
                             <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding DurationDisplay}" 
-                                      Style="{StaticResource BodyTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      Margin="0,0,0,12"/>
                             
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Test ID:" 
-                                      Style="{StaticResource LabelTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Test ID" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Margin="0,0,0,12"/>
                             <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding TestId}" 
-                                      Style="{StaticResource BodyTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      Margin="0,0,0,12"/>
                             
-                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Suite ID:" 
-                                      Style="{StaticResource LabelTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Suite ID" 
+                                      FontSize="{StaticResource FontSizeXS}"
+                                      Foreground="{StaticResource TextTertiaryBrush}"/>
                             <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SuiteId}" 
-                                      Style="{StaticResource BodyTextStyle}" 
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      FontSize="{StaticResource FontSizeM}"
+                                      Foreground="{StaticResource TextPrimaryBrush}"/>
                         </Grid>
                         
                         <!-- Actions -->
-                        <StackPanel Margin="{StaticResource SectionMargin}">
+                        <StackPanel Margin="0,24,0,0">
                             <ui:Button Content="View Logs &amp; Results" 
                                       Icon="{ui:SymbolIcon DocumentSearch24}"
                                       Command="{Binding DataContext.ViewLogsResultsCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                       Appearance="Primary"
                                       HorizontalAlignment="Stretch"
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      Margin="0,0,0,8"/>
                             <ui:Button Content="Open Folder" 
                                       Icon="{ui:SymbolIcon FolderOpen24}"
                                       Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                       HorizontalAlignment="Stretch"
-                                      Margin="{StaticResource SectionItemMargin}"/>
+                                      Margin="0,0,0,8"/>
                             <ui:Button Content="Rerun" 
                                       Icon="{ui:SymbolIcon ArrowRepeatAll24}"
                                       Command="{Binding DataContext.RerunCommand, RelativeSource={RelativeSource AncestorType=Page}}"

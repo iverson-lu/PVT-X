@@ -7,9 +7,10 @@
       d:DataContext="{d:DesignInstance vm:LogsResultsViewModel}"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      mc:Ignorable="d">
+      mc:Ignorable="d"
+      Background="{StaticResource SurfaceBackgroundBrush}">
     
-    <Grid>
+    <Grid Margin="16">
         <!-- Run Picker (shown when no run selected) -->
         <Grid Visibility="{Binding IsRunSelected, Converter={StaticResource InverseBoolToVisibilityConverter}}">
             <Grid.RowDefinitions>
@@ -18,9 +19,16 @@
             </Grid.RowDefinitions>
             
             <!-- Search/Filter Bar -->
-            <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
-                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
-                    Padding="{StaticResource CardPadding}">
+            <Border Grid.Row="0" 
+                    Background="{StaticResource CardBackgroundBrush}" 
+                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusM}"
+                    Padding="20"
+                    Margin="0,0,0,16">
+                <Border.Effect>
+                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                </Border.Effect>
                 <WrapPanel>
                     <ui:TextBox PlaceholderText="Search runs..." 
                                Text="{Binding RunPickerViewModel.SearchText, UpdateSourceTrigger=PropertyChanged}"
@@ -73,9 +81,16 @@
             </Grid.RowDefinitions>
             
             <!-- Header -->
-            <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
-                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
-                    Padding="{StaticResource CardPadding}">
+            <Border Grid.Row="0" 
+                    Background="{StaticResource CardBackgroundBrush}" 
+                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusM}"
+                    Padding="20"
+                    Margin="0,0,0,16">
+                <Border.Effect>
+                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                </Border.Effect>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -83,36 +98,44 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
-                    <ui:Button Grid.Column="0" Content="Back" 
+                    <ui:Button Grid.Column="0" 
                               Icon="{ui:SymbolIcon ArrowLeft24}" 
-                              Command="{Binding ClearRunCommand}" 
-                              Margin="{StaticResource ControlMarginLarge}"/>
+                              Command="{Binding ClearRunCommand}"
+                              ToolTip="Back"
+                              Margin="0,0,20,0"/>
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <TextBlock Text="Run:" 
+                        <TextBlock Text="Run" 
                                   VerticalAlignment="Center" 
-                                  Style="{StaticResource LabelTextStyle}"
+                                  FontSize="{StaticResource FontSizeXS}"
+                                  Foreground="{StaticResource TextTertiaryBrush}"
                                   Margin="0,0,8,0"/>
                         <TextBlock Text="{Binding RunId}" 
                                   FontWeight="{StaticResource FontWeightSemiBold}" 
-                                  FontSize="{StaticResource FontSizeM}"
+                                  FontSize="{StaticResource FontSizeL}"
                                   Foreground="{StaticResource TextPrimaryBrush}"
                                   VerticalAlignment="Center"/>
                         <ui:Badge Content="{Binding RunStatus}" 
-                                 Margin="{StaticResource ControlMarginMedium}"/>
-                        <TextBlock Text="Target:" 
+                                 VerticalAlignment="Center"
+                                 Margin="12,0,0,0"/>
+                        <Border Width="1" Height="20" 
+                               Background="{StaticResource BorderSubtleBrush}" 
+                               Margin="16,0"/>
+                        <TextBlock Text="Target" 
                                   VerticalAlignment="Center" 
-                                  Foreground="{StaticResource TextSecondaryBrush}"
-                                  FontSize="{StaticResource FontSizeM}"
-                                  Margin="12,0,8,0"/>
+                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                  FontSize="{StaticResource FontSizeXS}"
+                                  Margin="0,0,8,0"/>
                         <TextBlock Text="{Binding RunDisplayName}" 
                                   VerticalAlignment="Center"
                                   FontSize="{StaticResource FontSizeM}"
                                   Foreground="{StaticResource TextPrimaryBrush}"/>
                     </StackPanel>
                     
-                    <ui:Button Grid.Column="2" Content="Open Folder" Icon="{ui:SymbolIcon FolderOpen24}" 
-                              Command="{Binding OpenFolderCommand}"/>
+                    <ui:Button Grid.Column="2" 
+                              Icon="{ui:SymbolIcon FolderOpen24}" 
+                              Command="{Binding OpenFolderCommand}"
+                              ToolTip="Open Folder"/>
                 </Grid>
             </Border>
             
@@ -204,19 +227,19 @@
                         
                         <Border Grid.Row="1" 
                                Margin="16,0,16,16" 
-                               Background="{StaticResource ControlBackgroundSecondaryBrush}" 
+                               Background="#0C0C0C" 
                                BorderBrush="{StaticResource BorderSubtleBrush}"
-                               BorderThickness="1"
-                               CornerRadius="{StaticResource RadiusM}">
+                               BorderThickness="0"
+                               CornerRadius="6">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                                 <TextBox Text="{Binding StdoutContent, Mode=OneWay}" 
                                         IsReadOnly="True" 
-                                        FontFamily="Consolas" 
-                                        FontSize="{StaticResource FontSizeM}"
-                                        Foreground="{StaticResource TextPrimaryBrush}"
+                                        FontFamily="Cascadia Code, Consolas" 
+                                        FontSize="11"
+                                        Foreground="#CCCCCC"
                                         BorderThickness="0"
                                         Background="Transparent"
-                                        Padding="{StaticResource ThicknessM}"/>
+                                        Padding="12"/>
                             </ScrollViewer>
                         </Border>
                     </Grid>
@@ -224,20 +247,20 @@
                 
                 <!-- Stderr Tab -->
                 <TabItem Header="Stderr">
-                    <Border Margin="{StaticResource CardPadding}" 
-                           Background="{StaticResource ControlBackgroundSecondaryBrush}" 
+                    <Border Margin="16" 
+                           Background="#0C0C0C" 
                            BorderBrush="{StaticResource BorderSubtleBrush}"
-                           BorderThickness="1"
-                           CornerRadius="{StaticResource RadiusM}">
+                           BorderThickness="0"
+                           CornerRadius="6">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                             <TextBox Text="{Binding StderrContent, Mode=OneWay}" 
                                     IsReadOnly="True" 
-                                    FontFamily="Consolas" 
-                                    FontSize="{StaticResource FontSizeM}"
+                                    FontFamily="Cascadia Code, Consolas" 
+                                    FontSize="11"
                                     BorderThickness="0"
                                     Background="Transparent"
-                                    Foreground="{StaticResource StatusErrorBrush}"
-                                    Padding="{StaticResource ThicknessM}"/>
+                                    Foreground="#FF6B6B"
+                                    Padding="12"/>
                         </ScrollViewer>
                     </Border>
                 </TabItem>
@@ -297,11 +320,12 @@
                             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                                 <TextBox Text="{Binding SelectedEventJson, Mode=OneWay}" 
                                         IsReadOnly="True" 
-                                        FontFamily="Consolas" 
-                                        FontSize="{StaticResource FontSizeS}"
+                                        FontFamily="Cascadia Code, Consolas" 
+                                        FontSize="11"
                                         Foreground="{StaticResource TextPrimaryBrush}"
                                         BorderThickness="0"
-                                        Background="Transparent"/>
+                                        Background="Transparent"
+                                        Padding="8"/>
                             </ScrollViewer>
                         </ui:CardExpander>
                     </Grid>

@@ -7,18 +7,26 @@
       d:DataContext="{d:DesignInstance vm:RunViewModel}"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      mc:Ignorable="d">
+      mc:Ignorable="d"
+      Background="{StaticResource SurfaceBackgroundBrush}">
     
-    <Grid>
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
-        <!-- Control Bar -->
-        <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
-                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
-                Padding="{StaticResource CardPadding}">
+        <!-- Control Bar Card -->
+        <Border Grid.Row="0" 
+                Background="{StaticResource CardBackgroundBrush}" 
+                BorderBrush="{StaticResource BorderSubtleBrush}" 
+                BorderThickness="1"
+                CornerRadius="{StaticResource RadiusM}"
+                Padding="20"
+                Margin="0,0,0,16">
+            <Border.Effect>
+                <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+            </Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -47,26 +55,31 @@
                 
                 <!-- Target Display (shown when coming from Plan page) -->
                 <StackPanel Orientation="Horizontal" Visibility="{Binding ShowTargetSelector, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                    <TextBlock Text="Target:" VerticalAlignment="Center" 
-                              FontSize="{StaticResource FontSizeM}" 
-                              Foreground="{StaticResource TextSecondaryBrush}"
-                              Margin="{StaticResource ControlMarginMedium}"/>
+                    <TextBlock Text="Target" 
+                              VerticalAlignment="Center" 
+                              FontSize="{StaticResource FontSizeXS}" 
+                              Foreground="{StaticResource TextTertiaryBrush}"
+                              Margin="0,0,8,0"/>
                     <TextBlock Text="{Binding TargetIdentity}" 
                               FontWeight="{StaticResource FontWeightSemiBold}" 
-                              FontSize="{StaticResource FontSizeM}"
+                              FontSize="{StaticResource FontSizeL}"
                               Foreground="{StaticResource TextPrimaryBrush}"
                               VerticalAlignment="Center"/>
-                    <ui:Badge Content="{Binding RunType}" Margin="{StaticResource ControlMarginMedium}" VerticalAlignment="Center"/>
-                    <TextBlock Text="Status:" VerticalAlignment="Center" 
-                              FontSize="{StaticResource FontSizeM}" 
-                              Foreground="{StaticResource TextSecondaryBrush}"
-                              Margin="16,0,8,0"/>
+                    <ui:Badge Content="{Binding RunType}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    <Border Width="1" Height="20" 
+                           Background="{StaticResource BorderSubtleBrush}" 
+                           Margin="16,0"/>
                     <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" 
                                     Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
                                     VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Text="Status" 
+                              VerticalAlignment="Center" 
+                              FontSize="{StaticResource FontSizeXS}" 
+                              Foreground="{StaticResource TextTertiaryBrush}"
+                              Margin="0,0,8,0"/>
                     <TextBlock Text="{Binding StatusText}" 
                               FontWeight="{StaticResource FontWeightSemiBold}" 
-                              FontSize="{StaticResource FontSizeM}"
+                              FontSize="{StaticResource FontSizeL}"
                               Foreground="{StaticResource TextPrimaryBrush}"
                               VerticalAlignment="Center"/>
                 </StackPanel>
@@ -77,21 +90,21 @@
                               Command="{Binding StartCommand}"
                               Appearance="Primary"
                               IsEnabled="{Binding IsRunning, Converter={StaticResource InverseBoolConverter}}"
-                              Margin="{StaticResource ControlMarginSmall}"/>
+                              Margin="0,0,8,0"/>
                     <ui:Button Content="Stop" 
                               Icon="{ui:SymbolIcon Stop24}"
                               Command="{Binding StopCommand}"
                               IsEnabled="{Binding IsRunning}"
-                              Margin="{StaticResource ControlMarginSmall}"/>
+                              Margin="0,0,8,0"/>
                     <ui:Button Content="Abort" 
                               Icon="{ui:SymbolIcon Dismiss24}"
                               Command="{Binding AbortCommand}"
                               IsEnabled="{Binding IsRunning}"
                               Appearance="Danger"
-                              Margin="{StaticResource ControlMarginSmall}"/>
-                    <ui:Button Content="View Logs" 
-                              Icon="{ui:SymbolIcon DocumentSearch24}"
-                              Command="{Binding ViewLogsCommand}"/>
+                              Margin="0,0,8,0"/>
+                    <ui:Button Icon="{ui:SymbolIcon DocumentSearch24}"
+                              Command="{Binding ViewLogsCommand}"
+                              ToolTip="View Logs"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -99,14 +112,20 @@
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="350"/>
+                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="16"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
-            <!-- Node List -->
+            <!-- Execution Pipeline Card -->
             <Border Grid.Column="0" 
-                    Background="{StaticResource SurfaceBackgroundBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
+                    Background="{StaticResource CardBackgroundBrush}"
+                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusM}">
+                <Border.Effect>
+                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -115,19 +134,41 @@
                     
                     <TextBlock Grid.Row="0" Text="Execution Pipeline" 
                               Style="{StaticResource SectionTitleStyle}"
-                              Margin="{StaticResource CardPadding}"/>
+                              Margin="20,20,20,12"/>
                     
                     <ListBox Grid.Row="1" 
                             ItemsSource="{Binding Nodes}"
                             SelectedItem="{Binding SelectedNode}"
+                            BorderThickness="0"
+                            Background="Transparent"
                             VirtualizingPanel.IsVirtualizing="True"
-                            ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            Padding="8,0,8,8">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
-                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0,0,0,2"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border Background="{TemplateBinding Background}"
+                                                   BorderBrush="{TemplateBinding BorderBrush}"
+                                                   BorderThickness="{TemplateBinding BorderThickness}"
+                                                   Padding="{TemplateBinding Padding}"
+                                                   CornerRadius="6">
+                                                <ContentPresenter/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
                                 <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource InteractiveHoverBrush}"/>
+                                    </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Foreground" Value="{StaticResource TextOnPrimaryBrush}"/>
+                                        <Setter Property="Background" Value="{StaticResource InteractiveSelectedBrush}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -137,11 +178,10 @@
                                 <Grid>
                                     <Grid.Style>
                                         <Style TargetType="Grid">
-                                            <Setter Property="Margin" Value="10,5"/>
+                                            <Setter Property="Margin" Value="12,8"/>
                                             <Style.Triggers>
-                                                <!-- Indent nested items (IndentLevel = 1) -->
                                                 <DataTrigger Binding="{Binding IndentLevel}" Value="1">
-                                                    <Setter Property="Margin" Value="30,5,10,5"/>
+                                                    <Setter Property="Margin" Value="32,8,12,8"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -243,73 +283,92 @@
             </Border>
             
             <!-- Output Panels -->
-            <Grid Grid.Column="1">
+            <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="16"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 
-                <!-- Console Output -->
-                <Grid Grid.Row="0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="Console Output" 
-                              Style="{StaticResource SectionTitleStyle}"
-                              Margin="{StaticResource CardPadding}"/>
-                    
-                    <Border Grid.Row="1" 
-                           Margin="16,0,16,16" 
-                           Background="{StaticResource ControlBackgroundSecondaryBrush}" 
-                           BorderBrush="{StaticResource BorderSubtleBrush}"
-                           BorderThickness="1"
-                           CornerRadius="{StaticResource RadiusM}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <TextBox Text="{Binding ConsoleOutput, Mode=OneWay}" 
-                                    IsReadOnly="True" 
-                                    FontFamily="Consolas" 
-                                    FontSize="{StaticResource FontSizeM}"
-                                    Foreground="{StaticResource TextPrimaryBrush}"
-                                    BorderThickness="0"
-                                    Background="Transparent"
-                                    TextWrapping="NoWrap"
-                                    Padding="{StaticResource ThicknessM}"/>
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
+                <!-- Console Output Card -->
+                <Border Grid.Row="0"
+                       Background="{StaticResource CardBackgroundBrush}"
+                       BorderBrush="{StaticResource BorderSubtleBrush}"
+                       BorderThickness="1"
+                       CornerRadius="{StaticResource RadiusM}">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Console Output" 
+                                  Style="{StaticResource SectionTitleStyle}"
+                                  Margin="20,20,20,12"/>
+                        
+                        <Border Grid.Row="1" 
+                               Margin="12,0,12,12" 
+                               Background="#0C0C0C" 
+                               BorderBrush="{StaticResource BorderSubtleBrush}"
+                               BorderThickness="0"
+                               CornerRadius="6">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <TextBox Text="{Binding ConsoleOutput, Mode=OneWay}" 
+                                        IsReadOnly="True" 
+                                        FontFamily="Cascadia Code, Consolas" 
+                                        FontSize="11"
+                                        Foreground="#CCCCCC"
+                                        BorderThickness="0"
+                                        Background="Transparent"
+                                        TextWrapping="NoWrap"
+                                        Padding="12"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Border>
                 
-                <!-- Events Tail -->
-                <Grid Grid.Row="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="Events (Simplified)" 
-                              Style="{StaticResource SectionTitleStyle}"
-                              Margin="{StaticResource CardPadding}"/>
-                    
-                    <Border Grid.Row="1" 
-                           Margin="16,0,16,16" 
-                           Background="{StaticResource ControlBackgroundSecondaryBrush}" 
-                           BorderBrush="{StaticResource BorderSubtleBrush}"
-                           BorderThickness="1"
-                           CornerRadius="{StaticResource RadiusM}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                            <TextBox Text="{Binding EventsOutput, Mode=OneWay}" 
-                                    IsReadOnly="True" 
-                                    FontFamily="Consolas" 
-                                    FontSize="{StaticResource FontSizeM}"
-                                    Foreground="{StaticResource TextPrimaryBrush}"
-                                    BorderThickness="0"
-                                    Background="Transparent"
-                                    TextWrapping="NoWrap"
-                                    Padding="{StaticResource ThicknessM}"/>
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
+                <!-- Events Card -->
+                <Border Grid.Row="2"
+                       Background="{StaticResource CardBackgroundBrush}"
+                       BorderBrush="{StaticResource BorderSubtleBrush}"
+                       BorderThickness="1"
+                       CornerRadius="{StaticResource RadiusM}">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                    </Border.Effect>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Row="0" Text="Events (Simplified)" 
+                                  Style="{StaticResource SectionTitleStyle}"
+                                  Margin="20,20,20,12"/>
+                        
+                        <Border Grid.Row="1" 
+                               Margin="12,0,12,12" 
+                               Background="#0C0C0C" 
+                               BorderBrush="{StaticResource BorderSubtleBrush}"
+                               BorderThickness="0"
+                               CornerRadius="6">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <TextBox Text="{Binding EventsOutput, Mode=OneWay}" 
+                                        IsReadOnly="True" 
+                                        FontFamily="Cascadia Code, Consolas" 
+                                        FontSize="11"
+                                        Foreground="#CCCCCC"
+                                        BorderThickness="0"
+                                        Background="Transparent"
+                                        TextWrapping="NoWrap"
+                                        Padding="12"/>
+                            </ScrollViewer>
+                        </Border>
+                    </Grid>
+                </Border>
             </Grid>
         </Grid>
         
