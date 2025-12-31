@@ -5,7 +5,7 @@ using PcTest.Ui.ViewModels;
 namespace PcTest.Ui.Views.Pages;
 
 /// <summary>
-/// Unified Runs page (replaces History + Logs & Results).
+/// Unified History page (replaces old History + Logs & Results).
 /// Provides master-detail layout with run list and run inspector.
 /// </summary>
 public partial class RunsPage : Page

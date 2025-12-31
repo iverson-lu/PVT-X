@@ -9,7 +9,7 @@ using PcTest.Ui.Services;
 namespace PcTest.Ui.ViewModels;
 
 /// <summary>
-/// ViewModel for the unified Runs page (replaces History + Logs & Results).
+/// ViewModel for the unified History page (replaces old History + Logs & Results).
 /// Provides a master-detail layout with run list on the left and run inspector on the right.
 /// </summary>
 public partial class RunsViewModel : ViewModelBase

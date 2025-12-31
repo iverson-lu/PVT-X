@@ -34,8 +34,8 @@ public sealed class NavigationService : INavigationService
         {
             "Plan" => App.GetService<PlanPage>(),
             "Run" => App.GetService<RunPage>(),
-            "Runs" => App.GetService<RunsPage>(),
-            "History" => App.GetService<HistoryPage>(),  // Backward compatibility
+            "History" => App.GetService<RunsPage>(),
+            "Runs" => App.GetService<RunsPage>(),  // Backward compatibility
             "LogsResults" => App.GetService<LogsResultsPage>(),  // Backward compatibility
             "Settings" => App.GetService<SettingsPage>(),
             _ => App.GetService<PlanPage>()
@@ -61,8 +61,8 @@ public sealed class NavigationService : INavigationService
 
     public void NavigateToLogsResults(string? runId = null)
     {
-        // Redirect to unified Runs page
-        NavigateTo("Runs", runId);
+        // Redirect to unified History page
+        NavigateTo("History", runId);
     }
 }
 

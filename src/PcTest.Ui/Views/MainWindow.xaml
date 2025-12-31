@@ -61,7 +61,7 @@
                                   KeyboardNavigation.TabIndex="1"/>
                         <ui:Button x:Name="RunsNavButton"
                                   Icon="{ui:SymbolIcon History24}" 
-                                  Tag="Runs" 
+                                  Tag="History" 
                                   Click="NavButton_Click"
                                   Style="{StaticResource CompactNavButtonStyle}"
                                   ToolTip="History"
