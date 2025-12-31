@@ -41,6 +41,7 @@ public partial class App : Application
             services.AddTransient<PlansTabViewModel>();
             services.AddTransient<PlanEditorViewModel>();
             services.AddTransient<RunViewModel>();
+            services.AddTransient<RunsViewModel>();
             services.AddTransient<HistoryViewModel>();
             services.AddTransient<LogsResultsViewModel>();
             services.AddTransient<RunPickerViewModel>();
@@ -50,6 +51,7 @@ public partial class App : Application
             services.AddSingleton<MainWindow>();
             services.AddTransient<PlanPage>();
             services.AddTransient<RunPage>();
+            services.AddTransient<RunsPage>();
             services.AddTransient<HistoryPage>();
             services.AddTransient<LogsResultsPage>();
             services.AddTransient<SettingsPage>();

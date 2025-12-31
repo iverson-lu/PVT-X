@@ -50,14 +50,8 @@
                               HorizontalContentAlignment="Left"
                               Padding="12,8"
                               Margin="0,0,0,4"/>
-                    <ui:Button Content="History" Icon="{ui:SymbolIcon History24}" 
-                              Tag="History" Click="NavButton_Click"
-                              HorizontalAlignment="Stretch"
-                              HorizontalContentAlignment="Left"
-                              Padding="12,8"
-                              Margin="0,0,0,4"/>
-                    <ui:Button Content="Logs &amp; Results" Icon="{ui:SymbolIcon DocumentSearch24}" 
-                              Tag="LogsResults" Click="NavButton_Click"
+                    <ui:Button Content="Runs" Icon="{ui:SymbolIcon History24}" 
+                              Tag="Runs" Click="NavButton_Click"
                               HorizontalAlignment="Stretch"
                               HorizontalContentAlignment="Left"
                               Padding="12,8"

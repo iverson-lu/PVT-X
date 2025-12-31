@@ -213,4 +213,76 @@ public partial class RunIndexEntryViewModel : ViewModelBase
     public string DurationDisplay => Duration?.ToString(@"mm\:ss\.fff") ?? "-";
     public string StatusDisplay => Status.ToString();
     public bool IsTopLevel => string.IsNullOrEmpty(ParentRunId);
+    
+    /// <summary>
+    /// Short run ID for display in table (last 8 chars of hash).
+    /// </summary>
+    public string ShortRunId
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(RunId)) return string.Empty;
+            
+            // If format is "R-TIMESTAMP-UUID" or "P-TIMESTAMP-UUID", extract last 8 chars of UUID
+            if (RunId.StartsWith("R-") || RunId.StartsWith("P-"))
+            {
+                var parts = RunId.Split('-');
+                if (parts.Length >= 3)
+                {
+                    // Get the UUID part (last segment) and take last 8 chars
+                    var uuid = parts[^1];
+                    return uuid.Length > 8 ? uuid[^8..] : uuid;
+                }
+            }
+            
+            // Fallback: take last 8 characters
+            return RunId.Length > 8 ? RunId[^8..] : RunId;
+        }
+    }
+    
+    /// <summary>
+    /// Tooltip with full run type name.
+    /// </summary>
+    public string RunTypeTooltip => RunType switch
+    {
+        RunType.TestCase => "Test Case",
+        RunType.TestSuite => "Test Suite",
+        RunType.TestPlan => "Test Plan",
+        _ => "Unknown"
+    };
+    
+    /// <summary>
+    /// Version number for display (picks the appropriate version based on run type).
+    /// </summary>
+    public string VersionDisplay
+    {
+        get
+        {
+            var version = RunType switch
+            {
+                RunType.TestCase => TestVersion,
+                RunType.TestSuite => SuiteVersion,
+                RunType.TestPlan => PlanVersion,
+                _ => null
+            };
+            return !string.IsNullOrEmpty(version) ? $"v{version}" : string.Empty;
+        }
+    }
+    
+    /// <summary>
+    /// Display name without version (since version is shown separately).
+    /// </summary>
+    public string NameWithoutVersion
+    {
+        get
+        {
+            return RunType switch
+            {
+                RunType.TestCase => TestId ?? string.Empty,
+                RunType.TestSuite => SuiteId ?? string.Empty,
+                RunType.TestPlan => PlanId ?? string.Empty,
+                _ => DisplayName
+            };
+        }
+    }
 }
