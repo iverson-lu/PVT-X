@@ -8,9 +8,9 @@
          ======================================== -->
     
     <Style x:Key="CompactNavButtonStyle" TargetType="{x:Type ui:Button}">
-        <Setter Property="Height" Value="40"/>
-        <Setter Property="Width" Value="48"/>
-        <Setter Property="Margin" Value="4,2"/>
+        <Setter Property="Height" Value="46"/>
+        <Setter Property="Width" Value="60"/>
+        <Setter Property="Margin" Value="4,4"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -41,7 +41,7 @@
                                             VerticalAlignment="Center"
                                             Content="{TemplateBinding Icon}"
                                             TextElement.Foreground="{StaticResource NavIconNormalBrush}"
-                                            TextElement.FontSize="20"/>
+                                            TextElement.FontSize="22"/>
                         </Grid>
                     </Grid>
                     
@@ -80,9 +80,9 @@
          ======================================== -->
     
     <Style x:Key="CompactNavButtonSelectedStyle" TargetType="{x:Type ui:Button}">
-        <Setter Property="Height" Value="40"/>
-        <Setter Property="Width" Value="48"/>
-        <Setter Property="Margin" Value="4,2"/>
+        <Setter Property="Height" Value="46"/>
+        <Setter Property="Width" Value="60"/>
+        <Setter Property="Margin" Value="4,4"/>
         <Setter Property="HorizontalAlignment" Value="Center"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -113,7 +113,7 @@
                                             VerticalAlignment="Center"
                                             Content="{TemplateBinding Icon}"
                                             TextElement.Foreground="{StaticResource BrandPrimaryBrush}"
-                                            TextElement.FontSize="20"
+                                            TextElement.FontSize="22"
                                             TextElement.FontWeight="SemiBold"/>
                         </Grid>
                     </Grid>
