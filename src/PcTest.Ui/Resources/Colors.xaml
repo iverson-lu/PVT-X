@@ -6,20 +6,20 @@
          ======================================== -->
     
     <!-- Brand Colors -->
-    <Color x:Key="BrandPrimaryColor">#174AD8</Color>
-    <Color x:Key="BlueGrayDarkColor">#4B7682</Color>
-    <Color x:Key="BlueGrayMediumColor">#568392</Color>
-    <Color x:Key="BlueGrayLightColor">#779CA8</Color>
+    <Color x:Key="BrandPrimaryColor">#2563EB</Color>
+    <Color x:Key="BlueGrayDarkColor">#1F2933</Color>
+    <Color x:Key="BlueGrayMediumColor">#334155</Color>
+    <Color x:Key="BlueGrayLightColor">#64748B</Color>
     
     <!-- Error/Warning Colors -->
-    <Color x:Key="ErrorRedDarkColor">#E64647</Color>
-    <Color x:Key="ErrorRedPrimaryColor">#FF504E</Color>
-    <Color x:Key="ErrorRedLightColor">#FF7171</Color>
+    <Color x:Key="ErrorRedDarkColor">#B91C1C</Color>
+    <Color x:Key="ErrorRedPrimaryColor">#DC2626</Color>
+    <Color x:Key="ErrorRedLightColor">#EF4444</Color>
     
     <!-- Neutral Colors -->
     <Color x:Key="NeutralWhiteColor">#FFFFFF</Color>
-    <Color x:Key="NeutralVeryLightColor">#F8F9FA</Color>
-    <Color x:Key="NeutralLightColor">#E9ECEF</Color>
+    <Color x:Key="NeutralVeryLightColor">#F5F7FA</Color>
+    <Color x:Key="NeutralLightColor">#E5E7EB</Color>
     <Color x:Key="NeutralMediumColor">#CED4DA</Color>
     <Color x:Key="NeutralDarkColor">#6C757D</Color>
     <Color x:Key="NeutralVeryDarkColor">#343A40</Color>
@@ -63,8 +63,8 @@
     <SolidColorBrush x:Key="NavItemHoverBrush" Color="#08000000"/><!-- 3% opacity black -->
     <SolidColorBrush x:Key="NavItemSelectedBrush" Color="{StaticResource BrandPrimaryColor}"/>
     <SolidColorBrush x:Key="NavItemSelectedTextBrush" Color="{StaticResource NeutralWhiteColor}"/>
-    <SolidColorBrush x:Key="NavItemSelectedBackgroundBrush" Color="#10174AD8"/><!-- 6% opacity brand blue -->
-    <SolidColorBrush x:Key="NavItemSelectedHoverBrush" Color="#18174AD8"/><!-- 9% opacity brand blue -->
+    <SolidColorBrush x:Key="NavItemSelectedBackgroundBrush" Color="#102563EB"/><!-- 6% opacity brand blue -->
+    <SolidColorBrush x:Key="NavItemSelectedHoverBrush" Color="#182563EB"/><!-- 9% opacity brand blue -->
     <SolidColorBrush x:Key="NavIconNormalBrush" Color="#99000000"/><!-- 60% opacity for muted gray -->
     <SolidColorBrush x:Key="NavIconHoverBrush" Color="#CC000000"/><!-- 80% opacity for darker gray -->
     

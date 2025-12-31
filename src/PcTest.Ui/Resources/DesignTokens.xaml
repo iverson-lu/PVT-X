@@ -164,4 +164,24 @@
         <Setter Property="Margin" Value="{StaticResource CardMargin}"/>
     </Style>
     
+    <!-- ========================================
+         SETTINGS / FORM FIELD STYLES
+         ======================================== -->
+    
+    <!-- Field Label Style - for form field labels in settings -->
+    <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeM}"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightNormal}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    
+    <!-- Subsection Header Style - for grouping checkboxes or settings -->
+    <Style x:Key="SubsectionHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="{StaticResource FontSizeS}"/>
+        <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+    
 </ResourceDictionary>
