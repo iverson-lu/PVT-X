@@ -8,6 +8,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
+      Loaded="Page_Loaded"
       Background="{StaticResource SurfaceBackgroundBrush}">
     
     <Grid Margin="16">
@@ -88,15 +89,15 @@
             </Grid>
         </Border>
         
-        <!-- Runs List -->
+        <!-- Master-Detail Layout -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="380"/>
+                <ColumnDefinition Width="500" MinWidth="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" MinWidth="400"/>
             </Grid.ColumnDefinitions>
             
-            <!-- Data Grid Card -->
+            <!-- Master: Run List Card -->
             <Border Grid.Column="0"
                    Background="{StaticResource CardBackgroundBrush}"
                    BorderBrush="{StaticResource BorderSubtleBrush}"
@@ -115,19 +116,117 @@
                      SelectionMode="Single"
                      VirtualizingPanel.IsVirtualizing="True"
                      VirtualizingPanel.VirtualizationMode="Recycling"
-                     EnableRowVirtualization="True">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Run ID" Binding="{Binding RunId}" Width="200"/>
-                    <DataGridTextColumn Header="Type" Binding="{Binding RunType}" Width="80"/>
-                    <DataGridTextColumn Header="Target" Binding="{Binding DisplayName}" Width="200"/>
-                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="80"/>
-                    <DataGridTextColumn Header="Start Time" Binding="{Binding StartTimeDisplay}" Width="150"/>
-                    <DataGridTextColumn Header="Duration" Binding="{Binding DurationDisplay}" Width="100"/>
-                </DataGrid.Columns>
-            </DataGrid>
+                     EnableRowVirtualization="True"
+                     GridLinesVisibility="Horizontal"
+                     HorizontalGridLinesBrush="#10000000"
+                     VerticalGridLinesBrush="Transparent"
+                     RowHeight="48">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="Padding" Value="0,6"/>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <!-- Status Column: Icon Only -->
+                        <DataGridTemplateColumn Header="" Width="50" SortMemberPath="Status">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:SymbolIcon Symbol="{Binding Status, Converter={StaticResource RunStatusToIconConverter}}" 
+                                                  Foreground="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                                  FontSize="20" 
+                                                  HorizontalAlignment="Center"
+                                                  ToolTip="{Binding Status}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <!-- Target Column: Name + Version -->
+                        <DataGridTemplateColumn Header="Target" Width="*" MinWidth="150" SortMemberPath="DisplayName">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding NameWithoutVersion}" 
+                                                  FontSize="13"
+                                                  FontWeight="Medium"
+                                                  Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding VersionDisplay}" 
+                                                  FontSize="11"
+                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <!-- Type Column: Icon Only -->
+                        <DataGridTemplateColumn Header="Type" Width="50" SortMemberPath="RunType">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:SymbolIcon Symbol="{Binding RunType, Converter={StaticResource RunTypeToIconConverter}}" 
+                                                  FontSize="20"
+                                                  Foreground="{StaticResource TextSecondaryBrush}"
+                                                  HorizontalAlignment="Center"
+                                                  ToolTip="{Binding RunTypeTooltip}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <!-- Start Time Column: Date + Time -->
+                        <DataGridTemplateColumn Header="Start" Width="80" SortMemberPath="StartTime">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding StartTime, StringFormat=yyyy-MM-dd}" 
+                                                  FontSize="12"
+                                                  Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding StartTime, StringFormat=HH:mm:ss}" 
+                                                  FontSize="11"
+                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Margin="0,1,0,0"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <!-- Duration Column: Seconds only -->
+                        <DataGridTemplateColumn Header="Duration" Width="80" SortMemberPath="Duration">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Duration, StringFormat=mm\\:ss}" 
+                                              FontFamily="Consolas"
+                                              FontSize="12"
+                                              Foreground="{StaticResource TextSecondaryBrush}"
+                                              VerticalAlignment="Center"
+                                              ToolTip="{Binding Duration, StringFormat=hh\\:mm\\:ss}"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        
+                        <!-- Run ID Column: Short Display -->
+                        <DataGridTemplateColumn Header="Run ID" Width="80" SortMemberPath="RunId">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ShortRunId}" 
+                                              FontFamily="Consolas"
+                                              FontSize="11"
+                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                              ToolTip="{Binding RunId}"
+                                              VerticalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
             </Border>
             
-            <!-- Details Panel Card -->
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" 
+                         Width="16" 
+                         HorizontalAlignment="Stretch" 
+                         Background="Transparent"
+                         ShowsPreview="False"/>
+            
+            <!-- Detail: Run Inspector Card -->
             <Border Grid.Column="2" 
                     Background="{StaticResource CardBackgroundBrush}"
                     BorderBrush="{StaticResource BorderSubtleBrush}" 
@@ -136,125 +235,305 @@
                 <Border.Effect>
                     <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
                 </Border.Effect>
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-                    <StackPanel DataContext="{Binding SelectedRun}">
-                        <TextBlock Text="Run Details" 
-                                  Style="{StaticResource PageTitleStyle}"
-                                  Margin="0,0,0,24"/>
-                        
-                        <Grid Visibility="{Binding DataContext.SelectedRun, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource NullToVisibilityConverter}}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Run ID" 
-                                      FontSize="{StaticResource FontSizeXS}"
+                
+                <Grid>
+                    <!-- Show placeholder when no run is selected -->
+                    <Grid Visibility="{Binding IsRunSelected, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <ui:SymbolIcon Symbol="DocumentSearch24" FontSize="48" Foreground="{StaticResource TextTertiaryBrush}"/>
+                            <TextBlock Text="Select a run to view details" 
+                                      FontSize="{StaticResource FontSizeL}"
                                       Foreground="{StaticResource TextTertiaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunId}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                      TextWrapping="Wrap"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Type" 
-                                      FontSize="{StaticResource FontSizeXS}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RunType}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Target" 
-                                      FontSize="{StaticResource FontSizeXS}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DisplayName}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Status" 
-                                      FontSize="{StaticResource FontSizeXS}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Status}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Start" 
-                                      FontSize="{StaticResource FontSizeXS}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding StartTimeDisplay}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Duration" 
-                                      FontSize="{StaticResource FontSizeXS}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding DurationDisplay}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Test ID" 
-                                      FontSize="{StaticResource FontSizeXS}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding TestId}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"
-                                      Margin="0,0,0,12"/>
-                            
-                            <TextBlock Grid.Row="7" Grid.Column="0" Text="Suite ID" 
-                                      FontSize="{StaticResource FontSizeXS}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"/>
-                            <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding SuiteId}" 
-                                      FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextPrimaryBrush}"/>
-                        </Grid>
-                        
-                        <!-- Actions -->
-                        <StackPanel Margin="0,24,0,0">
-                            <ui:Button Content="View Logs &amp; Results" 
-                                      Icon="{ui:SymbolIcon DocumentSearch24}"
-                                      Command="{Binding DataContext.ViewLogsResultsCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                      Appearance="Primary"
-                                      HorizontalAlignment="Stretch"
-                                      Margin="0,0,0,8"/>
-                            <ui:Button Content="Open Folder" 
-                                      Icon="{ui:SymbolIcon FolderOpen24}"
-                                      Command="{Binding DataContext.OpenFolderCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                      HorizontalAlignment="Stretch"
-                                      Margin="0,0,0,8"/>
-                            <ui:Button Content="Rerun" 
-                                      Icon="{ui:SymbolIcon ArrowRepeatAll24}"
-                                      Command="{Binding DataContext.RerunCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                                      HorizontalAlignment="Stretch"/>
+                                      Margin="0,16,0,0"
+                                      HorizontalAlignment="Center"/>
                         </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                    </Grid>
+                    
+                    <!-- Show inspector when run is selected -->
+                    <Grid Visibility="{Binding IsRunSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Inspector Header -->
+                    <Border Grid.Row="0" 
+                            Background="{StaticResource ControlBackgroundSecondaryBrush}"
+                            BorderBrush="{StaticResource BorderSubtleBrush}" 
+                            BorderThickness="0,0,0,1"
+                            Padding="20,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding SelectedRun.RunId}" 
+                                              FontFamily="Consolas"
+                                              FontWeight="{StaticResource FontWeightSemiBold}" 
+                                              FontSize="{StaticResource FontSizeM}"
+                                              Foreground="{StaticResource TextPrimaryBrush}"
+                                              VerticalAlignment="Center"/>
+                                    <ui:Button Icon="{ui:SymbolIcon Copy20}" 
+                                              Command="{Binding CopyRunIdCommand}"
+                                              ToolTip="Copy full Run ID"
+                                              Appearance="Secondary"
+                                              Margin="8,0,0,0"
+                                              Padding="4"
+                                              Height="28"
+                                              Width="28"
+                                              VerticalAlignment="Center"/>
+                                    <ui:Badge Content="{Binding RunStatus}" 
+                                             VerticalAlignment="Center"
+                                             Margin="8,0,0,0"
+                                             Background="{Binding RunStatusEnum, Converter={StaticResource RunStatusToBrushConverter}}"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Target: " 
+                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                              FontSize="{StaticResource FontSizeM}"
+                                              VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding RunDisplayName}" 
+                                              FontSize="{StaticResource FontSizeM}"
+                                              Foreground="{StaticResource TextSecondaryBrush}"
+                                              VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                            
+                            <ui:Button Grid.Column="1" 
+                                      Icon="{ui:SymbolIcon FolderOpen24}" 
+                                      Command="{Binding OpenFolderCommand}"
+                                      ToolTip="Open Run Folder"/>
+                        </Grid>
+                    </Border>
+                    
+                    <!-- Inspector Tabs -->
+                    <TabControl Grid.Row="1" Margin="0">
+                        <!-- Summary Tab -->
+                        <TabItem Header="Summary">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                                         Padding="{StaticResource CardPadding}">
+                                <StackPanel>
+                                    <ui:CardExpander Header="Run Information" IsExpanded="True">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Status:" 
+                                                      Style="{StaticResource LabelTextStyle}"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunStatus}" 
+                                                      Style="{StaticResource BodyTextStyle}"/>
+                                            
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Start Time:" 
+                                                      Style="{StaticResource LabelTextStyle}"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding StartTimeDisplay}" 
+                                                      Style="{StaticResource BodyTextStyle}"/>
+                                            
+                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="End Time:" 
+                                                      Style="{StaticResource LabelTextStyle}"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EndTimeDisplay}" 
+                                                      Style="{StaticResource BodyTextStyle}"/>
+                                            
+                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Duration:" 
+                                                      Style="{StaticResource LabelTextStyle}"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurationDisplay}" 
+                                                      Style="{StaticResource BodyTextStyle}"/>
+                                            
+                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Exit Code:" 
+                                                      Style="{StaticResource LabelTextStyle}"/>
+                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ExitCode}" 
+                                                      Style="{StaticResource BodyTextStyle}"/>
+                                            
+                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Error:" 
+                                                      Style="{StaticResource LabelTextStyle}"/>
+                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorMessage}" 
+                                                      Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
+                                        </Grid>
+                                    </ui:CardExpander>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+                        
+                        <!-- Stdout Tab -->
+                        <TabItem Header="Stdout">
+                            <Border Margin="16" 
+                                   Background="#0C0C0C" 
+                                   BorderBrush="{StaticResource BorderSubtleBrush}"
+                                   BorderThickness="0"
+                                   CornerRadius="6">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                    <TextBox Text="{Binding StdoutContent, Mode=OneWay}" 
+                                            IsReadOnly="True" 
+                                            FontFamily="Cascadia Code, Consolas" 
+                                            FontSize="11"
+                                            Foreground="#CCCCCC"
+                                            BorderThickness="0"
+                                            Background="Transparent"
+                                            Padding="12"/>
+                                </ScrollViewer>
+                            </Border>
+                        </TabItem>
+                        
+                        <!-- Stderr Tab -->
+                        <TabItem Header="Stderr">
+                            <Border Margin="16" 
+                                   Background="#0C0C0C" 
+                                   BorderBrush="{StaticResource BorderSubtleBrush}"
+                                   BorderThickness="0"
+                                   CornerRadius="6">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                    <TextBox Text="{Binding StderrContent, Mode=OneWay}" 
+                                            IsReadOnly="True" 
+                                            FontFamily="Cascadia Code, Consolas" 
+                                            FontSize="11"
+                                            BorderThickness="0"
+                                            Background="Transparent"
+                                            Foreground="#FF6B6B"
+                                            Padding="12"/>
+                                </ScrollViewer>
+                            </Border>
+                        </TabItem>
+                        
+                        <!-- Structured Events Tab -->
+                        <TabItem Header="Structured Events">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Event Filters -->
+                                <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
+                                        BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
+                                        Padding="{StaticResource CardPadding}">
+                                    <WrapPanel>
+                                        <ui:TextBox PlaceholderText="Filter events..." 
+                                                   Text="{Binding EventSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                   Width="200" 
+                                                   Margin="{StaticResource ControlMarginMedium}"
+                                                   Icon="{ui:SymbolIcon Filter24}"/>
+                                        <CheckBox Content="Errors only" 
+                                                 IsChecked="{Binding ErrorsOnly}"
+                                                 VerticalAlignment="Center"
+                                                 Margin="{StaticResource ControlMarginMedium}"/>
+                                        <ui:Button Content="Refresh" Icon="{ui:SymbolIcon ArrowSync24}" 
+                                                  Command="{Binding RefreshEventsCommand}"
+                                                  Margin="{StaticResource ControlMarginMedium}"/>
+                                        <ui:Button Content="Clear" Icon="{ui:SymbolIcon Dismiss24}" 
+                                                  Command="{Binding ClearEventFiltersCommand}"/>
+                                    </WrapPanel>
+                                </Border>
+                                
+                                <!-- Events Grid -->
+                                <DataGrid Grid.Row="1" 
+                                         ItemsSource="{Binding FilteredEvents}"
+                                         SelectedItem="{Binding SelectedEvent}"
+                                         AutoGenerateColumns="False"
+                                         IsReadOnly="True"
+                                         SelectionMode="Single"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling"
+                                         EnableRowVirtualization="True">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Timestamp" Binding="{Binding TimestampDisplay}" Width="120"/>
+                                        <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80"/>
+                                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="150"/>
+                                        <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                
+                                <!-- Event Details -->
+                                <ui:CardExpander Grid.Row="2" Header="Event Details" IsExpanded="True" MaxHeight="200">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                        <TextBox Text="{Binding EventDetailsJson, Mode=OneWay}" 
+                                                IsReadOnly="True" 
+                                                FontFamily="Cascadia Code, Consolas" 
+                                                FontSize="11"
+                                                Foreground="{StaticResource TextPrimaryBrush}"
+                                                BorderThickness="0"
+                                                Background="Transparent"
+                                                Padding="8"/>
+                                    </ScrollViewer>
+                                </ui:CardExpander>
+                            </Grid>
+                        </TabItem>
+                        
+                        <!-- Artifacts Tab -->
+                        <TabItem Header="Artifacts">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="250" MinWidth="200"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Artifacts Tree -->
+                                <Border Grid.Column="0" 
+                                       BorderBrush="{StaticResource BorderSubtleBrush}" 
+                                       BorderThickness="0,0,1,0"
+                                       Padding="8">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <TreeView ItemsSource="{Binding Artifacts}" 
+                                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                                 SelectedItemChanged="ArtifactsTree_SelectedItemChanged">
+                                            <TreeView.ItemTemplate>
+                                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Name}"/>
+                                                        <TextBlock Text="{Binding SizeDisplay}" 
+                                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                                  FontSize="{StaticResource FontSizeXS}"
+                                                                  Margin="8,0,0,0"/>
+                                                    </StackPanel>
+                                                </HierarchicalDataTemplate>
+                                            </TreeView.ItemTemplate>
+                                        </TreeView>
+                                    </ScrollViewer>
+                                </Border>
+                                
+                                <GridSplitter Grid.Column="1" 
+                                             Width="4" 
+                                             HorizontalAlignment="Stretch" 
+                                             Background="Transparent"/>
+                                
+                                <!-- Artifact Content Viewer -->
+                                <Border Grid.Column="2" 
+                                       Background="#0C0C0C"
+                                       Margin="8">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                        <TextBox Text="{Binding ArtifactContent, Mode=OneWay}" 
+                                                IsReadOnly="True" 
+                                                FontFamily="Cascadia Code, Consolas" 
+                                                FontSize="11"
+                                                Foreground="#CCCCCC"
+                                                BorderThickness="0"
+                                                Background="Transparent"
+                                                Padding="12"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </Grid>
+            </Grid>
             </Border>
         </Grid>
         
         <!-- Busy Overlay -->
-        <Border Grid.RowSpan="2" Background="#80000000" 
+        <Border Grid.RowSpan="3" Background="#80000000" 
                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ui:ProgressRing IsIndeterminate="True"/>

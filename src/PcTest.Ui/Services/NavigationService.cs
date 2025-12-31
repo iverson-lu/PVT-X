@@ -34,9 +34,9 @@ public sealed class NavigationService : INavigationService
         {
             "Plan" => App.GetService<PlanPage>(),
             "Run" => App.GetService<RunPage>(),
-            "History" => App.GetService<RunsPage>(),
-            "Runs" => App.GetService<RunsPage>(),  // Backward compatibility
-            "LogsResults" => App.GetService<LogsResultsPage>(),  // Backward compatibility
+            "History" => App.GetService<HistoryPage>(),
+            "Runs" => App.GetService<HistoryPage>(),  // Backward compatibility
+            "LogsResults" => App.GetService<HistoryPage>(),  // Backward compatibility
             "Settings" => App.GetService<SettingsPage>(),
             _ => App.GetService<PlanPage>()
         };
