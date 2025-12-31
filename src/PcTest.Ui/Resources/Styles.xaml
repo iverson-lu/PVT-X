@@ -170,4 +170,107 @@
         </Style.Triggers>
     </Style>
     
+    <!-- ========================================
+         SEGMENTED CONTROL (PILL-STYLE TABS)
+         Modern navigation tabs with rounded container
+         ======================================== -->
+    
+    <Style x:Key="SegmentedControlTabItem" TargetType="{x:Type TabItem}">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="20,10"/>
+        <Setter Property="Margin" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabItem}">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderThickness="0"
+                            CornerRadius="8"
+                            Padding="{TemplateBinding Padding}"
+                            Margin="2">
+                        <ContentPresenter x:Name="ContentSite"
+                                        ContentSource="Header"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        TextElement.Foreground="{StaticResource TextSecondaryBrush}"
+                                        TextElement.FontSize="14"
+                                        TextElement.FontWeight="Normal"/>
+                    </Border>
+                    
+                    <ControlTemplate.Triggers>
+                        <!-- Hover State -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsSelected" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#F0F4F8"/>
+                        </MultiTrigger>
+                        
+                        <!-- Selected State -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="White"/>
+                            <Setter TargetName="Border" Property="Effect">
+                                <Setter.Value>
+                                    <DropShadowEffect Color="#20000000" BlurRadius="6" ShadowDepth="1" Direction="270" Opacity="0.25"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter TargetName="ContentSite" Property="TextElement.Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                            <Setter TargetName="ContentSite" Property="TextElement.FontWeight" Value="Medium"/>
+                        </Trigger>
+                        
+                        <!-- Selected + Hover -->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsSelected" Value="True"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#FAFBFC"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="SegmentedControlTabControl" TargetType="{x:Type TabControl}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Tab Headers Container (Segmented Control) -->
+                        <Border Grid.Row="0"
+                                Background="#E8EFF6"
+                                CornerRadius="10"
+                                Padding="4"
+                                HorizontalAlignment="Left"
+                                Margin="0,0,0,16">
+                            <StackPanel Orientation="Horizontal"
+                                       IsItemsHost="True"/>
+                        </Border>
+                        
+                        <!-- Tab Content Area -->
+                        <Border Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0">
+                            <ContentPresenter ContentSource="SelectedContent"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
 </ResourceDictionary>

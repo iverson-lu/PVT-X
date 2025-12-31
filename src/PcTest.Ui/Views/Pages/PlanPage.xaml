@@ -11,9 +11,10 @@
       Background="{StaticResource SurfaceBackgroundBrush}">
     
     <Grid Margin="16">
-        <TabControl SelectedIndex="{Binding SelectedTabIndex}">
+        <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                    Style="{StaticResource SegmentedControlTabControl}">
             <!-- Cases Tab -->
-            <TabItem Header="Cases">
+            <TabItem Header="Cases" Style="{StaticResource SegmentedControlTabItem}">
                 <Grid Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="380"/>
@@ -346,7 +347,7 @@
             </TabItem>
             
             <!-- Suites Tab -->
-            <TabItem Header="Suites">
+            <TabItem Header="Suites" Style="{StaticResource SegmentedControlTabItem}">
                 <Grid Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="380"/>
@@ -834,7 +835,7 @@
             </TabItem>
             
             <!-- Plans Tab -->
-            <TabItem Header="Plans">
+            <TabItem Header="Plans" Style="{StaticResource SegmentedControlTabItem}">
                 <Grid Margin="0,16,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="380"/>
