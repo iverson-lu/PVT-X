@@ -83,7 +83,7 @@
                                     Padding="8,0">
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">
-                                        <Setter Property="Padding" Value="12,10"/>
+                                        <Setter Property="Padding" Value="20,10"/>
                                         <Setter Property="Margin" Value="0,0,0,2"/>
                                         <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="BorderThickness" Value="0"/>
@@ -421,7 +421,7 @@
                                     Padding="8,0">
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">
-                                        <Setter Property="Padding" Value="12,10"/>
+                                        <Setter Property="Padding" Value="20,10"/>
                                         <Setter Property="Margin" Value="0,0,0,2"/>
                                         <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="BorderThickness" Value="0"/>
@@ -909,7 +909,7 @@
                                     Padding="8,0">
                                 <ListBox.ItemContainerStyle>
                                     <Style TargetType="ListBoxItem">
-                                        <Setter Property="Padding" Value="12,10"/>
+                                        <Setter Property="Padding" Value="20,10"/>
                                         <Setter Property="Margin" Value="0,0,0,2"/>
                                         <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="BorderThickness" Value="0"/>
