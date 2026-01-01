@@ -19,13 +19,26 @@ public partial class HistoryViewModel : ViewModelBase
     private readonly IFileDialogService _fileDialogService;
     private CancellationTokenSource? _loadCancellationTokenSource;
 
+    /// <summary>
+    /// Flattened list of visible tree nodes for virtualized display.
+    /// </summary>
     [ObservableProperty]
-    private ObservableCollection<RunIndexEntryViewModel> _runs = new();
+    private ObservableCollection<RunTreeNodeViewModel> _visibleNodes = new();
+
+    /// <summary>
+    /// Root tree nodes (Plan level or top-level runs).
+    /// </summary>
+    private List<RunTreeNodeViewModel> _rootNodes = new();
+
+    /// <summary>
+    /// All tree nodes indexed by RunId for quick lookup.
+    /// </summary>
+    private Dictionary<string, RunTreeNodeViewModel> _nodesByRunId = new();
 
     [ObservableProperty]
-    private RunIndexEntryViewModel? _selectedRun;
+    private RunTreeNodeViewModel? _selectedNode;
 
-    partial void OnSelectedRunChanged(RunIndexEntryViewModel? value)
+    partial void OnSelectedNodeChanged(RunTreeNodeViewModel? value)
     {
         // Cancel any pending load operation
         _loadCancellationTokenSource?.Cancel();
@@ -43,8 +56,13 @@ public partial class HistoryViewModel : ViewModelBase
         _loadCancellationTokenSource = new CancellationTokenSource();
         
         // Load full run details when selection changes
-        _ = LoadRunDetailsAsync(value.RunId, _loadCancellationTokenSource.Token);
+        _ = LoadRunDetailsAsync(value.Run.RunId, _loadCancellationTokenSource.Token);
     }
+
+    /// <summary>
+    /// Gets the selected run from the selected node.
+    /// </summary>
+    public RunIndexEntryViewModel? SelectedRun => SelectedNode?.Run;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -117,7 +135,15 @@ public partial class HistoryViewModel : ViewModelBase
     partial void OnSearchTextChanged(string value) => ApplyFilter();
     partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
     partial void OnRunTypeFilterChanged(string value) => _ = LoadAsync();
-    partial void OnTopLevelOnlyChanged(bool value) => _ = LoadAsync();
+    partial void OnTopLevelOnlyChanged(bool value)
+    {
+        // Notify all nodes that CanExpand may have changed
+        foreach (var node in _nodesByRunId.Values)
+        {
+            node.NotifyCanExpandChanged();
+        }
+        RebuildVisibleNodes();
+    }
     partial void OnStartTimeFromChanged(DateTime? value) => _ = LoadAsync();
     partial void OnStartTimeToChanged(DateTime? value) => _ = LoadAsync();
     partial void OnEventSearchTextChanged(string value) => ApplyEventFilter();
@@ -160,19 +186,191 @@ public partial class HistoryViewModel : ViewModelBase
 
     private void ApplyFilter()
     {
-        Runs.Clear();
-        var filtered = string.IsNullOrWhiteSpace(SearchText)
-            ? _allRuns
-            : _allRuns.Where(r =>
-                r.RunId.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                r.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                (r.TestId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (r.SuiteId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (r.PlanId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
-
-        foreach (var r in filtered)
+        if (string.IsNullOrWhiteSpace(SearchText))
         {
-            Runs.Add(r);
+            // No search text - rebuild with current expand state
+            RebuildVisibleNodes();
+            return;
+        }
+
+        // Search mode: find matching nodes and show their ancestor chain
+        var matchingNodeIds = new HashSet<string>();
+        var ancestorsToExpand = new HashSet<string>();
+
+        foreach (var node in _nodesByRunId.Values)
+        {
+            if (MatchesSearch(node.Run))
+            {
+                matchingNodeIds.Add(node.Run.RunId);
+                
+                // Mark all ancestors to be shown and expanded
+                var parent = node.Parent;
+                while (parent != null)
+                {
+                    ancestorsToExpand.Add(parent.Run.RunId);
+                    parent.IsExpanded = true;
+                    parent = parent.Parent;
+                }
+            }
+        }
+
+        // Build visible nodes showing matching nodes and their ancestors
+        VisibleNodes.Clear();
+        foreach (var root in _rootNodes)
+        {
+            AddFilteredNodes(root, matchingNodeIds, ancestorsToExpand);
+        }
+    }
+
+    private bool MatchesSearch(RunIndexEntryViewModel run)
+    {
+        return run.RunId.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+               run.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+               (run.TestId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (run.SuiteId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (run.PlanId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private void AddFilteredNodes(RunTreeNodeViewModel node, HashSet<string> matchingIds, HashSet<string> ancestorIds)
+    {
+        var isMatch = matchingIds.Contains(node.Run.RunId);
+        var isAncestor = ancestorIds.Contains(node.Run.RunId);
+        
+        if (isMatch || isAncestor)
+        {
+            VisibleNodes.Add(node);
+            
+            if (node.IsExpanded || isAncestor)
+            {
+                foreach (var child in node.Children)
+                {
+                    AddFilteredNodes(child, matchingIds, ancestorIds);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Rebuilds the visible nodes list based on expand/collapse state.
+    /// </summary>
+    private void RebuildVisibleNodes()
+    {
+        VisibleNodes.Clear();
+        
+        if (TopLevelOnly)
+        {
+            // Show only root nodes, no expand/collapse capability
+            foreach (var root in _rootNodes)
+            {
+                // Reset depth to 0 for display
+                root.Depth = 0;
+                VisibleNodes.Add(root);
+            }
+        }
+        else
+        {
+            // Show full tree with expand/collapse capability
+            foreach (var root in _rootNodes)
+            {
+                AddVisibleNodes(root);
+            }
+        }
+    }
+
+    private void AddVisibleNodes(RunTreeNodeViewModel node)
+    {
+        VisibleNodes.Add(node);
+        
+        if (node.IsExpanded)
+        {
+            foreach (var child in node.Children)
+            {
+                AddVisibleNodes(child);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Toggles the expand/collapse state of a node.
+    /// </summary>
+    public void ToggleNodeExpansion(RunTreeNodeViewModel node)
+    {
+        if (!node.HasChildren) return;
+        
+        node.IsExpanded = !node.IsExpanded;
+        
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            RebuildVisibleNodes();
+        }
+        else
+        {
+            ApplyFilter();
+        }
+    }
+
+    /// <summary>
+    /// Builds the tree structure from flat run list.
+    /// </summary>
+    private void BuildTree()
+    {
+        _rootNodes.Clear();
+        _nodesByRunId.Clear();
+        
+        // First pass: create all nodes
+        foreach (var run in _allRuns)
+        {
+            var node = new RunTreeNodeViewModel(run, this);
+            _nodesByRunId[run.RunId] = node;
+        }
+        
+        // Second pass: establish parent-child relationships
+        foreach (var node in _nodesByRunId.Values)
+        {
+            if (!string.IsNullOrEmpty(node.Run.ParentRunId) && 
+                _nodesByRunId.TryGetValue(node.Run.ParentRunId, out var parentNode))
+            {
+                parentNode.Children.Add(node);
+                node.Parent = parentNode;
+                node.Depth = parentNode.Depth + 1;
+            }
+            else
+            {
+                // No parent found - this is a root node
+                _rootNodes.Add(node);
+            }
+        }
+        
+        // Sort root nodes by start time (descending)
+        _rootNodes = _rootNodes.OrderByDescending(n => n.Run.StartTime).ToList();
+        
+        // Sort children by start time
+        foreach (var node in _nodesByRunId.Values)
+        {
+            if (node.Children.Count > 0)
+            {
+                var sorted = node.Children.OrderBy(c => c.Run.StartTime).ToList();
+                node.Children.Clear();
+                foreach (var child in sorted)
+                {
+                    node.Children.Add(child);
+                }
+            }
+        }
+        
+        // Update depths recursively
+        foreach (var root in _rootNodes)
+        {
+            UpdateDepths(root, 0);
+        }
+    }
+
+    private void UpdateDepths(RunTreeNodeViewModel node, int depth)
+    {
+        node.Depth = depth;
+        foreach (var child in node.Children)
+        {
+            UpdateDepths(child, depth + 1);
         }
     }
 
@@ -467,14 +665,16 @@ public partial class HistoryViewModel : ViewModelBase
 
         try
         {
+            // Note: For tree view, we need ALL runs (not just top-level) to build the hierarchy
+            // But we still apply other filters
             var filter = new RunFilter
             {
                 StartTimeFrom = StartTimeFrom,
                 StartTimeTo = StartTimeTo,
                 Status = GetStatusFilterEnum(),
                 RunType = GetRunTypeFilterEnum(),
-                TopLevelOnly = TopLevelOnly,
-                MaxResults = 500
+                TopLevelOnly = false, // Always load all runs for tree building
+                MaxResults = 2000 // Increased limit for full hierarchy
             };
 
             var runs = await _runRepository.GetRunsAsync(filter);
@@ -502,6 +702,10 @@ public partial class HistoryViewModel : ViewModelBase
                 });
             }
 
+            // Build tree structure
+            BuildTree();
+            
+            // Apply current filter/search
             ApplyFilter();
         }
         finally
@@ -517,10 +721,18 @@ public partial class HistoryViewModel : ViewModelBase
         // If a runId was provided as parameter, select that run
         if (parameter is string runId && !string.IsNullOrEmpty(runId))
         {
-            var run = Runs.FirstOrDefault(r => r.RunId == runId);
-            if (run != null)
+            if (_nodesByRunId.TryGetValue(runId, out var node))
             {
-                SelectedRun = run;
+                // Expand ancestors to make the node visible
+                var parent = node.Parent;
+                while (parent != null)
+                {
+                    parent.IsExpanded = true;
+                    parent = parent.Parent;
+                }
+                
+                RebuildVisibleNodes();
+                SelectedNode = node;
             }
         }
     }
@@ -751,6 +963,93 @@ public partial class RunIndexEntryViewModel : ViewModelBase
                 _ => DisplayName
             };
         }
+    }
+}
+
+/// <summary>
+/// ViewModel for a tree node in the run hierarchy.
+/// </summary>
+public partial class RunTreeNodeViewModel : ViewModelBase
+{
+    private readonly HistoryViewModel _viewModel;
+
+    public RunTreeNodeViewModel(RunIndexEntryViewModel run, HistoryViewModel viewModel)
+    {
+        Run = run;
+        _viewModel = viewModel;
+        
+        // Watch for children changes to update HasChildren and CanExpand
+        _children.CollectionChanged += (s, e) => 
+        {
+            OnPropertyChanged(nameof(HasChildren));
+            OnPropertyChanged(nameof(CanExpand));
+        };
+    }
+
+    /// <summary>
+    /// The underlying run data.
+    /// </summary>
+    public RunIndexEntryViewModel Run { get; }
+
+    /// <summary>
+    /// Parent node in the tree (null for root nodes).
+    /// </summary>
+    public RunTreeNodeViewModel? Parent { get; set; }
+
+    /// <summary>
+    /// Child nodes.
+    /// </summary>
+    [ObservableProperty]
+    private ObservableCollection<RunTreeNodeViewModel> _children = new();
+
+    partial void OnChildrenChanged(ObservableCollection<RunTreeNodeViewModel> value)
+    {
+        OnPropertyChanged(nameof(HasChildren));
+        OnPropertyChanged(nameof(CanExpand));
+        value.CollectionChanged += (s, e) => 
+        {
+            OnPropertyChanged(nameof(HasChildren));
+            OnPropertyChanged(nameof(CanExpand));
+        };
+    }
+
+    /// <summary>
+    /// Whether this node is expanded.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    /// <summary>
+    /// Depth in the tree (0 for root nodes).
+    /// </summary>
+    [ObservableProperty]
+    private int _depth;
+
+    /// <summary>
+    /// Whether this node has children.
+    /// </summary>
+    public bool HasChildren => Children.Count > 0;
+
+    /// <summary>
+    /// Whether expand/collapse is available (has children and not in top-level-only mode).
+    /// </summary>
+    public bool CanExpand => HasChildren && !_viewModel.TopLevelOnly;
+
+    /// <summary>
+    /// Notifies that CanExpand may have changed.
+    /// </summary>
+    public void NotifyCanExpandChanged()
+    {
+        OnPropertyChanged(nameof(CanExpand));
+    }
+
+    /// <summary>
+    /// Toggles the expand/collapse state.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleExpand()
+    {
+        _viewModel.ToggleNodeExpansion(this);
     }
 }
 

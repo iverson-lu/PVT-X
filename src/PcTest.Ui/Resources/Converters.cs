@@ -125,6 +125,22 @@ public class StringToBoolConverter : IValueConverter
 }
 
 /// <summary>
+/// Converts string to Visibility (empty/null = Collapsed, non-empty = Visible).
+/// </summary>
+public class StringToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return string.IsNullOrEmpty(value as string) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
 /// Converts boolean to Opacity (true = 1.0, false = 0.0).
 /// </summary>
 public class BoolToOpacityConverter : IValueConverter
@@ -298,6 +314,72 @@ public class RunStatusToIconConverter : IValueConverter
             };
         }
         return "Hourglass20";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts tree depth to left margin for indentation.
+/// Default multiplier is 16px per level.
+/// </summary>
+public class DepthToIndentConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int depth)
+        {
+            var multiplier = 16.0;
+            if (parameter is string paramStr && double.TryParse(paramStr, out var customMultiplier))
+            {
+                multiplier = customMultiplier;
+            }
+            return new Thickness(depth * multiplier, 0, 0, 0);
+        }
+        return new Thickness(0);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts boolean HasChildren to Visibility for expand/collapse arrow.
+/// </summary>
+public class HasChildrenToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool hasChildren)
+        {
+            return hasChildren ? Visibility.Visible : Visibility.Hidden;
+        }
+        return Visibility.Hidden;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts IsExpanded to expand/collapse icon symbol.
+/// </summary>
+public class IsExpandedToIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool isExpanded)
+        {
+            return isExpanded ? "ChevronDown20" : "ChevronRight20";
+        }
+        return "ChevronRight20";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
