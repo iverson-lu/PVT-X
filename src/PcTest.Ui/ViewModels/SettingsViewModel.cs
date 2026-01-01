@@ -13,6 +13,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly IFileDialogService _fileDialogService;
     private readonly IDiscoveryService _discoveryService;
+    private readonly IThemeManager _themeManager;
 
     [ObservableProperty] private string _workspaceRoot = string.Empty;
     [ObservableProperty] private string _testCasesRoot = string.Empty;
@@ -22,7 +23,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _autoDiscoverOnStartup = true;
     [ObservableProperty] private int _defaultTimeoutSec = 300;
     [ObservableProperty] private int _runRetentionDays = 30;
-    [ObservableProperty] private string _theme = "Dark";
+    [ObservableProperty] private string _theme = "Light";
     [ObservableProperty] private double _fontScale = 1.0;
     [ObservableProperty] private string _defaultLandingPage = "Plan";
     [ObservableProperty] private bool _showDebugOutput = false;
@@ -32,11 +33,13 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel(
         ISettingsService settingsService,
         IFileDialogService fileDialogService,
-        IDiscoveryService discoveryService)
+        IDiscoveryService discoveryService,
+        IThemeManager themeManager)
     {
         _settingsService = settingsService;
         _fileDialogService = fileDialogService;
         _discoveryService = discoveryService;
+        _themeManager = themeManager;
     }
 
     // Track changes
@@ -48,7 +51,12 @@ public partial class SettingsViewModel : ViewModelBase
     partial void OnAutoDiscoverOnStartupChanged(bool value) => HasChanges = true;
     partial void OnDefaultTimeoutSecChanged(int value) => HasChanges = true;
     partial void OnRunRetentionDaysChanged(int value) => HasChanges = true;
-    partial void OnThemeChanged(string value) => HasChanges = true;
+    partial void OnThemeChanged(string value)
+    {
+        HasChanges = true;
+        // Apply theme immediately for preview
+        _themeManager.ApplyTheme(value);
+    }
     partial void OnFontScaleChanged(double value) => HasChanges = true;
     partial void OnDefaultLandingPageChanged(string value) => HasChanges = true;
     partial void OnShowDebugOutputChanged(bool value) => HasChanges = true;
@@ -221,7 +229,7 @@ public partial class SettingsViewModel : ViewModelBase
         }
     }
 
-    public IEnumerable<string> ThemeOptions => new[] { "Light", "Dark", "System" };
-    public IEnumerable<string> LandingPageOptions => new[] { "Plan", "Run", "History", "LogsResults", "Settings" };
+    public IEnumerable<string> ThemeOptions => new[] { "Light", "Dark" };
+    public IEnumerable<string> LandingPageOptions => new[] { "Plan", "Run", "History", "Settings" };
 }
 

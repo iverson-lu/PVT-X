@@ -68,9 +68,7 @@ public partial class MainWindow : FluentWindow
         {
             "Plan" => PlanNavButton,
             "Run" => RunNavButton,
-            "History" => RunsNavButton,
-            "Runs" => RunsNavButton,  // Backward compatibility
-            "LogsResults" => RunsNavButton,  // Backward compatibility
+            "History" => HistoryNavButton,
             "Settings" => SettingsNavButton,
             _ => PlanNavButton
         };

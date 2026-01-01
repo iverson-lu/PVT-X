@@ -22,6 +22,7 @@ public partial class App : Application
             services.AddSingleton<TestEngine>();
             
             // UI services
+            services.AddSingleton<IThemeManager, ThemeManager>();
             services.AddSingleton<ISettingsService, SettingsService>();
             services.AddSingleton<IFileDialogService, FileDialogService>();
             services.AddSingleton<IFileSystemService, FileSystemService>();
@@ -67,8 +68,10 @@ public partial class App : Application
         var settingsService = GetService<ISettingsService>();
         await settingsService.LoadAsync();
         
-        // Apply theme
-        ApplyTheme(settingsService.CurrentSettings.Theme);
+        // Initialize and apply theme
+        var themeManager = GetService<IThemeManager>();
+        themeManager.Initialize();
+        themeManager.ApplyTheme(settingsService.CurrentSettings.Theme);
         
         var mainWindow = GetService<MainWindow>();
         mainWindow.Show();
@@ -95,13 +98,7 @@ public partial class App : Application
 
     public static void ApplyTheme(string theme)
     {
-        var appTheme = theme?.ToLowerInvariant() switch
-        {
-            "light" => Wpf.Ui.Appearance.ApplicationTheme.Light,
-            "dark" => Wpf.Ui.Appearance.ApplicationTheme.Dark,
-            _ => Wpf.Ui.Appearance.ApplicationTheme.Dark
-        };
-        
-        Wpf.Ui.Appearance.ApplicationThemeManager.Apply(appTheme);
+        var themeManager = Services.GetService<IThemeManager>();
+        themeManager?.ApplyTheme(theme);
     }
 }

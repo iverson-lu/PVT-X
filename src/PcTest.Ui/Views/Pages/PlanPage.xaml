@@ -8,7 +8,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
-      Background="{StaticResource SurfaceBackgroundBrush}">
+      Background="{DynamicResource SurfaceBackgroundBrush}">
     
     <Grid Margin="16">
         <TabControl SelectedIndex="{Binding SelectedTabIndex}"
@@ -24,9 +24,9 @@
                     
                     <!-- Cases List Card -->
                     <Border Grid.Column="0" 
-                            Background="{StaticResource CardBackgroundBrush}"
+                            Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1">
                         <Border.Effect>
                             <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
@@ -102,10 +102,10 @@
                                         </Setter>
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource InteractiveHoverBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource InteractiveSelectedBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -122,17 +122,17 @@
                                                       Text="{Binding Name}" 
                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                       FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                                       TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Grid.Row="1"
                                                       Text="{Binding Identity}" 
-                                                      Foreground="{StaticResource TextSecondaryBrush}" 
+                                                      Foreground="{DynamicResource TextSecondaryBrush}" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Margin="0,2,0,0"
                                                       TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Grid.Row="2"
                                                       Text="{Binding Category}" 
-                                                      Foreground="{StaticResource TextTertiaryBrush}" 
+                                                      Foreground="{DynamicResource TextTertiaryBrush}" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Margin="0,2,0,0"
                                                       TextTrimming="CharacterEllipsis"/>
@@ -145,9 +145,9 @@
                     
                     <!-- Case Details Card -->
                     <Border Grid.Column="2"
-                            Background="{StaticResource CardBackgroundBrush}"
+                            Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1">
                         <Border.Effect>
                             <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
@@ -181,14 +181,14 @@
                                         <TextBlock Grid.Row="0" Grid.Column="0" 
                                                   Text="Name" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"
                                                   VerticalAlignment="Top"/>
                                         <TextBlock Grid.Row="0" Grid.Column="1" 
                                                   Text="{Binding Name}" 
                                                   FontSize="{StaticResource FontSizeM}"
                                                   FontWeight="{StaticResource FontWeightSemiBold}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   TextWrapping="Wrap"
                                                   Margin="0,0,0,12"/>
                                         
@@ -196,73 +196,73 @@
                                         <TextBlock Grid.Row="1" Grid.Column="0" 
                                                   Text="ID" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         <TextBlock Grid.Row="1" Grid.Column="1" 
                                                   Text="{Binding Id}" 
                                                   FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         
                                         <!-- Version Row -->
                                         <TextBlock Grid.Row="2" Grid.Column="0" 
                                                   Text="Version" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         <TextBlock Grid.Row="2" Grid.Column="1" 
                                                   Text="{Binding Version}" 
                                                   FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         
                                         <!-- Category Row -->
                                         <TextBlock Grid.Row="3" Grid.Column="0" 
                                                   Text="Category" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         <TextBlock Grid.Row="3" Grid.Column="1" 
                                                   Text="{Binding Category}" 
                                                   FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         
                                         <!-- Privilege Row -->
                                         <TextBlock Grid.Row="4" Grid.Column="0" 
                                                   Text="Privilege" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         <TextBlock Grid.Row="4" Grid.Column="1" 
                                                   Text="{Binding Privilege}" 
                                                   FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         
                                         <!-- Timeout Row -->
                                         <TextBlock Grid.Row="5" Grid.Column="0" 
                                                   Text="Timeout" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         <TextBlock Grid.Row="5" Grid.Column="1" 
                                                   Text="{Binding TimeoutSec, StringFormat={}{0}s}" 
                                                   FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   Margin="0,0,0,12"/>
                                         
                                         <!-- Tags Row -->
                                         <TextBlock Grid.Row="6" Grid.Column="0" 
                                                   Text="Tags" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"
                                                   VerticalAlignment="Top"/>
                                         <TextBlock Grid.Row="6" Grid.Column="1" 
                                                   Text="{Binding TagsDisplay}" 
                                                   FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   TextWrapping="Wrap"
                                                   Margin="0,0,0,12"/>
                                         
@@ -270,12 +270,12 @@
                                         <TextBlock Grid.Row="7" Grid.Column="0" 
                                                   Text="Description" 
                                                   FontSize="{StaticResource FontSizeXS}"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   VerticalAlignment="Top"/>
                                         <TextBlock Grid.Row="7" Grid.Column="1" 
                                                   Text="{Binding Description}" 
                                                   FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"
                                                   TextWrapping="Wrap"/>
                                     </Grid>
                                 </ui:CardExpander>
@@ -287,12 +287,12 @@
                                     <StackPanel>
                                         <TextBlock Text="Configure parameter values before running the test case" 
                                                   FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{StaticResource TextSecondaryBrush}"
+                                                  Foreground="{DynamicResource TextSecondaryBrush}"
                                                   Margin="0,0,0,16"/>
                                         <ItemsControl ItemsSource="{Binding Parameters}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border BorderBrush="{StaticResource BorderSubtleBrush}" 
+                                                    <Border BorderBrush="{DynamicResource BorderSubtleBrush}" 
                                                            BorderThickness="0,0,0,1" 
                                                            Padding="0,0,0,16" 
                                                            Margin="0,0,0,16">
@@ -308,7 +308,7 @@
                                                                 <TextBlock Text="{Binding Name}" 
                                                                           FontSize="{StaticResource FontSizeM}"
                                                                           FontWeight="{StaticResource FontWeightSemiBold}"
-                                                                          Foreground="{StaticResource TextPrimaryBrush}"
+                                                                          Foreground="{DynamicResource TextPrimaryBrush}"
                                                                           VerticalAlignment="Center"
                                                                           Margin="0,0,12,0"/>
                                                                 <ui:Badge Content="{Binding Type}" 
@@ -323,7 +323,7 @@
                                                             <TextBlock Grid.Row="1" 
                                                                       Text="{Binding Help}" 
                                                                       FontSize="{StaticResource FontSizeS}"
-                                                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       TextWrapping="Wrap"
                                                                       Margin="0,0,0,8"
                                                                       Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
@@ -357,9 +357,9 @@
                     
                     <!-- Suites List Card -->
                     <Border Grid.Column="0" 
-                            Background="{StaticResource CardBackgroundBrush}"
+                            Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1">
                         <Border.Effect>
                             <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
@@ -440,10 +440,10 @@
                                         </Setter>
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource InteractiveHoverBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource InteractiveSelectedBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -460,20 +460,20 @@
                                                       Text="{Binding Name}" 
                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                       FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                                       TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Grid.Row="1"
                                                       Text="{Binding Identity}" 
-                                                      Foreground="{StaticResource TextSecondaryBrush}" 
+                                                      Foreground="{DynamicResource TextSecondaryBrush}" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Margin="0,2,0,0"
                                                       TextTrimming="CharacterEllipsis"/>
                                             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
                                                 <Ellipse Width="4" Height="4" 
-                                                        Fill="{StaticResource TextTertiaryBrush}"
+                                                        Fill="{DynamicResource TextTertiaryBrush}"
                                                         VerticalAlignment="Center"
                                                         Margin="0,0,6,0"/>
-                                                <TextBlock Foreground="{StaticResource TextTertiaryBrush}" 
+                                                <TextBlock Foreground="{DynamicResource TextTertiaryBrush}" 
                                                           FontSize="{StaticResource FontSizeXS}">
                                                     <Run Text="{Binding NodeCount}"/>
                                                     <Run Text="nodes"/>
@@ -488,9 +488,9 @@
                     
                     <!-- Suite Editor Card -->
                     <Border Grid.Column="2"
-                            Background="{StaticResource CardBackgroundBrush}"
+                            Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1"
                             Visibility="{Binding SuitesTab.IsEditorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Border.Effect>
@@ -544,35 +544,35 @@
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="ID" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="Name" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="Version" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="Description" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel>
                                             <TextBlock Text="Tags (comma-separated)" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
@@ -596,7 +596,7 @@
                                         <StackPanel Grid.Row="0" Grid.Column="0">
                                             <TextBlock Text="Repeat Count" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:NumberBox Value="{Binding Repeat}" Minimum="1" Maximum="100"/>
                                         </StackPanel>
@@ -604,7 +604,7 @@
                                         <StackPanel Grid.Row="0" Grid.Column="2">
                                             <TextBlock Text="Retry on Error" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:NumberBox Value="{Binding RetryOnError}" Minimum="0" Maximum="10"/>
                                         </StackPanel>
@@ -648,8 +648,8 @@
                                         
                                         <!-- Nodes List -->
                                         <Border Grid.Row="2"
-                                               Background="{StaticResource ControlBackgroundSecondaryBrush}"
-                                               BorderBrush="{StaticResource BorderSubtleBrush}"
+                                               Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                                               BorderBrush="{DynamicResource BorderSubtleBrush}"
                                                BorderThickness="1"
                                                CornerRadius="8">
                                             <ListBox ItemsSource="{Binding Nodes}"
@@ -678,10 +678,10 @@
                                                         </Setter>
                                                         <Style.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="{StaticResource InteractiveHoverBrush}"/>
+                                                                <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
                                                             </Trigger>
                                                             <Trigger Property="IsSelected" Value="True">
-                                                                <Setter Property="Background" Value="{StaticResource InteractiveSelectedBrush}"/>
+                                                                <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
                                                             </Trigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -708,11 +708,11 @@
                                                                       Text="{Binding NodeId}" 
                                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                                       FontSize="{StaticResource FontSizeM}"
-                                                                      Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                                      Foreground="{DynamicResource TextPrimaryBrush}"/>
                                                             
                                                             <TextBlock Grid.Row="1" Grid.Column="1"
                                                                       Text="{Binding Ref}" 
-                                                                      Foreground="{StaticResource TextSecondaryBrush}"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       FontSize="{StaticResource FontSizeXS}"
                                                                       Margin="0,2,0,0"/>
                                                         </Grid>
@@ -724,8 +724,8 @@
                                         <!-- Node Editor -->
                                         <Border Grid.Row="4" 
                                                Padding="16" 
-                                               Background="{StaticResource ControlBackgroundSecondaryBrush}"
-                                               BorderBrush="{StaticResource BorderSubtleBrush}"
+                                               Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                                               BorderBrush="{DynamicResource BorderSubtleBrush}"
                                                BorderThickness="1"
                                                CornerRadius="8"
                                                DataContext="{Binding SelectedNode}"
@@ -734,13 +734,13 @@
                                                 <TextBlock Text="Node Configuration"
                                                           FontSize="{StaticResource FontSizeL}"
                                                           FontWeight="{StaticResource FontWeightSemiBold}"
-                                                          Foreground="{StaticResource TextPrimaryBrush}"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"
                                                           Margin="0,0,0,16"/>
                                                 
                                                 <StackPanel Margin="0,0,0,16">
                                                     <TextBlock Text="Node ID" 
                                                               FontSize="{StaticResource FontSizeXS}"
-                                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
                                                               Margin="0,0,0,6"/>
                                                     <ui:TextBox Text="{Binding NodeId, UpdateSourceTrigger=PropertyChanged}"/>
                                                 </StackPanel>
@@ -748,7 +748,7 @@
                                                 <StackPanel Margin="0,0,0,16">
                                                     <TextBlock Text="Test Case Reference" 
                                                               FontSize="{StaticResource FontSizeXS}"
-                                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
                                                               Margin="0,0,0,6"/>
                                                     <ui:TextBox Text="{Binding Ref, UpdateSourceTrigger=PropertyChanged}"/>
                                                 </StackPanel>
@@ -758,12 +758,12 @@
                                                            Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibilityConverter}}">
                                                     <TextBlock Text="Parameters" 
                                                               FontSize="{StaticResource FontSizeXS}"
-                                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
                                                               Margin="0,0,0,12"/>
                                                     <ItemsControl ItemsSource="{Binding Parameters}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
-                                                                <Border BorderBrush="{StaticResource BorderSubtleBrush}" 
+                                                                <Border BorderBrush="{DynamicResource BorderSubtleBrush}" 
                                                                        BorderThickness="0,0,0,1" 
                                                                        Padding="0,0,0,12" 
                                                                        Margin="0,0,0,12">
@@ -779,7 +779,7 @@
                                                                             <TextBlock Text="{Binding Name}" 
                                                                                       FontSize="{StaticResource FontSizeM}"
                                                                                       FontWeight="{StaticResource FontWeightSemiBold}"
-                                                                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                                                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                       VerticalAlignment="Center"
                                                                                       Margin="0,0,10,0"/>
                                                                             <ui:Badge Content="{Binding Type}" 
@@ -794,7 +794,7 @@
                                                                         <TextBlock Grid.Row="1" 
                                                                                   Text="{Binding Help}" 
                                                                                   FontSize="{StaticResource FontSizeS}"
-                                                                                  Foreground="{StaticResource TextSecondaryBrush}"
+                                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
                                                                                   TextWrapping="Wrap"
                                                                                   Margin="0,0,0,8"
                                                                                   Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
@@ -814,7 +814,7 @@
                                                 <StackPanel Visibility="{Binding HasParameters, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                                                     <TextBlock Text="Inputs (JSON)" 
                                                               FontSize="{StaticResource FontSizeXS}"
-                                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
                                                               Margin="0,0,0,6"/>
                                                     <TextBox Text="{Binding InputsJson, UpdateSourceTrigger=PropertyChanged}" 
                                                             AcceptsReturn="True" 
@@ -822,7 +822,7 @@
                                                             FontFamily="Consolas"
                                                             FontSize="11"
                                                             VerticalScrollBarVisibility="Auto"
-                                                            Background="{StaticResource CardBackgroundBrush}"/>
+                                                            Background="{DynamicResource CardBackgroundBrush}"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>
@@ -845,9 +845,9 @@
                     
                     <!-- Plans List Card -->
                     <Border Grid.Column="0" 
-                            Background="{StaticResource CardBackgroundBrush}"
+                            Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1">
                         <Border.Effect>
                             <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
@@ -928,10 +928,10 @@
                                         </Setter>
                                         <Style.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource InteractiveHoverBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="{StaticResource InteractiveSelectedBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>
@@ -948,20 +948,20 @@
                                                       Text="{Binding Name}" 
                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                       FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                                       TextTrimming="CharacterEllipsis"/>
                                             <TextBlock Grid.Row="1"
                                                       Text="{Binding Identity}" 
-                                                      Foreground="{StaticResource TextSecondaryBrush}" 
+                                                      Foreground="{DynamicResource TextSecondaryBrush}" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Margin="0,2,0,0"
                                                       TextTrimming="CharacterEllipsis"/>
                                             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
                                                 <Ellipse Width="4" Height="4" 
-                                                        Fill="{StaticResource TextTertiaryBrush}"
+                                                        Fill="{DynamicResource TextTertiaryBrush}"
                                                         VerticalAlignment="Center"
                                                         Margin="0,0,6,0"/>
-                                                <TextBlock Foreground="{StaticResource TextTertiaryBrush}" 
+                                                <TextBlock Foreground="{DynamicResource TextTertiaryBrush}" 
                                                           FontSize="{StaticResource FontSizeXS}">
                                                     <Run Text="{Binding SuiteCount}"/>
                                                     <Run Text="suites"/>
@@ -976,9 +976,9 @@
                     
                     <!-- Plan Editor Card -->
                     <Border Grid.Column="2"
-                            Background="{StaticResource CardBackgroundBrush}"
+                            Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
                             BorderThickness="1"
                             Visibility="{Binding PlansTab.IsEditorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Border.Effect>
@@ -1032,35 +1032,35 @@
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="ID" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="Name" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="Version" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel Margin="0,0,0,16">
                                             <TextBlock Text="Description" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
                                         <StackPanel>
                                             <TextBlock Text="Tags (comma-separated)" 
                                                       FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,6"/>
                                             <ui:TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"/>
                                         </StackPanel>
@@ -1098,8 +1098,8 @@
                                         
                                         <!-- Suite References List -->
                                         <Border Grid.Row="2"
-                                               Background="{StaticResource ControlBackgroundSecondaryBrush}"
-                                               BorderBrush="{StaticResource BorderSubtleBrush}"
+                                               Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                                               BorderBrush="{DynamicResource BorderSubtleBrush}"
                                                BorderThickness="1"
                                                CornerRadius="8">
                                             <ListBox ItemsSource="{Binding SuiteReferences}"
@@ -1128,10 +1128,10 @@
                                                         </Setter>
                                                         <Style.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="{StaticResource InteractiveHoverBrush}"/>
+                                                                <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
                                                             </Trigger>
                                                             <Trigger Property="IsSelected" Value="True">
-                                                                <Setter Property="Background" Value="{StaticResource InteractiveSelectedBrush}"/>
+                                                                <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
                                                             </Trigger>
                                                         </Style.Triggers>
                                                     </Style>
@@ -1145,7 +1145,7 @@
                                                                     Margin="0,0,10,0"/>
                                                             <TextBlock Text="{Binding SuiteIdentity}" 
                                                                       FontSize="{StaticResource FontSizeM}"
-                                                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                                                       VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </DataTemplate>
@@ -1162,10 +1162,10 @@
         </TabControl>
         
         <!-- Busy overlay -->
-        <Border Background="#80000000" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
+        <Border Background="{DynamicResource OverlayBackgroundBrush}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ui:ProgressRing IsIndeterminate="True"/>
-                <TextBlock Text="{Binding BusyMessage}" Margin="0,10,0,0" Foreground="White"/>
+                <TextBlock Text="{Binding BusyMessage}" Margin="0,10,0,0" Foreground="{DynamicResource TextOnDarkBrush}"/>
             </StackPanel>
         </Border>
     </Grid>

@@ -8,7 +8,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
-      Background="{StaticResource SurfaceBackgroundBrush}">
+      Background="{DynamicResource SurfaceBackgroundBrush}">
     
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -18,8 +18,8 @@
         
         <!-- Control Bar Card -->
         <Border Grid.Row="0" 
-                Background="{StaticResource CardBackgroundBrush}" 
-                BorderBrush="{StaticResource BorderSubtleBrush}" 
+                Background="{DynamicResource CardBackgroundBrush}" 
+                BorderBrush="{DynamicResource BorderSubtleBrush}" 
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusM}"
                 Padding="20"
@@ -37,7 +37,7 @@
                 <StackPanel Orientation="Horizontal" Visibility="{Binding ShowTargetSelector, Converter={StaticResource BoolToVisibilityConverter}}">
                     <TextBlock Text="Run Type:" VerticalAlignment="Center" 
                               FontSize="{StaticResource FontSizeM}"
-                              Foreground="{StaticResource TextPrimaryBrush}"
+                              Foreground="{DynamicResource TextPrimaryBrush}"
                               Margin="{StaticResource ControlMarginMedium}"/>
                     <ComboBox SelectedIndex="{Binding RunType, Converter={StaticResource EnumToIntConverter}}" Width="120" Margin="{StaticResource ControlMarginMedium}">
                         <ComboBoxItem Content="Test Case"/>
@@ -46,7 +46,7 @@
                     </ComboBox>
                     <TextBlock Text="Target:" VerticalAlignment="Center" 
                               FontSize="{StaticResource FontSizeM}"
-                              Foreground="{StaticResource TextPrimaryBrush}"
+                              Foreground="{DynamicResource TextPrimaryBrush}"
                               Margin="{StaticResource ControlMarginMedium}"/>
                     <ComboBox ItemsSource="{Binding AvailableTargets}" 
                              SelectedItem="{Binding TargetIdentity}" 
@@ -58,16 +58,16 @@
                     <TextBlock Text="Target" 
                               VerticalAlignment="Center" 
                               FontSize="{StaticResource FontSizeXS}" 
-                              Foreground="{StaticResource TextTertiaryBrush}"
+                              Foreground="{DynamicResource TextTertiaryBrush}"
                               Margin="0,0,8,0"/>
                     <TextBlock Text="{Binding TargetIdentity}" 
                               FontWeight="{StaticResource FontWeightSemiBold}" 
                               FontSize="{StaticResource FontSizeL}"
-                              Foreground="{StaticResource TextPrimaryBrush}"
+                              Foreground="{DynamicResource TextPrimaryBrush}"
                               VerticalAlignment="Center"/>
                     <ui:Badge Content="{Binding RunType}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                     <Border Width="1" Height="20" 
-                           Background="{StaticResource BorderSubtleBrush}" 
+                           Background="{DynamicResource BorderSubtleBrush}" 
                            Margin="16,0"/>
                     <ui:ProgressRing IsIndeterminate="True" Width="16" Height="16" 
                                     Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -75,12 +75,12 @@
                     <TextBlock Text="Status" 
                               VerticalAlignment="Center" 
                               FontSize="{StaticResource FontSizeXS}" 
-                              Foreground="{StaticResource TextTertiaryBrush}"
+                              Foreground="{DynamicResource TextTertiaryBrush}"
                               Margin="0,0,8,0"/>
                     <TextBlock Text="{Binding StatusText}" 
                               FontWeight="{StaticResource FontWeightSemiBold}" 
                               FontSize="{StaticResource FontSizeL}"
-                              Foreground="{StaticResource TextPrimaryBrush}"
+                              Foreground="{DynamicResource TextPrimaryBrush}"
                               VerticalAlignment="Center"/>
                 </StackPanel>
                 
@@ -104,8 +104,8 @@
                               Margin="0,0,8,0"/>
                     <ui:Button 
                               Icon="{ui:SymbolIcon DocumentSearch24}"
-                              Command="{Binding ViewLogsCommand}"
-                              ToolTip="View Logs"/>
+                              Command="{Binding ViewHistoryCommand}"
+                              ToolTip="View in History"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -120,8 +120,8 @@
             
             <!-- Execution Pipeline Card -->
             <Border Grid.Column="0" 
-                    Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}">
                 <Border.Effect>
@@ -166,10 +166,10 @@
                                 </Setter>
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource InteractiveHoverBrush}"/>
+                                        <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="{StaticResource InteractiveSelectedBrush}"/>
+                                        <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -201,7 +201,7 @@
                                     <Grid Grid.Row="0" Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Top">
                                         <!-- Running state icon -->
                                         <ui:SymbolIcon Symbol="Play20" 
-                                                      Foreground="{StaticResource StatusRunningBrush}"
+                                                      Foreground="{DynamicResource StatusRunningBrush}"
                                                       FontSize="20" 
                                                       ToolTip="Running"
                                                       Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
@@ -217,7 +217,7 @@
                                     <TextBlock Grid.Row="0" Grid.Column="1" 
                                               FontWeight="{StaticResource FontWeightSemiBold}"
                                               FontSize="{StaticResource FontSizeM}"
-                                              Foreground="{StaticResource TextPrimaryBrush}"
+                                              Foreground="{DynamicResource TextPrimaryBrush}"
                                               Margin="0,0,10,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
@@ -236,7 +236,7 @@
                                     
                                     <!-- Second row: Identity (only visible if NodeId is not empty and not standalone) -->
                                     <TextBlock Grid.Row="1" Grid.Column="1" 
-                                              Foreground="{StaticResource TextSecondaryBrush}" 
+                                              Foreground="{DynamicResource TextSecondaryBrush}" 
                                               FontSize="{StaticResource FontSizeS}"
                                               Margin="0,0,10,0">
                                         <TextBlock.Style>
@@ -263,9 +263,9 @@
                                         </Grid.RowDefinitions>
                                         <TextBlock Grid.Row="0" Text="{Binding StatusDisplay}" 
                                                   FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
                                         <TextBlock Grid.Row="1" Text="{Binding DurationDisplay}" 
-                                                  Foreground="{StaticResource TextTertiaryBrush}" 
+                                                  Foreground="{DynamicResource TextTertiaryBrush}" 
                                                   FontSize="{StaticResource FontSizeXS}"/>
                                     </Grid>
                                 </Grid>
@@ -285,8 +285,8 @@
                 
                 <!-- Console Output Card -->
                 <Border Grid.Row="0"
-                       Background="{StaticResource CardBackgroundBrush}"
-                       BorderBrush="{StaticResource BorderSubtleBrush}"
+                       Background="{DynamicResource CardBackgroundBrush}"
+                       BorderBrush="{DynamicResource BorderSubtleBrush}"
                        BorderThickness="1"
                        CornerRadius="{StaticResource RadiusM}">
                     <Border.Effect>
@@ -304,8 +304,8 @@
                         
                         <Border Grid.Row="1" 
                                Margin="12,0,12,12" 
-                               Background="#0C0C0C" 
-                               BorderBrush="{StaticResource BorderSubtleBrush}"
+                               Background="{DynamicResource TerminalBackgroundBrush}" 
+                               BorderBrush="{DynamicResource BorderSubtleBrush}"
                                BorderThickness="0"
                                CornerRadius="6">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -313,7 +313,7 @@
                                         IsReadOnly="True" 
                                         FontFamily="Cascadia Code, Consolas" 
                                         FontSize="11"
-                                        Foreground="#CCCCCC"
+                                        Foreground="{DynamicResource TerminalTextBrush}"
                                         BorderThickness="0"
                                         Background="Transparent"
                                         TextWrapping="NoWrap"
@@ -342,8 +342,8 @@
                 
                 <!-- Events Card -->
                 <Border Grid.Row="2"
-                       Background="{StaticResource CardBackgroundBrush}"
-                       BorderBrush="{StaticResource BorderSubtleBrush}"
+                       Background="{DynamicResource CardBackgroundBrush}"
+                       BorderBrush="{DynamicResource BorderSubtleBrush}"
                        BorderThickness="1"
                        CornerRadius="{StaticResource RadiusM}">
                     <Border.Effect>
@@ -361,8 +361,8 @@
                         
                         <Border Grid.Row="1" 
                                Margin="12,0,12,12" 
-                               Background="#0C0C0C" 
-                               BorderBrush="{StaticResource BorderSubtleBrush}"
+                               Background="{DynamicResource TerminalBackgroundBrush}" 
+                               BorderBrush="{DynamicResource BorderSubtleBrush}"
                                BorderThickness="0"
                                CornerRadius="6">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -370,7 +370,7 @@
                                         IsReadOnly="True" 
                                         FontFamily="Cascadia Code, Consolas" 
                                         FontSize="11"
-                                        Foreground="#CCCCCC"
+                                        Foreground="{DynamicResource TerminalTextBrush}"
                                         BorderThickness="0"
                                         Background="Transparent"
                                         TextWrapping="NoWrap"

@@ -9,7 +9,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
       Loaded="Page_Loaded"
-      Background="{StaticResource SurfaceBackgroundBrush}">
+      Background="{DynamicResource SurfaceBackgroundBrush}">
     
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -20,8 +20,8 @@
         
         <!-- Filters Card -->
         <Border Grid.Row="0" 
-                Background="{StaticResource CardBackgroundBrush}" 
-                BorderBrush="{StaticResource BorderSubtleBrush}" 
+                Background="{DynamicResource CardBackgroundBrush}" 
+                BorderBrush="{DynamicResource BorderSubtleBrush}" 
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusM}"
                 Padding="20">
@@ -99,8 +99,8 @@
             
             <!-- Master: Run List Card -->
             <Border Grid.Column="0"
-                   Background="{StaticResource CardBackgroundBrush}"
-                   BorderBrush="{StaticResource BorderSubtleBrush}"
+                   Background="{DynamicResource CardBackgroundBrush}"
+                   BorderBrush="{DynamicResource BorderSubtleBrush}"
                    BorderThickness="1"
                    CornerRadius="{StaticResource RadiusM}">
                 <Border.Effect>
@@ -118,7 +118,7 @@
                      VirtualizingPanel.VirtualizationMode="Recycling"
                      EnableRowVirtualization="True"
                      GridLinesVisibility="Horizontal"
-                     HorizontalGridLinesBrush="#10000000"
+                     HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
                      VerticalGridLinesBrush="Transparent"
                      RowHeight="48">
                     <DataGrid.RowStyle>
@@ -148,10 +148,10 @@
                                         <TextBlock Text="{Binding NameWithoutVersion}" 
                                                   FontSize="13"
                                                   FontWeight="Medium"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <TextBlock Text="{Binding VersionDisplay}" 
                                                   FontSize="11"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </DataTemplate>
@@ -164,7 +164,7 @@
                                 <DataTemplate>
                                     <ui:SymbolIcon Symbol="{Binding RunType, Converter={StaticResource RunTypeToIconConverter}}" 
                                                   FontSize="20"
-                                                  Foreground="{StaticResource TextSecondaryBrush}"
+                                                  Foreground="{DynamicResource TextSecondaryBrush}"
                                                   HorizontalAlignment="Center"
                                                   ToolTip="{Binding RunTypeTooltip}"/>
                                 </DataTemplate>
@@ -178,10 +178,10 @@
                                     <StackPanel VerticalAlignment="Center">
                                         <TextBlock Text="{Binding StartTime, StringFormat=yyyy-MM-dd}" 
                                                   FontSize="12"
-                                                  Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                  Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <TextBlock Text="{Binding StartTime, StringFormat=HH:mm:ss}" 
                                                   FontSize="11"
-                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,1,0,0"/>
                                     </StackPanel>
                                 </DataTemplate>
@@ -195,7 +195,7 @@
                                     <TextBlock Text="{Binding Duration, StringFormat=mm\\:ss}" 
                                               FontFamily="Consolas"
                                               FontSize="12"
-                                              Foreground="{StaticResource TextSecondaryBrush}"
+                                              Foreground="{DynamicResource TextSecondaryBrush}"
                                               VerticalAlignment="Center"
                                               ToolTip="{Binding Duration, StringFormat=hh\\:mm\\:ss}"/>
                                 </DataTemplate>
@@ -209,7 +209,7 @@
                                     <TextBlock Text="{Binding ShortRunId}" 
                                               FontFamily="Consolas"
                                               FontSize="11"
-                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                              Foreground="{DynamicResource TextTertiaryBrush}"
                                               ToolTip="{Binding RunId}"
                                               VerticalAlignment="Center"/>
                                 </DataTemplate>
@@ -228,8 +228,8 @@
             
             <!-- Detail: Run Inspector Card -->
             <Border Grid.Column="2" 
-                    Background="{StaticResource CardBackgroundBrush}"
-                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}">
                 <Border.Effect>
@@ -240,10 +240,10 @@
                     <!-- Show placeholder when no run is selected -->
                     <Grid Visibility="{Binding IsRunSelected, Converter={StaticResource InverseBoolToVisibilityConverter}}">
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <ui:SymbolIcon Symbol="DocumentSearch24" FontSize="48" Foreground="{StaticResource TextTertiaryBrush}"/>
+                            <ui:SymbolIcon Symbol="DocumentSearch24" FontSize="48" Foreground="{DynamicResource TextTertiaryBrush}"/>
                             <TextBlock Text="Select a run to view details" 
                                       FontSize="{StaticResource FontSizeL}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                       Margin="0,16,0,0"
                                       HorizontalAlignment="Center"/>
                         </StackPanel>
@@ -258,8 +258,8 @@
                     
                     <!-- Inspector Header -->
                     <Border Grid.Row="0" 
-                            Background="{StaticResource ControlBackgroundSecondaryBrush}"
-                            BorderBrush="{StaticResource BorderSubtleBrush}" 
+                            Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}" 
                             BorderThickness="0,0,0,1"
                             Padding="20,16">
                         <Grid>
@@ -274,7 +274,7 @@
                                               FontFamily="Consolas"
                                               FontWeight="{StaticResource FontWeightSemiBold}" 
                                               FontSize="{StaticResource FontSizeM}"
-                                              Foreground="{StaticResource TextPrimaryBrush}"
+                                              Foreground="{DynamicResource TextPrimaryBrush}"
                                               VerticalAlignment="Center"/>
                                     <ui:Button Icon="{ui:SymbolIcon Copy20}" 
                                               Command="{Binding CopyRunIdCommand}"
@@ -292,12 +292,12 @@
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="Target: " 
-                                              Foreground="{StaticResource TextTertiaryBrush}"
+                                              Foreground="{DynamicResource TextTertiaryBrush}"
                                               FontSize="{StaticResource FontSizeM}"
                                               VerticalAlignment="Center"/>
                                     <TextBlock Text="{Binding RunDisplayName}" 
                                               FontSize="{StaticResource FontSizeM}"
-                                              Foreground="{StaticResource TextSecondaryBrush}"
+                                              Foreground="{DynamicResource TextSecondaryBrush}"
                                               VerticalAlignment="Center"/>
                                 </StackPanel>
                             </StackPanel>
@@ -369,8 +369,8 @@
                         <!-- Stdout Tab -->
                         <TabItem Header="Stdout">
                             <Border Margin="16" 
-                                   Background="#0C0C0C" 
-                                   BorderBrush="{StaticResource BorderSubtleBrush}"
+                                   Background="{DynamicResource TerminalBackgroundBrush}" 
+                                   BorderBrush="{DynamicResource BorderSubtleBrush}"
                                    BorderThickness="0"
                                    CornerRadius="6">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -378,7 +378,7 @@
                                             IsReadOnly="True" 
                                             FontFamily="Cascadia Code, Consolas" 
                                             FontSize="11"
-                                            Foreground="#CCCCCC"
+                                            Foreground="{DynamicResource TerminalTextBrush}"
                                             BorderThickness="0"
                                             Background="Transparent"
                                             Padding="12"/>
@@ -389,8 +389,8 @@
                         <!-- Stderr Tab -->
                         <TabItem Header="Stderr">
                             <Border Margin="16" 
-                                   Background="#0C0C0C" 
-                                   BorderBrush="{StaticResource BorderSubtleBrush}"
+                                   Background="{DynamicResource TerminalBackgroundBrush}" 
+                                   BorderBrush="{DynamicResource BorderSubtleBrush}"
                                    BorderThickness="0"
                                    CornerRadius="6">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
@@ -400,7 +400,7 @@
                                             FontSize="11"
                                             BorderThickness="0"
                                             Background="Transparent"
-                                            Foreground="#FF6B6B"
+                                            Foreground="{DynamicResource TerminalErrorBrush}"
                                             Padding="12"/>
                                 </ScrollViewer>
                             </Border>
@@ -416,8 +416,8 @@
                                 </Grid.RowDefinitions>
                                 
                                 <!-- Event Filters -->
-                                <Border Grid.Row="0" Background="{StaticResource CardBackgroundBrush}" 
-                                        BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
+                                <Border Grid.Row="0" Background="{DynamicResource CardBackgroundBrush}" 
+                                        BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
                                         Padding="{StaticResource CardPadding}">
                                     <WrapPanel>
                                         <ui:TextBox PlaceholderText="Filter events..." 
@@ -462,7 +462,7 @@
                                                 IsReadOnly="True" 
                                                 FontFamily="Cascadia Code, Consolas" 
                                                 FontSize="11"
-                                                Foreground="{StaticResource TextPrimaryBrush}"
+                                                Foreground="{DynamicResource TextPrimaryBrush}"
                                                 BorderThickness="0"
                                                 Background="Transparent"
                                                 Padding="8"/>
@@ -482,7 +482,7 @@
                                 
                                 <!-- Artifacts Tree -->
                                 <Border Grid.Column="0" 
-                                       BorderBrush="{StaticResource BorderSubtleBrush}" 
+                                       BorderBrush="{DynamicResource BorderSubtleBrush}" 
                                        BorderThickness="0,0,1,0"
                                        Padding="8">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -494,7 +494,7 @@
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="{Binding Name}"/>
                                                         <TextBlock Text="{Binding SizeDisplay}" 
-                                                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                                                   FontSize="{StaticResource FontSizeXS}"
                                                                   Margin="8,0,0,0"/>
                                                     </StackPanel>
@@ -511,14 +511,14 @@
                                 
                                 <!-- Artifact Content Viewer -->
                                 <Border Grid.Column="2" 
-                                       Background="#0C0C0C"
+                                       Background="{DynamicResource TerminalBackgroundBrush}"
                                        Margin="8">
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                                         <TextBox Text="{Binding ArtifactContent, Mode=OneWay}" 
                                                 IsReadOnly="True" 
                                                 FontFamily="Cascadia Code, Consolas" 
                                                 FontSize="11"
-                                                Foreground="#CCCCCC"
+                                                Foreground="{DynamicResource TerminalTextBrush}"
                                                 BorderThickness="0"
                                                 Background="Transparent"
                                                 Padding="12"/>
@@ -533,11 +533,11 @@
         </Grid>
         
         <!-- Busy Overlay -->
-        <Border Grid.RowSpan="3" Background="#80000000" 
+        <Border Grid.RowSpan="3" Background="{DynamicResource OverlayBackgroundBrush}" 
                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                 <ui:ProgressRing IsIndeterminate="True"/>
-                <TextBlock Text="{Binding BusyMessage}" Margin="0,10,0,0" Foreground="White"/>
+                <TextBlock Text="{Binding BusyMessage}" Margin="0,10,0,0" Foreground="{DynamicResource TextOnDarkBrush}"/>
             </StackPanel>
         </Border>
     </Grid>

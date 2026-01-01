@@ -35,8 +35,8 @@
             </Grid.ColumnDefinitions>
             
             <!-- Navigation Menu -->
-            <Border Grid.Column="0" Background="{StaticResource NavBackgroundBrush}" 
-                    BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Background="{DynamicResource NavBackgroundBrush}" 
+                    BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -59,7 +59,7 @@
                                   Style="{StaticResource CompactNavButtonStyle}"
                                   ToolTip="Run"
                                   KeyboardNavigation.TabIndex="1"/>
-                        <ui:Button x:Name="RunsNavButton"
+                        <ui:Button x:Name="HistoryNavButton"
                                   Icon="{ui:SymbolIcon History24}" 
                                   Tag="History" 
                                   Click="NavButton_Click"
@@ -70,7 +70,7 @@
                     
                     <!-- Settings (Bottom) -->
                     <StackPanel Grid.Row="1" VerticalAlignment="Bottom" Margin="0,0,0,12">
-                        <Separator Margin="10,16" Background="{StaticResource BorderSubtleBrush}"/>
+                        <Separator Margin="10,16" Background="{DynamicResource BorderSubtleBrush}"/>
                         <ui:Button x:Name="SettingsNavButton"
                                   Icon="{ui:SymbolIcon Settings24}" 
                                   Tag="Settings" 
@@ -87,8 +87,8 @@
         </Grid>
         
         <!-- Status Bar -->
-        <Border Grid.Row="2" Background="{StaticResource ControlBackgroundSecondaryBrush}" 
-                BorderBrush="{StaticResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
+        <Border Grid.Row="2" Background="{DynamicResource ControlBackgroundSecondaryBrush}" 
+                BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
                 Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -98,9 +98,9 @@
                 <TextBlock Text="{Binding StatusMessage}" 
                           VerticalAlignment="Center"
                           FontSize="{StaticResource FontSizeM}"
-                          Foreground="{StaticResource TextSecondaryBrush}"/>
+                          Foreground="{DynamicResource TextSecondaryBrush}"/>
                 <TextBlock Grid.Column="1" Text="{Binding CurrentPageName}" 
-                          Foreground="{StaticResource TextTertiaryBrush}"
+                          Foreground="{DynamicResource TextTertiaryBrush}"
                           FontSize="{StaticResource FontSizeS}"
                           VerticalAlignment="Center"/>
             </Grid>

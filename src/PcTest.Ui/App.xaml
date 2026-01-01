@@ -9,9 +9,12 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
-                <!-- HP-Inspired Design System -->
-                <ResourceDictionary Source="Resources/Colors.xaml"/>
+                <!-- Theme System -->
+                <ResourceDictionary Source="Themes/Theme.Shared.xaml"/>
+                <ResourceDictionary Source="Themes/Light/Colors.Light.xaml"/>
+                <!-- Design Tokens (Text Styles, Card Styles) -->
                 <ResourceDictionary Source="Resources/DesignTokens.xaml"/>
+                <!-- Component Styles -->
                 <ResourceDictionary Source="Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             

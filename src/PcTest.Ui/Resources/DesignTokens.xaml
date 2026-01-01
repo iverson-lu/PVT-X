@@ -103,51 +103,51 @@
     <Style x:Key="PageTitleStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSize3XL}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="Margin" Value="0,0,0,8"/>
     </Style>
     
     <Style x:Key="PageSubtitleStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeL}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeightNormal}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
         <Setter Property="Margin" Value="0,0,0,16"/>
     </Style>
     
     <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeXL}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
     </Style>
     
     <Style x:Key="CardTitleStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeL}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
     
     <!-- Body Styles -->
     <Style x:Key="BodyTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeM}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
         <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
     
     <Style x:Key="SecondaryTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeS}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
     </Style>
     
     <Style x:Key="TertiaryTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeXS}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}"/>
     </Style>
     
     <Style x:Key="LabelTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeM}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
     </Style>
     
     
@@ -156,8 +156,8 @@
          ======================================== -->
     
     <Style x:Key="CardContainerStyle" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderSubtleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusM}"/>
         <Setter Property="Padding" Value="{StaticResource CardPadding}"/>
@@ -172,7 +172,7 @@
     <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeM}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeightNormal}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
     </Style>
     
@@ -180,7 +180,7 @@
     <Style x:Key="SubsectionHeaderStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSizeS}"/>
         <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextTertiaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}"/>
         <Setter Property="Margin" Value="0,0,0,8"/>
     </Style>
     

@@ -8,7 +8,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
-      Background="{StaticResource SurfaceBackgroundBrush}">
+      Background="{DynamicResource SurfaceBackgroundBrush}">
     
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="32,24" MaxWidth="1040" HorizontalAlignment="Center">
@@ -18,8 +18,8 @@
                       Margin="0,0,0,24"/>
             
             <!-- Path Configuration Card -->
-            <Border Background="{StaticResource CardBackgroundBrush}" 
-                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+            <Border Background="{DynamicResource CardBackgroundBrush}" 
+                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}"
                     Padding="20"
@@ -45,7 +45,7 @@
                                   Text="Assets Root" 
                                   VerticalAlignment="Center"
                                   FontSize="{StaticResource FontSizeM}"
-                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <ui:TextBox Grid.Column="1" 
                                    Text="{Binding AssetsRoot, UpdateSourceTrigger=PropertyChanged}" 
                                    Margin="0,0,8,0"/>
@@ -68,7 +68,7 @@
                                   Text="Runs Directory" 
                                   VerticalAlignment="Center"
                                   FontSize="{StaticResource FontSizeM}"
-                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <ui:TextBox Grid.Column="1" 
                                    Text="{Binding RunsDirectory, UpdateSourceTrigger=PropertyChanged}" 
                                    Margin="0,0,8,0"/>
@@ -91,7 +91,7 @@
                                   Text="Runner Executable" 
                                   VerticalAlignment="Center"
                                   FontSize="{StaticResource FontSizeM}"
-                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <ui:TextBox Grid.Column="1" 
                                    Text="{Binding RunnerExecutable, UpdateSourceTrigger=PropertyChanged}" 
                                    Margin="0,0,8,0"/>
@@ -105,8 +105,8 @@
             </Border>
             
             <!-- Appearance Card -->
-            <Border Background="{StaticResource CardBackgroundBrush}" 
-                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+            <Border Background="{DynamicResource CardBackgroundBrush}" 
+                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}"
                     Padding="20"
@@ -131,10 +131,10 @@
                                   Text="Theme" 
                                   VerticalAlignment="Center"
                                   FontSize="{StaticResource FontSizeM}"
-                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <ComboBox Grid.Column="1" 
                                  ItemsSource="{Binding ThemeOptions}" 
-                                 SelectedItem="{Binding SelectedTheme}" 
+                                 SelectedItem="{Binding Theme}" 
                                  Width="180" 
                                  HorizontalAlignment="Left"/>
                     </Grid>
@@ -144,7 +144,7 @@
                         <TextBlock Text="Console" 
                                   FontSize="{StaticResource FontSizeS}"
                                   FontWeight="SemiBold"
-                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                   Margin="0,0,0,8"/>
                         <CheckBox Content="Show console window during execution" 
                                  IsChecked="{Binding ShowConsoleWindow}"
@@ -154,8 +154,8 @@
             </Border>
             
             <!-- Execution Card -->
-            <Border Background="{StaticResource CardBackgroundBrush}" 
-                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+            <Border Background="{DynamicResource CardBackgroundBrush}" 
+                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}"
                     Padding="20"
@@ -180,7 +180,7 @@
                                   Text="Default Timeout" 
                                   VerticalAlignment="Center"
                                   FontSize="{StaticResource FontSizeM}"
-                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
                             <ui:NumberBox Value="{Binding DefaultTimeout}" 
                                          Width="120" 
@@ -189,7 +189,7 @@
                             <TextBlock Text="seconds" 
                                       VerticalAlignment="Center" 
                                       FontSize="{StaticResource FontSizeM}"
-                                      Foreground="{StaticResource TextTertiaryBrush}"
+                                      Foreground="{DynamicResource TextTertiaryBrush}"
                                       Margin="12,0,0,0"/>
                         </StackPanel>
                     </Grid>
@@ -205,7 +205,7 @@
                                   Text="Max Retry Count" 
                                   VerticalAlignment="Center"
                                   FontSize="{StaticResource FontSizeM}"
-                                  Foreground="{StaticResource TextSecondaryBrush}"/>
+                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
                         <ui:NumberBox Grid.Column="1" 
                                      Value="{Binding MaxRetryCount}" 
                                      Width="120" 
@@ -219,7 +219,7 @@
                         <TextBlock Text="Automation" 
                                   FontSize="{StaticResource FontSizeS}"
                                   FontWeight="SemiBold"
-                                  Foreground="{StaticResource TextTertiaryBrush}"
+                                  Foreground="{DynamicResource TextTertiaryBrush}"
                                   Margin="0,0,0,8"/>
                         <CheckBox Content="Auto-refresh run history" 
                                  IsChecked="{Binding AutoRefreshHistory}" 
@@ -231,8 +231,8 @@
             </Border>
             
             <!-- Import/Export Card -->
-            <Border Background="{StaticResource CardBackgroundBrush}" 
-                    BorderBrush="{StaticResource BorderSubtleBrush}" 
+            <Border Background="{DynamicResource CardBackgroundBrush}" 
+                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}"
                     Padding="20"
@@ -278,7 +278,7 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding HasUnsavedChanges}" Value="True">
                                     <Setter Property="Text" Value="You have unsaved changes."/>
-                                    <Setter Property="Foreground" Value="{StaticResource StatusWarningBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource StatusWarningBrush}"/>
                                     <Setter Property="FontSize" Value="{StaticResource FontSizeM}"/>
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                 </DataTrigger>

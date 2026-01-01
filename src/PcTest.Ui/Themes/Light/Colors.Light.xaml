@@ -1,0 +1,269 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ========================================
+         LIGHT THEME COLORS
+         Professional engineering tool palette
+         ======================================== -->
+    
+    <!-- ========================================
+         CANONICAL COLOR TOKENS
+         These are the semantic color definitions
+         ======================================== -->
+    
+    <!-- App Background Colors -->
+    <Color x:Key="AppBackgroundColor">#F5F7FA</Color>
+    <Color x:Key="PanelBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="SidebarBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="CardBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="CardBackgroundHoverColor">#FAFBFC</Color>
+    <Color x:Key="SurfaceAlternateColor">#E5E7EB</Color>
+    
+    <!-- Text Colors -->
+    <Color x:Key="TextPrimaryColor">#212529</Color>
+    <Color x:Key="TextSecondaryColor">#343A40</Color>
+    <Color x:Key="TextTertiaryColor">#6C757D</Color>
+    <Color x:Key="TextDisabledColor">#CED4DA</Color>
+    <Color x:Key="TextOnPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="TextOnDarkColor">#FFFFFF</Color>
+    
+    <!-- Border Colors -->
+    <Color x:Key="BorderDefaultColor">#CED4DA</Color>
+    <Color x:Key="BorderSubtleColor">#E5E7EB</Color>
+    <Color x:Key="BorderStrongColor">#6C757D</Color>
+    <Color x:Key="DividerColor">#E5E7EB</Color>
+    
+    <!-- Primary Brand Colors -->
+    <Color x:Key="PrimaryColor">#2563EB</Color>
+    <Color x:Key="PrimaryHoverColor">#1E56E8</Color>
+    <Color x:Key="PrimaryPressedColor">#1340C0</Color>
+    <Color x:Key="PrimaryLightColor">#EFF4FF</Color>
+    <Color x:Key="PrimarySubtleColor">#D6E4FF</Color>
+    
+    <!-- Selection Colors -->
+    <Color x:Key="SelectionBackgroundColor">#E7F1FF</Color>
+    <Color x:Key="SelectionIndicatorColor">#2563EB</Color>
+    <Color x:Key="SelectionHoverColor">#DCE9FF</Color>
+    
+    <!-- Navigation Colors -->
+    <Color x:Key="NavBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="NavItemHoverColor">#08000000</Color>
+    <Color x:Key="NavItemSelectedBackgroundColor">#102563EB</Color>
+    <Color x:Key="NavItemSelectedHoverColor">#182563EB</Color>
+    <Color x:Key="NavIconNormalColor">#99000000</Color>
+    <Color x:Key="NavIconHoverColor">#CC000000</Color>
+    <Color x:Key="NavIconSelectedColor">#2563EB</Color>
+    
+    <!-- Control Colors -->
+    <Color x:Key="ControlBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="ControlBackgroundSecondaryColor">#F5F7FA</Color>
+    <Color x:Key="ControlHoverColor">#E5E7EB</Color>
+    <Color x:Key="ControlPressedColor">#CED4DA</Color>
+    <Color x:Key="ControlDisabledColor">#E5E7EB</Color>
+    
+    <!-- Interactive State Colors -->
+    <Color x:Key="InteractiveHoverColor">#E5E7EB</Color>
+    <Color x:Key="InteractivePressedColor">#CED4DA</Color>
+    <Color x:Key="InteractiveSelectedColor">#E7F1FF</Color>
+    
+    <!-- Badge Colors (for parameter type badges) -->
+    <Color x:Key="BadgeBackgroundColor">#EFF4FF</Color>
+    <Color x:Key="BadgeBorderColor">#D6E4FF</Color>
+    <Color x:Key="BadgeTextColor">#2563EB</Color>
+    
+    <!-- Status Colors -->
+    <Color x:Key="StatusSuccessColor">#28A745</Color>
+    <Color x:Key="StatusSuccessLightColor">#D4EDDA</Color>
+    <Color x:Key="StatusSuccessBorderColor">#C3E6CB</Color>
+    
+    <Color x:Key="StatusWarningColor">#FFC107</Color>
+    <Color x:Key="StatusWarningLightColor">#FFF3CD</Color>
+    <Color x:Key="StatusWarningBorderColor">#FFEEBA</Color>
+    
+    <Color x:Key="StatusErrorColor">#DC2626</Color>
+    <Color x:Key="StatusErrorDarkColor">#B91C1C</Color>
+    <Color x:Key="StatusErrorLightColor">#F8D7DA</Color>
+    <Color x:Key="StatusErrorBorderColor">#F5C6CB</Color>
+    
+    <Color x:Key="StatusRunningColor">#2563EB</Color>
+    <Color x:Key="StatusRunningLightColor">#D1E7FD</Color>
+    <Color x:Key="StatusRunningBorderColor">#B6D4FE</Color>
+    
+    <Color x:Key="StatusPendingColor">#6C757D</Color>
+    <Color x:Key="StatusPendingLightColor">#E5E7EB</Color>
+    <Color x:Key="StatusPendingBorderColor">#CED4DA</Color>
+    
+    <Color x:Key="StatusInfoColor">#17A2B8</Color>
+    <Color x:Key="StatusInfoLightColor">#D1ECF1</Color>
+    <Color x:Key="StatusInfoBorderColor">#BEE5EB</Color>
+    
+    <!-- Overlay/Modal Colors -->
+    <Color x:Key="OverlayBackgroundColor">#80000000</Color>
+    <Color x:Key="ShadowColor">#20000000</Color>
+    
+    <!-- Terminal/Console Colors (always dark) -->
+    <Color x:Key="TerminalBackgroundColor">#0C0C0C</Color>
+    <Color x:Key="TerminalTextColor">#CCCCCC</Color>
+    <Color x:Key="TerminalErrorColor">#FF6B6B</Color>
+    
+    <!-- Tab/Segmented Control Colors -->
+    <Color x:Key="TabContainerBackgroundColor">#E8EFF6</Color>
+    <Color x:Key="TabSelectedBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="TabHoverBackgroundColor">#F0F4F8</Color>
+    <Color x:Key="TabSelectedHoverBackgroundColor">#FAFBFC</Color>
+    
+    <!-- DataGrid Colors -->
+    <Color x:Key="GridLineColor">#10000000</Color>
+    
+    
+    <!-- ========================================
+         CANONICAL BRUSH TOKENS
+         SolidColorBrush versions of color tokens
+         ======================================== -->
+    
+    <!-- App Background Brushes -->
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}"/>
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}"/>
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}"/>
+    <SolidColorBrush x:Key="CardBackgroundHoverBrush" Color="{StaticResource CardBackgroundHoverColor}"/>
+    <SolidColorBrush x:Key="SurfaceAlternateBrush" Color="{StaticResource SurfaceAlternateColor}"/>
+    
+    <!-- Text Brushes -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
+    <SolidColorBrush x:Key="TextTertiaryBrush" Color="{StaticResource TextTertiaryColor}"/>
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}"/>
+    <SolidColorBrush x:Key="TextOnPrimaryBrush" Color="{StaticResource TextOnPrimaryColor}"/>
+    <SolidColorBrush x:Key="TextOnDarkBrush" Color="{StaticResource TextOnDarkColor}"/>
+    
+    <!-- Border Brushes -->
+    <SolidColorBrush x:Key="BorderDefaultBrush" Color="{StaticResource BorderDefaultColor}"/>
+    <SolidColorBrush x:Key="BorderSubtleBrush" Color="{StaticResource BorderSubtleColor}"/>
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrongColor}"/>
+    <SolidColorBrush x:Key="DividerBrush" Color="{StaticResource DividerColor}"/>
+    
+    <!-- Primary Brushes -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource PrimaryHoverColor}"/>
+    <SolidColorBrush x:Key="PrimaryPressedBrush" Color="{StaticResource PrimaryPressedColor}"/>
+    <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource PrimaryLightColor}"/>
+    <SolidColorBrush x:Key="PrimarySubtleBrush" Color="{StaticResource PrimarySubtleColor}"/>
+    
+    <!-- Selection Brushes -->
+    <SolidColorBrush x:Key="SelectionBackgroundBrush" Color="{StaticResource SelectionBackgroundColor}"/>
+    <SolidColorBrush x:Key="SelectionIndicatorBrush" Color="{StaticResource SelectionIndicatorColor}"/>
+    <SolidColorBrush x:Key="SelectionHoverBrush" Color="{StaticResource SelectionHoverColor}"/>
+    
+    <!-- Navigation Brushes -->
+    <SolidColorBrush x:Key="NavBackgroundBrush" Color="{StaticResource NavBackgroundColor}"/>
+    <SolidColorBrush x:Key="NavItemHoverBrush" Color="{StaticResource NavItemHoverColor}"/>
+    <SolidColorBrush x:Key="NavItemSelectedBackgroundBrush" Color="{StaticResource NavItemSelectedBackgroundColor}"/>
+    <SolidColorBrush x:Key="NavItemSelectedHoverBrush" Color="{StaticResource NavItemSelectedHoverColor}"/>
+    <SolidColorBrush x:Key="NavIconNormalBrush" Color="{StaticResource NavIconNormalColor}"/>
+    <SolidColorBrush x:Key="NavIconHoverBrush" Color="{StaticResource NavIconHoverColor}"/>
+    <SolidColorBrush x:Key="NavIconSelectedBrush" Color="{StaticResource NavIconSelectedColor}"/>
+    
+    <!-- Control Brushes -->
+    <SolidColorBrush x:Key="ControlBackgroundBrush" Color="{StaticResource ControlBackgroundColor}"/>
+    <SolidColorBrush x:Key="ControlBackgroundSecondaryBrush" Color="{StaticResource ControlBackgroundSecondaryColor}"/>
+    <SolidColorBrush x:Key="ControlHoverBrush" Color="{StaticResource ControlHoverColor}"/>
+    <SolidColorBrush x:Key="ControlPressedBrush" Color="{StaticResource ControlPressedColor}"/>
+    <SolidColorBrush x:Key="ControlDisabledBrush" Color="{StaticResource ControlDisabledColor}"/>
+    
+    <!-- Interactive Brushes -->
+    <SolidColorBrush x:Key="InteractiveHoverBrush" Color="{StaticResource InteractiveHoverColor}"/>
+    <SolidColorBrush x:Key="InteractivePressedBrush" Color="{StaticResource InteractivePressedColor}"/>
+    <SolidColorBrush x:Key="InteractiveSelectedBrush" Color="{StaticResource InteractiveSelectedColor}"/>
+    
+    <!-- Badge Brushes -->
+    <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="{StaticResource BadgeBackgroundColor}"/>
+    <SolidColorBrush x:Key="BadgeBorderBrush" Color="{StaticResource BadgeBorderColor}"/>
+    <SolidColorBrush x:Key="BadgeTextBrush" Color="{StaticResource BadgeTextColor}"/>
+    
+    <!-- Status Brushes -->
+    <SolidColorBrush x:Key="StatusSuccessBrush" Color="{StaticResource StatusSuccessColor}"/>
+    <SolidColorBrush x:Key="StatusSuccessLightBrush" Color="{StaticResource StatusSuccessLightColor}"/>
+    <SolidColorBrush x:Key="StatusSuccessBorderBrush" Color="{StaticResource StatusSuccessBorderColor}"/>
+    
+    <SolidColorBrush x:Key="StatusWarningBrush" Color="{StaticResource StatusWarningColor}"/>
+    <SolidColorBrush x:Key="StatusWarningLightBrush" Color="{StaticResource StatusWarningLightColor}"/>
+    <SolidColorBrush x:Key="StatusWarningBorderBrush" Color="{StaticResource StatusWarningBorderColor}"/>
+    
+    <SolidColorBrush x:Key="StatusErrorBrush" Color="{StaticResource StatusErrorColor}"/>
+    <SolidColorBrush x:Key="StatusErrorDarkBrush" Color="{StaticResource StatusErrorDarkColor}"/>
+    <SolidColorBrush x:Key="StatusErrorLightBrush" Color="{StaticResource StatusErrorLightColor}"/>
+    <SolidColorBrush x:Key="StatusErrorBorderBrush" Color="{StaticResource StatusErrorBorderColor}"/>
+    
+    <SolidColorBrush x:Key="StatusRunningBrush" Color="{StaticResource StatusRunningColor}"/>
+    <SolidColorBrush x:Key="StatusRunningLightBrush" Color="{StaticResource StatusRunningLightColor}"/>
+    <SolidColorBrush x:Key="StatusRunningBorderBrush" Color="{StaticResource StatusRunningBorderColor}"/>
+    
+    <SolidColorBrush x:Key="StatusPendingBrush" Color="{StaticResource StatusPendingColor}"/>
+    <SolidColorBrush x:Key="StatusPendingLightBrush" Color="{StaticResource StatusPendingLightColor}"/>
+    <SolidColorBrush x:Key="StatusPendingBorderBrush" Color="{StaticResource StatusPendingBorderColor}"/>
+    
+    <SolidColorBrush x:Key="StatusInfoBrush" Color="{StaticResource StatusInfoColor}"/>
+    <SolidColorBrush x:Key="StatusInfoLightBrush" Color="{StaticResource StatusInfoLightColor}"/>
+    <SolidColorBrush x:Key="StatusInfoBorderBrush" Color="{StaticResource StatusInfoBorderColor}"/>
+    
+    <!-- Overlay Brushes -->
+    <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="{StaticResource OverlayBackgroundColor}"/>
+    <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}"/>
+    
+    <!-- Terminal Brushes -->
+    <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="{StaticResource TerminalBackgroundColor}"/>
+    <SolidColorBrush x:Key="TerminalTextBrush" Color="{StaticResource TerminalTextColor}"/>
+    <SolidColorBrush x:Key="TerminalErrorBrush" Color="{StaticResource TerminalErrorColor}"/>
+    
+    <!-- Tab Brushes -->
+    <SolidColorBrush x:Key="TabContainerBackgroundBrush" Color="{StaticResource TabContainerBackgroundColor}"/>
+    <SolidColorBrush x:Key="TabSelectedBackgroundBrush" Color="{StaticResource TabSelectedBackgroundColor}"/>
+    <SolidColorBrush x:Key="TabHoverBackgroundBrush" Color="{StaticResource TabHoverBackgroundColor}"/>
+    <SolidColorBrush x:Key="TabSelectedHoverBackgroundBrush" Color="{StaticResource TabSelectedHoverBackgroundColor}"/>
+    
+    <!-- DataGrid Brushes -->
+    <SolidColorBrush x:Key="GridLineBrush" Color="{StaticResource GridLineColor}"/>
+    
+    
+    <!-- ========================================
+         LEGACY KEY MAPPINGS
+         Map old keys to new canonical tokens
+         for backward compatibility
+         ======================================== -->
+    
+    <!-- Legacy Brand Colors -->
+    <Color x:Key="BrandPrimaryColor">#2563EB</Color>
+    <Color x:Key="BlueGrayDarkColor">#1F2933</Color>
+    <Color x:Key="BlueGrayMediumColor">#334155</Color>
+    <Color x:Key="BlueGrayLightColor">#64748B</Color>
+    
+    <!-- Legacy Error Colors -->
+    <Color x:Key="ErrorRedDarkColor">#B91C1C</Color>
+    <Color x:Key="ErrorRedPrimaryColor">#DC2626</Color>
+    <Color x:Key="ErrorRedLightColor">#EF4444</Color>
+    
+    <!-- Legacy Neutral Colors -->
+    <Color x:Key="NeutralWhiteColor">#FFFFFF</Color>
+    <Color x:Key="NeutralVeryLightColor">#F5F7FA</Color>
+    <Color x:Key="NeutralLightColor">#E5E7EB</Color>
+    <Color x:Key="NeutralMediumColor">#CED4DA</Color>
+    <Color x:Key="NeutralDarkColor">#6C757D</Color>
+    <Color x:Key="NeutralVeryDarkColor">#343A40</Color>
+    <Color x:Key="NeutralBlackColor">#212529</Color>
+    
+    <!-- Legacy Status Colors -->
+    <Color x:Key="SuccessGreenColor">#28A745</Color>
+    <Color x:Key="InfoCyanColor">#17A2B8</Color>
+    <Color x:Key="WarningAmberColor">#FFC107</Color>
+    
+    <!-- Legacy Brushes (mapped to canonical) -->
+    <SolidColorBrush x:Key="BrandPrimaryBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="BrandPrimaryHoverBrush" Color="{StaticResource PrimaryHoverColor}"/>
+    <SolidColorBrush x:Key="BrandPrimaryPressedBrush" Color="{StaticResource PrimaryPressedColor}"/>
+    <SolidColorBrush x:Key="SurfaceBackgroundBrush" Color="{StaticResource AppBackgroundColor}"/>
+    <SolidColorBrush x:Key="BorderAccentBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="NavItemSelectedBrush" Color="{StaticResource SelectionIndicatorColor}"/>
+    <SolidColorBrush x:Key="NavItemSelectedTextBrush" Color="{StaticResource TextOnPrimaryColor}"/>
+    
+</ResourceDictionary>

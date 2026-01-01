@@ -18,11 +18,6 @@ public interface INavigationService
     void NavigateToRun(string targetIdentity, PcTest.Contracts.RunType runType);
     
     /// <summary>
-    /// Navigates to the Logs & Results page with a specific run.
-    /// </summary>
-    void NavigateToLogsResults(string? runId = null);
-    
-    /// <summary>
     /// Gets the current page name.
     /// </summary>
     string CurrentPage { get; }

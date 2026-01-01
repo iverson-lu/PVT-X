@@ -61,9 +61,14 @@ public partial class HistoryViewModel : ViewModelBase
     // Event properties
     [ObservableProperty] private string _eventSearchText = string.Empty;
     [ObservableProperty] private bool _errorsOnly = false;
+    [ObservableProperty] private string? _nodeIdFilter;
+    [ObservableProperty]
+    private ObservableCollection<string> _selectedLevels = new() { "info", "warning", "error" };
     [ObservableProperty] private ObservableCollection<StructuredEventViewModel> _filteredEvents = new();
     [ObservableProperty] private StructuredEventViewModel? _selectedEvent;
     [ObservableProperty] private string _eventDetailsJson = string.Empty;
+
+    public IEnumerable<string> AvailableLevels => new[] { "trace", "debug", "info", "warning", "error" };
 
     // Artifact properties
     [ObservableProperty] private ObservableCollection<ArtifactNodeViewModel> _artifacts = new();
@@ -95,6 +100,7 @@ public partial class HistoryViewModel : ViewModelBase
     partial void OnStartTimeToChanged(DateTime? value) => _ = LoadAsync();
     partial void OnEventSearchTextChanged(string value) => ApplyEventFilter();
     partial void OnErrorsOnlyChanged(bool value) => ApplyEventFilter();
+    partial void OnNodeIdFilterChanged(string? value) => ApplyEventFilter();
 
     partial void OnSelectedArtifactChanged(ArtifactNodeViewModel? value)
     {
@@ -110,7 +116,24 @@ public partial class HistoryViewModel : ViewModelBase
 
     partial void OnSelectedEventChanged(StructuredEventViewModel? value)
     {
-        EventDetailsJson = value != null ? System.Text.Json.JsonSerializer.Serialize(value, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) : string.Empty;
+        if (value is not null)
+        {
+            try
+            {
+                var formatted = JsonSerializer.Serialize(
+                    JsonSerializer.Deserialize<JsonElement>(value.RawJson),
+                    new JsonSerializerOptions { WriteIndented = true });
+                EventDetailsJson = formatted;
+            }
+            catch
+            {
+                EventDetailsJson = value.RawJson;
+            }
+        }
+        else
+        {
+            EventDetailsJson = string.Empty;
+        }
     }
 
     private void ApplyFilter()
@@ -303,13 +326,24 @@ public partial class HistoryViewModel : ViewModelBase
             filtered = filtered.Where(e => e.Level?.ToLowerInvariant() == "error");
         }
 
+        if (!string.IsNullOrEmpty(NodeIdFilter))
+        {
+            filtered = filtered.Where(e => e.NodeId?.Equals(NodeIdFilter, StringComparison.OrdinalIgnoreCase) == true);
+        }
+
         if (!string.IsNullOrWhiteSpace(EventSearchText))
         {
             var searchLower = EventSearchText.ToLowerInvariant();
             filtered = filtered.Where(e =>
                 e.Message?.ToLowerInvariant().Contains(searchLower) == true ||
                 e.Type?.ToLowerInvariant().Contains(searchLower) == true ||
+                e.Code?.ToLowerInvariant().Contains(searchLower) == true ||
                 e.Source?.ToLowerInvariant().Contains(searchLower) == true);
+        }
+
+        if (SelectedLevels.Count > 0)
+        {
+            filtered = filtered.Where(e => SelectedLevels.Contains(e.Level.ToLowerInvariant()));
         }
 
         foreach (var evt in filtered)
@@ -470,15 +504,6 @@ public partial class HistoryViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ViewLogsResults()
-    {
-        if (SelectedRun is not null)
-        {
-            _navigationService.NavigateToLogsResults(SelectedRun.RunId);
-        }
-    }
-
-    [RelayCommand]
     private void OpenFolder()
     {
         if (SelectedRun is null) return;
@@ -525,8 +550,10 @@ public partial class HistoryViewModel : ViewModelBase
     [RelayCommand]
     private async Task RefreshEvents()
     {
-        // Placeholder for loading structured events from run
-        await Task.CompletedTask;
+        if (SelectedRun is not null)
+        {
+            await LoadEventsAsync(SelectedRun.RunId);
+        }
     }
 
     [RelayCommand]
@@ -534,6 +561,18 @@ public partial class HistoryViewModel : ViewModelBase
     {
         EventSearchText = string.Empty;
         ErrorsOnly = false;
+        NodeIdFilter = null;
+        SelectedLevels = new ObservableCollection<string> { "info", "warning", "error" };
+        ApplyEventFilter();
+    }
+
+    [RelayCommand]
+    private void OpenFilePath()
+    {
+        if (SelectedEvent?.FilePath is not null && _fileSystemService.FileExists(SelectedEvent.FilePath))
+        {
+            _fileSystemService.OpenWithDefaultApp(SelectedEvent.FilePath);
+        }
     }
 
     private int? GetExitCodeFromResult()
@@ -674,4 +713,51 @@ public partial class RunIndexEntryViewModel : ViewModelBase
             };
         }
     }
+}
+
+/// <summary>
+/// ViewModel for artifact tree node.
+/// </summary>
+public partial class ArtifactNodeViewModel : ViewModelBase
+{
+    [ObservableProperty] private string _name = string.Empty;
+    [ObservableProperty] private string _relativePath = string.Empty;
+    [ObservableProperty] private string _fullPath = string.Empty;
+    [ObservableProperty] private long _size;
+    [ObservableProperty] private bool _isDirectory;
+    [ObservableProperty] private bool _isExpanded;
+
+    [ObservableProperty]
+    private ObservableCollection<ArtifactNodeViewModel> _children = new();
+
+    public string SizeDisplay => IsDirectory ? string.Empty : FormatSize(Size);
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+}
+
+/// <summary>
+/// ViewModel for a structured event.
+/// </summary>
+public partial class StructuredEventViewModel : ViewModelBase
+{
+    [ObservableProperty] private DateTime _timestamp;
+    [ObservableProperty] private string _level = "info";
+    [ObservableProperty] private string? _source;
+    [ObservableProperty] private string? _nodeId;
+    [ObservableProperty] private string? _type;
+    [ObservableProperty] private string? _code;
+    [ObservableProperty] private string _message = string.Empty;
+    [ObservableProperty] private string? _exception;
+    [ObservableProperty] private string? _stackTrace;
+    [ObservableProperty] private string? _filePath;
+    [ObservableProperty] private string _rawJson = string.Empty;
+
+    public string TimestampDisplay => Timestamp.ToString("HH:mm:ss.fff");
+    public bool HasException => !string.IsNullOrEmpty(Exception);
+    public bool HasFilePath => !string.IsNullOrEmpty(FilePath);
 }

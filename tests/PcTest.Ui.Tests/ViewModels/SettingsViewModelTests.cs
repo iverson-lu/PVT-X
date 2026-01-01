@@ -14,12 +14,14 @@ public class SettingsViewModelTests
     private readonly Mock<ISettingsService> _settingsServiceMock;
     private readonly Mock<IFileDialogService> _fileDialogMock;
     private readonly Mock<IDiscoveryService> _discoveryMock;
+    private readonly Mock<IThemeManager> _themeManagerMock;
 
     public SettingsViewModelTests()
     {
         _settingsServiceMock = new Mock<ISettingsService>();
         _fileDialogMock = new Mock<IFileDialogService>();
         _discoveryMock = new Mock<IDiscoveryService>();
+        _themeManagerMock = new Mock<IThemeManager>();
     }
 
     [Fact]
@@ -37,7 +39,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
 
         // Act
         vm.Load();
@@ -58,7 +61,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
 
         // Act
         vm.Load();
@@ -77,7 +81,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
         vm.Load();
 
         // Act
@@ -97,7 +102,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
 
         // Act
         vm.Load();
@@ -116,7 +122,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
         vm.Load();
         vm.WorkspaceRoot = @"C:\Changed";
 
@@ -140,7 +147,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
         vm.Load();
 
         // Act
@@ -162,7 +170,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
         vm.Load();
 
         // Act
@@ -182,7 +191,8 @@ public class SettingsViewModelTests
         var vm = new SettingsViewModel(
             _settingsServiceMock.Object,
             _fileDialogMock.Object,
-            _discoveryMock.Object);
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
         vm.Load();
 
         // Act
@@ -191,4 +201,122 @@ public class SettingsViewModelTests
         // Assert
         vm.HasChanges.Should().BeTrue();
     }
+
+    #region Theme Tests
+
+    [Fact]
+    public void Theme_ShouldApplyTheme_WhenPropertyChanged()
+    {
+        // Arrange
+        var settings = new AppSettings { Theme = "Light" };
+        _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
+
+        var vm = new SettingsViewModel(
+            _settingsServiceMock.Object,
+            _fileDialogMock.Object,
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
+        vm.Load();
+
+        // Act
+        vm.Theme = "Dark";
+
+        // Assert
+        _themeManagerMock.Verify(x => x.ApplyTheme("Dark"), Times.Once);
+    }
+
+    [Fact]
+    public void ThemeOptions_ShouldContainLightAndDark()
+    {
+        // Arrange
+        var settings = new AppSettings();
+        _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
+
+        var vm = new SettingsViewModel(
+            _settingsServiceMock.Object,
+            _fileDialogMock.Object,
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
+
+        // Act
+        var options = vm.ThemeOptions;
+
+        // Assert
+        options.Should().Contain("Light");
+        options.Should().Contain("Dark");
+        options.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Theme_ChangeShouldSetHasChanges()
+    {
+        // Arrange
+        var settings = new AppSettings { Theme = "Light" };
+        _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
+
+        var vm = new SettingsViewModel(
+            _settingsServiceMock.Object,
+            _fileDialogMock.Object,
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
+        vm.Load();
+
+        // Act
+        vm.Theme = "Dark";
+
+        // Assert
+        vm.HasChanges.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SaveCommand_ShouldPersistThemeChange()
+    {
+        // Arrange
+        var settings = new AppSettings { Theme = "Light" };
+        _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
+        _settingsServiceMock.Setup(x => x.SaveAsync())
+            .Returns(Task.CompletedTask);
+
+        var vm = new SettingsViewModel(
+            _settingsServiceMock.Object,
+            _fileDialogMock.Object,
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
+        vm.Load();
+        vm.Theme = "Dark";
+
+        // Act
+        vm.SaveCommand.Execute(null);
+        await Task.Delay(100); // Give async command time to complete
+
+        // Assert
+        _settingsServiceMock.Verify(x => x.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
+    public void Discard_ShouldRestoreOriginalTheme()
+    {
+        // Arrange
+        var settings = new AppSettings { Theme = "Light" };
+        _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
+
+        var vm = new SettingsViewModel(
+            _settingsServiceMock.Object,
+            _fileDialogMock.Object,
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
+        vm.Load();
+        vm.Theme = "Dark";
+
+        _themeManagerMock.Reset(); // Clear previous calls
+
+        // Act
+        vm.DiscardCommand.Execute(null);
+
+        // Assert
+        vm.Theme.Should().Be("Light");
+        _themeManagerMock.Verify(x => x.ApplyTheme("Light"), Times.Once);
+    }
+
+    #endregion
 }

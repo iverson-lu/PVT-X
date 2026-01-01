@@ -283,11 +283,11 @@ public partial class RunViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ViewLogs()
+    private void ViewHistory()
     {
         if (!string.IsNullOrEmpty(RunId))
         {
-            _navigationService.NavigateToLogsResults(RunId);
+            _navigationService.NavigateTo("History", RunId);
         }
     }
 
