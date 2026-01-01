@@ -1,4 +1,0 @@
-TemplateCase raw text
-generatedAt=2026-01-01T15:02:50.6961534+08:00
-mode=error
-line3=hello
