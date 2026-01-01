@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "id": "TemplateCase",
-  "name": "📋 Template Case (Mode Switch)",
+  "name": "📋 Template Case",
   "description": "Template case with a single TestMode parameter to force Pass/Fail/Timeout/Error, and writes predictable artifacts under artifacts/.",
   "version": "1.0.0",
   "category": "Template",
