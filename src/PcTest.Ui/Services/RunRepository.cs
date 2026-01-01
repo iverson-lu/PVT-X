@@ -1,6 +1,8 @@
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using PcTest.Contracts;
+using PcTest.Ui.ViewModels;
 
 namespace PcTest.Ui.Services;
 
@@ -57,6 +59,32 @@ public sealed class RunRepository : IRunRepository
             .OrderByDescending(e => e.StartTime)
             .Take(filter.MaxResults)
             .ToList();
+    }
+
+    public async Task<IReadOnlyList<RunIndexEntryViewModel>> GetRunIndexAsync(
+        RunFilter filter,
+        CancellationToken cancellationToken = default)
+    {
+        var runs = await GetRunsAsync(filter, cancellationToken);
+
+        return runs.Select(run => new RunIndexEntryViewModel
+        {
+            RunId = run.RunId,
+            RunType = run.RunType,
+            NodeId = run.NodeId,
+            TestId = run.TestId,
+            TestVersion = run.TestVersion,
+            SuiteId = run.SuiteId,
+            SuiteVersion = run.SuiteVersion,
+            PlanId = run.PlanId,
+            PlanVersion = run.PlanVersion,
+            ParentRunId = run.ParentRunId,
+            StartTime = run.StartTime,
+            EndTime = run.EndTime,
+            Status = run.Status,
+            DisplayName = run.DisplayName,
+            Duration = run.Duration
+        }).ToList();
     }
 
     private bool MatchesFilter(RunIndexEntry entry, RunFilter filter)
@@ -357,4 +385,3 @@ public sealed class RunRepository : IRunRepository
         return Path.Combine(settings.ResolvedRunsRoot, runId);
     }
 }
-

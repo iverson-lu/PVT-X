@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Windows.Controls;
 using PcTest.Ui.Services;
 using PcTest.Ui.ViewModels;
@@ -27,18 +26,8 @@ public partial class HistoryPage : Page
     {
         // Load the runs, optionally with a specific runId from navigation parameter
         var parameter = _navigationService.CurrentParameter;
-        
-        await _viewModel.LoadAsync();
-        
-        // If a runId was provided as parameter, select that run
-        if (parameter is string runId && !string.IsNullOrEmpty(runId))
-        {
-            var run = _viewModel.Runs.FirstOrDefault(r => r.RunId == runId);
-            if (run != null)
-            {
-                _viewModel.SelectedRun = run;
-            }
-        }
+
+        await _viewModel.InitializeAsync(parameter);
     }
 
     private void ArtifactsTree_SelectedItemChanged(object sender, System.Windows.RoutedPropertyChangedEventArgs<object> e)
