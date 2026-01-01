@@ -32,6 +32,7 @@
             <converters:RunStatusToBrushConverter x:Key="RunStatusToBrushConverter"/>
             <converters:RunStatusToShortTextConverter x:Key="RunStatusToShortTextConverter"/>
             <converters:RunStatusToIconConverter x:Key="RunStatusToIconConverter"/>
+            <converters:DepthToIndentationConverter x:Key="DepthToIndentationConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
