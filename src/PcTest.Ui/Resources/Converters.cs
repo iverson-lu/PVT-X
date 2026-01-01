@@ -197,6 +197,32 @@ public class EnumToIntConverter : IValueConverter
 }
 
 /// <summary>
+/// Converts a tree depth value into a left margin.
+/// </summary>
+public class DepthToIndentConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is int depth)
+        {
+            var indentSize = 16.0;
+            if (parameter is not null && double.TryParse(parameter.ToString(), out var parsed))
+            {
+                indentSize = parsed;
+            }
+            return new Thickness(depth * indentSize, 0, 0, 0);
+        }
+
+        return new Thickness(0);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
 /// Converts RunType enum to icon symbol name for Fluent UI.
 /// </summary>
 public class RunTypeToIconConverter : IValueConverter

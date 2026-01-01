@@ -28,6 +28,7 @@
             <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
             <converters:InverseBoolToOpacityConverter x:Key="InverseBoolToOpacityConverter"/>
             <converters:EnumToIntConverter x:Key="EnumToIntConverter"/>
+            <converters:DepthToIndentConverter x:Key="DepthToIndentConverter"/>
             <converters:RunTypeToIconConverter x:Key="RunTypeToIconConverter"/>
             <converters:RunStatusToBrushConverter x:Key="RunStatusToBrushConverter"/>
             <converters:RunStatusToShortTextConverter x:Key="RunStatusToShortTextConverter"/>
