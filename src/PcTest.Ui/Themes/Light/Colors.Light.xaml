@@ -71,6 +71,11 @@
     <Color x:Key="BadgeBorderColor">#D6E4FF</Color>
     <Color x:Key="BadgeTextColor">#2563EB</Color>
     
+    <!-- Required Badge Colors (red variant) -->
+    <Color x:Key="RequiredBadgeBackgroundColor">#FEF2F2</Color>
+    <Color x:Key="RequiredBadgeBorderColor">#FECACA</Color>
+    <Color x:Key="RequiredBadgeTextColor">#DC2626</Color>
+    
     <!-- Status Colors -->
     <Color x:Key="StatusSuccessColor">#28A745</Color>
     <Color x:Key="StatusSuccessLightColor">#D4EDDA</Color>
@@ -180,6 +185,10 @@
     <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="{StaticResource BadgeBackgroundColor}"/>
     <SolidColorBrush x:Key="BadgeBorderBrush" Color="{StaticResource BadgeBorderColor}"/>
     <SolidColorBrush x:Key="BadgeTextBrush" Color="{StaticResource BadgeTextColor}"/>
+    
+    <SolidColorBrush x:Key="RequiredBadgeBackgroundBrush" Color="{StaticResource RequiredBadgeBackgroundColor}"/>
+    <SolidColorBrush x:Key="RequiredBadgeBorderBrush" Color="{StaticResource RequiredBadgeBorderColor}"/>
+    <SolidColorBrush x:Key="RequiredBadgeTextBrush" Color="{StaticResource RequiredBadgeTextColor}"/>
     
     <!-- Status Brushes -->
     <SolidColorBrush x:Key="StatusSuccessBrush" Color="{StaticResource StatusSuccessColor}"/>

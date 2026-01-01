@@ -170,6 +170,28 @@
         </Style.Triggers>
     </Style>
     
+    <!-- Required Badge Style (red variant, same style as Secondary) -->
+    <Style x:Key="RequiredBadgeStyle" TargetType="{x:Type ui:Badge}" BasedOn="{StaticResource {x:Type ui:Badge}}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ui:Badge}">
+                    <Border Background="{DynamicResource RequiredBadgeBackgroundBrush}" 
+                            BorderBrush="{DynamicResource RequiredBadgeBorderBrush}" 
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="6,2">
+                        <TextBlock Text="{TemplateBinding Content}" 
+                                  Foreground="{DynamicResource RequiredBadgeTextBrush}"
+                                  FontSize="11"
+                                  FontWeight="Medium"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
     <!-- ========================================
          SEGMENTED CONTROL (PILL-STYLE TABS)
          Modern navigation tabs with rounded container

@@ -314,8 +314,8 @@
                                                                 <ui:Badge Content="{Binding Type}" 
                                                                          Appearance="Secondary" 
                                                                          Margin="0,0,6,0"/>
-                                                                <ui:Badge Content="Required" 
-                                                                         Appearance="Danger" 
+                                                                <ui:Badge Content="required" 
+                                                                         Style="{StaticResource RequiredBadgeStyle}"
                                                                          Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                             </StackPanel>
                                                             
@@ -785,8 +785,8 @@
                                                                             <ui:Badge Content="{Binding Type}" 
                                                                                      Appearance="Secondary" 
                                                                                      Margin="0,0,6,0"/>
-                                                                            <ui:Badge Content="Required" 
-                                                                                     Appearance="Danger" 
+                                                                            <ui:Badge Content="required" 
+                                                                                     Style="{StaticResource RequiredBadgeStyle}"
                                                                                      Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                                         </StackPanel>
                                                                         

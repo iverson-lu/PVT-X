@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.0",
   "id": "TemplateCase",
-  "name": "Template Case",
-  "description": "A template test case demonstrating standardized logging, artifacts output, and exit code semantics.",
+  "name": "Template Case (Mode Switch)",
+  "description": "Template case with a single TestMode parameter to force Pass/Fail/Timeout/Error, and writes predictable artifacts under artifacts/.",
   "version": "1.0.0",
   "category": "Template",
   "owner": "PVT-X",
@@ -10,28 +10,22 @@
     "type": "powershell",
     "script": "run.ps1"
   },
-  "timeoutSec": 60,
+  "timeoutSec": 2,
   "parameters": [
     {
-      "name": "MinExpectedCount",
-      "type": "int",
-      "required": false,
-      "default": 1,
-      "description": "Minimum expected count for the demo check."
-    },
-    {
-      "name": "NameContains",
+      "name": "TestMode", 
       "type": "string",
-      "required": false,
-      "default": "",
-      "description": "If set, the demo check ensures a sample string contains this substring."
+      "required": true,
+      "default": "pass",
+      "help": "Controls outcome: pass|fail|timeout|error"
     }
   ],
-  "tags": ["template", "standard-output", "artifacts"],
+  "tags": ["template", "mode", "artifacts", "timeout"],
   "artifacts": [
-    {
-      "path": "artifacts/report.json",
-      "description": "Standard machine-readable test report produced by the test script."
-    }
+    { "path": "artifacts/report.json", "description": "Standard machine-readable report" },
+    { "path": "artifacts/raw/sample.json", "description": "Sample raw json output" },
+    { "path": "artifacts/raw/sample.txt", "description": "Sample raw text output" },
+    { "path": "artifacts/attachments/sample.log", "description": "Sample attachment log file" },
+    { "path": "artifacts/attachments/sample.bin", "description": "Sample attachment binary file" }
   ]
 }

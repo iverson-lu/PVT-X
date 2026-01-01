@@ -1,0 +1,12 @@
+{
+  "metrics": {
+    "attachmentsWritten": 2,
+    "rawFilesWritten": 2
+  },
+  "summary": "Check failed",
+  "outcome": "Fail",
+  "details": {
+    "mode": "error"
+  },
+  "testId": "TemplateCase"
+}
