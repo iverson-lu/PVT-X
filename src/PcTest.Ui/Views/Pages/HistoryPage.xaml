@@ -118,6 +118,7 @@
                             Background="{DynamicResource ControlBackgroundSecondaryBrush}" 
                             BorderBrush="{DynamicResource BorderSubtleBrush}" 
                             BorderThickness="0,0,0,1"
+                            CornerRadius="8,8,0,0"
                             Padding="8,8,8,8">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -321,6 +322,7 @@
                             Background="{DynamicResource ControlBackgroundSecondaryBrush}"
                             BorderBrush="{DynamicResource BorderSubtleBrush}" 
                             BorderThickness="0,0,0,1"
+                            CornerRadius="8,8,0,0"
                             Padding="20,16">
                         <Grid>
                             <Grid.ColumnDefinitions>
