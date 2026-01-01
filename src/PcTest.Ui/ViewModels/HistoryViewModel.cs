@@ -36,9 +36,15 @@ public partial class HistoryViewModel : ViewModelBase
     // Filters
     [ObservableProperty] private DateTime? _startTimeFrom;
     [ObservableProperty] private DateTime? _startTimeTo;
-    [ObservableProperty] private RunStatus? _statusFilter;
-    [ObservableProperty] private RunType? _runTypeFilter;
+    [ObservableProperty] private string _statusFilter = "ALL";
+    [ObservableProperty] private string _runTypeFilter = "ALL";
     [ObservableProperty] private bool _topLevelOnly = true;
+
+    private RunStatus? GetStatusFilterEnum() => 
+        StatusFilter == "ALL" ? null : Enum.TryParse<RunStatus>(StatusFilter, out var status) ? status : null;
+    
+    private RunType? GetRunTypeFilterEnum() => 
+        RunTypeFilter == "ALL" ? null : Enum.TryParse<RunType>(RunTypeFilter, out var type) ? type : null;
 
     // Run Details - Main observable
     [ObservableProperty] private RunDetails? _runDetails;
@@ -93,8 +99,8 @@ public partial class HistoryViewModel : ViewModelBase
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
-    partial void OnStatusFilterChanged(RunStatus? value) => _ = LoadAsync();
-    partial void OnRunTypeFilterChanged(RunType? value) => _ = LoadAsync();
+    partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
+    partial void OnRunTypeFilterChanged(string value) => _ = LoadAsync();
     partial void OnTopLevelOnlyChanged(bool value) => _ = LoadAsync();
     partial void OnStartTimeFromChanged(DateTime? value) => _ = LoadAsync();
     partial void OnStartTimeToChanged(DateTime? value) => _ = LoadAsync();
@@ -432,8 +438,8 @@ public partial class HistoryViewModel : ViewModelBase
             {
                 StartTimeFrom = StartTimeFrom,
                 StartTimeTo = StartTimeTo,
-                Status = StatusFilter,
-                RunType = RunTypeFilter,
+                Status = GetStatusFilterEnum(),
+                RunType = GetRunTypeFilterEnum(),
                 TopLevelOnly = TopLevelOnly,
                 MaxResults = 500
             };
@@ -498,8 +504,8 @@ public partial class HistoryViewModel : ViewModelBase
         SearchText = string.Empty;
         StartTimeFrom = null;
         StartTimeTo = null;
-        StatusFilter = null;
-        RunTypeFilter = null;
+        StatusFilter = "ALL";
+        RunTypeFilter = "ALL";
         TopLevelOnly = true;
     }
 
@@ -609,11 +615,11 @@ public partial class HistoryViewModel : ViewModelBase
         return string.Empty;
     }
 
-    public IEnumerable<RunStatus?> StatusOptions => new RunStatus?[] { null }
-        .Concat(Enum.GetValues<RunStatus>().Cast<RunStatus?>());
+    public IEnumerable<string> StatusOptions => new[] { "ALL" }
+        .Concat(Enum.GetValues<RunStatus>().Select(s => s.ToString()));
 
-    public IEnumerable<RunType?> RunTypeOptions => new RunType?[] { null }
-        .Concat(Enum.GetValues<RunType>().Cast<RunType?>());
+    public IEnumerable<string> RunTypeOptions => new[] { "ALL" }
+        .Concat(Enum.GetValues<RunType>().Select(t => t.ToString()));
 }
 
 /// <summary>
