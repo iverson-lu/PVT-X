@@ -136,6 +136,15 @@
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
                             <Setter Property="Padding" Value="0,6"/>
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                                </Trigger>
+                            </Style.Triggers>
                         </Style>
                     </DataGrid.RowStyle>
                     <DataGrid.Columns>
@@ -393,7 +402,25 @@
                                             Foreground="{DynamicResource TerminalTextBrush}"
                                             BorderThickness="0"
                                             Background="Transparent"
-                                            Padding="12"/>
+                                            TextWrapping="NoWrap"
+                                            Padding="12"
+                                            Cursor="Arrow">
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="TextBox">
+                                                            <Border Background="{TemplateBinding Background}"
+                                                                   BorderBrush="{TemplateBinding BorderBrush}"
+                                                                   BorderThickness="{TemplateBinding BorderThickness}">
+                                                                <ScrollViewer x:Name="PART_ContentHost" />
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
                                 </ScrollViewer>
                             </Border>
                         </TabItem>
@@ -413,7 +440,25 @@
                                             BorderThickness="0"
                                             Background="Transparent"
                                             Foreground="{DynamicResource TerminalErrorBrush}"
-                                            Padding="12"/>
+                                            TextWrapping="NoWrap"
+                                            Padding="12"
+                                            Cursor="Arrow">
+                                        <TextBox.Style>
+                                            <Style TargetType="TextBox">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="TextBox">
+                                                            <Border Background="{TemplateBinding Background}"
+                                                                   BorderBrush="{TemplateBinding BorderBrush}"
+                                                                   BorderThickness="{TemplateBinding BorderThickness}">
+                                                                <ScrollViewer x:Name="PART_ContentHost" />
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </TextBox.Style>
+                                    </TextBox>
                                 </ScrollViewer>
                             </Border>
                         </TabItem>
@@ -533,7 +578,25 @@
                                                 Foreground="{DynamicResource TerminalTextBrush}"
                                                 BorderThickness="0"
                                                 Background="Transparent"
-                                                Padding="12"/>
+                                                TextWrapping="NoWrap"
+                                                Padding="12"
+                                                Cursor="Arrow">
+                                            <TextBox.Style>
+                                                <Style TargetType="TextBox">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="TextBox">
+                                                                <Border Background="{TemplateBinding Background}"
+                                                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                                                       BorderThickness="{TemplateBinding BorderThickness}">
+                                                                    <ScrollViewer x:Name="PART_ContentHost" />
+                                                                </Border>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </TextBox.Style>
+                                        </TextBox>
                                     </ScrollViewer>
                                 </Border>
                             </Grid>
