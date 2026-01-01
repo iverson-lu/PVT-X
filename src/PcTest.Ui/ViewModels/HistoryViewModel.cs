@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,10 +21,13 @@ public partial class HistoryViewModel : ViewModelBase
     private CancellationTokenSource? _loadCancellationTokenSource;
 
     [ObservableProperty]
-    private ObservableCollection<RunIndexEntryViewModel> _runs = new();
+    private ObservableCollection<RunTreeNodeViewModel> _visibleNodes = new();
 
     [ObservableProperty]
     private RunIndexEntryViewModel? _selectedRun;
+
+    [ObservableProperty]
+    private RunTreeNodeViewModel? _selectedNode;
 
     partial void OnSelectedRunChanged(RunIndexEntryViewModel? value)
     {
@@ -100,7 +104,9 @@ public partial class HistoryViewModel : ViewModelBase
 
 
 
-    private List<RunIndexEntryViewModel> _allRuns = new();
+    private readonly List<RunIndexEntryViewModel> _allRuns = new();
+    private readonly Dictionary<string, RunTreeNodeViewModel> _nodeLookup = new();
+    private readonly List<RunTreeNodeViewModel> _rootNodes = new();
 
     public HistoryViewModel(
         IRunRepository runRepository,
@@ -158,21 +164,152 @@ public partial class HistoryViewModel : ViewModelBase
         }
     }
 
+    partial void OnSelectedNodeChanged(RunTreeNodeViewModel? value)
+    {
+        SelectedRun = value?.Run;
+    }
+
     private void ApplyFilter()
     {
-        Runs.Clear();
-        var filtered = string.IsNullOrWhiteSpace(SearchText)
-            ? _allRuns
-            : _allRuns.Where(r =>
-                r.RunId.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                r.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                (r.TestId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (r.SuiteId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (r.PlanId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+        VisibleNodes.Clear();
 
-        foreach (var r in filtered)
+        if (_rootNodes.Count == 0)
         {
-            Runs.Add(r);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            foreach (var root in _rootNodes)
+            {
+                AddVisibleNode(root, includePredicate: null, includeChildren: !TopLevelOnly);
+            }
+            return;
+        }
+
+        var matches = new HashSet<RunTreeNodeViewModel>();
+        foreach (var root in _rootNodes)
+        {
+            EvaluateSearch(root, SearchText, matches);
+        }
+
+        foreach (var root in _rootNodes)
+        {
+            AddVisibleNode(root, node => matches.Contains(node), includeChildren: true);
+        }
+    }
+
+    private void AddVisibleNode(
+        RunTreeNodeViewModel node,
+        Func<RunTreeNodeViewModel, bool>? includePredicate,
+        bool includeChildren)
+    {
+        if (includePredicate is not null && !includePredicate(node))
+        {
+            return;
+        }
+
+        VisibleNodes.Add(node);
+
+        if (includeChildren && node.IsExpanded)
+        {
+            foreach (var child in node.Children)
+            {
+                AddVisibleNode(child, includePredicate, includeChildren);
+            }
+        }
+    }
+
+    private bool EvaluateSearch(
+        RunTreeNodeViewModel node,
+        string searchText,
+        ISet<RunTreeNodeViewModel> matches)
+    {
+        var selfMatches = NodeMatchesSearch(node.Run, searchText);
+        var descendantMatches = false;
+
+        foreach (var child in node.Children)
+        {
+            if (EvaluateSearch(child, searchText, matches))
+            {
+                descendantMatches = true;
+            }
+        }
+
+        if (selfMatches || descendantMatches)
+        {
+            matches.Add(node);
+        }
+
+        if (descendantMatches)
+        {
+            node.IsExpanded = true;
+        }
+
+        return selfMatches || descendantMatches;
+    }
+
+    private static bool NodeMatchesSearch(RunIndexEntryViewModel run, string searchText)
+    {
+        return run.RunId.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+               run.DisplayName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+               (run.TestId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (run.SuiteId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+               (run.PlanId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private void BuildTree()
+    {
+        _nodeLookup.Clear();
+        _rootNodes.Clear();
+
+        foreach (var run in _allRuns)
+        {
+            var node = new RunTreeNodeViewModel
+            {
+                Run = run,
+                IsExpanded = false,
+                Depth = 0
+            };
+            _nodeLookup[run.RunId] = node;
+        }
+
+        foreach (var node in _nodeLookup.Values)
+        {
+            var parentRunId = node.Run.ParentRunId;
+            if (!string.IsNullOrEmpty(parentRunId) && _nodeLookup.TryGetValue(parentRunId, out var parent))
+            {
+                parent.Children.Add(node);
+            }
+            else
+            {
+                _rootNodes.Add(node);
+            }
+        }
+
+        foreach (var root in _rootNodes)
+        {
+            SetDepth(root, 0);
+        }
+    }
+
+    private static void SetDepth(RunTreeNodeViewModel node, int depth)
+    {
+        node.Depth = depth;
+        foreach (var child in node.Children)
+        {
+            SetDepth(child, depth + 1);
+        }
+    }
+
+    private void ExpandAncestors(RunTreeNodeViewModel node)
+    {
+        var current = node;
+        while (!string.IsNullOrEmpty(current.Run.ParentRunId) &&
+               _nodeLookup.TryGetValue(current.Run.ParentRunId, out var parent))
+        {
+            parent.IsExpanded = true;
+            current = parent;
         }
     }
 
@@ -502,6 +639,7 @@ public partial class HistoryViewModel : ViewModelBase
                 });
             }
 
+            BuildTree();
             ApplyFilter();
         }
         finally
@@ -517,10 +655,22 @@ public partial class HistoryViewModel : ViewModelBase
         // If a runId was provided as parameter, select that run
         if (parameter is string runId && !string.IsNullOrEmpty(runId))
         {
-            var run = Runs.FirstOrDefault(r => r.RunId == runId);
-            if (run != null)
+            if (_nodeLookup.TryGetValue(runId, out var node))
             {
-                SelectedRun = run;
+                if (node.Depth > 0 && TopLevelOnly)
+                {
+                    _topLevelOnly = false;
+                    OnPropertyChanged(nameof(TopLevelOnly));
+                    await LoadAsync();
+                    _nodeLookup.TryGetValue(runId, out node);
+                }
+
+                if (node is not null)
+                {
+                    ExpandAncestors(node);
+                    ApplyFilter();
+                    SelectedNode = node;
+                }
             }
         }
     }
@@ -529,6 +679,18 @@ public partial class HistoryViewModel : ViewModelBase
     private async Task RefreshAsync()
     {
         await LoadAsync();
+    }
+
+    [RelayCommand]
+    private void ToggleNode(RunTreeNodeViewModel? node)
+    {
+        if (node is null || node.Children.Count == 0)
+        {
+            return;
+        }
+
+        node.IsExpanded = !node.IsExpanded;
+        ApplyFilter();
     }
 
     [RelayCommand]
@@ -752,6 +914,24 @@ public partial class RunIndexEntryViewModel : ViewModelBase
             };
         }
     }
+}
+
+/// <summary>
+/// ViewModel for a run tree node.
+/// </summary>
+public partial class RunTreeNodeViewModel : ViewModelBase
+{
+    [ObservableProperty] private RunIndexEntryViewModel _run = new();
+    [ObservableProperty] private ObservableCollection<RunTreeNodeViewModel> _children = new();
+    [ObservableProperty] private bool _isExpanded;
+    [ObservableProperty] private int _depth;
+
+    public RunTreeNodeViewModel()
+    {
+        _children.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasChildren));
+    }
+
+    public bool HasChildren => Children.Count > 0;
 }
 
 /// <summary>
