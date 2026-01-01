@@ -572,10 +572,10 @@ public sealed class RunService : IRunService, IExecutionReporter
             {
                 var content = await _fileSystemService.ReadAllTextAsync(stdoutPath);
                 
-                // Format output with clear separation
-                var separator = new string('=', 80);
-                var header = $"Node: {nodeId} | Status: {status} | RunId: {childRunId}";
-                var output = $"\n{separator}\n{header}\n{separator}\n{content}\n{separator}\n";
+                // Format output with log-style delimiter
+                var statusLabel = status.ToString().ToUpperInvariant();
+                var header = $"{new string('-', 6)} [{nodeId} | {statusLabel} | {childRunId}] {new string('-', 6)}";
+                var output = $"{header}\n{content}";
                 
                 ConsoleOutput?.Invoke(this, output);
             }
