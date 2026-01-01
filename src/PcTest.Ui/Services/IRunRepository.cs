@@ -17,6 +17,13 @@ public interface IRunRepository
     /// Gets runs matching the specified filter.
     /// </summary>
     Task<IReadOnlyList<RunIndexEntry>> GetRunsAsync(RunFilter filter, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets run index entries as view models for UI lists.
+    /// </summary>
+    Task<IReadOnlyList<PcTest.Ui.ViewModels.RunIndexEntryViewModel>> GetRunIndexAsync(
+        RunFilter filter,
+        CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Gets a run by ID.
@@ -141,4 +148,3 @@ public sealed class StructuredEvent
     public string? FilePath { get; set; }
     public string RawJson { get; set; } = string.Empty;
 }
-

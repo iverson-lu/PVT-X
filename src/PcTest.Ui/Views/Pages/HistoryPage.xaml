@@ -107,137 +107,166 @@
                 <Border.Effect>
                     <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
                 </Border.Effect>
-                <DataGrid 
-                     ItemsSource="{Binding Runs}"
-                     SelectedItem="{Binding SelectedRun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                     AutoGenerateColumns="False"
-                     IsReadOnly="True"
-                     CanUserAddRows="False"
-                     CanUserDeleteRows="False"
-                     CanUserReorderColumns="False"
-                     CanUserResizeRows="False"
-                     SelectionMode="Single"
-                     SelectionUnit="FullRow"
-                     VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling"
-                     VirtualizingPanel.CacheLength="20"
-                     VirtualizingPanel.CacheLengthUnit="Item"
-                     EnableRowVirtualization="True"
-                     EnableColumnVirtualization="False"
-                     ScrollViewer.CanContentScroll="True"
-                     ScrollViewer.IsDeferredScrollingEnabled="False"
-                     GridLinesVisibility="Horizontal"
-                     HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
-                     VerticalGridLinesBrush="Transparent"
-                     RowHeight="48"
-                     HeadersVisibility="Column"
-                     Background="Transparent"
-                     BorderThickness="0">
-                    <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow">
-                            <Setter Property="Padding" Value="0,6"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.RowStyle>
-                    <DataGrid.Columns>
-                        <!-- Status Column: Icon Only -->
-                        <DataGridTemplateColumn Header="" Width="50" SortMemberPath="Status">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <ui:SymbolIcon Symbol="{Binding Status, Converter={StaticResource RunStatusToIconConverter}}" 
-                                                  Foreground="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"
-                                                  FontSize="20" 
+                <Grid Grid.IsSharedSizeScope="True">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="12,8">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="50" SharedSizeGroup="StatusColumn"/>
+                                <ColumnDefinition Width="*" SharedSizeGroup="TargetColumn"/>
+                                <ColumnDefinition Width="50" SharedSizeGroup="TypeColumn"/>
+                                <ColumnDefinition Width="80" SharedSizeGroup="StartColumn"/>
+                                <ColumnDefinition Width="80" SharedSizeGroup="DurationColumn"/>
+                                <ColumnDefinition Width="80" SharedSizeGroup="RunIdColumn"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="1" Text="Target" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <TextBlock Grid.Column="2" Text="Type" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="3" Text="Start" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <TextBlock Grid.Column="4" Text="Duration" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                            <TextBlock Grid.Column="5" Text="Run ID" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"/>
+                        </Grid>
+                    </Border>
+
+                    <ListView Grid.Row="1"
+                              ItemsSource="{Binding VisibleNodes}"
+                              SelectedItem="{Binding SelectedNode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              BorderThickness="0"
+                              Background="Transparent"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"
+                              VirtualizingPanel.CacheLength="20"
+                              VirtualizingPanel.CacheLengthUnit="Item"
+                              ScrollViewer.CanContentScroll="True">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                <Setter Property="Height" Value="48"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50" SharedSizeGroup="StatusColumn"/>
+                                        <ColumnDefinition Width="*" SharedSizeGroup="TargetColumn"/>
+                                        <ColumnDefinition Width="50" SharedSizeGroup="TypeColumn"/>
+                                        <ColumnDefinition Width="80" SharedSizeGroup="StartColumn"/>
+                                        <ColumnDefinition Width="80" SharedSizeGroup="DurationColumn"/>
+                                        <ColumnDefinition Width="80" SharedSizeGroup="RunIdColumn"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Status Column -->
+                                    <ui:SymbolIcon Grid.Column="0"
+                                                  Symbol="{Binding Run.Status, Converter={StaticResource RunStatusToIconConverter}}"
+                                                  Foreground="{Binding Run.Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                                  FontSize="20"
                                                   HorizontalAlignment="Center"
-                                                  ToolTip="{Binding Status}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        
-                        <!-- Target Column: Name + Version -->
-                        <DataGridTemplateColumn Header="Target" Width="*" MinWidth="150" SortMemberPath="DisplayName">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding NameWithoutVersion}" 
-                                                  FontSize="13"
-                                                  FontWeight="Medium"
-                                                  Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding VersionDisplay}" 
-                                                  FontSize="11"
-                                                  Foreground="{DynamicResource TextTertiaryBrush}"
-                                                  Margin="0,2,0,0"/>
+                                                  ToolTip="{Binding Run.Status}"/>
+
+                                    <!-- Target Column -->
+                                    <StackPanel Grid.Column="1"
+                                                Orientation="Horizontal"
+                                                VerticalAlignment="Center"
+                                                Margin="{Binding Depth, Converter={StaticResource DepthToIndentConverter}}">
+                                        <Button Command="{Binding DataContext.ToggleNodeCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Padding="0"
+                                                Width="20"
+                                                Height="20">
+                                            <ui:SymbolIcon FontSize="16">
+                                                <ui:SymbolIcon.Style>
+                                                    <Style TargetType="ui:SymbolIcon">
+                                                        <Setter Property="Symbol" Value="ChevronRight24"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Children.Count}" Value="0">
+                                                                <Setter Property="Visibility" Value="Hidden"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                                                                <Setter Property="Symbol" Value="ChevronDown24"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ui:SymbolIcon.Style>
+                                            </ui:SymbolIcon>
+                                        </Button>
+
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Run.NameWithoutVersion}"
+                                                      FontSize="13"
+                                                      FontWeight="Medium"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Run.VersionDisplay}"
+                                                      FontSize="11"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,2,0,0"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        
-                        <!-- Type Column: Icon Only -->
-                        <DataGridTemplateColumn Header="Type" Width="50" SortMemberPath="RunType">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <ui:SymbolIcon Symbol="{Binding RunType, Converter={StaticResource RunTypeToIconConverter}}" 
+
+                                    <!-- Type Column -->
+                                    <ui:SymbolIcon Grid.Column="2"
+                                                  Symbol="{Binding Run.RunType, Converter={StaticResource RunTypeToIconConverter}}"
                                                   FontSize="20"
                                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                                   HorizontalAlignment="Center"
-                                                  ToolTip="{Binding RunTypeTooltip}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        
-                        <!-- Start Time Column: Date + Time -->
-                        <DataGridTemplateColumn Header="Start" Width="80" SortMemberPath="StartTime">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding StartTime, StringFormat=yyyy-MM-dd}" 
+                                                  ToolTip="{Binding Run.RunTypeTooltip}"/>
+
+                                    <!-- Start Time Column -->
+                                    <StackPanel Grid.Column="3" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Run.StartTime, StringFormat=yyyy-MM-dd}"
                                                   FontSize="12"
                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding StartTime, StringFormat=HH:mm:ss}" 
+                                        <TextBlock Text="{Binding Run.StartTime, StringFormat=HH:mm:ss}"
                                                   FontSize="11"
                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,1,0,0"/>
                                     </StackPanel>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        
-                        <!-- Duration Column: Seconds only -->
-                        <DataGridTemplateColumn Header="Duration" Width="80" SortMemberPath="Duration">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Duration, StringFormat=mm\\:ss}" 
+
+                                    <!-- Duration Column -->
+                                    <TextBlock Grid.Column="4"
+                                              Text="{Binding Run.Duration, StringFormat=mm\\:ss}"
                                               FontFamily="Consolas"
                                               FontSize="12"
                                               Foreground="{DynamicResource TextSecondaryBrush}"
                                               VerticalAlignment="Center"
-                                              ToolTip="{Binding Duration, StringFormat=hh\\:mm\\:ss}"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                        
-                        <!-- Run ID Column: Short Display -->
-                        <DataGridTemplateColumn Header="Run ID" Width="80" SortMemberPath="RunId">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding ShortRunId}" 
+                                              ToolTip="{Binding Run.Duration, StringFormat=hh\\:mm\\:ss}"/>
+
+                                    <!-- Run ID Column -->
+                                    <TextBlock Grid.Column="5"
+                                              Text="{Binding Run.ShortRunId}"
                                               FontFamily="Consolas"
                                               FontSize="11"
                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                              ToolTip="{Binding RunId}"
+                                              ToolTip="{Binding Run.RunId}"
                                               VerticalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
             </Border>
             
             <!-- Splitter -->
