@@ -124,10 +124,10 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="36"/><!-- Status -->
                                 <ColumnDefinition Width="*"/><!-- Target with expand -->
-                                <ColumnDefinition Width="40"/><!-- Type -->
-                                <ColumnDefinition Width="72"/><!-- Start -->
-                                <ColumnDefinition Width="56"/><!-- Duration -->
-                                <ColumnDefinition Width="64"/><!-- RunId -->
+                                <ColumnDefinition Width="50"/><!-- Type -->
+                                <ColumnDefinition Width="60"/><!-- Start -->
+                                <ColumnDefinition Width="60"/><!-- Duration -->
+                                <ColumnDefinition Width="60"/><!-- RunId -->
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" Text="" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center"/>
                             <TextBlock Grid.Column="1" Text="Target" FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}" Margin="24,0,0,0"/>
@@ -187,10 +187,10 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="36"/><!-- Status -->
                                         <ColumnDefinition Width="*"/><!-- Target with expand/indent -->
-                                        <ColumnDefinition Width="40"/><!-- Type -->
-                                        <ColumnDefinition Width="72"/><!-- Start -->
-                                        <ColumnDefinition Width="56"/><!-- Duration -->
-                                        <ColumnDefinition Width="64"/><!-- RunId -->
+                                        <ColumnDefinition Width="50"/><!-- Type -->
+                                        <ColumnDefinition Width="60"/><!-- Start -->
+                                        <ColumnDefinition Width="60"/><!-- Duration -->
+                                        <ColumnDefinition Width="60"/><!-- RunId -->
                                     </Grid.ColumnDefinitions>
                                     
                                     <!-- Status Icon -->
