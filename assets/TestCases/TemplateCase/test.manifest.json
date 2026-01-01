@@ -20,12 +20,5 @@
       "help": "Controls outcome: pass|fail|timeout|error"
     }
   ],
-  "tags": ["template", "mode", "artifacts", "timeout"],
-  "artifacts": [
-    { "path": "artifacts/report.json", "description": "Standard machine-readable report" },
-    { "path": "artifacts/raw/sample.json", "description": "Sample raw json output" },
-    { "path": "artifacts/raw/sample.txt", "description": "Sample raw text output" },
-    { "path": "artifacts/attachments/sample.log", "description": "Sample attachment log file" },
-    { "path": "artifacts/attachments/sample.bin", "description": "Sample attachment binary file" }
-  ]
+  "tags": ["template", "mode", "artifacts", "timeout"]
 }
