@@ -53,9 +53,14 @@ public partial class SettingsViewModel : ViewModelBase
     partial void OnRunRetentionDaysChanged(int value) => HasChanges = true;
     partial void OnThemeChanged(string value)
     {
-        HasChanges = true;
-        // Apply theme immediately for preview
+        // Apply theme immediately and auto-save
         _themeManager.ApplyTheme(value);
+        
+        var settings = _settingsService.CurrentSettings;
+        settings.Theme = value;
+        _ = _settingsService.SaveAsync(); // Fire and forget async save
+        
+        // Don't set HasChanges since we auto-saved the theme
     }
     partial void OnFontScaleChanged(double value) => HasChanges = true;
     partial void OnDefaultLandingPageChanged(string value) => HasChanges = true;

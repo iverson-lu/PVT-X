@@ -248,33 +248,12 @@ public class SettingsViewModelTests
     }
 
     [Fact]
-    public void Theme_ChangeShouldSetHasChanges()
+    public void Theme_ChangeShouldAutoSaveImmediately()
     {
         // Arrange
         var settings = new AppSettings { Theme = "Light" };
         _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
-
-        var vm = new SettingsViewModel(
-            _settingsServiceMock.Object,
-            _fileDialogMock.Object,
-            _discoveryMock.Object,
-            _themeManagerMock.Object);
-        vm.Load();
-
-        // Act
-        vm.Theme = "Dark";
-
-        // Assert
-        vm.HasChanges.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task SaveCommand_ShouldPersistThemeChange()
-    {
-        // Arrange
-        var settings = new AppSettings { Theme = "Light" };
-        _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
-        _settingsServiceMock.Setup(x => x.SaveAsync())
+        _settingsServiceMock.Setup(x => x.SaveAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var vm = new SettingsViewModel(
@@ -283,18 +262,44 @@ public class SettingsViewModelTests
             _discoveryMock.Object,
             _themeManagerMock.Object);
         vm.Load();
-        vm.Theme = "Dark";
 
         // Act
-        vm.SaveCommand.Execute(null);
-        await Task.Delay(100); // Give async command time to complete
+        vm.Theme = "Dark";
 
-        // Assert
-        _settingsServiceMock.Verify(x => x.SaveAsync(), Times.Once);
+        // Assert - Theme change should auto-save, not set HasChanges
+        vm.HasChanges.Should().BeFalse();
+        settings.Theme.Should().Be("Dark");
+        _settingsServiceMock.Verify(x => x.SaveAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public void Discard_ShouldRestoreOriginalTheme()
+    public void Theme_ChangeWithOtherSettings_ShouldOnlyAutoSaveTheme()
+    {
+        // Arrange
+        var settings = new AppSettings { Theme = "Light", DefaultTimeoutSec = 300 };
+        _settingsServiceMock.Setup(x => x.CurrentSettings).Returns(settings);
+        _settingsServiceMock.Setup(x => x.SaveAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var vm = new SettingsViewModel(
+            _settingsServiceMock.Object,
+            _fileDialogMock.Object,
+            _discoveryMock.Object,
+            _themeManagerMock.Object);
+        vm.Load();
+
+        // Act - Change theme (auto-saved) and another setting (requires save)
+        vm.Theme = "Dark";
+        vm.DefaultTimeoutSec = 600;
+
+        // Assert
+        vm.HasChanges.Should().BeTrue(); // Because DefaultTimeoutSec changed
+        settings.Theme.Should().Be("Dark");
+        _settingsServiceMock.Verify(x => x.SaveAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public void Discard_ShouldReloadThemeFromSavedSettings()
     {
         // Arrange
         var settings = new AppSettings { Theme = "Light" };
@@ -306,16 +311,20 @@ public class SettingsViewModelTests
             _discoveryMock.Object,
             _themeManagerMock.Object);
         vm.Load();
+        
+        // Change theme to Dark (auto-saved), then user changes it to Light and saved setting
         vm.Theme = "Dark";
+        settings.Theme = "Dark"; // Simulate the auto-save
+        _themeManagerMock.Reset();
+        
+        // Now change another setting without saving
+        vm.DefaultTimeoutSec = 600;
 
-        _themeManagerMock.Reset(); // Clear previous calls
-
-        // Act
+        // Act - Discard should reload theme from saved settings (which is now Dark)
         vm.DiscardCommand.Execute(null);
 
-        // Assert
-        vm.Theme.Should().Be("Light");
-        _themeManagerMock.Verify(x => x.ApplyTheme("Light"), Times.Once);
+        // Assert - Theme stays Dark because it was auto-saved
+        vm.Theme.Should().Be("Dark");
     }
 
     #endregion
