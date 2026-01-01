@@ -17,6 +17,7 @@ public partial class HistoryViewModel : ViewModelBase
     private readonly INavigationService _navigationService;
     private readonly IFileSystemService _fileSystemService;
     private readonly IFileDialogService _fileDialogService;
+    private CancellationTokenSource? _loadCancellationTokenSource;
 
     [ObservableProperty]
     private ObservableCollection<RunIndexEntryViewModel> _runs = new();
@@ -26,8 +27,23 @@ public partial class HistoryViewModel : ViewModelBase
 
     partial void OnSelectedRunChanged(RunIndexEntryViewModel? value)
     {
+        // Cancel any pending load operation
+        _loadCancellationTokenSource?.Cancel();
+        _loadCancellationTokenSource?.Dispose();
+        _loadCancellationTokenSource = null;
+        
+        // Clear old data immediately to prevent showing stale content
+        if (value is null)
+        {
+            ClearRunDetails();
+            return;
+        }
+        
+        // Create new cancellation token for this load
+        _loadCancellationTokenSource = new CancellationTokenSource();
+        
         // Load full run details when selection changes
-        _ = LoadRunDetailsAsync(value?.RunId);
+        _ = LoadRunDetailsAsync(value.RunId, _loadCancellationTokenSource.Token);
     }
 
     [ObservableProperty]
@@ -160,7 +176,7 @@ public partial class HistoryViewModel : ViewModelBase
         }
     }
 
-    private async Task LoadRunDetailsAsync(string? runId)
+    private async Task LoadRunDetailsAsync(string? runId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(runId))
         {
@@ -168,12 +184,21 @@ public partial class HistoryViewModel : ViewModelBase
             return;
         }
 
-        SetBusy(true, "Loading run details...");
+        // Clear previous content first
+        StdoutContent = string.Empty;
+        StderrContent = string.Empty;
+        FilteredEvents.Clear();
+        Artifacts.Clear();
+        ArtifactContent = string.Empty;
 
         try
         {
+            if (cancellationToken.IsCancellationRequested) return;
+            
             RunDetails = await _runRepository.GetRunDetailsAsync(runId);
 
+            if (cancellationToken.IsCancellationRequested) return;
+            
             if (RunDetails is null)
             {
                 _fileDialogService.ShowError("Run Not Found", $"Could not load run: {runId}");
@@ -181,16 +206,7 @@ public partial class HistoryViewModel : ViewModelBase
                 return;
             }
 
-            // Load artifacts tree
-            await LoadArtifactsAsync(runId);
-
-            // Load stdout/stderr logs
-            await LoadStdoutStderrAsync(runId);
-
-            // Load events
-            await LoadEventsAsync(runId);
-
-            // Notify UI of computed property changes
+            // Notify UI of computed property changes immediately
             OnPropertyChanged(nameof(IsRunSelected));
             OnPropertyChanged(nameof(RunStatus));
             OnPropertyChanged(nameof(RunStatusEnum));
@@ -200,15 +216,32 @@ public partial class HistoryViewModel : ViewModelBase
             OnPropertyChanged(nameof(DurationDisplay));
             OnPropertyChanged(nameof(ExitCode));
             OnPropertyChanged(nameof(ErrorMessage));
+
+            if (cancellationToken.IsCancellationRequested) return;
+
+            // Load additional data sequentially on UI thread
+            // This ensures smooth updates without cross-thread issues
+            await LoadArtifactsAsync(runId);
+            
+            if (cancellationToken.IsCancellationRequested) return;
+            
+            await LoadStdoutStderrAsync(runId);
+            
+            if (cancellationToken.IsCancellationRequested) return;
+            
+            await LoadEventsAsync(runId);
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal cancellation, ignore
         }
         catch (Exception ex)
         {
-            _fileDialogService.ShowError("Error Loading Run", $"Failed to load run details: {ex.Message}");
-            ClearRunDetails();
-        }
-        finally
-        {
-            SetBusy(false);
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                _fileDialogService.ShowError("Error Loading Run", $"Failed to load run details: {ex.Message}");
+                ClearRunDetails();
+            }
         }
     }
 

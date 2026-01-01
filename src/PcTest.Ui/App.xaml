@@ -25,6 +25,8 @@
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <converters:NullToInverseVisibilityConverter x:Key="NullToInverseVisibilityConverter"/>
             <converters:StringToBoolConverter x:Key="StringToBoolConverter"/>
+            <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
+            <converters:InverseBoolToOpacityConverter x:Key="InverseBoolToOpacityConverter"/>
             <converters:EnumToIntConverter x:Key="EnumToIntConverter"/>
             <converters:RunTypeToIconConverter x:Key="RunTypeToIconConverter"/>
             <converters:RunStatusToBrushConverter x:Key="RunStatusToBrushConverter"/>

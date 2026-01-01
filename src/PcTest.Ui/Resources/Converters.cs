@@ -125,6 +125,54 @@ public class StringToBoolConverter : IValueConverter
 }
 
 /// <summary>
+/// Converts boolean to Opacity (true = 1.0, false = 0.0).
+/// </summary>
+public class BoolToOpacityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return boolValue ? 1.0 : 0.0;
+        }
+        return 0.0;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is double opacity)
+        {
+            return opacity > 0.5;
+        }
+        return false;
+    }
+}
+
+/// <summary>
+/// Converts boolean to Opacity (inverted: true = 0.0, false = 1.0).
+/// </summary>
+public class InverseBoolToOpacityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return boolValue ? 0.0 : 1.0;
+        }
+        return 1.0;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is double opacity)
+        {
+            return opacity <= 0.5;
+        }
+        return true;
+    }
+}
+
+/// <summary>
 /// Converts enum to int for ComboBox SelectedIndex binding.
 /// </summary>
 public class EnumToIntConverter : IValueConverter

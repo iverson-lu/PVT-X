@@ -109,19 +109,30 @@
                 </Border.Effect>
                 <DataGrid 
                      ItemsSource="{Binding Runs}"
-                     SelectedItem="{Binding SelectedRun}"
+                     SelectedItem="{Binding SelectedRun, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      AutoGenerateColumns="False"
                      IsReadOnly="True"
                      CanUserAddRows="False"
                      CanUserDeleteRows="False"
+                     CanUserReorderColumns="False"
+                     CanUserResizeRows="False"
                      SelectionMode="Single"
+                     SelectionUnit="FullRow"
                      VirtualizingPanel.IsVirtualizing="True"
                      VirtualizingPanel.VirtualizationMode="Recycling"
+                     VirtualizingPanel.CacheLength="20"
+                     VirtualizingPanel.CacheLengthUnit="Item"
                      EnableRowVirtualization="True"
+                     EnableColumnVirtualization="False"
+                     ScrollViewer.CanContentScroll="True"
+                     ScrollViewer.IsDeferredScrollingEnabled="False"
                      GridLinesVisibility="Horizontal"
                      HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
                      VerticalGridLinesBrush="Transparent"
-                     RowHeight="48">
+                     RowHeight="48"
+                     HeadersVisibility="Column"
+                     Background="Transparent"
+                     BorderThickness="0">
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
                             <Setter Property="Padding" Value="0,6"/>
