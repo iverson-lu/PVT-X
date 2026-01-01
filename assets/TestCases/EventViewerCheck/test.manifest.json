@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.5.0",
   "id": "EventViewerCheck",
-  "name": "📋 Event Viewer Level Check",
+  "name": "📜 Event Viewer Level Check",
   "category": "System",
   "description": "Checks the most recent N events in Event Viewer to ensure none have a specified severity level.",
   "version": "1.0.0",
