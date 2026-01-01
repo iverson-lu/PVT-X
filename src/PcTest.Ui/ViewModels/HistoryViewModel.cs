@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
@@ -18,15 +19,45 @@ public partial class HistoryViewModel : ViewModelBase
     private readonly IFileSystemService _fileSystemService;
     private readonly IFileDialogService _fileDialogService;
     private CancellationTokenSource? _loadCancellationTokenSource;
+    private readonly Dictionary<string, RunTreeNodeViewModel> _nodeByRunId = new();
+    private readonly List<RunTreeNodeViewModel> _rootNodes = new();
+    private HashSet<RunTreeNodeViewModel> _filteredNodes = new();
+    private bool _suppressSelectionSync;
 
     [ObservableProperty]
-    private ObservableCollection<RunIndexEntryViewModel> _runs = new();
+    private ObservableCollection<RunTreeNodeViewModel> _visibleNodes = new();
+
+    [ObservableProperty]
+    private RunTreeNodeViewModel? _selectedNode;
 
     [ObservableProperty]
     private RunIndexEntryViewModel? _selectedRun;
 
+    partial void OnSelectedNodeChanged(RunTreeNodeViewModel? value)
+    {
+        if (_suppressSelectionSync)
+        {
+            return;
+        }
+
+        _suppressSelectionSync = true;
+        SelectedRun = value?.Run;
+        _suppressSelectionSync = false;
+    }
+
     partial void OnSelectedRunChanged(RunIndexEntryViewModel? value)
     {
+        if (!_suppressSelectionSync)
+        {
+            if (value is null)
+            {
+                _suppressSelectionSync = true;
+                SelectedNode = null;
+                _suppressSelectionSync = false;
+            }
+            SyncSelectedNode(value);
+        }
+
         // Cancel any pending load operation
         _loadCancellationTokenSource?.Cancel();
         _loadCancellationTokenSource?.Dispose();
@@ -117,7 +148,7 @@ public partial class HistoryViewModel : ViewModelBase
     partial void OnSearchTextChanged(string value) => ApplyFilter();
     partial void OnStatusFilterChanged(string value) => _ = LoadAsync();
     partial void OnRunTypeFilterChanged(string value) => _ = LoadAsync();
-    partial void OnTopLevelOnlyChanged(bool value) => _ = LoadAsync();
+    partial void OnTopLevelOnlyChanged(bool value) => ApplyFilter();
     partial void OnStartTimeFromChanged(DateTime? value) => _ = LoadAsync();
     partial void OnStartTimeToChanged(DateTime? value) => _ = LoadAsync();
     partial void OnEventSearchTextChanged(string value) => ApplyEventFilter();
@@ -160,19 +191,174 @@ public partial class HistoryViewModel : ViewModelBase
 
     private void ApplyFilter()
     {
-        Runs.Clear();
-        var filtered = string.IsNullOrWhiteSpace(SearchText)
-            ? _allRuns
-            : _allRuns.Where(r =>
-                r.RunId.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                r.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                (r.TestId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (r.SuiteId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                (r.PlanId?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+        _filteredNodes = BuildFilteredNodeSet(out var matches);
 
-        foreach (var r in filtered)
+        if (matches.Count > 0)
         {
-            Runs.Add(r);
+            foreach (var match in matches)
+            {
+                ExpandAncestors(match);
+            }
+        }
+
+        RefreshVisibleNodes();
+    }
+
+    private void BuildTree()
+    {
+        _nodeByRunId.Clear();
+        _rootNodes.Clear();
+
+        foreach (var run in _allRuns)
+        {
+            var node = new RunTreeNodeViewModel { Run = run };
+            node.PropertyChanged += NodeOnPropertyChanged;
+            _nodeByRunId[run.RunId] = node;
+        }
+
+        foreach (var run in _allRuns)
+        {
+            var node = _nodeByRunId[run.RunId];
+            if (!string.IsNullOrEmpty(run.ParentRunId) && _nodeByRunId.TryGetValue(run.ParentRunId, out var parent))
+            {
+                node.Parent = parent;
+                parent.Children.Add(node);
+            }
+            else
+            {
+                _rootNodes.Add(node);
+            }
+        }
+
+        foreach (var root in _rootNodes)
+        {
+            SetDepth(root, 0);
+        }
+    }
+
+    private void SetDepth(RunTreeNodeViewModel node, int depth)
+    {
+        node.Depth = depth;
+        foreach (var child in node.Children)
+        {
+            SetDepth(child, depth + 1);
+        }
+    }
+
+    private void NodeOnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(RunTreeNodeViewModel.IsExpanded))
+        {
+            RefreshVisibleNodes();
+        }
+    }
+
+    private HashSet<RunTreeNodeViewModel> BuildFilteredNodeSet(out List<RunTreeNodeViewModel> matches)
+    {
+        matches = new List<RunTreeNodeViewModel>();
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            return new HashSet<RunTreeNodeViewModel>(_nodeByRunId.Values);
+        }
+
+        var visible = new HashSet<RunTreeNodeViewModel>();
+
+        var searchText = SearchText.Trim();
+        foreach (var node in _nodeByRunId.Values)
+        {
+            if (!NodeMatchesSearch(node, searchText))
+            {
+                continue;
+            }
+
+            matches.Add(node);
+
+            var current = node;
+            while (current is not null)
+            {
+                visible.Add(current);
+                current = current.Parent;
+            }
+        }
+
+        return visible;
+    }
+
+    private static bool NodeMatchesSearch(RunTreeNodeViewModel node, string searchText)
+    {
+        return node.Run.RunId.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+            || node.Run.DisplayName.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+            || (node.Run.TestId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (node.Run.SuiteId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (node.Run.PlanId?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private void RefreshVisibleNodes()
+    {
+        VisibleNodes.Clear();
+
+        foreach (var root in _rootNodes)
+        {
+            AddVisibleNode(root);
+        }
+    }
+
+    private void AddVisibleNode(RunTreeNodeViewModel node)
+    {
+        if (!_filteredNodes.Contains(node))
+        {
+            return;
+        }
+
+        VisibleNodes.Add(node);
+
+        if (TopLevelOnly || !node.IsExpanded)
+        {
+            return;
+        }
+
+        foreach (var child in node.Children)
+        {
+            AddVisibleNode(child);
+        }
+    }
+
+    private void ExpandAncestors(RunTreeNodeViewModel node)
+    {
+        var current = node.Parent;
+        while (current is not null)
+        {
+            current.IsExpanded = true;
+            current = current.Parent;
+        }
+    }
+
+    private void SelectRunById(string runId)
+    {
+        if (_nodeByRunId.TryGetValue(runId, out var node))
+        {
+            ExpandAncestors(node);
+            _suppressSelectionSync = true;
+            SelectedNode = node;
+            SelectedRun = node.Run;
+            _suppressSelectionSync = false;
+            RefreshVisibleNodes();
+        }
+    }
+
+    private void SyncSelectedNode(RunIndexEntryViewModel? run)
+    {
+        if (run is null)
+        {
+            return;
+        }
+
+        if (_nodeByRunId.TryGetValue(run.RunId, out var node))
+        {
+            _suppressSelectionSync = true;
+            SelectedNode = node;
+            _suppressSelectionSync = false;
         }
     }
 
@@ -473,35 +659,19 @@ public partial class HistoryViewModel : ViewModelBase
                 StartTimeTo = StartTimeTo,
                 Status = GetStatusFilterEnum(),
                 RunType = GetRunTypeFilterEnum(),
-                TopLevelOnly = TopLevelOnly,
+                TopLevelOnly = false,
                 MaxResults = 500
             };
 
-            var runs = await _runRepository.GetRunsAsync(filter);
+            var runs = await _runRepository.GetRunIndexAsync(filter);
             _allRuns.Clear();
 
             foreach (var run in runs)
             {
-                _allRuns.Add(new RunIndexEntryViewModel
-                {
-                    RunId = run.RunId,
-                    RunType = run.RunType,
-                    NodeId = run.NodeId,
-                    TestId = run.TestId,
-                    TestVersion = run.TestVersion,
-                    SuiteId = run.SuiteId,
-                    SuiteVersion = run.SuiteVersion,
-                    PlanId = run.PlanId,
-                    PlanVersion = run.PlanVersion,
-                    ParentRunId = run.ParentRunId,
-                    StartTime = run.StartTime,
-                    EndTime = run.EndTime,
-                    Status = run.Status,
-                    DisplayName = run.DisplayName,
-                    Duration = run.Duration
-                });
+                _allRuns.Add(run);
             }
 
+            BuildTree();
             ApplyFilter();
         }
         finally
@@ -517,11 +687,7 @@ public partial class HistoryViewModel : ViewModelBase
         // If a runId was provided as parameter, select that run
         if (parameter is string runId && !string.IsNullOrEmpty(runId))
         {
-            var run = Runs.FirstOrDefault(r => r.RunId == runId);
-            if (run != null)
-            {
-                SelectedRun = run;
-            }
+            SelectRunById(runId);
         }
     }
 
@@ -651,8 +817,25 @@ public partial class HistoryViewModel : ViewModelBase
     public IEnumerable<string> StatusOptions => new[] { "ALL" }
         .Concat(Enum.GetValues<RunStatus>().Select(s => s.ToString()));
 
-    public IEnumerable<string> RunTypeOptions => new[] { "ALL" }
+public IEnumerable<string> RunTypeOptions => new[] { "ALL" }
         .Concat(Enum.GetValues<RunType>().Select(t => t.ToString()));
+}
+
+/// <summary>
+/// ViewModel for a run tree node.
+/// </summary>
+public partial class RunTreeNodeViewModel : ViewModelBase
+{
+    [ObservableProperty] private RunIndexEntryViewModel _run = new();
+    [ObservableProperty] private ObservableCollection<RunTreeNodeViewModel> _children = new();
+    [ObservableProperty] private bool _isExpanded;
+    [ObservableProperty] private int _depth;
+
+    public RunTreeNodeViewModel? Parent { get; set; }
+
+    public Thickness IndentMargin => new(Depth * 16, 0, 0, 0);
+
+    partial void OnDepthChanged(int value) => OnPropertyChanged(nameof(IndentMargin));
 }
 
 /// <summary>
