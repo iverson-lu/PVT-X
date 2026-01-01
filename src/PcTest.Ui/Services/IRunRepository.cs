@@ -1,5 +1,6 @@
 using System.IO;
 using PcTest.Contracts;
+using PcTest.Ui.ViewModels;
 
 namespace PcTest.Ui.Services;
 
@@ -12,6 +13,11 @@ public interface IRunRepository
     /// Gets all runs from the index.
     /// </summary>
     Task<IReadOnlyList<RunIndexEntry>> GetAllRunsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the run index for UI display.
+    /// </summary>
+    Task<IReadOnlyList<RunIndexEntryViewModel>> GetRunIndexAsync(CancellationToken cancellationToken = default);
     
     /// <summary>
     /// Gets runs matching the specified filter.
@@ -141,4 +147,3 @@ public sealed class StructuredEvent
     public string? FilePath { get; set; }
     public string RawJson { get; set; } = string.Empty;
 }
-

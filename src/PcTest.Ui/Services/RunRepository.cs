@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using PcTest.Contracts;
+using PcTest.Ui.ViewModels;
 
 namespace PcTest.Ui.Services;
 
@@ -21,6 +22,31 @@ public sealed class RunRepository : IRunRepository
     public async Task<IReadOnlyList<RunIndexEntry>> GetAllRunsAsync(CancellationToken cancellationToken = default)
     {
         return await GetRunsAsync(new RunFilter { TopLevelOnly = false, MaxResults = int.MaxValue }, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<RunIndexEntryViewModel>> GetRunIndexAsync(CancellationToken cancellationToken = default)
+    {
+        var runs = await GetAllRunsAsync(cancellationToken);
+        return runs
+            .Select(run => new RunIndexEntryViewModel
+            {
+                RunId = run.RunId,
+                RunType = run.RunType,
+                NodeId = run.NodeId,
+                TestId = run.TestId,
+                TestVersion = run.TestVersion,
+                SuiteId = run.SuiteId,
+                SuiteVersion = run.SuiteVersion,
+                PlanId = run.PlanId,
+                PlanVersion = run.PlanVersion,
+                ParentRunId = run.ParentRunId,
+                StartTime = run.StartTime,
+                EndTime = run.EndTime,
+                Status = run.Status,
+                DisplayName = run.DisplayName,
+                Duration = run.Duration
+            })
+            .ToList();
     }
 
     public async Task<IReadOnlyList<RunIndexEntry>> GetRunsAsync(RunFilter filter, CancellationToken cancellationToken = default)
@@ -357,4 +383,3 @@ public sealed class RunRepository : IRunRepository
         return Path.Combine(settings.ResolvedRunsRoot, runId);
     }
 }
-
