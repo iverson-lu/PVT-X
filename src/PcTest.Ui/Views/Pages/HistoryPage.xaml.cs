@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Windows.Controls;
 using PcTest.Ui.Services;
 using PcTest.Ui.ViewModels;
@@ -33,11 +32,7 @@ public partial class HistoryPage : Page
         // If a runId was provided as parameter, select that run
         if (parameter is string runId && !string.IsNullOrEmpty(runId))
         {
-            var run = _viewModel.Runs.FirstOrDefault(r => r.RunId == runId);
-            if (run != null)
-            {
-                _viewModel.SelectedRun = run;
-            }
+            _viewModel.SelectRunById(runId);
         }
     }
 
