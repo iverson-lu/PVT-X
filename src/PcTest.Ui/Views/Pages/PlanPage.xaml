@@ -304,7 +304,7 @@
                                                             </Grid.RowDefinitions>
                                                             
                                                             <!-- Parameter name and badges -->
-                                                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
                                                                 <TextBlock Text="{Binding Name}" 
                                                                           FontSize="{StaticResource FontSizeM}"
                                                                           FontWeight="{StaticResource FontWeightSemiBold}"
@@ -325,7 +325,7 @@
                                                                       FontSize="{StaticResource FontSizeS}"
                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       TextWrapping="Wrap"
-                                                                      Margin="0,0,0,8"
+                                                                      Margin="0,0,0,4"
                                                                       Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
                                                             
                                                             <!-- Input field -->
@@ -775,7 +775,7 @@
                                                                         </Grid.RowDefinitions>
                                                                         
                                                                         <!-- Parameter name and badges -->
-                                                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
+                                                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
                                                                             <TextBlock Text="{Binding Name}" 
                                                                                       FontSize="{StaticResource FontSizeM}"
                                                                                       FontWeight="{StaticResource FontWeightSemiBold}"

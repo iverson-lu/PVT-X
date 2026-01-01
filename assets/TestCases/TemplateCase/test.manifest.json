@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0",
+  "id": "TemplateCase",
+  "name": "Template Case",
+  "description": "A template test case demonstrating standardized logging, artifacts output, and exit code semantics.",
+  "version": "1.0.0",
+  "category": "Template",
+  "owner": "PVT-X",
+  "entry": {
+    "type": "powershell",
+    "script": "run.ps1"
+  },
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "MinExpectedCount",
+      "type": "int",
+      "required": false,
+      "default": 1,
+      "description": "Minimum expected count for the demo check."
+    },
+    {
+      "name": "NameContains",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "If set, the demo check ensures a sample string contains this substring."
+    }
+  ],
+  "tags": ["template", "standard-output", "artifacts"],
+  "artifacts": [
+    {
+      "path": "artifacts/report.json",
+      "description": "Standard machine-readable test report produced by the test script."
+    }
+  ]
+}
