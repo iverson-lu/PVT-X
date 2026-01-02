@@ -45,6 +45,7 @@ public enum ErrorType
 
 /// <summary>
 /// Supported parameter types per spec section 6.2.
+/// Array types are NOT supported - use json type for complex structures.
 /// </summary>
 public static class ParameterTypes
 {
@@ -56,29 +57,12 @@ public static class ParameterTypes
     public const string File = "file";
     public const string Folder = "folder";
     public const string Enum = "enum";
-    public const string IntArray = "int[]";
-    public const string DoubleArray = "double[]";
-    public const string StringArray = "string[]";
-    public const string BooleanArray = "boolean[]";
-    public const string PathArray = "path[]";
-    public const string FileArray = "file[]";
-    public const string FolderArray = "folder[]";
-    public const string EnumArray = "enum[]";
+    public const string Json = "json";
 
     private static readonly HashSet<string> ValidTypes = new(StringComparer.Ordinal)
     {
-        Int, Double, String, Boolean, Path, File, Folder, Enum,
-        IntArray, DoubleArray, StringArray, BooleanArray, PathArray, FileArray, FolderArray, EnumArray
+        Int, Double, String, Boolean, Path, File, Folder, Enum, Json
     };
 
     public static bool IsValid(string type) => ValidTypes.Contains(type);
-    
-    public static bool IsArrayType(string type) => type.EndsWith("[]", StringComparison.Ordinal);
-    
-    public static string GetElementType(string arrayType)
-    {
-        if (!IsArrayType(arrayType))
-            return arrayType;
-        return arrayType[..^2];
-    }
 }

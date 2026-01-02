@@ -244,7 +244,7 @@ Example:
   "parameters": [
     { "name": "DurationSec", "type": "int", "required": true, "default": 30 },
     { "name": "Mode", "type": "enum", "required": false, "enumValues": ["A", "B"] },
-    { "name": "Modes", "type": "enum[]", "required": false, "enumValues": ["A", "B"] }
+    { "name": "ModesJson", "type": "json", "required": false, "default": "[\"A\", \"B\"]", "help": "JSON array of modes" }
   ]
 }
 ```
@@ -256,22 +256,43 @@ Example:
 | Field | Type | Required | Description |
 |---|---|---|---|
 | name | string | Yes | Parameter name |
-| type | string | Yes | Supported: int, double, string, boolean, path, file, folder, enum, int[], double[], string[], boolean[], path[], file[], folder[], enum[] |
+| type | string | Yes | Supported: int, double, string, boolean, path, file, folder, enum, json |
 | required | bool | Yes | Required or not |
 | default | any | No | Default value |
 | min / max | number | No | Numeric range |
 | enumValues | string[] | No | Enum candidates |
 | unit | string | No | Display unit |
-| uiHint | string | No | textbox / dropdown / checkboxes / filePicker / folderPicker / multiline |
+| uiHint | string | No | textbox / dropdown / filePicker / folderPicker / textarea |
 | pattern | string | No | Regex validation |
 | help | string | No | Help text |
 
-Notes:
-- The supported type set above is authoritative and MUST be used consistently by validation, EnvRef resolution, and Runner argument binding.
-- int and double MUST parse using invariant culture (dot decimal); boolean MUST parse true/false/1/0 (case-insensitive). Arrays MUST be JSON arrays of the corresponding primitive type; empty arrays MUST be accepted and preserved.
-- For enum and enum[] values (whether literal or resolved from EnvRef), the final resolved value(s) MUST be contained in enumValues; otherwise validation MUST fail.
-- For type path/file/folder: relative values MUST resolve against environment.workingDir (inside the Run Folder); existence checks for file/folder occur at pre-node validation time (section 7.2.1). Schema v1 does NOT define an allowCreate flag; creation is NOT implied by the schema. UI hints such as filePicker/folderPicker MUST align with this resolution rule and MUST NOT imply alternative bases.
-- If environment.workingDir is absent, relative path/file/folder values MUST resolve against the Case Run Folder root (CaseRunId).
+**Supported Parameter Types (Whitelist):**
+- `int` - Integer number
+- `double` - Floating-point number
+- `string` - Text
+- `boolean` - True/false value (CLI uses `-Flag:$true` / `-Flag:$false`)
+- `enum` - String value from enumValues list
+- `path` - File system path (string)
+- `file` - File path (string)
+- `folder` - Folder path (string)
+- `json` - JSON-encoded string (object or array)
+
+**Array Types are NOT Supported:**
+- Do NOT use `int[]`, `double[]`, `string[]`, `boolean[]`, etc.
+- For complex structures (arrays, objects), use `json` type instead.
+
+**JSON Parameter Notes:**
+- `json` type is transported as string containing JSON-encoded data.
+- Engine and Runner do NOT parse or validate JSON content.
+- Test Case PowerShell scripts MUST handle JSON parsing explicitly using `ConvertFrom-Json`.
+- Use `json` type for any structured data (arrays, objects, nested structures).
+
+**Type Conversion Rules:**
+- `int` and `double` parse using invariant culture (dot decimal separator).
+- `boolean` parses `true`/`false`/`1`/`0` (case-insensitive).
+- `enum` values (whether literal or from EnvRef) MUST be in `enumValues` list.
+- `path`/`file`/`folder`: relative values resolve against `environment.workingDir` (inside Run Folder); if `workingDir` absent, resolve against Case Run Folder root.
+- `json`: passed as-is, no parsing or validation by Engine/Runner.
 
 ---
 

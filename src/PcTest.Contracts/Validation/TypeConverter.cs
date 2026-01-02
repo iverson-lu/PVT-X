@@ -28,12 +28,7 @@ public static class TypeConverter
                 ParameterTypes.Boolean => ConvertToBoolean(element),
                 ParameterTypes.Path or ParameterTypes.File or ParameterTypes.Folder => ConvertToString(element),
                 ParameterTypes.Enum => ConvertToEnum(element, enumValues),
-                ParameterTypes.IntArray => ConvertToIntArray(element),
-                ParameterTypes.DoubleArray => ConvertToDoubleArray(element),
-                ParameterTypes.StringArray => ConvertToStringArray(element),
-                ParameterTypes.BooleanArray => ConvertToBooleanArray(element),
-                ParameterTypes.PathArray or ParameterTypes.FileArray or ParameterTypes.FolderArray => ConvertToStringArray(element),
-                ParameterTypes.EnumArray => ConvertToEnumArray(element, enumValues),
+                ParameterTypes.Json => ConvertToString(element),
                 _ => (false, null, $"Unsupported type: {targetType}")
             };
         }
@@ -65,12 +60,7 @@ public static class TypeConverter
                 ParameterTypes.Boolean => ParseBoolean(value),
                 ParameterTypes.Path or ParameterTypes.File or ParameterTypes.Folder => (true, value, null),
                 ParameterTypes.Enum => ValidateEnum(value, enumValues),
-                ParameterTypes.IntArray => ParseIntArray(value),
-                ParameterTypes.DoubleArray => ParseDoubleArray(value),
-                ParameterTypes.StringArray => ParseStringArray(value),
-                ParameterTypes.BooleanArray => ParseBooleanArray(value),
-                ParameterTypes.PathArray or ParameterTypes.FileArray or ParameterTypes.FolderArray => ParseStringArray(value),
-                ParameterTypes.EnumArray => ParseEnumArray(value, enumValues),
+                ParameterTypes.Json => (true, value, null),
                 _ => (true, value, null) // Treat unknown as string
             };
         }
@@ -132,86 +122,6 @@ public static class TypeConverter
         return ValidateEnum(element.GetString() ?? "", enumValues);
     }
 
-    private static (bool, object?, string?) ConvertToIntArray(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Array)
-            return (false, null, $"Expected array, got {element.ValueKind}");
-
-        var list = new List<int>();
-        foreach (var item in element.EnumerateArray())
-        {
-            var (success, value, error) = ConvertToInt(item);
-            if (!success)
-                return (false, null, error);
-            list.Add((int)value!);
-        }
-        return (true, list.ToArray(), null);
-    }
-
-    private static (bool, object?, string?) ConvertToDoubleArray(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Array)
-            return (false, null, $"Expected array, got {element.ValueKind}");
-
-        var list = new List<double>();
-        foreach (var item in element.EnumerateArray())
-        {
-            var (success, value, error) = ConvertToDouble(item);
-            if (!success)
-                return (false, null, error);
-            list.Add((double)value!);
-        }
-        return (true, list.ToArray(), null);
-    }
-
-    private static (bool, object?, string?) ConvertToStringArray(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Array)
-            return (false, null, $"Expected array, got {element.ValueKind}");
-
-        var list = new List<string>();
-        foreach (var item in element.EnumerateArray())
-        {
-            var (success, value, error) = ConvertToString(item);
-            if (!success)
-                return (false, null, error);
-            list.Add((string?)value ?? "");
-        }
-        return (true, list.ToArray(), null);
-    }
-
-    private static (bool, object?, string?) ConvertToBooleanArray(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Array)
-            return (false, null, $"Expected array, got {element.ValueKind}");
-
-        var list = new List<bool>();
-        foreach (var item in element.EnumerateArray())
-        {
-            var (success, value, error) = ConvertToBoolean(item);
-            if (!success)
-                return (false, null, error);
-            list.Add((bool)value!);
-        }
-        return (true, list.ToArray(), null);
-    }
-
-    private static (bool, object?, string?) ConvertToEnumArray(JsonElement element, IReadOnlyList<string>? enumValues)
-    {
-        if (element.ValueKind != JsonValueKind.Array)
-            return (false, null, $"Expected array, got {element.ValueKind}");
-
-        var list = new List<string>();
-        foreach (var item in element.EnumerateArray())
-        {
-            var (success, value, error) = ConvertToEnum(item, enumValues);
-            if (!success)
-                return (false, null, error);
-            list.Add((string?)value ?? "");
-        }
-        return (true, list.ToArray(), null);
-    }
-
     private static (bool, object?, string?) ParseInt(string value)
     {
         if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
@@ -242,70 +152,5 @@ public static class TypeConverter
         if (enumValues.Contains(value))
             return (true, value, null);
         return (false, null, $"Value '{value}' is not in allowed values: [{string.Join(", ", enumValues)}]");
-    }
-
-    private static (bool, object?, string?) ParseIntArray(string value)
-    {
-        try
-        {
-            var element = JsonSerializer.Deserialize<JsonElement>(value);
-            return ConvertToIntArray(element);
-        }
-        catch (JsonException ex)
-        {
-            return (false, null, $"Cannot parse as JSON int array: {ex.Message}");
-        }
-    }
-
-    private static (bool, object?, string?) ParseDoubleArray(string value)
-    {
-        try
-        {
-            var element = JsonSerializer.Deserialize<JsonElement>(value);
-            return ConvertToDoubleArray(element);
-        }
-        catch (JsonException ex)
-        {
-            return (false, null, $"Cannot parse as JSON double array: {ex.Message}");
-        }
-    }
-
-    private static (bool, object?, string?) ParseStringArray(string value)
-    {
-        try
-        {
-            var element = JsonSerializer.Deserialize<JsonElement>(value);
-            return ConvertToStringArray(element);
-        }
-        catch (JsonException ex)
-        {
-            return (false, null, $"Cannot parse as JSON string array: {ex.Message}");
-        }
-    }
-
-    private static (bool, object?, string?) ParseBooleanArray(string value)
-    {
-        try
-        {
-            var element = JsonSerializer.Deserialize<JsonElement>(value);
-            return ConvertToBooleanArray(element);
-        }
-        catch (JsonException ex)
-        {
-            return (false, null, $"Cannot parse as JSON boolean array: {ex.Message}");
-        }
-    }
-
-    private static (bool, object?, string?) ParseEnumArray(string value, IReadOnlyList<string>? enumValues)
-    {
-        try
-        {
-            var element = JsonSerializer.Deserialize<JsonElement>(value);
-            return ConvertToEnumArray(element, enumValues);
-        }
-        catch (JsonException ex)
-        {
-            return (false, null, $"Cannot parse as JSON enum array: {ex.Message}");
-        }
     }
 }

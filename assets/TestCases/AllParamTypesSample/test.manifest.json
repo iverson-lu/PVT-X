@@ -1,13 +1,13 @@
 {
   "schemaVersion": "1.5.0",
   "id": "AllParamTypesSample",
-  "name": "🧪 All Parameter Types Sample",
+  "name": "🧪 Parameter Types Sample",
   "category": "Demo",
-  "description": "Covers basic parameter types to validate UI+Engine handling.",
+  "description": "Demonstrates all supported parameter types including json for complex structures.",
   "version": "1.0.0",
   "privilege": "User",
   "timeoutSec": 120,
-  "tags": ["sample", "parameters", "basic-types"],
+  "tags": ["sample", "parameters", "demo"],
   "parameters": [
     {
       "name": "E_Mode",
@@ -15,14 +15,14 @@
       "required": true,
       "default": "Alpha",
       "enumValues": ["Alpha", "Beta", "Gamma"],
-      "help": "enum (string with allowed values)"
+      "help": "Enum parameter (required)"
     },
     {
       "name": "S_Text",
       "type": "string",
       "required": false,
       "default": "hello",
-      "help": "string"
+      "help": "String parameter"
     },
     {
       "name": "N_Int",
@@ -31,14 +31,14 @@
       "default": 42,
       "min": -100,
       "max": 100,
-      "help": "int (with min/max)"
+      "help": "Integer with min/max constraints"
     },
     {
       "name": "B_Flag",
       "type": "boolean",
       "required": false,
       "default": true,
-      "help": "boolean"
+      "help": "Boolean parameter (CLI: -B_Flag:$true or -B_Flag:$false)"
     },
     {
       "name": "N_Double",
@@ -48,14 +48,30 @@
       "min": 0,
       "max": 9999,
       "unit": "unit",
-      "help": "double (with min/max + unit)"
+      "help": "Double with min/max and unit"
     },
     {
       "name": "P_Path",
       "type": "path",
       "required": false,
       "default": "C:\\Windows",
-      "help": "path (string)"
+      "help": "Path parameter (string)"
+    },
+    {
+      "name": "ItemsJson",
+      "type": "json",
+      "required": false,
+      "default": "[1, 2, 3]",
+      "uiHint": "textarea",
+      "help": "JSON array example - parsed by script using ConvertFrom-Json"
+    },
+    {
+      "name": "ConfigJson",
+      "type": "json",
+      "required": false,
+      "default": "{\"timeout\": 30, \"retry\": true}",
+      "uiHint": "textarea",
+      "help": "JSON object example - parsed by script using ConvertFrom-Json"
     }
   ]
 }

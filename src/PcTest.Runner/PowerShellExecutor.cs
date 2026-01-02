@@ -327,6 +327,7 @@ public sealed class PowerShellExecutor
     /// <summary>
     /// Adds parameter value(s) to argument list per spec section 9.
     /// Note: Boolean values are handled separately in the parameter loop using -Name:$true syntax.
+    /// Array types are NOT supported - complex structures should use json type.
     /// </summary>
     private static void AddParameterValue(ICollection<string> argumentList, object value)
     {
@@ -366,45 +367,6 @@ public sealed class PowerShellExecutor
                 AddJsonElementValue(argumentList, jsonElement);
                 break;
 
-            case int[] intArray:
-                foreach (var item in intArray)
-                {
-                    argumentList.Add(item.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                }
-                break;
-
-            case double[] doubleArray:
-                foreach (var item in doubleArray)
-                {
-                    argumentList.Add(item.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                }
-                break;
-
-            case string[] stringArray:
-                // Array parameters as repeated values: -Modes "A" "B"
-                foreach (var item in stringArray)
-                {
-                    argumentList.Add(item);
-                }
-                break;
-
-            case bool[] boolArray:
-                foreach (var item in boolArray)
-                {
-                    argumentList.Add(item ? "$true" : "$false");
-                }
-                break;
-
-            case object[] objArray:
-                foreach (var item in objArray)
-                {
-                    if (item is not null)
-                    {
-                        AddParameterValue(argumentList, item);
-                    }
-                }
-                break;
-
             default:
                 argumentList.Add(value.ToString() ?? "");
                 break;
@@ -416,26 +378,18 @@ public sealed class PowerShellExecutor
         switch (element.ValueKind)
         {
             case System.Text.Json.JsonValueKind.True:
-                // In array context, boolean values are passed as $true/$false strings
-                argumentList.Add("$true");
-                break;
+                throw new InvalidOperationException("Boolean JsonElement values should be handled separately using -Name:$true syntax");
             case System.Text.Json.JsonValueKind.False:
-                // In array context, boolean values are passed as $true/$false strings
-                argumentList.Add("$false");
-                break;
+                throw new InvalidOperationException("Boolean JsonElement values should be handled separately using -Name:$false syntax");
             case System.Text.Json.JsonValueKind.Number:
                 argumentList.Add(element.GetRawText());
                 break;
             case System.Text.Json.JsonValueKind.String:
                 argumentList.Add(element.GetString() ?? "");
                 break;
-            case System.Text.Json.JsonValueKind.Array:
-                foreach (var item in element.EnumerateArray())
-                {
-                    AddJsonElementValue(argumentList, item);
-                }
-                break;
             default:
+                // All other types (array, object, null) should not appear as parameter values
+                // Use json type for complex structures
                 argumentList.Add(element.ToString());
                 break;
         }
