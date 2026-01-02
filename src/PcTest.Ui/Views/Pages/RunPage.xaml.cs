@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows.Controls;
 using PcTest.Ui.Services;
 using PcTest.Ui.ViewModels;
@@ -21,10 +22,28 @@ public partial class RunPage : Page
         InitializeComponent();
         
         Loaded += RunPage_Loaded;
+        Unloaded += RunPage_Unloaded;
+        
+        // Subscribe to ConsoleOutput property changes for auto-scroll
+        _viewModel.PropertyChanged += ViewModel_PropertyChanged;
     }
 
     private void RunPage_Loaded(object sender, System.Windows.RoutedEventArgs e)
     {
         _viewModel.Initialize(_navigationService.CurrentParameter);
+    }
+    
+    private void RunPage_Unloaded(object sender, System.Windows.RoutedEventArgs e)
+    {
+        _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+    }
+    
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(RunViewModel.ConsoleOutput))
+        {
+            // Auto-scroll to bottom when new console output is added
+            ConsoleScrollViewer?.ScrollToEnd();
+        }
     }
 }

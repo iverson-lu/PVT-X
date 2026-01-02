@@ -308,7 +308,9 @@
                                BorderBrush="{DynamicResource BorderSubtleBrush}"
                                BorderThickness="0"
                                CornerRadius="6">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <ScrollViewer x:Name="ConsoleScrollViewer" 
+                                         VerticalScrollBarVisibility="Auto" 
+                                         HorizontalScrollBarVisibility="Auto">
                                 <TextBox Text="{Binding ConsoleOutput, Mode=OneWay}" 
                                         IsReadOnly="True" 
                                         FontFamily="Cascadia Code, Consolas" 
