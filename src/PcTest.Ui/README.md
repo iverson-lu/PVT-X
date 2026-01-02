@@ -4,12 +4,21 @@ A WPF desktop application for managing and executing PC test cases, suites, and 
 
 ## Features
 
+### Navigation
+- **Compact Icon-Only Sidebar**: Borderless 68px wide navigation panel
+- **Visual Selection Indicator**: Left accent bar shows current page
+- **Page Icons**: Plan (Clipboard), Run (Play), History (History), Settings (Settings)
+- **Keyboard Navigation**: Tab-accessible navigation buttons
+- **Contextual States**: Hover effects without button-pressed appearance
+
 ### Plan Page
+- **Segmented Tab Control**: Modern pill-style tab navigation (Cases/Suites/Plans)
 - **Cases Tab**: Browse discovered test cases (read-only)
 - **Suites Tab**: Create, edit, delete, import/export test suites
 - **Plans Tab**: Create, edit, delete, import/export test plans
 - Inline editing with dirty state tracking
 - Search and filter capabilities
+- Improved spacing and layout consistency
 
 ### Run Page
 - Execute individual test cases, suites, or plans
@@ -20,26 +29,31 @@ A WPF desktop application for managing and executing PC test cases, suites, and 
 - **Execution Pipeline Panel**: Shows queued nodes as Pending, updates status in real-time during execution
 
 ### History Page
-- Browse all previous test runs
-- Filter by status, run type, time range
-- Quick actions: View Logs, Open Folder, Rerun
-
-### Logs & Results Page
-- Run Picker for selecting runs to inspect
-- Result summary with execution details
-- Artifacts tree browser
-- Stdout/Stderr log viewers
-- Structured Events Viewer with:
-  - Event filtering by level and type
-  - Search functionality
-  - JSON detail view
-  - Virtualized list for large event streams
+- **Unified Run Browser**: Consolidated view combining run index and detailed inspection
+- **Tree Navigation**: Hierarchical display showing Plan → Suite → Case relationships
+  - Top-level runs shown by default
+  - Expand/collapse nodes to show nested child runs
+  - Visual indentation indicates hierarchy depth
+- **Filtering**: By status, run type, time range, with text search across all fields
+- **Master-Detail Layout**:
+  - **Left Panel**: Tree list of runs with status icons, type badges, timestamps
+  - **Right Panel**: Run inspector with tabbed detail views
+- **Detail View Selection** (Radio Button Segmented Control):
+  - **Summary**: Run information, status, timing, exit code
+  - **Stdout**: Console output in terminal-styled viewer
+  - **Stderr**: Error output in terminal-styled viewer
+  - **Structured Events**: Filterable event log with JSON detail view
+  - **Artifacts**: Tree browser with file preview
+- **Quick Actions**: Copy Run ID, Refresh, Reset Filters
 
 ### Settings Page
-- Configure paths (assets root, runs directory, runner executable)
-- Theme selection (Dark/Light)
-- Execution settings
-- Import/Export settings as JSON
+- **Modern Card-Based Layout**: Organized in visual cards with drop shadows
+- **Path Configuration**: Assets root, runs directory, runner executable
+- **Appearance Settings**:
+  - **Theme Selection**: Light/Dark mode with **immediate auto-save**
+  - Theme changes apply instantly without requiring manual save
+- **Console Settings**: Show/hide console window during execution
+- **Save/Discard Controls**: For non-theme settings
 
 ## Technology Stack
 
@@ -49,6 +63,29 @@ A WPF desktop application for managing and executing PC test cases, suites, and 
 - **CommunityToolkit.Mvvm** for MVVM infrastructure
 - **Microsoft.Extensions.DependencyInjection** for DI
 - **System.Text.Json** for JSON serialization
+
+## Visual Design
+
+### Theme System
+- **Light and Dark Themes**: Full theme support with semantic color tokens
+- **Dynamic Theme Switching**: Themes apply immediately without restart
+- **Theme Manager Service**: Centralized theme management (`IThemeManager`)
+- **Auto-Save**: Theme preference saved automatically on change
+- **Color Tokens**: Defined in `Themes/Light/Colors.Light.xaml` and `Themes/Dark/Colors.Dark.xaml`
+- **Shared Styles**: Common typography and spacing in `Themes/Theme.Shared.xaml`
+
+### Design System
+- **Modern Card UI**: Drop-shadow elevated cards for major content sections
+- **Segmented Controls**: Pill-style tab navigation in Plan page
+- **Compact Navigation**: Icon-only sidebar with selection accent bar
+- **Fluent Typography**: Consistent font scales and weights
+- **Design Tokens**: Centralized spacing, radius, and sizing values in `Resources/DesignTokens.xaml`
+
+### Key UI Components
+- **Tree View with Virtualization**: Efficient hierarchical run display in History
+- **Radio Button Segmented Control**: Used for detail view selection
+- **Status Icons and Badges**: Visual status indicators with color coding
+- **Terminal-Styled Viewers**: Monospace console output with appropriate theming
 
 ## Building
 
@@ -102,8 +139,26 @@ src/PcTest.Ui/
 │   ├── IRunRepository.cs
 │   ├── ISettingsService.cs
 │   └── Implementations/
-└── Resources/              # Converters, styles
-    └── Converters.cs
+├── Resources/              # Converters, styles, design tokens
+│   ├── Converters.cs       # Value converters (enum, bool, visibility, opacity)
+│   ├── Styles.xaml         # Segmented controls, navigation buttons
+│   └── DesignTokens.xaml   # Spacing, sizing, typography tokens
+├── Themes/                 # Theme system
+│   ├── Light/
+│   │   └── Colors.Light.xaml
+│   ├── Dark/
+│   │   └── Colors.Dark.xaml
+│   └── Theme.Shared.xaml
+└── Services/               # Business logic services
+    ├── IDiscoveryService.cs
+    ├── ISuiteRepository.cs
+    ├── IPlanRepository.cs
+    ├── IRunService.cs
+    ├── IRunRepository.cs
+    ├── ISettingsService.cs
+    ├── IThemeManager.cs
+    ├── INavigationService.cs
+    └── Implementations/
 ```
 
 ## Configuration
