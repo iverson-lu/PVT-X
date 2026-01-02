@@ -27,7 +27,7 @@ public sealed class TestCaseRunner
     public async Task<TestCaseResult> ExecuteAsync(RunContext context)
     {
         var startTime = DateTime.UtcNow;
-        var folderManager = new CaseRunFolderManager(context.RunsRoot);
+        using var folderManager = new CaseRunFolderManager(context.RunsRoot);
 
         // Create Case Run Folder
         var caseRunFolder = folderManager.CreateRunFolder(context.RunId);
@@ -119,19 +119,34 @@ public sealed class TestCaseRunner
                 return errorResult;
             }
 
-            // Execute PowerShell script
+            // Execute PowerShell script with streaming output
             var executor = new PowerShellExecutor(_cancellationToken);
+            
+            // Create output handler for real-time streaming to log files
+            async Task OnOutputLine(string? line, bool isStderr)
+            {
+                if (line is null) return;
+                if (isStderr)
+                {
+                    await folderManager.AppendStderrLineAsync(caseRunFolder, line, secretValues);
+                }
+                else
+                {
+                    await folderManager.AppendStdoutLineAsync(caseRunFolder, line, secretValues);
+                }
+            }
+            
             var execResult = await executor.ExecuteAsync(
                 scriptPath,
                 context.EffectiveInputs,
                 context.EffectiveEnvironment,
                 resolvedWorkDir,
                 context.TimeoutSec,
-                context.SecretInputs);
+                context.SecretInputs,
+                OnOutputLine);
 
-            // Write stdout/stderr (redacted)
-            await folderManager.WriteStdoutAsync(caseRunFolder, execResult.Stdout, secretValues);
-            await folderManager.WriteStderrAsync(caseRunFolder, execResult.Stderr, secretValues);
+            // Flush and close the streaming writers
+            folderManager.FlushAndCloseWriters(caseRunFolder);
 
             // Build result
             var endTime = DateTime.UtcNow;

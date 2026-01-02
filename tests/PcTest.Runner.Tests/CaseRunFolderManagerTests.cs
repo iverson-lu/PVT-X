@@ -211,4 +211,113 @@ public class CaseRunFolderManagerTests : IDisposable
         Assert.DoesNotContain("another-secret", content);
         Assert.Contains("***", content);
     }
+
+    [Fact]
+    public async Task AppendStdoutLine_WritesIncrementally()
+    {
+        var runId = $"append-stdout-{Guid.NewGuid():N}";
+        var runFolder = _manager.CreateRunFolder(runId);
+        var stdoutPath = Path.Combine(runFolder, "stdout.log");
+
+        // Write multiple lines incrementally
+        await _manager.AppendStdoutLineAsync(runFolder, "Line 1", null);
+        await _manager.AppendStdoutLineAsync(runFolder, "Line 2", null);
+        await _manager.AppendStdoutLineAsync(runFolder, "Line 3", null);
+
+        // Flush before reading
+        _manager.FlushAndCloseWriters(runFolder);
+
+        Assert.True(File.Exists(stdoutPath));
+        var content = await File.ReadAllTextAsync(stdoutPath);
+        Assert.Contains("Line 1", content);
+        Assert.Contains("Line 2", content);
+        Assert.Contains("Line 3", content);
+    }
+
+    [Fact]
+    public async Task AppendStdoutLine_RedactsSecrets()
+    {
+        var runId = $"append-secret-{Guid.NewGuid():N}";
+        var runFolder = _manager.CreateRunFolder(runId);
+        var secretValues = new[] { "my-password" };
+        var stdoutPath = Path.Combine(runFolder, "stdout.log");
+
+        await _manager.AppendStdoutLineAsync(runFolder, "Password is my-password", secretValues);
+        _manager.FlushAndCloseWriters(runFolder);
+
+        var content = await File.ReadAllTextAsync(stdoutPath);
+        Assert.DoesNotContain("my-password", content);
+        Assert.Contains("***", content);
+    }
+
+    [Fact]
+    public async Task AppendStderrLine_WritesIncrementally()
+    {
+        var runId = $"append-stderr-{Guid.NewGuid():N}";
+        var runFolder = _manager.CreateRunFolder(runId);
+        var stderrPath = Path.Combine(runFolder, "stderr.log");
+
+        await _manager.AppendStderrLineAsync(runFolder, "Error 1", null);
+        await _manager.AppendStderrLineAsync(runFolder, "Error 2", null);
+        _manager.FlushAndCloseWriters(runFolder);
+
+        Assert.True(File.Exists(stderrPath));
+        var content = await File.ReadAllTextAsync(stderrPath);
+        Assert.Contains("Error 1", content);
+        Assert.Contains("Error 2", content);
+    }
+
+    [Fact]
+    public async Task AppendStdoutLine_FileShareReadWrite_AllowsSimultaneousRead()
+    {
+        var runId = $"share-test-{Guid.NewGuid():N}";
+        var runFolder = _manager.CreateRunFolder(runId);
+        var stdoutPath = Path.Combine(runFolder, "stdout.log");
+
+        // Start writing
+        await _manager.AppendStdoutLineAsync(runFolder, "First line", null);
+
+        // Should be able to read while writing (FileShare.ReadWrite)
+        using (var readStream = new FileStream(stdoutPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var reader = new StreamReader(readStream))
+        {
+            var content = await reader.ReadToEndAsync();
+            Assert.Contains("First line", content);
+        }
+
+        // Continue writing
+        await _manager.AppendStdoutLineAsync(runFolder, "Second line", null);
+        _manager.FlushAndCloseWriters(runFolder);
+
+        var finalContent = await File.ReadAllTextAsync(stdoutPath);
+        Assert.Contains("First line", finalContent);
+        Assert.Contains("Second line", finalContent);
+    }
+
+    [Fact]
+    public async Task AppendStdoutLine_NullLine_Ignored()
+    {
+        var runId = $"null-line-{Guid.NewGuid():N}";
+        var runFolder = _manager.CreateRunFolder(runId);
+        var stdoutPath = Path.Combine(runFolder, "stdout.log");
+
+        await _manager.AppendStdoutLineAsync(runFolder, null, null);
+        await _manager.AppendStdoutLineAsync(runFolder, "Valid line", null);
+        _manager.FlushAndCloseWriters(runFolder);
+
+        var content = await File.ReadAllTextAsync(stdoutPath);
+        // Should only have the valid line, null should not cause issues
+        Assert.Contains("Valid line", content);
+    }
+
+    [Fact]
+    public void FlushAndCloseWriters_CanBeCalledMultipleTimes()
+    {
+        var runId = $"flush-multiple-{Guid.NewGuid():N}";
+        var runFolder = _manager.CreateRunFolder(runId);
+
+        // Should not throw even when called multiple times or without writers
+        _manager.FlushAndCloseWriters(runFolder);
+        _manager.FlushAndCloseWriters(runFolder);
+    }
 }

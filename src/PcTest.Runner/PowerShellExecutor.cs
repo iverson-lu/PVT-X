@@ -32,6 +32,11 @@ public sealed class PowerShellExecutor
         public bool WasAborted { get; init; }
     }
 
+    /// <summary>
+    /// Callback for real-time output streaming.
+    /// </summary>
+    public delegate Task OutputLineHandler(string? line, bool isStderr);
+
     private readonly CancellationToken _cancellationToken;
 
     public PowerShellExecutor(CancellationToken cancellationToken = default)
@@ -93,13 +98,29 @@ public sealed class PowerShellExecutor
     /// Executes a PowerShell script with the given parameters.
     /// Per spec section 9 and 11.
     /// </summary>
-    public async Task<ExecutionResult> ExecuteAsync(
+    public Task<ExecutionResult> ExecuteAsync(
         string scriptPath,
         Dictionary<string, object?> parameters,
         Dictionary<string, string> environment,
         string workingDirectory,
         int? timeoutSec,
         Dictionary<string, bool>? secretParams = null)
+    {
+        return ExecuteAsync(scriptPath, parameters, environment, workingDirectory, timeoutSec, secretParams, onOutputLine: null);
+    }
+
+    /// <summary>
+    /// Executes a PowerShell script with streaming output support.
+    /// Per spec section 9 and 11.
+    /// </summary>
+    public async Task<ExecutionResult> ExecuteAsync(
+        string scriptPath,
+        Dictionary<string, object?> parameters,
+        Dictionary<string, string> environment,
+        string workingDirectory,
+        int? timeoutSec,
+        Dictionary<string, bool>? secretParams,
+        OutputLineHandler? onOutputLine)
     {
         var stopwatch = Stopwatch.StartNew();
         var stdoutBuilder = new StringBuilder();
@@ -206,10 +227,6 @@ public sealed class PowerShellExecutor
                 };
             }
 
-            // Read output asynchronously
-            var stdoutTask = process.StandardOutput.ReadToEndAsync();
-            var stderrTask = process.StandardError.ReadToEndAsync();
-
             // Wait with timeout
             var timeout = timeoutSec.HasValue
                 ? TimeSpan.FromSeconds(timeoutSec.Value)
@@ -218,17 +235,23 @@ public sealed class PowerShellExecutor
             using var timeoutCts = new CancellationTokenSource(timeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, _cancellationToken);
 
+            // Read output asynchronously line-by-line for real-time streaming
+            var stdoutTask = ReadLinesAsync(process.StandardOutput, stdoutBuilder, false, onOutputLine, linkedCts.Token);
+            var stderrTask = ReadLinesAsync(process.StandardError, stderrBuilder, true, onOutputLine, linkedCts.Token);
+
             try
             {
                 await process.WaitForExitAsync(linkedCts.Token);
+                // Wait for stream readers to complete after process exits
+                await Task.WhenAll(stdoutTask, stderrTask);
             }
             catch (OperationCanceledException)
             {
                 // Kill process tree
                 KillProcessTree(process);
 
-                var stdout = await stdoutTask;
-                var stderr = await stderrTask;
+                // Give streams a chance to flush
+                try { await Task.WhenAll(stdoutTask, stderrTask).WaitAsync(TimeSpan.FromSeconds(2)); } catch { /* timeout ok */ }
 
                 if (_cancellationToken.IsCancellationRequested)
                 {
@@ -241,8 +264,8 @@ public sealed class PowerShellExecutor
                             Source = "Runner",
                             Message = "Execution was aborted by user"
                         },
-                        Stdout = stdout,
-                        Stderr = stderr,
+                        Stdout = stdoutBuilder.ToString(),
+                        Stderr = stderrBuilder.ToString(),
                         Duration = stopwatch.Elapsed,
                         PwshVersion = pwshVersion,
                         WasAborted = true
@@ -258,16 +281,13 @@ public sealed class PowerShellExecutor
                         Source = "Runner",
                         Message = $"Execution timed out after {timeoutSec} seconds"
                     },
-                    Stdout = stdout,
-                    Stderr = stderr,
+                    Stdout = stdoutBuilder.ToString(),
+                    Stderr = stderrBuilder.ToString(),
                     Duration = stopwatch.Elapsed,
                     PwshVersion = pwshVersion,
                     WasTimeout = true
                 };
             }
-
-            var stdoutResult = await stdoutTask;
-            var stderrResult = await stderrTask;
 
             // Map exit code per spec section 11.2
             var exitCode = process.ExitCode;
@@ -289,8 +309,8 @@ public sealed class PowerShellExecutor
                 ExitCode = exitCode,
                 Status = status,
                 Error = error,
-                Stdout = stdoutResult,
-                Stderr = stderrResult,
+                Stdout = stdoutBuilder.ToString(),
+                Stderr = stderrBuilder.ToString(),
                 Duration = stopwatch.Elapsed,
                 PwshVersion = pwshVersion
             };
@@ -406,6 +426,51 @@ public sealed class PowerShellExecutor
             1 => RunStatus.Failed,
             _ => RunStatus.Error
         };
+    }
+
+    /// <summary>
+    /// Reads lines from a StreamReader asynchronously, invoking callback for each line.
+    /// Continues until stream ends or cancellation is requested.
+    /// </summary>
+    private static async Task ReadLinesAsync(
+        StreamReader reader,
+        StringBuilder builder,
+        bool isStderr,
+        OutputLineHandler? onOutputLine,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            string? line;
+            while ((line = await reader.ReadLineAsync(cancellationToken)) != null)
+            {
+                builder.AppendLine(line);
+                if (onOutputLine != null)
+                {
+                    await onOutputLine(line, isStderr);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when cancellation requested - drain remaining buffered content
+            try
+            {
+                var remaining = await reader.ReadToEndAsync();
+                if (!string.IsNullOrEmpty(remaining))
+                {
+                    builder.Append(remaining);
+                }
+            }
+            catch
+            {
+                // Best effort
+            }
+        }
+        catch
+        {
+            // Stream may be closed, best effort
+        }
     }
 
     /// <summary>

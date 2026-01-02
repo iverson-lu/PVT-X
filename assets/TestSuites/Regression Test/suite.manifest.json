@@ -32,6 +32,23 @@
       "inputs": {
         "ExpectedUtcOffset": "\u002B08:00"
       }
+    },
+    {
+      "nodeId": "NetworkPingConnectivity",
+      "ref": "NetworkPingConnectivity",
+      "inputs": {
+        "TargetAddress": "www.microsoft.com",
+        "MaxReplyTimeMs": "0"
+      }
+    },
+    {
+      "nodeId": "EventViewerCheck",
+      "ref": "EventViewerCheck",
+      "inputs": {
+        "EventCount": "100",
+        "ProhibitedLevel": "Error",
+        "LogName": "System"
+      }
     }
   ]
 }

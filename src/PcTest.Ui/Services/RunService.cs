@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Windows.Threading;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
 using PcTest.Engine;
@@ -11,15 +12,20 @@ namespace PcTest.Ui.Services;
 /// <summary>
 /// Service for executing test runs.
 /// </summary>
-public sealed class RunService : IRunService, IExecutionReporter
+public sealed class RunService : IRunService, IExecutionReporter, IDisposable
 {
     private readonly TestEngine _engine;
     private readonly ISettingsService _settingsService;
     private readonly IFileSystemService _fileSystemService;
+    private readonly Dispatcher _dispatcher;
     private RunExecutionContext? _currentContext;
     private RunExecutionState? _currentState;
     private readonly Dictionary<string, NodeExecutionState> _nodesDict = new();
     private readonly List<Task> _consoleLoadingTasks = new();
+    
+    // Real-time log tailing
+    private LogTailService? _tailService;
+    private readonly Dictionary<string, LogTailService> _nodeTailServices = new();
 
     public event EventHandler<RunExecutionState>? StateChanged;
     public event EventHandler<string>? ConsoleOutput;
@@ -31,6 +37,24 @@ public sealed class RunService : IRunService, IExecutionReporter
         _engine = engine;
         _settingsService = settingsService;
         _fileSystemService = fileSystemService;
+        _dispatcher = Dispatcher.CurrentDispatcher;
+    }
+    
+    public void Dispose()
+    {
+        StopAllTailing();
+    }
+
+    private void StopAllTailing()
+    {
+        _tailService?.Dispose();
+        _tailService = null;
+        
+        foreach (var service in _nodeTailServices.Values)
+        {
+            service.Dispose();
+        }
+        _nodeTailServices.Clear();
     }
 
     private void LogDebug(string message)
@@ -125,6 +149,9 @@ public sealed class RunService : IRunService, IExecutionReporter
             node.IsRunning = true;
         }
 
+        // Start tailing for this node's run folder (child run)
+        StartNodeTailingAsync(runId, nodeId).ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnFaulted);
+
         LogDebug($"[REPORTER] OnNodeStarted: runId={runId}, nodeId={nodeId}");
         StateChanged?.Invoke(this, _currentState);
     }
@@ -141,11 +168,11 @@ public sealed class RunService : IRunService, IExecutionReporter
             node.RetryCount = nodeState.RetryCount;
         }
 
-        // Load and display console output for this node in background
-        var task = Task.Run(async () => await LoadNodeConsoleOutputAsync(runId, nodeState.NodeId, nodeState.Status));
+        // Stop tailing for this node and emit final header
+        var stopTailTask = StopNodeTailingAndEmitHeaderAsync(nodeState.NodeId, nodeState.Status);
         lock (_consoleLoadingTasks)
         {
-            _consoleLoadingTasks.Add(task);
+            _consoleLoadingTasks.Add(stopTailTask);
         }
 
         LogDebug($"[REPORTER] OnNodeFinished: runId={runId}, nodeId={nodeState.NodeId}, status={nodeState.Status}");
@@ -227,12 +254,6 @@ public sealed class RunService : IRunService, IExecutionReporter
                 }
             }
             
-            // Load and stream stdout.log if available
-            if (!string.IsNullOrEmpty(_currentContext.RunId))
-            {
-                await LoadConsoleOutputAsync(_currentContext.RunId);
-            }
-            
             // Wait for all background console loading tasks to complete
             Task[] tasksToWait;
             lock (_consoleLoadingTasks)
@@ -244,6 +265,9 @@ public sealed class RunService : IRunService, IExecutionReporter
                 await Task.WhenAll(tasksToWait);
             }
             
+            // Stop all tailing services
+            StopAllTailing();
+            
             // Notify completion
             ConsoleOutput?.Invoke(this, $"\nRun completed with status: {_currentState.FinalStatus}");
         }
@@ -251,6 +275,9 @@ public sealed class RunService : IRunService, IExecutionReporter
         {
             _currentState.IsRunning = false;
             _currentState.FinalStatus = RunStatus.Aborted;
+            
+            // Stop all tailing services
+            StopAllTailing();
             
             // Mark remaining pending nodes as Aborted
             foreach (var node in _nodesDict.Values)
@@ -273,6 +300,10 @@ public sealed class RunService : IRunService, IExecutionReporter
         {
             _currentState.IsRunning = false;
             _currentState.FinalStatus = RunStatus.Error;
+            
+            // Stop all tailing services
+            StopAllTailing();
+            
             ConsoleOutput?.Invoke(this, $"\nError: {ex.Message}\n{ex.StackTrace}");
             StateChanged?.Invoke(this, _currentState);
         }
@@ -403,6 +434,9 @@ public sealed class RunService : IRunService, IExecutionReporter
                 {
                     _currentState.Nodes.Clear();
                     
+                    // Use dictionary to deduplicate nodes by NodeId (in case of multiple entries for retries)
+                    var nodeDict = new Dictionary<string, NodeExecutionState>();
+                    
                     foreach (var line in lines)
                     {
                         if (string.IsNullOrWhiteSpace(line)) continue;
@@ -465,12 +499,22 @@ public sealed class RunService : IRunService, IExecutionReporter
                                 }
                             }
                             
-                            _currentState.Nodes.Add(childNode);
+                            // Add or update the node in dictionary (later entries overwrite earlier ones)
+                            if (!string.IsNullOrEmpty(childNode.NodeId))
+                            {
+                                nodeDict[childNode.NodeId] = childNode;
+                            }
                         }
                         catch
                         {
                             // Skip malformed lines
                         }
+                    }
+                    
+                    // Add all deduplicated nodes to the collection
+                    foreach (var node in nodeDict.Values)
+                    {
+                        _currentState.Nodes.Add(node);
                     }
                 }
             }
@@ -505,28 +549,68 @@ public sealed class RunService : IRunService, IExecutionReporter
         }
     }
 
-    private async Task LoadNodeConsoleOutputAsync(string parentRunId, string nodeId, RunStatus status)
+    /// <summary>
+    /// Starts tailing logs for a node. Looks up the child run folder from children.jsonl.
+    /// For standalone runs (nodeId="standalone"), tails the main run folder directly.
+    /// </summary>
+    private async Task StartNodeTailingAsync(string parentRunId, string nodeId)
     {
         try
         {
             var settings = _settingsService.CurrentSettings;
             var parentRunFolder = Path.Combine(settings.ResolvedRunsRoot, parentRunId);
+            
+            // For standalone test case runs, the nodeId is "standalone" and there's no children.jsonl
+            // The test runs directly in the main run folder
+            if (nodeId == "standalone")
+            {
+                // Wait for run folder to be created
+                for (int attempt = 0; attempt < 10; attempt++)
+                {
+                    if (_fileSystemService.DirectoryExists(parentRunFolder))
+                        break;
+                    await Task.Delay(100);
+                }
+                
+                if (!_fileSystemService.DirectoryExists(parentRunFolder))
+                    return;
+                
+                // Create tail service for the main run folder
+                var standaloneTailService = new LogTailService(_dispatcher);
+                standaloneTailService.ContentReceived += (s, content) => ConsoleOutput?.Invoke(this, content);
+                
+                lock (_nodeTailServices)
+                {
+                    // Stop any existing tail for this node
+                    if (_nodeTailServices.TryGetValue(nodeId, out var existing))
+                    {
+                        existing.Dispose();
+                    }
+                    _nodeTailServices[nodeId] = standaloneTailService;
+                }
+                
+                // Emit header for standalone run
+                ConsoleOutput?.Invoke(this, $"\n{new string('=', 6)} [Standalone | {parentRunId}] {new string('=', 6)}\n");
+                
+                standaloneTailService.StartTailing(parentRunFolder);
+                return;
+            }
+            
+            // For suite/plan child nodes, look up the child run ID from children.jsonl
             var childrenPath = Path.Combine(parentRunFolder, "children.jsonl");
             
-            // Retry logic to wait for file to be written
+            // Wait for children.jsonl to contain this node's entry
             string? childRunId = null;
-            for (int attempt = 0; attempt < 10; attempt++)
+            for (int attempt = 0; attempt < 30; attempt++) // Wait up to 3 seconds
             {
                 if (_fileSystemService.FileExists(childrenPath))
                 {
-                    // Read children.jsonl to find the run ID for this node
                     var lines = await _fileSystemService.ReadAllLinesAsync(childrenPath);
                     
-                    foreach (var line in lines.Reverse()) // Start from most recent
+                    foreach (var line in lines.Reverse())
                     {
-                        if (string.IsNullOrWhiteSpace(line))
-                            continue;
-                            
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        
                         try
                         {
                             var child = JsonSerializer.Deserialize<ChildEntry>(line);
@@ -536,53 +620,72 @@ public sealed class RunService : IRunService, IExecutionReporter
                                 break;
                             }
                         }
-                        catch
-                        {
-                            continue;
-                        }
+                        catch { continue; }
                     }
                     
-                    if (!string.IsNullOrEmpty(childRunId))
-                        break;
+                    if (!string.IsNullOrEmpty(childRunId)) break;
                 }
                 
                 await Task.Delay(100);
             }
             
-            if (string.IsNullOrEmpty(childRunId))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(childRunId)) return;
             
-            // Load stdout.log from the child run folder
             var childRunFolder = Path.Combine(settings.ResolvedRunsRoot, childRunId);
-            var stdoutPath = Path.Combine(childRunFolder, "stdout.log");
             
-            // Wait for stdout.log to exist
-            for (int attempt = 0; attempt < 10; attempt++)
+            // Create tail service for this node
+            var tailService = new LogTailService(_dispatcher);
+            tailService.ContentReceived += (s, content) => ConsoleOutput?.Invoke(this, content);
+            
+            lock (_nodeTailServices)
             {
-                if (_fileSystemService.FileExists(stdoutPath))
+                // Stop any existing tail for this node
+                if (_nodeTailServices.TryGetValue(nodeId, out var existing))
                 {
-                    break;
+                    existing.Dispose();
                 }
-                await Task.Delay(100);
+                _nodeTailServices[nodeId] = tailService;
             }
             
-            if (_fileSystemService.FileExists(stdoutPath))
+            // Emit header for this node
+            ConsoleOutput?.Invoke(this, $"\n{new string('-', 6)} [{nodeId} | RUNNING | {childRunId}] {new string('-', 6)}\n");
+            
+            tailService.StartTailing(childRunFolder);
+        }
+        catch
+        {
+            // Best effort - tailing is optional
+        }
+    }
+
+    /// <summary>
+    /// Stops tailing for a node and emits a completion header.
+    /// </summary>
+    private async Task StopNodeTailingAndEmitHeaderAsync(string nodeId, RunStatus status)
+    {
+        try
+        {
+            LogTailService? tailService = null;
+            lock (_nodeTailServices)
             {
-                var content = await _fileSystemService.ReadAllTextAsync(stdoutPath);
+                _nodeTailServices.TryGetValue(nodeId, out tailService);
+            }
+            
+            if (tailService is not null)
+            {
+                await tailService.StopTailingAsync();
                 
-                // Format output with log-style delimiter
-                var statusLabel = status.ToString().ToUpperInvariant();
-                var header = $"{new string('-', 6)} [{nodeId} | {statusLabel} | {childRunId}] {new string('-', 6)}";
-                var output = $"{header}\n{content}";
+                lock (_nodeTailServices)
+                {
+                    _nodeTailServices.Remove(nodeId);
+                }
                 
-                ConsoleOutput?.Invoke(this, output);
+                tailService.Dispose();
             }
         }
         catch
         {
-            // Silently fail - output loading is best-effort
+            // Best effort
         }
     }
 

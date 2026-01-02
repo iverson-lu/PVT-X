@@ -230,10 +230,21 @@ public sealed class SuiteOrchestrator
                             InputTemplates = inputResult.InputTemplates
                         };
 
+                        // Write children.jsonl entry BEFORE execution so UI can start tailing immediately
+                        // Using Passed as placeholder; will be overwritten after execution
+                        await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
+                        {
+                            RunId = runId,
+                            NodeId = node.NodeId,
+                            TestId = testCaseManifest.Id,
+                            TestVersion = testCaseManifest.Version,
+                            Status = RunStatus.Passed
+                        });
+
                         nodeResult = await runner.ExecuteAsync(context);
                         childRunIds.Add(runId);
 
-                        // Append to children.jsonl
+                        // Append final status to children.jsonl after execution
                         await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
                         {
                             RunId = runId,

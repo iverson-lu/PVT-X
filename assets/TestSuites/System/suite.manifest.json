@@ -4,17 +4,37 @@
   "name": "System Validation Suite",
   "description": "Basic system validation tests",
   "version": "1.0.0",
-  "tags": ["system", "validation"],
+  "tags": [
+    "system",
+    "validation"
+  ],
   "controls": {
     "repeat": 1,
-    "continueOnFailure": true
+    "maxParallel": 1,
+    "continueOnFailure": true,
+    "retryOnError": 0,
+    "timeoutPolicy": "AbortOnTimeout"
   },
   "testCases": [
     {
       "nodeId": "memory-check",
       "ref": "MemoryCheck",
       "inputs": {
-        "MinMemoryMB": 50
+        "MinMemoryMB": "50"
+      }
+    },
+    {
+      "nodeId": "SystemInfoVerification",
+      "ref": "SystemInfoVerification",
+      "inputs": {
+        "CPU_ProcessorName": "Intel Core Ultra",
+        "WindowsUpdate_MaxDaysSinceLastUpdate": "30",
+        "CPU_MinFrequency": "1.0",
+        "OS_Version": "Windows 25H2",
+        "Windows_MustBeActivated": true,
+        "System_WindowsPath": "C:\\Windows",
+        "RequiredSoftware": "[\u0022Microsoft Edge\u0022, \u0022Microsoft 365\u0022]",
+        "MinimumRequirements": "{\u0022cores\u0022: 4, \u0022memoryGB\u0022: 8, \u0022diskTotalGB\u0022: 100, \u0022webcamCount\u0022: 1}"
       }
     }
   ]

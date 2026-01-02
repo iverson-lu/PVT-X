@@ -199,6 +199,87 @@ exit 0
     }
 
     [Fact]
+    public async Task Execute_StreamingOutput_CallbackInvokedPerLine()
+    {
+        // Test that streaming callback is invoked for each line during execution
+        var scriptPath = CreateScript(@"
+Write-Host 'Line 1'
+Write-Host 'Line 2'
+Write-Host 'Line 3'
+exit 0
+");
+        var executor = new PowerShellExecutor();
+        var env = new Dictionary<string, string>();
+        var receivedLines = new List<string>();
+        var callbackInvocations = 0;
+
+        async Task OnOutputLine(string? line, bool isStderr)
+        {
+            if (line is not null && !isStderr)
+            {
+                callbackInvocations++;
+                receivedLines.Add(line);
+            }
+            await Task.CompletedTask;
+        }
+
+        var result = await executor.ExecuteAsync(
+            scriptPath,
+            new Dictionary<string, object?>(),
+            env,
+            _tempRoot,
+            timeoutSec: 30,
+            secretParams: null,
+            onOutputLine: OnOutputLine);
+
+        Assert.Equal(RunStatus.Passed, result.Status);
+        Assert.True(callbackInvocations >= 3, $"Expected at least 3 callback invocations, got {callbackInvocations}");
+        Assert.Contains("Line 1", receivedLines);
+        Assert.Contains("Line 2", receivedLines);
+        Assert.Contains("Line 3", receivedLines);
+    }
+
+    [Fact]
+    public async Task Execute_StreamingOutput_StderrSeparated()
+    {
+        // Test that stderr is correctly identified in streaming callback
+        var scriptPath = CreateScript(@"
+Write-Host 'stdout line'
+Write-Error 'stderr line'
+exit 0
+");
+        var executor = new PowerShellExecutor();
+        var env = new Dictionary<string, string>();
+        var stdoutLines = new List<string>();
+        var stderrLines = new List<string>();
+
+        async Task OnOutputLine(string? line, bool isStderr)
+        {
+            if (line is not null)
+            {
+                if (isStderr)
+                    stderrLines.Add(line);
+                else
+                    stdoutLines.Add(line);
+            }
+            await Task.CompletedTask;
+        }
+
+        var result = await executor.ExecuteAsync(
+            scriptPath,
+            new Dictionary<string, object?>(),
+            env,
+            _tempRoot,
+            timeoutSec: 30,
+            secretParams: null,
+            onOutputLine: OnOutputLine);
+
+        Assert.Equal(RunStatus.Passed, result.Status);
+        Assert.Contains(stdoutLines, l => l.Contains("stdout line"));
+        Assert.Contains(stderrLines, l => l.Contains("stderr line"));
+    }
+
+    [Fact]
     public async Task Execute_NullParameter_OmittedFromCommandLine()
     {
         // Spec section 9: Missing optional parameters MUST be omitted

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using PcTest.Contracts;
@@ -11,13 +12,37 @@ namespace PcTest.Runner;
 /// Manages Test Case Run Folder creation and artifacts.
 /// Runner is the exclusive owner of Case Run Folders per spec section 12.1.
 /// </summary>
-public sealed class CaseRunFolderManager
+public sealed class CaseRunFolderManager : IDisposable
 {
     private readonly string _runsRoot;
+    private readonly ConcurrentDictionary<string, StreamWriter> _stdoutWriters = new();
+    private readonly ConcurrentDictionary<string, StreamWriter> _stderrWriters = new();
+    private bool _disposed;
 
     public CaseRunFolderManager(string runsRoot)
     {
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+    }
+
+    /// <summary>
+    /// Disposes all open StreamWriters.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        foreach (var writer in _stdoutWriters.Values)
+        {
+            try { writer.Dispose(); } catch { /* best effort */ }
+        }
+        _stdoutWriters.Clear();
+
+        foreach (var writer in _stderrWriters.Values)
+        {
+            try { writer.Dispose(); } catch { /* best effort */ }
+        }
+        _stderrWriters.Clear();
     }
 
     /// <summary>
@@ -141,6 +166,89 @@ public sealed class CaseRunFolderManager
         var redacted = RedactContent(content, secretValues);
         var path = Path.Combine(caseRunFolder, "stderr.log");
         await File.WriteAllTextAsync(path, redacted, Encoding.UTF8);
+    }
+
+    /// <summary>
+    /// Gets or creates a StreamWriter for stdout.log with FileShare.ReadWrite for real-time tailing.
+    /// </summary>
+    private StreamWriter GetOrCreateStdoutWriter(string caseRunFolder)
+    {
+        return _stdoutWriters.GetOrAdd(caseRunFolder, folder =>
+        {
+            var path = Path.Combine(folder, "stdout.log");
+            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+        });
+    }
+
+    /// <summary>
+    /// Gets or creates a StreamWriter for stderr.log with FileShare.ReadWrite for real-time tailing.
+    /// </summary>
+    private StreamWriter GetOrCreateStderrWriter(string caseRunFolder)
+    {
+        return _stderrWriters.GetOrAdd(caseRunFolder, folder =>
+        {
+            var path = Path.Combine(folder, "stderr.log");
+            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+        });
+    }
+
+    /// <summary>
+    /// Appends a line to stdout.log in real-time with redaction.
+    /// Used during execution for streaming output.
+    /// </summary>
+    public async Task AppendStdoutLineAsync(
+        string caseRunFolder,
+        string? line,
+        IEnumerable<string>? secretValues)
+    {
+        if (line is null) return;
+        var redacted = RedactContent(line, secretValues);
+        var writer = GetOrCreateStdoutWriter(caseRunFolder);
+        await writer.WriteLineAsync(redacted);
+    }
+
+    /// <summary>
+    /// Appends a line to stderr.log in real-time with redaction.
+    /// Used during execution for streaming output.
+    /// </summary>
+    public async Task AppendStderrLineAsync(
+        string caseRunFolder,
+        string? line,
+        IEnumerable<string>? secretValues)
+    {
+        if (line is null) return;
+        var redacted = RedactContent(line, secretValues);
+        var writer = GetOrCreateStderrWriter(caseRunFolder);
+        await writer.WriteLineAsync(redacted);
+    }
+
+    /// <summary>
+    /// Flushes and closes the stdout/stderr writers for a specific run folder.
+    /// Must be called when execution completes.
+    /// </summary>
+    public void FlushAndCloseWriters(string caseRunFolder)
+    {
+        if (_stdoutWriters.TryRemove(caseRunFolder, out var stdoutWriter))
+        {
+            try
+            {
+                stdoutWriter.Flush();
+                stdoutWriter.Dispose();
+            }
+            catch { /* best effort */ }
+        }
+
+        if (_stderrWriters.TryRemove(caseRunFolder, out var stderrWriter))
+        {
+            try
+            {
+                stderrWriter.Flush();
+                stderrWriter.Dispose();
+            }
+            catch { /* best effort */ }
+        }
     }
 
     /// <summary>
