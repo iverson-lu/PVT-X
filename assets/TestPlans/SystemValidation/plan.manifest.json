@@ -4,14 +4,12 @@
   "name": "Full System Validation Plan",
   "description": "Complete system validation including thermal and system tests",
   "version": "1.0.0",
-  "tags": ["validation", "full"],
-  "environment": {
-    "env": {
-      "VALIDATION_LEVEL": "full"
-    }
-  },
+  "tags": [
+    "validation",
+    "full"
+  ],
   "suites": [
-    "ThermalSuite@1.0.0",
+    "RegressionTest@1.0.0",
     "SystemSuite@1.0.0"
   ]
 }

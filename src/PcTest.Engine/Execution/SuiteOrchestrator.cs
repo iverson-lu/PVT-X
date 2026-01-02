@@ -41,7 +41,8 @@ public sealed class SuiteOrchestrator
         string? planId = null,
         string? planVersion = null,
         string? parentPlanRunId = null,
-        string? parentNodeId = null)
+        string? parentNodeId = null,
+        string? parentPlanRunFolder = null)
     {
         var startTime = DateTime.UtcNow;
         var groupRunId = GroupRunFolderManager.GenerateGroupRunId("S");
@@ -97,6 +98,27 @@ public sealed class SuiteOrchestrator
                     ["parentRunId"] = parentPlanRunId
                 }
             });
+
+            // Also write to parent plan folder if executing within a plan
+            if (!string.IsNullOrEmpty(parentPlanRunFolder))
+            {
+                await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestSuite.Started",
+                    Level = "info",
+                    Message = $"Test suite '{suite.Manifest.Id}' (version {suite.Manifest.Version}) execution started",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["suiteId"] = suite.Manifest.Id,
+                        ["suiteVersion"] = suite.Manifest.Version,
+                        ["runId"] = groupRunId,
+                        ["planId"] = planId,
+                        ["planVersion"] = planVersion,
+                        ["parentRunId"] = parentPlanRunId
+                    }
+                });
+            }
 
             // Log maxParallel warning if needed per spec section 6.5
             if (controls.MaxParallel > 1)
@@ -228,6 +250,41 @@ public sealed class SuiteOrchestrator
                     for (var attempt = 0; attempt < attempts; attempt++)
                     {
                         var runId = TestCaseRunner.GenerateRunId();
+
+                        // Forward test case started event to suite events.jsonl
+                        await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+                        {
+                            Timestamp = DateTime.UtcNow.ToString("o"),
+                            Code = "TestCase.Started",
+                            Level = "info",
+                            Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') execution started",
+                            Data = new Dictionary<string, object?>
+                            {
+                                ["nodeId"] = node.NodeId,
+                                ["testId"] = testCaseManifest.Id,
+                                ["testVersion"] = testCaseManifest.Version,
+                                ["runId"] = runId
+                            }
+                        });
+
+                        // Also write to parent plan folder if executing within a plan
+                        if (!string.IsNullOrEmpty(parentPlanRunFolder))
+                        {
+                            await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
+                            {
+                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Code = "TestCase.Started",
+                                Level = "info",
+                                Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') execution started",
+                                Data = new Dictionary<string, object?>
+                                {
+                                    ["nodeId"] = node.NodeId,
+                                    ["testId"] = testCaseManifest.Id,
+                                    ["testVersion"] = testCaseManifest.Version,
+                                    ["runId"] = runId
+                                }
+                            });
+                        }
                         var context = new RunContext
                         {
                             RunId = runId,
@@ -279,6 +336,27 @@ public sealed class SuiteOrchestrator
                                 ["exitCode"] = nodeResult.ExitCode
                             }
                         });
+
+                        // Also write to parent plan folder if executing within a plan
+                        if (!string.IsNullOrEmpty(parentPlanRunFolder))
+                        {
+                            await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
+                            {
+                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Code = "TestCase.Completed",
+                                Level = nodeResult.Status == RunStatus.Passed ? "info" : "warning",
+                                Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') completed with status: {nodeResult.Status}",
+                                Data = new Dictionary<string, object?>
+                                {
+                                    ["nodeId"] = node.NodeId,
+                                    ["testId"] = testCaseManifest.Id,
+                                    ["testVersion"] = testCaseManifest.Version,
+                                    ["runId"] = runId,
+                                    ["status"] = nodeResult.Status.ToString(),
+                                    ["exitCode"] = nodeResult.ExitCode
+                                }
+                            });
+                        }
 
                         // Append final status to children.jsonl after execution
                         await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
@@ -397,6 +475,29 @@ public sealed class SuiteOrchestrator
                     ["failedCases"] = statusCounts.Failed
                 }
             });
+
+            // Also write to parent plan folder if executing within a plan
+            if (!string.IsNullOrEmpty(parentPlanRunFolder))
+            {
+                await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestSuite.Completed",
+                    Level = aggregateStatus == RunStatus.Passed ? "info" : "warning",
+                    Message = $"Test suite '{suite.Manifest.Id}' execution completed with status: {aggregateStatus}",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["suiteId"] = suite.Manifest.Id,
+                        ["suiteVersion"] = suite.Manifest.Version,
+                        ["runId"] = groupRunId,
+                        ["status"] = aggregateStatus.ToString(),
+                        ["duration"] = (endTime - startTime).TotalSeconds,
+                        ["totalCases"] = statusCounts.Passed + statusCounts.Failed + statusCounts.Error + statusCounts.Timeout + statusCounts.Aborted,
+                        ["passedCases"] = statusCounts.Passed,
+                        ["failedCases"] = statusCounts.Failed
+                    }
+                });
+            }
 
             // Append Suite run to index
             folderManager.AppendIndexEntry(new IndexEntry

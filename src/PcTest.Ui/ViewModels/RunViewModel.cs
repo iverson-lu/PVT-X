@@ -23,6 +23,7 @@ public partial class RunViewModel : ViewModelBase
     private CancellationTokenSource? _runCts;
     private Dictionary<string, object?>? _parameterOverrides;
     private readonly Dictionary<string, NodeExecutionStateViewModel> _nodeViewModelDict = new();
+    private System.Windows.Threading.DispatcherTimer? _eventRefreshTimer;
 
     [ObservableProperty] private bool _isRunning;
     [ObservableProperty] private bool _showTargetSelector = true;
@@ -70,6 +71,31 @@ public partial class RunViewModel : ViewModelBase
 
         _runService.StateChanged += OnStateChanged;
         _runService.ConsoleOutput += OnConsoleOutput;
+
+        // Setup event refresh timer (fires every 500ms during execution)
+        _eventRefreshTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(500)
+        };
+        _eventRefreshTimer.Tick += (s, e) =>
+        {
+            if (!string.IsNullOrEmpty(RunId))
+            {
+                _ = LoadEventsAsync(RunId);
+            }
+        };
+    }
+
+    partial void OnIsRunningChanged(bool value)
+    {
+        if (value)
+        {
+            _eventRefreshTimer?.Start();
+        }
+        else
+        {
+            _eventRefreshTimer?.Stop();
+        }
     }
 
     public async void Initialize(object? parameter)

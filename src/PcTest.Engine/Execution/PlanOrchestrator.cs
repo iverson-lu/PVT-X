@@ -163,27 +163,12 @@ public sealed class PlanOrchestrator
                     plan.Manifest.Id,
                     plan.Manifest.Version,
                     groupRunId,
-                    suiteIdentity);
+                    suiteIdentity,
+                    groupRunFolder);
 
                 childResults.Add(suiteResult);
                 childRunIds.AddRange(suiteResult.ChildRunIds);
                 UpdateCounts(statusCounts, suiteResult.Status);
-
-                // Forward suite completion event to plan events.jsonl
-                await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
-                {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
-                    Code = "TestSuite.Completed",
-                    Level = suiteResult.Status == RunStatus.Passed ? "info" : "warning",
-                    Message = $"Test suite '{suite.Manifest.Id}' completed with status: {suiteResult.Status}",
-                    Data = new Dictionary<string, object?>
-                    {
-                        ["suiteId"] = suite.Manifest.Id,
-                        ["suiteVersion"] = suite.Manifest.Version,
-                        ["status"] = suiteResult.Status.ToString(),
-                        ["childCaseCount"] = suiteResult.ChildRunIds.Count
-                    }
-                });
 
                 // Append to children.jsonl
                 await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
