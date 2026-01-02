@@ -154,27 +154,30 @@ Select the test case and configure parameters in the UI, then run.
 
 ### From CLI
 ```powershell
-# Basic run with defaults
-dotnet run --project src/PcTest.Cli/PcTest.Cli.csproj -- run --target testcase --id SystemInfoVerification --inputs "{ \"OS_Version\": \"Windows 24H2\" }"
+# Basic run with defaults (note: id must include @version)
+dotnet run --project src/PcTest.Cli/PcTest.Cli.csproj -- run --target testcase --id SystemInfoVerification@1.0.0 --inputs '{"OS_Version":"Windows 25H2"}'
 
-# Custom requirements
-dotnet run --project src/PcTest.Cli/PcTest.Cli.csproj -- run --target testcase --id SystemInfoVerification --inputs @"
+# Custom requirements (using PowerShell variable for complex JSON)
+$inputs = @'
 {
-  \"OS_Version\": \"Windows 24H2\",
-  \"CPU_ProcessorName\": \"Intel Core\",
-  \"CPU_MaxTemperature\": 85,
-  \"CPU_MaxFrequency\": 6.0,
-  \"Windows_MustBeActivated\": true,
-  \"System_WindowsPath\": \"C:\\\\Windows\",
-  \"RequiredSoftware\": [\"Microsoft Edge\", \"Windows Security\"],
-  \"MinimumRequirements\": {
-    \"cores\": 8,
-    \"memoryGB\": 16,
-    \"diskGB\": 100,
-    \"webcamCount\": 1
+  "OS_Version": "Windows 25H2",
+  "CPU_ProcessorName": "Intel Core",
+  "CPU_MinFrequency": 1.0,
+  "Windows_MustBeActivated": true,
+  "System_WindowsPath": "C:\\Windows",
+  "RequiredSoftware": ["Microsoft Edge", "Windows Security"],
+  "MinimumRequirements": {
+    "cores": 8,
+    "memoryGB": 16,
+    "diskTotalGB": 100,
+    "webcamCount": 1
   }
 }
-"@
+'@
+dotnet run --project src/PcTest.Cli/PcTest.Cli.csproj -- run --target testcase --id SystemInfoVerification@1.0.0 --inputs $inputs
+
+# Test non-activated Windows requirement
+dotnet run --project src/PcTest.Cli/PcTest.Cli.csproj -- run --target testcase --id SystemInfoVerification@1.0.0 --inputs '{"OS_Version":"Windows 25H2","Windows_MustBeActivated":false}'
 ```
 
 ## Notes
