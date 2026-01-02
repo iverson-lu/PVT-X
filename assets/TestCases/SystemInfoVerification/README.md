@@ -35,16 +35,20 @@ Maximum allowed CPU frequency in GHz. Test fails if current frequency exceeds th
 - **Unit**: GHz
 
 ### OS_Version (enum) **[Required]**
-Expected Windows version. Test fails if the actual version doesn't match.
+Expected Windows version. Test fails if the actual DisplayVersion doesn't match exactly.
 - **Options**: 
   - `"Windows 24H2"`
   - `"Windows 25H1"`
   - `"Windows 25H2"`
 - **Default**: `"Windows 24H2"`
+- **Validation**: Strict match against DisplayVersion registry value (e.g., "24H2", "25H1", "25H2"). No fallback to Windows 11 detection.
 
 ### Windows_MustBeActivated (boolean)
-Whether Windows must be activated. If true, test fails if Windows is not activated.
+Whether Windows must be activated.
 - **Default**: `true`
+- **Behavior**:
+  - If `true`: Test fails if Windows is NOT activated
+  - If `false`: Test fails if Windows IS activated (useful for testing non-activated systems)
 - **CLI Usage**: `-Windows_MustBeActivated:$true` or `-Windows_MustBeActivated:$false`
 
 ### System_WindowsPath (path)
@@ -99,13 +103,16 @@ JSON object defining minimum system requirements. All checks must pass.
 - Validates against maximum threshold
 
 ### 5. OS Version Check
-- Retrieves Windows version and build number
-- Validates against expected version
-- Maps build numbers to Windows versions (24H2, 25H1, 25H2)
+- Retrieves Windows version and build number from registry
+- Validates DisplayVersion exactly matches expected version
+- **Strict Matching**: No fallback to "Windows 11" detection; both DisplayVersion and expected value must match
+- Maps parameter values (e.g., "Windows 24H2") to registry DisplayVersion values (e.g., "24H2")
 
 ### 6. Windows Activation Check
-- Queries Windows licensing status
-- Validates activation if required by parameter
+- Queries Windows licensing status via SoftwareLicensingProduct
+- Validates activation state matches requirement:
+  - **If Windows_MustBeActivated = true**: Fails if not activated
+  - **If Windows_MustBeActivated = false**: Fails if activated (enforces non-activation requirement)
 
 ### 7. Windows Installation Path Check
 - Reads system root directory from environment
@@ -173,7 +180,8 @@ dotnet run --project src/PcTest.Cli/PcTest.Cli.csproj -- run --target testcase -
 ## Notes
 - CPU temperature check is skipped if thermal sensors are not available
 - Windows activation check is skipped on error (some systems may not expose this information)
-- OS version matching is flexible for demo purposes - validates Windows 11 presence
+- **OS version matching is strict**: DisplayVersion must exactly match the expected value (no Windows 11 fallback)
+- **Activation validation**: When Windows_MustBeActivated=false, the test enforces that Windows must NOT be activated
 - Software name matching uses substring matching (case-insensitive)
 - All PowerShell output and comments are in English
 

@@ -290,11 +290,6 @@ function Invoke-OsVersionCheck {
             $versionMatch = $true
         }
         
-        if (-not $versionMatch -and $actualVersion -like "*Windows 11*" -and $OS_Version -like "*Windows*") {
-            Write-Output "⚠ Exact version match not verified (DisplayVersion: $displayVersion, Build: $($os.BuildNumber)), but Windows 11 detected"
-            $versionMatch = $true
-        }
-        
         if (-not $versionMatch) {
             Add-ValidationFailure -CheckName "OS Version" `
                 -Reason "Windows version mismatch" `
@@ -335,7 +330,15 @@ function Invoke-WindowsActivationCheck {
         
         if ($Windows_MustBeActivated -and -not $isActivated) {
             Add-ValidationFailure -CheckName "Windows Activation" `
-                -Reason "Windows is not activated" `
+                -Reason "Windows is not activated, but activation is required" `
+                -Details @{
+                    isActivated = $isActivated
+                    licenseStatus = $licenseStatus
+                    required = $Windows_MustBeActivated
+                }
+        } elseif (-not $Windows_MustBeActivated -and $isActivated) {
+            Add-ValidationFailure -CheckName "Windows Activation" `
+                -Reason "Windows is activated, but must NOT be activated" `
                 -Details @{
                     isActivated = $isActivated
                     licenseStatus = $licenseStatus
