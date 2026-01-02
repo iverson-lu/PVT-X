@@ -855,6 +855,28 @@ Example: children.jsonl for Test Plan run (child TestSuite runs; nodeId omitted)
 - The schema is intentionally unspecified.
 - Consumers MUST treat events as best-effort diagnostic data only.
 
+#### Standard Event Codes (Reference Implementation)
+The reference implementation uses these event codes for Test Case runs:
+
+| Code | Level | When | Description |
+|---|---|---|---|
+| TestCase.Started | info | Test execution begins | Records test start with testId, testVersion, runId, and context (standalone/suite) |
+| TestCase.Completed | info/warning | Test execution finishes normally | Records completion with status, exitCode, and duration. Level is "info" for Passed, "warning" for Failed/Timeout/Aborted |
+| TestCase.Error | error | Unexpected exception | Records runtime exception during test execution |
+| EnvRef.SecretOnCommandLine | warning | Secret value passed as CLI arg | Per spec section 7.4, warns when secret input is exposed via command line |
+
+Event entry schema:
+```json
+{
+  "timestamp": "ISO8601 UTC with Z",
+  "code": "string",
+  "level": "info|warning|error",
+  "message": "string",
+  "location": "optional string",
+  "data": { "optional": "key-value pairs" }
+}
+```
+
 ---
 
 ## 13. Result Specification (result.json)

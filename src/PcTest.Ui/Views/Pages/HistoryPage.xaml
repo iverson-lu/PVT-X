@@ -633,7 +633,7 @@
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Timestamp" Binding="{Binding TimestampDisplay}" Width="120"/>
                                         <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80"/>
-                                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="150"/>
+                                        <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="200"/>
                                         <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
                                     </DataGrid.Columns>
                                 </DataGrid>

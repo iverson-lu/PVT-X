@@ -259,7 +259,7 @@ public sealed class RunRepository : IRunRepository
     public async IAsyncEnumerable<EventBatch> StreamEventsAsync(string runId, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var runFolder = GetRunFolderPath(runId);
-        var eventsPath = Path.Combine(runFolder, "artifacts", "events.jsonl");
+        var eventsPath = Path.Combine(runFolder, "events.jsonl");
         
         if (!_fileSystemService.FileExists(eventsPath))
         {

@@ -82,48 +82,13 @@ public class TypeConverterTests
         }
     }
 
-    [Fact]
-    public void ConvertString_IntArray_ParsesJsonArray()
-    {
-        var (success, result, error) = TypeConverter.ConvertString("[1, 2, 3]", ParameterTypes.IntArray);
+    // Note: Array types are no longer supported per spec. Use Json type for complex structures.
 
-        Assert.True(success);
-        var array = Assert.IsType<int[]>(result);
-        Assert.Equal(new[] { 1, 2, 3 }, array);
-    }
 
-    [Fact]
-    public void ConvertString_EmptyArray_Accepted()
-    {
-        var (success, result, error) = TypeConverter.ConvertString("[]", ParameterTypes.IntArray);
 
-        Assert.True(success);
-        var array = Assert.IsType<int[]>(result);
-        Assert.Empty(array);
-    }
 
-    [Fact]
-    public void ConvertString_StringArray_ParsesJsonArray()
-    {
-        var (success, result, error) = TypeConverter.ConvertString("[\"a\", \"b\"]", ParameterTypes.StringArray);
 
-        Assert.True(success);
-        var array = Assert.IsType<string[]>(result);
-        Assert.Equal(new[] { "a", "b" }, array);
-    }
 
-    [Fact]
-    public void ConvertString_EnumArray_ValidatesEachElement()
-    {
-        var enumValues = new[] { "A", "B" };
-
-        var (success, result, error) = TypeConverter.ConvertString("[\"A\", \"B\"]", ParameterTypes.EnumArray, enumValues);
-        Assert.True(success);
-
-        var (failSuccess, _, failError) = TypeConverter.ConvertString("[\"A\", \"C\"]", ParameterTypes.EnumArray, enumValues);
-        Assert.False(failSuccess);
-        Assert.Contains("not in allowed values", failError);
-    }
 
     [Fact]
     public void ConvertJsonElement_Int_FromNumber()
@@ -147,14 +112,5 @@ public class TypeConverterTests
         Assert.Equal(true, result);
     }
 
-    [Fact]
-    public void ConvertJsonElement_Array_FromJsonArray()
-    {
-        var json = JsonDocument.Parse("[\"A\", \"B\"]").RootElement;
-
-        var (success, result, error) = TypeConverter.ConvertJsonElement(json, ParameterTypes.StringArray);
-
-        Assert.True(success);
-        Assert.Equal(new[] { "A", "B" }, result);
-    }
 }
+

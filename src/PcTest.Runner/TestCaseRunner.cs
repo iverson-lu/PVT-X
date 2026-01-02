@@ -72,6 +72,23 @@ public sealed class TestCaseRunner
             // Write params.json
             await folderManager.WriteParamsAsync(caseRunFolder, context.EffectiveInputs, context.SecretInputs);
 
+            // Record test started event
+            await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+            {
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Code = "TestCase.Started",
+                Level = "info",
+                Message = $"Test case '{context.Manifest.Id}' (version {context.Manifest.Version}) execution started",
+                Data = new Dictionary<string, object?>
+                {
+                    ["testId"] = context.Manifest.Id,
+                    ["testVersion"] = context.Manifest.Version,
+                    ["runId"] = extractedRunId,
+                    ["isStandalone"] = context.IsStandalone,
+                    ["nodeId"] = context.IsStandalone ? null : context.NodeId
+                }
+            });
+
             // Write env.json
             var envSnapshot = CreateEnvSnapshot();
             await folderManager.WriteEnvSnapshotAsync(caseRunFolder, envSnapshot);
@@ -150,6 +167,24 @@ public sealed class TestCaseRunner
             // Write result.json (redacted)
             await folderManager.WriteResultAsync(caseRunFolder, result, context.SecretInputs);
 
+            // Record test completed event
+            await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+            {
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Code = "TestCase.Completed",
+                Level = result.Status == RunStatus.Passed ? "info" : "warning",
+                Message = $"Test case '{context.Manifest.Id}' execution completed with status: {result.Status}",
+                Data = new Dictionary<string, object?>
+                {
+                    ["testId"] = context.Manifest.Id,
+                    ["testVersion"] = context.Manifest.Version,
+                    ["runId"] = extractedRunId,
+                    ["status"] = result.Status.ToString(),
+                    ["exitCode"] = result.ExitCode,
+                    ["duration"] = (endTime - startTime).TotalSeconds
+                }
+            });
+
             return result;
         }
         catch (Exception ex)
@@ -157,6 +192,24 @@ public sealed class TestCaseRunner
             var errorResult = CreateErrorResult(context, startTime,
                 ErrorType.RunnerError, ex.Message);
             await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues);
+
+            // Record test error event
+            await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+            {
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Code = "TestCase.Error",
+                Level = "error",
+                Message = $"Test case '{context.Manifest.Id}' execution failed with exception: {ex.Message}",
+                Data = new Dictionary<string, object?>
+                {
+                    ["testId"] = context.Manifest.Id,
+                    ["testVersion"] = context.Manifest.Version,
+                    ["runId"] = extractedRunId,
+                    ["errorType"] = ex.GetType().Name,
+                    ["errorMessage"] = ex.Message
+                }
+            });
+
             return errorResult;
         }
     }
