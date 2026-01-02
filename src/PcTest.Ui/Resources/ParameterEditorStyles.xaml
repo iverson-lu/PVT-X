@@ -289,9 +289,9 @@
                                 Grid.Column="0"
                                 Width="46"
                                 Height="24"
-                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
-                                BorderBrush="{DynamicResource BorderDefaultBrush}"
-                                BorderThickness="1"
+                                Background="#E5E7EB"
+                                BorderBrush="#9CA3AF"
+                                BorderThickness="1.5"
                                 CornerRadius="12">
                             
                             <!-- Toggle Thumb -->
@@ -300,13 +300,13 @@
                                         Width="18"
                                         Height="18"
                                         Fill="White"
-                                        Canvas.Left="3"
-                                        Canvas.Top="3">
+                                        Canvas.Left="0"
+                                        Canvas.Top="0">
                                     <Ellipse.Effect>
-                                        <DropShadowEffect Color="Black" Opacity="0.2" BlurRadius="4" ShadowDepth="1" Direction="270"/>
+                                        <DropShadowEffect Color="Black" Opacity="0.3" BlurRadius="5" ShadowDepth="1" Direction="270"/>
                                     </Ellipse.Effect>
                                     <Ellipse.RenderTransform>
-                                        <TranslateTransform x:Name="ThumbTranslate" X="0"/>
+                                        <TranslateTransform x:Name="ThumbTranslate" X="3" Y="1"/>
                                     </Ellipse.RenderTransform>
                                 </Ellipse>
                             </Canvas>
