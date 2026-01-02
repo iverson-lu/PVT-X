@@ -6,7 +6,7 @@ param(
     [Parameter(Mandatory=$true)]  [ValidateSet("Windows 24H2", "Windows 25H1", "Windows 25H2")] [string] $OS_Version,
     [Parameter(Mandatory=$false)] [bool]   $Windows_MustBeActivated = $true,
     [Parameter(Mandatory=$false)] [string] $System_WindowsPath = "C:\\Windows",
-    [Parameter(Mandatory=$false)] [string] $RequiredSoftware = "[`"Microsoft Edge`"]",
+    [Parameter(Mandatory=$false)] [string] $RequiredSoftware = "[`"Microsoft Edge`", `"Microsoft 365`"]",
     [Parameter(Mandatory=$false)] [string] $MinimumRequirements = "{`"cores`": 4, `"memoryGB`": 8, `"diskTotalGB`": 100, `"webcamCount`": 1}"
 )
 #endregion
