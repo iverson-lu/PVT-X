@@ -1,12 +1,12 @@
 param(
     [Parameter(Mandatory=$false)] [string] $CPU_ProcessorName = "Intel Core Ultra",
-    [Parameter(Mandatory=$false)] [int]    $CPU_MaxTemperature = 80,
-    [Parameter(Mandatory=$false)] [double] $CPU_MaxFrequency = 5.5,
+    [Parameter(Mandatory=$false)] [int]    $WindowsUpdate_MaxDaysSinceLastUpdate = 30,
+    [Parameter(Mandatory=$false)] [double] $CPU_MinFrequency = 1.0,
     [Parameter(Mandatory=$true)]  [string] $OS_Version,
     [Parameter(Mandatory=$false)] [bool]   $Windows_MustBeActivated = $true,
     [Parameter(Mandatory=$false)] [string] $System_WindowsPath = "C:\\Windows",
     [Parameter(Mandatory=$false)] [string] $RequiredSoftware = "[`"Microsoft Edge`"]",
-    [Parameter(Mandatory=$false)] [string] $MinimumRequirements = "{`"cores`": 4, `"memoryGB`": 8, `"diskGB`": 50, `"webcamCount`": 1}"
+    [Parameter(Mandatory=$false)] [string] $MinimumRequirements = "{`"cores`": 4, `"memoryGB`": 8, `"diskTotalGB`": 100, `"webcamCount`": 1}"
 )
 
 Set-StrictMode -Version Latest
@@ -21,6 +21,15 @@ function Ensure-Dir([string] $Path) {
 
 function Write-JsonFile([string] $Path, $Obj) {
     $Obj | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $Path -Encoding UTF8
+}
+
+function Report-Failure([string] $Check, [string] $Reason, [hashtable] $Details = @{}) {
+    Write-Host "[FAIL] $Check - $Reason"
+    return [ordered]@{
+        check = $Check
+        reason = $Reason
+        details = $Details
+    }
 }
 
 function Fail-Test([string] $Reason, [hashtable] $Details = @{}) {
@@ -65,6 +74,9 @@ if ($allowedVersions -notcontains $OS_Version) {
     Fail-Test "Invalid OS_Version '$OS_Version'. Allowed: $($allowedVersions -join ', ')"
 }
 
+# Collect all validation failures
+$validationFailures = @()
+
 # Parse JSON parameters
 Write-Output "=== Parsing JSON Parameters ==="
 try {
@@ -85,6 +97,7 @@ Write-Output ""
 
 # 1. CPU Processor Name Check
 Write-Output "=== [1/8] Checking CPU Processor Name ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
     $cpu = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
     $actualProcessorName = $cpu.Name.Trim()
@@ -99,132 +112,143 @@ try {
     
     # Case-insensitive substring match
     if ($normalizedActual.ToLower().IndexOf($normalizedPattern.ToLower()) -eq -1) {
-        Fail-Test "CPU processor name does not match pattern '$CPU_ProcessorName'" @{
+        $validationFailures += Report-Failure "CPU Processor Name" "CPU processor name does not match pattern '$CPU_ProcessorName'" @{
             actual = $actualProcessorName
             required = $CPU_ProcessorName
             normalizedActual = $normalizedActual
             normalizedPattern = $normalizedPattern
         }
+    } else {
+        Write-Output "✓ Processor name validation passed"
     }
-    Write-Output "✓ Processor name validation passed"
 } catch {
-    Fail-Test "Failed to retrieve CPU information: $_"
+    $validationFailures += Report-Failure "CPU Processor Name" "Failed to retrieve CPU information: $_" @{}
 }
 
 Write-Output ""
 
-# 2. CPU Temperature Check
-Write-Output "=== [2/8] Checking CPU Temperature ==="
+# 2. Windows Update Check
+Write-Output "=== [2/8] Checking Windows Update Status ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
-    # Note: CPU temperature is not always available via WMI on all systems
-    # Using MSAcpi_ThermalZoneTemperature (requires admin on some systems)
-    $thermalZones = Get-CimInstance -Namespace root/wmi -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction SilentlyContinue
+    $lastHotfix = Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 1
     
-    if ($thermalZones) {
-        # Temperature is in tenths of Kelvin, convert to Celsius
-        $maxTemp = ($thermalZones | Measure-Object -Property CurrentTemperature -Maximum).Maximum
-        $tempCelsius = [math]::Round(($maxTemp / 10) - 273.15, 2)
-        Write-Output "Actual: ${tempCelsius}°C"
-        Write-Output "Maximum allowed: ${CPU_MaxTemperature}°C"
+    if ($lastHotfix -and $lastHotfix.InstalledOn) {
+        $daysSinceUpdate = [math]::Round(((Get-Date) - $lastHotfix.InstalledOn).TotalDays, 1)
+        Write-Output "Last update: $($lastHotfix.HotFixID) on $($lastHotfix.InstalledOn)"
+        Write-Output "Days since last update: $daysSinceUpdate"
+        Write-Output "Maximum allowed: $WindowsUpdate_MaxDaysSinceLastUpdate days"
         
-        if ($tempCelsius -gt $CPU_MaxTemperature) {
-            Fail-Test "CPU temperature ${tempCelsius}°C exceeds maximum ${CPU_MaxTemperature}°C" @{
-                actualTemp = $tempCelsius
-                maxTemp = $CPU_MaxTemperature
+        if ($daysSinceUpdate -gt $WindowsUpdate_MaxDaysSinceLastUpdate) {
+            $validationFailures += Report-Failure "Windows Update" "Last Windows Update was $daysSinceUpdate days ago, exceeds maximum of $WindowsUpdate_MaxDaysSinceLastUpdate days" @{
+                daysSinceUpdate = $daysSinceUpdate
+                maxDays = $WindowsUpdate_MaxDaysSinceLastUpdate
+                lastUpdate = $lastHotfix.InstalledOn
+                lastHotFixID = $lastHotfix.HotFixID
             }
+        } else {
+            Write-Output "✓ Windows Update status is acceptable"
         }
-        Write-Output "✓ CPU temperature is within acceptable range"
     } else {
-        Write-Output "⚠ CPU temperature sensor not available - skipping check"
+        Write-Output "⚠ Unable to retrieve Windows Update history - skipping check"
     }
 } catch {
-    Write-Output "⚠ Failed to retrieve CPU temperature: $_ - skipping check"
+    Write-Output "⚠ Failed to retrieve Windows Update information: $_ - skipping check"
 }
 
 Write-Output ""
 
 # 3. CPU Frequency Check
-Write-Output "=== [3/8] Checking CPU Frequency ==="
+Write-Output "=== [3/8] Checking CPU Current Frequency ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
     $cpu = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
     $actualFreqMHz = $cpu.CurrentClockSpeed
     $actualFreqGHz = [math]::Round($actualFreqMHz / 1000, 2)
-    Write-Output "Actual: ${actualFreqGHz} GHz"
-    Write-Output "Maximum allowed: ${CPU_MaxFrequency} GHz"
+    Write-Output "Current running frequency: ${actualFreqGHz} GHz"
+    Write-Output "Minimum required: ${CPU_MinFrequency} GHz"
     
-    if ($actualFreqGHz -gt $CPU_MaxFrequency) {
-        Fail-Test "CPU frequency ${actualFreqGHz} GHz exceeds maximum ${CPU_MaxFrequency} GHz" @{
+    if ($actualFreqGHz -lt $CPU_MinFrequency) {
+        $validationFailures += Report-Failure "CPU Frequency" "CPU frequency ${actualFreqGHz} GHz is below minimum ${CPU_MinFrequency} GHz" @{
             actualFreq = $actualFreqGHz
-            maxFreq = $CPU_MaxFrequency
+            minFreq = $CPU_MinFrequency
         }
+    } else {
+        Write-Output "✓ CPU frequency is acceptable"
     }
-    Write-Output "✓ CPU frequency is within acceptable range"
 } catch {
-    Fail-Test "Failed to retrieve CPU frequency: $_"
+    $validationFailures += Report-Failure "CPU Frequency" "Failed to retrieve CPU frequency: $_" @{}
 }
 
 Write-Output ""
 
 # 4. OS Version Check
 Write-Output "=== [4/8] Checking Windows Version ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
     $os = Get-CimInstance -ClassName Win32_OperatingSystem
+    $displayVersion = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion").DisplayVersion
     $actualVersion = $os.Caption
     Write-Output "Actual OS: $actualVersion"
+    Write-Output "Display Version: $displayVersion"
+    Write-Output "Build Number: $($os.BuildNumber)"
     Write-Output "Expected version: $OS_Version"
     
-    # Simple version mapping (in real scenario, you'd check build numbers)
+    # Version matching based on DisplayVersion
     $versionMatch = $false
-    if ($OS_Version -eq "Windows 24H2" -and $actualVersion -like "*Windows 11*") {
-        # Build 26100 is 24H2
-        if ($os.BuildNumber -ge 26100 -and $os.BuildNumber -lt 26200) { $versionMatch = $true }
-    } elseif ($OS_Version -eq "Windows 25H1" -and $actualVersion -like "*Windows 11*") {
-        # Hypothetical future version
-        if ($os.BuildNumber -ge 26200 -and $os.BuildNumber -lt 26300) { $versionMatch = $true }
-    } elseif ($OS_Version -eq "Windows 25H2" -and $actualVersion -like "*Windows 11*") {
-        # Hypothetical future version
-        if ($os.BuildNumber -ge 26300) { $versionMatch = $true }
+    if ($displayVersion -eq $OS_Version) {
+        $versionMatch = $true
+    } elseif ($OS_Version -eq "Windows 24H2" -and $displayVersion -eq "24H2") {
+        $versionMatch = $true
+    } elseif ($OS_Version -eq "Windows 25H1" -and $displayVersion -eq "25H1") {
+        $versionMatch = $true
+    } elseif ($OS_Version -eq "Windows 25H2" -and $displayVersion -eq "25H2") {
+        $versionMatch = $true
     }
     
-    # For demo purposes, if we can't match exactly, just check it's Windows 11
-    if (-not $versionMatch -and $actualVersion -like "*Windows 11*") {
-        Write-Output "⚠ Exact version match not verified (build: $($os.BuildNumber)), but Windows 11 detected"
+    # Fallback: For demo purposes, if we can't match exactly, just check it's Windows 11
+    if (-not $versionMatch -and $actualVersion -like "*Windows 11*" -and $OS_Version -like "*Windows*") {
+        Write-Output "⚠ Exact version match not verified (DisplayVersion: $displayVersion, Build: $($os.BuildNumber)), but Windows 11 detected"
         $versionMatch = $true
     }
     
     if (-not $versionMatch) {
-        Fail-Test "Windows version mismatch" @{
+        $validationFailures += Report-Failure "OS Version" "Windows version mismatch" @{
             actual = $actualVersion
+            displayVersion = $displayVersion
             actualBuild = $os.BuildNumber
             expected = $OS_Version
         }
+    } else {
+        Write-Output "✓ Windows version validation passed"
     }
-    Write-Output "✓ Windows version validation passed"
 } catch {
-    Fail-Test "Failed to retrieve Windows version: $_"
+    $validationFailures += Report-Failure "OS Version" "Failed to retrieve Windows version: $_" @{}
 }
 
 Write-Output ""
 
 # 5. Windows Activation Status Check
 Write-Output "=== [5/8] Checking Windows Activation Status ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
-    $license = Get-CimInstance -ClassName SoftwareLicensingProduct | 
-               Where-Object { $_.PartialProductKey -and $_.ApplicationID -eq '55c92734-d682-4d71-983e-d6ec3f16059f' } |
-               Select-Object -First 1
+    $licenseStatus = Get-CimInstance -ClassName SoftwareLicensingProduct `
+                     -Filter "ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey IS NOT NULL" |
+                     Select-Object -First 1 -ExpandProperty LicenseStatus
     
-    $isActivated = $license.LicenseStatus -eq 1
-    Write-Output "Windows activated: $isActivated"
+    $isActivated = $licenseStatus -eq 1
+    Write-Output "Windows activated: $isActivated (LicenseStatus: $licenseStatus)"
     Write-Output "Activation required: $Windows_MustBeActivated"
     
     if ($Windows_MustBeActivated -and -not $isActivated) {
-        Fail-Test "Windows is not activated" @{
+        $validationFailures += Report-Failure "Windows Activation" "Windows is not activated" @{
             isActivated = $isActivated
-            licenseStatus = $license.LicenseStatus
+            licenseStatus = $licenseStatus
             required = $Windows_MustBeActivated
         }
+    } else {
+        Write-Output "✓ Windows activation status check passed"
     }
-    Write-Output "✓ Windows activation status check passed"
 } catch {
     Write-Output "⚠ Failed to retrieve Windows activation status: $_ - skipping check"
 }
@@ -233,26 +257,30 @@ Write-Output ""
 
 # 6. Windows Installation Path Check
 Write-Output "=== [6/8] Checking Windows Installation Path ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
     $actualWindowsPath = $env:SystemRoot
     Write-Output "Actual: $actualWindowsPath"
     Write-Output "Expected: $System_WindowsPath"
     
-    if ($actualWindowsPath -ne $System_WindowsPath) {
-        Fail-Test "Windows installation path mismatch" @{
+    # Case-insensitive comparison
+    if ($actualWindowsPath.ToLower() -ne $System_WindowsPath.ToLower()) {
+        $validationFailures += Report-Failure "Windows Path" "Windows installation path mismatch" @{
             actual = $actualWindowsPath
             expected = $System_WindowsPath
         }
+    } else {
+        Write-Output "✓ Windows installation path validation passed"
     }
-    Write-Output "✓ Windows installation path validation passed"
 } catch {
-    Fail-Test "Failed to retrieve Windows installation path: $_"
+    $validationFailures += Report-Failure "Windows Path" "Failed to retrieve Windows installation path: $_" @{}
 }
 
 Write-Output ""
 
 # 7. Required Software Check
 Write-Output "=== [7/8] Checking Required Software ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
     $installedSoftware = @()
     
@@ -273,32 +301,37 @@ try {
         }
     }
     
+    Write-Output "Found $($installedSoftware.Count) installed applications"
+    
     $missingSoftware = @()
     foreach ($requiredApp in $parsedSoftware) {
-        $found = $installedSoftware | Where-Object { $_ -like "*$requiredApp*" }
+        # Case-insensitive substring matching using Contains
+        $found = $installedSoftware | Where-Object { $_.ToLower().Contains($requiredApp.ToLower()) }
         if (-not $found) {
             $missingSoftware += $requiredApp
             Write-Output "✗ Missing: $requiredApp"
         } else {
-            Write-Output "✓ Found: $requiredApp"
+            Write-Output "✓ Found: $requiredApp (matched: $($found | Select-Object -First 1))"
         }
     }
     
     if ($missingSoftware.Count -gt 0) {
-        Fail-Test "Missing required software: $($missingSoftware -join ', ')" @{
+        $validationFailures += Report-Failure "Required Software" "Missing required software: $($missingSoftware -join ', ')" @{
             missing = $missingSoftware
             required = $parsedSoftware
         }
+    } else {
+        Write-Output "✓ All required software is installed"
     }
-    Write-Output "✓ All required software is installed"
 } catch {
-    Fail-Test "Failed to check installed software: $_"
+    $validationFailures += Report-Failure "Required Software" "Failed to check installed software: $_" @{}
 }
 
 Write-Output ""
 
 # 8. Minimum Requirements Check
 Write-Output "=== [8/8] Checking Minimum System Requirements ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
 try {
     $failedChecks = @()
     
@@ -317,13 +350,13 @@ try {
         $failedChecks += "Memory: ${actualMemoryGB} GB < $($parsedRequirements.memoryGB) GB"
     }
     
-    # Check disk space
+    # Check total disk space (physical disk size, not free space)
     $systemDrive = $env:SystemDrive
     $disk = Get-CimInstance -ClassName Win32_LogicalDisk | Where-Object { $_.DeviceID -eq $systemDrive }
-    $actualDiskGB = [math]::Round($disk.FreeSpace / 1GB, 2)
-    Write-Output "Free Disk Space (${systemDrive}): ${actualDiskGB} GB (minimum: $($parsedRequirements.diskGB) GB)"
-    if ($actualDiskGB -lt $parsedRequirements.diskGB) {
-        $failedChecks += "Disk space: ${actualDiskGB} GB < $($parsedRequirements.diskGB) GB"
+    $actualDiskTotalGB = [math]::Round($disk.Size / 1GB, 2)
+    Write-Output "Total Disk Size (${systemDrive}): ${actualDiskTotalGB} GB (minimum: $($parsedRequirements.diskTotalGB) GB)"
+    if ($actualDiskTotalGB -lt $parsedRequirements.diskTotalGB) {
+        $failedChecks += "Total disk size: ${actualDiskTotalGB} GB < $($parsedRequirements.diskTotalGB) GB"
     }
     
     # Check webcam count
@@ -336,25 +369,61 @@ try {
     }
     
     if ($failedChecks.Count -gt 0) {
-        Fail-Test "System does not meet minimum requirements" @{
+        $validationFailures += Report-Failure "Minimum Requirements" "System does not meet minimum requirements: $($failedChecks -join '; ')" @{
             failedChecks = $failedChecks
             actual = @{
                 cores = $actualCores
                 memoryGB = $actualMemoryGB
-                diskGB = $actualDiskGB
+                diskTotalGB = $actualDiskTotalGB
                 webcamCount = $actualWebcamCount
             }
             required = $parsedRequirements
         }
+    } else {
+        Write-Output "✓ All minimum requirements are met"
     }
-    Write-Output "✓ All minimum requirements are met"
 } catch {
-    Fail-Test "Failed to check minimum requirements: $_"
+    $validationFailures += Report-Failure "Minimum Requirements" "Failed to check minimum requirements: $_" @{}
 }
 
 Write-Output ""
+Write-Output "=== Validation Summary ==="
+Write-Output "Timestamp: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff')"
+
+# Check if any validations failed
+if ($validationFailures.Count -gt 0) {
+    Write-Output "Failed checks: $($validationFailures.Count)"
+    foreach ($failure in $validationFailures) {
+        Write-Output "  - $($failure.check): $($failure.reason)"
+    }
+    
+    $details = [ordered]@{
+        failures = $validationFailures
+        summary = @{
+            totalChecks = 8
+            failedChecks = $validationFailures.Count
+            passedChecks = 8 - $validationFailures.Count
+        }
+    }
+    
+    $report = [ordered]@{
+        testId  = "SystemInfoVerification"
+        outcome = "Fail"
+        summary = "$($validationFailures.Count) validation(s) failed"
+        details = $details
+        metrics = @{}
+    }
+    
+    $ArtifactsRoot = Join-Path (Get-Location) "artifacts"
+    Ensure-Dir $ArtifactsRoot
+    Write-JsonFile (Join-Path $ArtifactsRoot "report.json") $report
+    Write-Output "[RESULT] Fail"
+    exit 1
+}
 
 # All checks passed
+Write-Output "All checks passed: 8/8"
+
 $details = [ordered]@{
     cpu = [ordered]@{
         processorName = $actualProcessorName
@@ -369,7 +438,7 @@ $details = [ordered]@{
     requirements = [ordered]@{
         cores = $actualCores
         memoryGB = $actualMemoryGB
-        diskGB = $actualDiskGB
+        diskTotalGB = $actualDiskTotalGB
         webcamCount = $actualWebcamCount
     }
     software = [ordered]@{
@@ -381,7 +450,7 @@ $details = [ordered]@{
 $metrics = [ordered]@{
     cpuCores = $actualCores
     memoryGB = $actualMemoryGB
-    freeDiskGB = $actualDiskGB
+    totalDiskGB = $actualDiskTotalGB
     webcamCount = $actualWebcamCount
     cpuFrequencyGHz = $actualFreqGHz
 }

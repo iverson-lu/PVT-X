@@ -17,30 +17,30 @@
       "help": "Required processor name pattern (case-insensitive substring match)"
     },
     {
-      "name": "CPU_MaxTemperature",
+      "name": "WindowsUpdate_MaxDaysSinceLastUpdate",
       "type": "int",
       "required": false,
-      "default": 80,
-      "min": 0,
-      "max": 150,
-      "unit": "°C",
-      "help": "Maximum allowed CPU temperature in Celsius"
+      "default": 30,
+      "min": 1,
+      "max": 365,
+      "unit": "days",
+      "help": "Maximum days since last Windows Update"
     },
     {
-      "name": "CPU_MaxFrequency",
+      "name": "CPU_MinFrequency",
       "type": "double",
       "required": false,
-      "default": 5.5,
+      "default": 1.0,
       "min": 0.1,
       "max": 10.0,
       "unit": "GHz",
-      "help": "Maximum allowed CPU frequency in GHz"
+      "help": "Minimum required current CPU running frequency in GHz"
     },
     {
       "name": "OS_Version",
       "type": "enum",
       "required": true,
-      "default": "Windows 24H2",
+      "default": "Windows 25H2",
       "enumValues": ["Windows 24H2", "Windows 25H1", "Windows 25H2"],
       "help": "Expected Windows version (enum)"
     },
@@ -62,7 +62,7 @@
       "name": "RequiredSoftware",
       "type": "json",
       "required": false,
-      "default": "[\"Microsoft Edge\"]",
+      "default": "[\"Microsoft Edge\", \"Microsoft 365\"]",
       "uiHint": "textarea",
       "help": "JSON array of software names that must be installed on the system"
     },
@@ -70,9 +70,9 @@
       "name": "MinimumRequirements",
       "type": "json",
       "required": false,
-      "default": "{\"cores\": 4, \"memoryGB\": 8, \"diskGB\": 50, \"webcamCount\": 1}",
+      "default": "{\"cores\": 4, \"memoryGB\": 8, \"diskTotalGB\": 100, \"webcamCount\": 1}",
       "uiHint": "textarea",
-      "help": "JSON object defining minimum system requirements: cores (int), memoryGB (int), diskGB (int), webcamCount (int)"
+      "help": "JSON object defining minimum system requirements: cores (int), memoryGB (int), diskTotalGB (int), webcamCount (int)"
     }
   ]
 }
