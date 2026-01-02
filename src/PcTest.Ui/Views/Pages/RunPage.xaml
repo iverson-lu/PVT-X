@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:PcTest.Ui.ViewModels"
+      xmlns:res="clr-namespace:PcTest.Ui.Resources"
       Title="Run"
       d:DataContext="{d:DesignInstance vm:RunViewModel}"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -342,7 +343,7 @@
                     </Grid>
                 </Border>
                 
-                <!-- Events Card -->
+                <!-- Events Card - Timeline View -->
                 <Border Grid.Row="2"
                        Background="{DynamicResource CardBackgroundBrush}"
                        BorderBrush="{DynamicResource BorderSubtleBrush}"
@@ -351,105 +352,153 @@
                     <Border.Effect>
                         <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
                     </Border.Effect>
+                    <Border.Resources>
+                        <!-- Event Timeline Converters -->
+                        <res:EventCodeToTitleConverter x:Key="EventCodeToTitleConverter"/>
+                        <res:EventCodeIsStartedConverter x:Key="EventCodeIsStartedConverter"/>
+                        <res:EventCodeIsCompletedConverter x:Key="EventCodeIsCompletedConverter"/>
+                        <res:EventLevelToIconConverter x:Key="EventLevelToIconConverter"/>
+                    </Border.Resources>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         
-                        <TextBlock Grid.Row="0" Text="Structured Events" 
+                        <TextBlock Grid.Row="0" Text="Execution Timeline" 
                                   Style="{StaticResource SectionTitleStyle}"
                                   Margin="20,20,20,12"/>
                         
-                        <DataGrid Grid.Row="1"
-                                 ItemsSource="{Binding Events}"
-                                 AutoGenerateColumns="False"
-                                 IsReadOnly="True"
-                                 SelectionMode="Single"
-                                 HeadersVisibility="Column"
-                                 GridLinesVisibility="None"
-                                 BorderThickness="0"
-                                 Background="{DynamicResource CardBackgroundBrush}"
-                                 Margin="12,0,12,12"
-                                 CanUserAddRows="False"
-                                 CanUserDeleteRows="False"
-                                 CanUserReorderColumns="False"
-                                 CanUserResizeColumns="True"
-                                 CanUserResizeRows="False"
-                                 CanUserSortColumns="False"
-                                 VirtualizingPanel.IsVirtualizing="True"
-                                 VirtualizingPanel.VirtualizationMode="Recycling"
-                                 EnableRowVirtualization="True">
-                            <DataGrid.Resources>
-                                <Style TargetType="DataGridRow">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                                <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-                                    <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-                                    <Setter Property="FontSize" Value="{StaticResource FontSizeS}"/>
-                                    <Setter Property="Padding" Value="8,8"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
-                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                                </Style>
-                                <Style TargetType="DataGridCell">
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="Padding" Value="0"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                                    <Setter Property="FontSize" Value="{StaticResource FontSizeS}"/>
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="DataGridCell">
-                                                <Border Padding="8,6"
-                                                       Background="{TemplateBinding Background}">
-                                                    <ContentPresenter VerticalAlignment="Center"/>
+                        <ScrollViewer Grid.Row="1" 
+                                    VerticalScrollBarVisibility="Auto"
+                                    HorizontalScrollBarVisibility="Disabled"
+                                    Padding="0,0,8,12">
+                            <ItemsControl ItemsSource="{Binding Events}"
+                                        Margin="12,0,12,0"
+                                        VirtualizingPanel.IsVirtualizing="True"
+                                        VirtualizingPanel.VirtualizationMode="Recycling">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- Event Timeline Item -->
+                                        <Grid Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <!-- Timeline column -->
+                                                <ColumnDefinition Width="32"/>
+                                                <!-- Content column -->
+                                                <ColumnDefinition Width="*"/>
+                                                <!-- Timestamp column -->
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <!-- Timeline Visual -->
+                                            <Grid Grid.Column="0">
+                                                <!-- Vertical line -->
+                                                <Rectangle Width="2" 
+                                                         Fill="{DynamicResource TimelineLineBrush}"
+                                                         HorizontalAlignment="Center"
+                                                         Margin="0,0,0,0"/>
+                                                
+                                                <!-- Event node/icon -->
+                                                <Border Width="20" Height="20"
+                                                       CornerRadius="10"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Top"
+                                                       Margin="0,6,0,0">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{DynamicResource TimelineNodeInfoBrush}"/>
+                                                            <Setter Property="BorderThickness" Value="0"/>
+                                                            <!-- Level-based color -->
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Level}" Value="error">
+                                                                    <Setter Property="Background" Value="{DynamicResource TimelineNodeErrorBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Level}" Value="warning">
+                                                                    <Setter Property="Background" Value="{DynamicResource TimelineNodeWarningBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Code, Converter={StaticResource EventCodeIsStartedConverter}}" Value="True">
+                                                                    <Setter Property="Background" Value="Transparent"/>
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource TimelineNodeStartedBrush}"/>
+                                                                    <Setter Property="BorderThickness" Value="2"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Code, Converter={StaticResource EventCodeIsCompletedConverter}}" Value="True">
+                                                                    <Setter Property="Background" Value="{DynamicResource TimelineNodeCompletedBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    
+                                                    <!-- Icon inside node -->
+                                                    <TextBlock Text="{Binding Level, Converter={StaticResource EventLevelToIconConverter}}"
+                                                             FontFamily="Segoe MDL2 Assets"
+                                                             FontSize="10"
+                                                             Foreground="{DynamicResource TextOnPrimaryBrush}"
+                                                             HorizontalAlignment="Center"
+                                                             VerticalAlignment="Center"
+                                                             Opacity="0.9"/>
                                                 </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </DataGrid.Resources>
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='HH:mm:ss.fff'}" Width="100"/>
-                                <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{Binding Level, Converter={StaticResource EventLevelToBrushConverter}}"/>
-                                            <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="180">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="FontFamily" Value="Cascadia Code, Consolas"/>
-                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-                                            <Setter Property="FontSize" Value="11"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                                <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" MinWidth="200">
-                                    <DataGridTextColumn.ElementStyle>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                            <Setter Property="ToolTip" Value="{Binding Message}"/>
-                                        </Style>
-                                    </DataGridTextColumn.ElementStyle>
-                                </DataGridTextColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
+                                            </Grid>
+                                            
+                                            <!-- Event Content Card -->
+                                            <Border Grid.Column="1" 
+                                                   Background="{DynamicResource TimelineCardBackgroundBrush}"
+                                                   BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                   BorderThickness="0"
+                                                   CornerRadius="6"
+                                                   Padding="12,8"
+                                                   Margin="8,0,8,0">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter Property="Background" Value="{DynamicResource TimelineCardHoverBrush}"/>
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+                                                    
+                                                    <!-- Event Title (derived from Code) -->
+                                                    <TextBlock Grid.Row="0"
+                                                             Text="{Binding Code, Converter={StaticResource EventCodeToTitleConverter}}"
+                                                             FontWeight="{StaticResource FontWeightSemiBold}"
+                                                             FontSize="{StaticResource FontSizeS}"
+                                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                                             TextTrimming="CharacterEllipsis"
+                                                             Margin="0,0,0,4"/>
+                                                    
+                                                    <!-- Event Message -->
+                                                    <TextBlock Grid.Row="1"
+                                                             Text="{Binding Message}"
+                                                             FontSize="{StaticResource FontSizeXS}"
+                                                             Foreground="{DynamicResource TextSecondaryBrush}"
+                                                             TextWrapping="Wrap"
+                                                             MaxHeight="80"
+                                                             TextTrimming="CharacterEllipsis"
+                                                             ToolTip="{Binding Message}"/>
+                                                </Grid>
+                                            </Border>
+                                            
+                                            <!-- Timestamp -->
+                                            <TextBlock Grid.Column="2"
+                                                     Text="{Binding Timestamp, StringFormat='HH:mm:ss.fff'}"
+                                                     FontFamily="Cascadia Code, Consolas"
+                                                     FontSize="10"
+                                                     Foreground="{DynamicResource TextTertiaryBrush}"
+                                                     VerticalAlignment="Top"
+                                                     Margin="4,8,8,0"
+                                                     Opacity="0.7"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                     </Grid>
                 </Border>
             </Grid>

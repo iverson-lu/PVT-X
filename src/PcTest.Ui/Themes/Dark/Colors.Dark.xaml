@@ -102,6 +102,16 @@
     <Color x:Key="StatusInfoLightColor">#164E63</Color>
     <Color x:Key="StatusInfoBorderColor">#0E7490</Color>
     
+    <!-- Timeline/Event Feed Colors -->
+    <Color x:Key="TimelineLineColor">#404040</Color>
+    <Color x:Key="TimelineNodeStartedColor">#3B82F6</Color>
+    <Color x:Key="TimelineNodeCompletedColor">#22C55E</Color>
+    <Color x:Key="TimelineNodeInfoColor">#3B82F6</Color>
+    <Color x:Key="TimelineNodeWarningColor">#EAB308</Color>
+    <Color x:Key="TimelineNodeErrorColor">#EF4444</Color>
+    <Color x:Key="TimelineCardBackgroundColor">#2D2D2D</Color>
+    <Color x:Key="TimelineCardHoverColor">#353535</Color>
+    
     <!-- Overlay/Modal Colors -->
     <Color x:Key="OverlayBackgroundColor">#B0000000</Color>
     <Color x:Key="ShadowColor">#40000000</Color>
@@ -265,6 +275,16 @@
     <Color x:Key="SuccessGreenColor">#22C55E</Color>
     <Color x:Key="InfoCyanColor">#22D3EE</Color>
     <Color x:Key="WarningAmberColor">#EAB308</Color>
+    
+    <!-- Timeline/Event Feed Brushes -->
+    <SolidColorBrush x:Key="TimelineLineBrush" Color="{StaticResource TimelineLineColor}"/>
+    <SolidColorBrush x:Key="TimelineNodeStartedBrush" Color="{StaticResource TimelineNodeStartedColor}"/>
+    <SolidColorBrush x:Key="TimelineNodeCompletedBrush" Color="{StaticResource TimelineNodeCompletedColor}"/>
+    <SolidColorBrush x:Key="TimelineNodeInfoBrush" Color="{StaticResource TimelineNodeInfoColor}"/>
+    <SolidColorBrush x:Key="TimelineNodeWarningBrush" Color="{StaticResource TimelineNodeWarningColor}"/>
+    <SolidColorBrush x:Key="TimelineNodeErrorBrush" Color="{StaticResource TimelineNodeErrorColor}"/>
+    <SolidColorBrush x:Key="TimelineCardBackgroundBrush" Color="{StaticResource TimelineCardBackgroundColor}"/>
+    <SolidColorBrush x:Key="TimelineCardHoverBrush" Color="{StaticResource TimelineCardHoverColor}"/>
     
     <!-- Legacy Brushes (mapped to canonical) -->
     <SolidColorBrush x:Key="BrandPrimaryBrush" Color="{StaticResource PrimaryColor}"/>

@@ -496,3 +496,110 @@ public class EventLevelToBrushConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// Converts event Code to a friendly display title.
+/// Examples: "TestCase.Started" -> "Test Case Started"
+/// </summary>
+public class EventCodeToTitleConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string code || string.IsNullOrEmpty(code))
+            return string.Empty;
+
+        // Replace dots with spaces and split on capital letters
+        var parts = code.Split('.');
+        var result = new System.Text.StringBuilder();
+        
+        foreach (var part in parts)
+        {
+            if (result.Length > 0)
+                result.Append(' ');
+            
+            // Insert spaces before capital letters
+            for (int i = 0; i < part.Length; i++)
+            {
+                if (i > 0 && char.IsUpper(part[i]))
+                    result.Append(' ');
+                result.Append(part[i]);
+            }
+        }
+        
+        return result.ToString();
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Determines if an event code represents a "Started" event.
+/// </summary>
+public class EventCodeIsStartedConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string code)
+            return false;
+        
+        return code.EndsWith(".Started", StringComparison.OrdinalIgnoreCase) ||
+               code.EndsWith(".Begin", StringComparison.OrdinalIgnoreCase) ||
+               code.Contains("Starting", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Determines if an event code represents a "Completed" event.
+/// </summary>
+public class EventCodeIsCompletedConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string code)
+            return false;
+        
+        return code.EndsWith(".Completed", StringComparison.OrdinalIgnoreCase) ||
+               code.EndsWith(".Finished", StringComparison.OrdinalIgnoreCase) ||
+               code.EndsWith(".End", StringComparison.OrdinalIgnoreCase) ||
+               code.Contains("Complete", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts event Level to a corresponding icon glyph (Segoe MDL2 Assets).
+/// </summary>
+public class EventLevelToIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string level)
+            return "\uE946"; // Default: StatusCircleBlock2
+        
+        return level.ToLowerInvariant() switch
+        {
+            "error" => "\uE711", // ErrorBadge
+            "warning" => "\uE7BA", // Warning
+            "info" => "\uE946", // StatusCircleBlock2
+            "debug" => "\uE8EC", // DeveloperTools
+            _ => "\uE946"
+        };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
