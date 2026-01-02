@@ -81,8 +81,8 @@ Pure visual-only XAML styling/layout may skip tests.
 Specs are authoritative. If spec conflicts with these instructions, **ask**—do not guess.
 
 Spec locations:
-- Core (engine/runner/contracts): `PC_Test_System_SPEC_vxxx/spec.md`
-- UI (design/UX): `PC_Test_System_UI_SPEC_vxxx.md`
+- Core (engine/runner/contracts): `docs/pvtx-core-spec.md`
+- UI (design/UX): `docs/pvtx-ui-spec.md`
 
 Update specs when:
 - Core behavior/contracts/artifacts change → update Core spec
