@@ -441,3 +441,30 @@ public class EnumToVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converts between boolean string values ("true"/"false") and bool for CheckBox binding.
+/// Supports "true"/"false", "1"/"0" (case-insensitive).
+/// </summary>
+public class BooleanStringConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string strValue)
+        {
+            var lower = strValue.ToLowerInvariant();
+            return lower == "true" || lower == "1";
+        }
+        return false;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return boolValue ? "true" : "false";
+        }
+        return "false";
+    }
+}
+

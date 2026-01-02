@@ -16,6 +16,8 @@
                 <ResourceDictionary Source="Resources/DesignTokens.xaml"/>
                 <!-- Component Styles -->
                 <ResourceDictionary Source="Resources/Styles.xaml"/>
+                <!-- Parameter Editor Styles -->
+                <ResourceDictionary Source="Resources/ParameterEditorStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             
             <!-- Converters -->
@@ -38,6 +40,70 @@
             <converters:IsExpandedToIconConverter x:Key="IsExpandedToIconConverter"/>
             <converters:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
             <converters:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter"/>
+            <converters:BooleanStringConverter x:Key="BooleanStringConverter"/>
+            
+            <!-- Parameter Editor Template Selector (must be in App.xaml, not in merged dictionary) -->
+            <converters:ParameterEditorTemplateSelector x:Key="ParameterEditorTemplateSelector">
+                <converters:ParameterEditorTemplateSelector.EnumEditorTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <ComboBox ItemsSource="{Binding EnumValues}"
+                                      SelectedItem="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      ToolTip="{Binding Help}"
+                                      Style="{StaticResource ModernComboBoxStyle}"
+                                      ItemContainerStyle="{StaticResource ModernComboBoxItemStyle}">
+                                <ComboBox.Resources>
+                                    <!-- Override base style error state -->
+                                    <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBoxStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasError}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBrush}"/>
+                                                <Setter Property="BorderThickness" Value="2"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ComboBox.Resources>
+                            </ComboBox>
+                        </StackPanel>
+                    </DataTemplate>
+                </converters:ParameterEditorTemplateSelector.EnumEditorTemplate>
+                <converters:ParameterEditorTemplateSelector.BooleanToggleTemplate>
+                    <DataTemplate>
+                        <CheckBox IsChecked="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BooleanStringConverter}}"
+                                  Style="{StaticResource ModernToggleSwitchStyle}"
+                                  ToolTip="{Binding Help}"
+                                  Margin="0,6,0,0"/>
+                    </DataTemplate>
+                </converters:ParameterEditorTemplateSelector.BooleanToggleTemplate>
+                <converters:ParameterEditorTemplateSelector.BooleanCheckBoxTemplate>
+                    <DataTemplate>
+                        <CheckBox IsChecked="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BooleanStringConverter}}"
+                                  Content="{Binding Name}"
+                                  ToolTip="{Binding Help}"
+                                  Margin="0,6,0,0"/>
+                    </DataTemplate>
+                </converters:ParameterEditorTemplateSelector.BooleanCheckBoxTemplate>
+                <converters:ParameterEditorTemplateSelector.DefaultEditorTemplate>
+                    <DataTemplate>
+                        <TextBox Text="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="{Binding Help}"
+                                 ToolTip="{Binding Help}"
+                                 Style="{StaticResource ModernTextBoxStyle}">
+                            <TextBox.Resources>
+                                <!-- Override base style error state -->
+                                <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBoxStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasError}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBrush}"/>
+                                            <Setter Property="BorderThickness" Value="2"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Resources>
+                        </TextBox>
+                    </DataTemplate>
+                </converters:ParameterEditorTemplateSelector.DefaultEditorTemplate>
+            </converters:ParameterEditorTemplateSelector>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

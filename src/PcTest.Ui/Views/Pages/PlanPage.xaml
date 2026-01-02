@@ -294,8 +294,8 @@
                                                 <DataTemplate>
                                                     <Border BorderBrush="{DynamicResource BorderSubtleBrush}" 
                                                            BorderThickness="0,0,0,1" 
-                                                           Padding="0,0,0,16" 
-                                                           Margin="0,0,0,16">
+                                                           Padding="0,0,0,12" 
+                                                           Margin="0,0,0,12">
                                                         <Grid>
                                                             <Grid.RowDefinitions>
                                                                 <RowDefinition Height="Auto"/>
@@ -303,36 +303,55 @@
                                                                 <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
                                                             
-                                                            <!-- Parameter name and badges -->
-                                                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                                                            <!-- Parameter name and badges - more compact -->
+                                                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                                                 <TextBlock Text="{Binding Name}" 
                                                                           FontSize="{StaticResource FontSizeM}"
                                                                           FontWeight="{StaticResource FontWeightSemiBold}"
                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
                                                                           VerticalAlignment="Center"
-                                                                          Margin="0,0,12,0"/>
+                                                                          Margin="0,0,8,0"/>
                                                                 <ui:Badge Content="{Binding Type}" 
                                                                          Appearance="Secondary" 
-                                                                         Margin="0,0,6,0"/>
+                                                                         Margin="0,0,4,0"
+                                                                         FontSize="10"
+                                                                         Padding="6,2"/>
                                                                 <ui:Badge Content="required" 
                                                                          Style="{StaticResource RequiredBadgeStyle}"
-                                                                         Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                         Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                         FontSize="10"
+                                                                         Padding="6,2"/>
                                                             </StackPanel>
                                                             
-                                                            <!-- Help text -->
+                                                            <!-- Help text - tighter spacing -->
                                                             <TextBlock Grid.Row="1" 
                                                                       Text="{Binding Help}" 
                                                                       FontSize="{StaticResource FontSizeS}"
                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       TextWrapping="Wrap"
-                                                                      Margin="0,0,0,4"
+                                                                      LineHeight="18"
+                                                                      Margin="0,0,0,8"
                                                                       Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
                                                             
                                                             <!-- Input field -->
-                                                            <ui:TextBox Grid.Row="2"
-                                                                       Text="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                                       PlaceholderText="Enter value..."
-                                                                       ToolTip="Default value (can be edited before running)"/>
+                                                            <Grid Grid.Row="2">
+                                                                <Grid.RowDefinitions>
+                                                                    <RowDefinition Height="Auto"/>
+                                                                    <RowDefinition Height="Auto"/>
+                                                                </Grid.RowDefinitions>
+                                                                
+                                                                <ContentPresenter Grid.Row="0"
+                                                                                Content="{Binding}"
+                                                                                ContentTemplateSelector="{StaticResource ParameterEditorTemplateSelector}"/>
+                                                                
+                                                                <!-- Error message -->
+                                                                <TextBlock Grid.Row="1"
+                                                                          Text="{Binding ErrorMessage}"
+                                                                          FontSize="{StaticResource FontSizeS}"
+                                                                          Foreground="{DynamicResource StatusErrorBrush}"
+                                                                          Margin="0,6,0,0"
+                                                                          Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                            </Grid>
                                                         </Grid>
                                                     </Border>
                                                 </DataTemplate>
@@ -774,35 +793,55 @@
                                                                             <RowDefinition Height="Auto"/>
                                                                         </Grid.RowDefinitions>
                                                                         
-                                                                        <!-- Parameter name and badges -->
-                                                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4">
+                                                                        <!-- Parameter name and badges - more compact -->
+                                                                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
                                                                             <TextBlock Text="{Binding Name}" 
                                                                                       FontSize="{StaticResource FontSizeM}"
                                                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                                       VerticalAlignment="Center"
-                                                                                      Margin="0,0,10,0"/>
+                                                                                      Margin="0,0,8,0"/>
                                                                             <ui:Badge Content="{Binding Type}" 
                                                                                      Appearance="Secondary" 
-                                                                                     Margin="0,0,6,0"/>
+                                                                                     Margin="0,0,4,0"
+                                                                                     FontSize="10"
+                                                                                     Padding="6,2"/>
                                                                             <ui:Badge Content="required" 
                                                                                      Style="{StaticResource RequiredBadgeStyle}"
-                                                                                     Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                                     Visibility="{Binding Required, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                                     FontSize="10"
+                                                                                     Padding="6,2"/>
                                                                         </StackPanel>
                                                                         
-                                                                        <!-- Help text -->
+                                                                        <!-- Help text - tighter spacing -->
                                                                         <TextBlock Grid.Row="1" 
                                                                                   Text="{Binding Help}" 
                                                                                   FontSize="{StaticResource FontSizeS}"
                                                                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                                                                   TextWrapping="Wrap"
+                                                                                  LineHeight="18"
                                                                                   Margin="0,0,0,8"
                                                                                   Visibility="{Binding Help, Converter={StaticResource StringToBoolConverter}}"/>
                                                                         
                                                                         <!-- Input field -->
-                                                                        <ui:TextBox Grid.Row="2"
-                                                                                   Text="{Binding CurrentValue, UpdateSourceTrigger=PropertyChanged}" 
-                                                                                   PlaceholderText="{Binding Default}"/>
+                                                                        <Grid Grid.Row="2">
+                                                                            <Grid.RowDefinitions>
+                                                                                <RowDefinition Height="Auto"/>
+                                                                                <RowDefinition Height="Auto"/>
+                                                                            </Grid.RowDefinitions>
+                                                                            
+                                                                            <ContentPresenter Grid.Row="0"
+                                                                                            Content="{Binding}"
+                                                                                            ContentTemplateSelector="{StaticResource ParameterEditorTemplateSelector}"/>
+                                                                            
+                                                                            <!-- Error message -->
+                                                                            <TextBlock Grid.Row="1"
+                                                                                      Text="{Binding ErrorMessage}"
+                                                                                      FontSize="{StaticResource FontSizeS}"
+                                                                                      Foreground="{DynamicResource StatusErrorBrush}"
+                                                                                      Margin="0,6,0,0"
+                                                                                      Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                        </Grid>
                                                                     </Grid>
                                                                 </Border>
                                                             </DataTemplate>

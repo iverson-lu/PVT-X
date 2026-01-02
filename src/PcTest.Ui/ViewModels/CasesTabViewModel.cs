@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
 using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
@@ -196,6 +197,8 @@ public partial class ParameterViewModel : ViewModelBase
     private readonly ParameterDefinition _definition;
     
     [ObservableProperty] private string _currentValue = string.Empty;
+    [ObservableProperty] private bool _hasError;
+    [ObservableProperty] private string? _errorMessage;
     
     public ParameterViewModel(ParameterDefinition definition)
     {
@@ -222,9 +225,71 @@ public partial class ParameterViewModel : ViewModelBase
         }
     }
     
+    partial void OnCurrentValueChanged(string value)
+    {
+        ValidateValue();
+    }
+    
     public string Name => _definition.Name;
     public string Type => _definition.Type;
     public bool Required => _definition.Required;
     public string? Help => _definition.Help;
     public string Default => CurrentValue;  // For binding in XAML
+    
+    // Enum-specific properties
+    public bool IsEnum => Type == ParameterTypes.Enum;
+    public List<string>? EnumValues => _definition.EnumValues;
+    
+    // Boolean-specific properties
+    public bool IsBoolean => Type == ParameterTypes.Boolean;
+    public bool UsePlainCheckBox => 
+        IsBoolean && 
+        _definition.UiHint != null && 
+        _definition.UiHint.Contains("checkbox", StringComparison.OrdinalIgnoreCase);
+    
+    /// <summary>
+    /// Validates the current value against parameter constraints.
+    /// </summary>
+    public void ValidateValue()
+    {
+        HasError = false;
+        ErrorMessage = null;
+        
+        // Required validation
+        if (Required && string.IsNullOrWhiteSpace(CurrentValue))
+        {
+            HasError = true;
+            ErrorMessage = $"{Name} is required";
+            return;
+        }
+        
+        // Skip validation for empty optional parameters
+        if (!Required && string.IsNullOrWhiteSpace(CurrentValue))
+        {
+            return;
+        }
+        
+        // Enum validation
+        if (IsEnum && EnumValues != null && EnumValues.Count > 0)
+        {
+            if (!EnumValues.Contains(CurrentValue))
+            {
+                HasError = true;
+                ErrorMessage = $"Value must be one of: {string.Join(", ", EnumValues)}";
+                return;
+            }
+        }
+        
+        // Boolean validation
+        if (IsBoolean)
+        {
+            var lower = CurrentValue.ToLowerInvariant();
+            if (lower != "true" && lower != "false" && lower != "1" && lower != "0")
+            {
+                HasError = true;
+                ErrorMessage = "Value must be true/false or 1/0";
+                return;
+            }
+        }
+    }
 }

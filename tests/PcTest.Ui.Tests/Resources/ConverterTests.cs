@@ -156,4 +156,54 @@ public class ConverterTests
         // Assert
         result.Should().Be(expectedIcon);
     }
+
+    [Theory]
+    [InlineData("true", true)]
+    [InlineData("false", false)]
+    [InlineData("True", true)]
+    [InlineData("FALSE", false)]
+    [InlineData("1", true)]
+    [InlineData("0", false)]
+    public void BooleanStringConverter_ShouldConvert_StringToBool(string input, bool expected)
+    {
+        // Arrange
+        var converter = new BooleanStringConverter();
+
+        // Act
+        var result = converter.Convert(input, typeof(bool), null!, CultureInfo.InvariantCulture);
+
+        // Assert
+        result.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("invalid", false)]
+    [InlineData("yes", false)]
+    [InlineData("", false)]
+    public void BooleanStringConverter_WithInvalidString_ShouldReturn_False(string input, bool expected)
+    {
+        // Arrange
+        var converter = new BooleanStringConverter();
+
+        // Act
+        var result = converter.Convert(input, typeof(bool), null!, CultureInfo.InvariantCulture);
+
+        // Assert
+        result.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(true, "true")]
+    [InlineData(false, "false")]
+    public void BooleanStringConverter_ConvertBack_ShouldReturn_String(bool input, string expected)
+    {
+        // Arrange
+        var converter = new BooleanStringConverter();
+
+        // Act
+        var result = converter.ConvertBack(input, typeof(string), null!, CultureInfo.InvariantCulture);
+
+        // Assert
+        result.Should().Be(expected);
+    }
 }

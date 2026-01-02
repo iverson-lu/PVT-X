@@ -569,5 +569,83 @@ The unified History page provides:
 
 ---
 
+## 8. Parameter Editors: Enum/Bool Rendering Rules
+
+### 8.1 Overview
+
+The UI provides automatic parameter editor rendering based on parameter type metadata. The editor control (ComboBox, Toggle, TextBox, etc.) is selected at runtime via a `DataTemplateSelector` without requiring manual UI logic in code-behind or per-case XAML.
+
+### 8.2 Type-Based Editor Selection
+
+| Parameter Type | Conditions | Control | Description |
+|---|---|---|---|
+| `enum` | `EnumValues` list non-empty | **ComboBox** | Dropdown showing enumValues as selectable options |
+| `boolean` | `UiHint` contains "checkbox" (case-insensitive) | **CheckBox** (plain) | Standard CheckBox with label |
+| `boolean` | Default (no specific UiHint) | **CheckBox** (Toggle style) | Custom toggle switch appearance (40×20px track, animated thumb) |
+| Other types | `string`, `int`, `double`, `path`, `json`, etc. | **TextBox** | Standard WPF-UI TextBox with placeholder |
+
+### 8.3 Implementation Details
+
+#### ParameterViewModel Extensions
+- **IsEnum**: `Type == "enum"`
+- **EnumValues**: Exposes `Definition.EnumValues` list for ComboBox binding
+- **IsBoolean**: `Type == "boolean"`
+- **UsePlainCheckBox**: `IsBoolean && UiHint.Contains("checkbox")`
+- **HasError** / **ErrorMessage**: Validation state properties
+
+#### DataTemplateSelector
+- **ParameterEditorTemplateSelector** selects appropriate DataTemplate
+- **EnumEditorTemplate**: ComboBox bound to `EnumValues` and `CurrentValue`
+- **BooleanToggleTemplate**: CheckBox with `ToggleSwitchCheckBoxStyle`
+- **BooleanCheckBoxTemplate**: Standard CheckBox
+- **DefaultEditorTemplate**: WPF-UI TextBox
+
+#### Value Binding
+- Enum: `SelectedItem="{Binding CurrentValue, Mode=TwoWay}"`
+- Boolean: `IsChecked="{Binding CurrentValue, Converter={StaticResource BooleanStringConverter}}"`
+  - Converter maps `"true"`/`"false"` strings ↔ `bool`
+  - Supports `"true"`, `"false"`, `"1"`, `"0"` (case-insensitive)
+- Other: `Text="{Binding CurrentValue, Mode=TwoWay}"`
+
+### 8.4 Validation
+
+Validation executes on `CurrentValue` change:
+- **Required**: Non-empty when `Required=true`
+- **Enum**: Value must be in `EnumValues` list (if provided)
+- **Boolean**: Must be `true`/`false`/`1`/`0` (case-insensitive)
+
+Validation errors display below the editor control with `PaletteDangerBrush` foreground. Invalid editors show red border (2px for ComboBox, adjusted BorderBrush for TextBox).
+
+### 8.5 Toggle Switch Style
+
+Custom CheckBox style (`ToggleSwitchCheckBoxStyle`) provides modern toggle appearance without third-party dependencies:
+- **Track**: 40×20px rounded rectangle
+- **Thumb**: 14×14px circle
+- **Unchecked**: Gray track, text-colored thumb at left (X=0)
+- **Checked**: Primary-colored track, white thumb at right (X=20)
+- **Animation**: 150ms cubic-ease transition on thumb position
+
+### 8.6 Usage in XAML
+
+Parameters display using `ContentPresenter` with selector:
+
+```xaml
+<ContentPresenter Content="{Binding}"
+                  ContentTemplateSelector="{StaticResource ParameterEditorTemplateSelector}"/>
+```
+
+No additional code required per parameter. Editor automatically adapts to type.
+
+### 8.7 Design Rationale
+
+- **Centralized**: Single DataTemplateSelector eliminates per-page duplication
+- **Declarative**: XAML-driven, no code-behind switching logic
+- **Extensible**: New types/editors added by extending selector and templates
+- **Consistent**: All parameter editors share validation/error display patterns
+- **Type-Safe**: Enum values from manifest prevent invalid input
+- **Modern UX**: Toggle switch aligns with Windows 11 Fluent design language
+
+---
+
 **END OF UI SPEC v0.5**
 
