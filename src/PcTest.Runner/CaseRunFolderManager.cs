@@ -281,13 +281,29 @@ public sealed class CaseRunFolderManager : IDisposable
 
     /// <summary>
     /// Appends an event to events.jsonl.
+    /// Uses retry logic to handle concurrent write scenarios.
     /// </summary>
     public async Task AppendEventAsync(string caseRunFolder, EventEntry entry)
     {
         var line = JsonSerializer.Serialize(entry, JsonDefaults.WriteOptions)
             .Replace("\r\n", "").Replace("\n", "") + Environment.NewLine;
         var path = Path.Combine(caseRunFolder, "events.jsonl");
-        await File.AppendAllTextAsync(path, line, Encoding.UTF8);
+        
+        // Retry up to 3 times with exponential backoff for file locking issues
+        var maxRetries = 3;
+        for (var attempt = 0; attempt < maxRetries; attempt++)
+        {
+            try
+            {
+                await File.AppendAllTextAsync(path, line, Encoding.UTF8);
+                return; // Success
+            }
+            catch (IOException) when (attempt < maxRetries - 1)
+            {
+                // File is locked, wait and retry
+                await Task.Delay(10 * (attempt + 1)); // 10ms, 20ms, 30ms
+            }
+        }
     }
 
     private static CaseManifestSnapshot RedactSnapshot(

@@ -247,9 +247,11 @@ public sealed class SuiteOrchestrator
 
                     var nodeStartTime = DateTime.UtcNow;
 
-                    for (var attempt = 0; attempt < attempts; attempt++)
+                    try
                     {
-                        var runId = TestCaseRunner.GenerateRunId();
+                        for (var attempt = 0; attempt < attempts; attempt++)
+                        {
+                            var runId = TestCaseRunner.GenerateRunId();
 
                         // Forward test case started event to suite events.jsonl
                         await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
@@ -402,29 +404,85 @@ public sealed class SuiteOrchestrator
                         }
                     }
 
-                    var nodeEndTime = DateTime.UtcNow;
+                        var nodeEndTime = DateTime.UtcNow;
 
-                    if (nodeResult is not null)
+                        if (nodeResult is not null)
+                        {
+                            childResults.Add(nodeResult);
+                            UpdateCounts(statusCounts, nodeResult.Status);
+
+                            // Report node finished
+                            _reporter.OnNodeFinished(
+                                string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
+                                new NodeFinishedState
+                                {
+                                    NodeId = node.NodeId,
+                                    Status = nodeResult.Status,
+                                    StartTime = nodeStartTime,
+                                    EndTime = nodeEndTime,
+                                    Message = nodeResult.Error?.Message,
+                                    RetryCount = Math.Max(0, childRunIds.Count - 1),
+                                    ParentNodeId = parentNodeId
+                                });
+
+                            // Check continue on failure
+                            if (!continueOnFailure && nodeResult.Status != RunStatus.Passed)
+                                break;
+                        }
+                    }
+                    catch (Exception nodeEx)
                     {
-                        childResults.Add(nodeResult);
-                        UpdateCounts(statusCounts, nodeResult.Status);
+                        // CRITICAL: If exception occurs during node execution, we must call OnNodeFinished
+                        // to prevent the node from being stuck in "Running" state forever
+                        var nodeEndTime = DateTime.UtcNow;
+                        
+                        // Create error result for the failed node
+                        var errorResult = CreateNodeErrorResult(
+                            node.NodeId,
+                            suite.Manifest,
+                            planId, planVersion,
+                            $"Node execution failed: {nodeEx.Message}");
+                        
+                        childResults.Add(errorResult);
+                        UpdateCounts(statusCounts, errorResult.Status);
 
-                        // Report node finished
+                        // Report node finished with error status (CRITICAL - must succeed)
                         _reporter.OnNodeFinished(
                             string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
                             new NodeFinishedState
                             {
                                 NodeId = node.NodeId,
-                                Status = nodeResult.Status,
+                                Status = RunStatus.Error,
                                 StartTime = nodeStartTime,
                                 EndTime = nodeEndTime,
-                                Message = nodeResult.Error?.Message,
-                                RetryCount = Math.Max(0, childRunIds.Count - 1),
+                                Message = nodeEx.Message,
+                                RetryCount = 0,
                                 ParentNodeId = parentNodeId
                             });
 
+                        // Try to log the error to suite events (non-fatal - ignore if it fails)
+                        try
+                        {
+                            await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+                            {
+                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Code = "Node.ExecutionError",
+                                Level = "error",
+                                Message = $"Node '{node.NodeId}' execution failed with exception: {nodeEx.Message}",
+                                Data = new Dictionary<string, object?>
+                                {
+                                    ["nodeId"] = node.NodeId,
+                                    ["error"] = nodeEx.Message
+                                }
+                            });
+                        }
+                        catch
+                        {
+                            // Silently ignore event logging failures - the critical part is OnNodeFinished
+                        }
+
                         // Check continue on failure
-                        if (!continueOnFailure && nodeResult.Status != RunStatus.Passed)
+                        if (!continueOnFailure)
                             break;
                     }
                 }
