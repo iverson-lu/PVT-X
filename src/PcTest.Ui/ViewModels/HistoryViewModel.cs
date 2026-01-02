@@ -8,6 +8,14 @@ using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
 
+public enum HistoryDetailView
+{
+    Summary,
+    Stdout,
+    Stderr,
+    Artifacts
+}
+
 /// <summary>
 /// ViewModel for the History page.
 /// </summary>
@@ -82,6 +90,11 @@ public partial class HistoryViewModel : ViewModelBase
 
     // Run Details - Main observable
     [ObservableProperty] private RunDetails? _runDetails;
+
+    [ObservableProperty]
+    private HistoryDetailView _selectedView = HistoryDetailView.Summary;
+
+    public IReadOnlyList<HistoryDetailView> DetailViews { get; } = Enum.GetValues<HistoryDetailView>();
 
     // Computed properties based on RunDetails
     public bool IsRunSelected => RunDetails is not null;
