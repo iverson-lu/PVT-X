@@ -371,10 +371,95 @@
                         </Grid>
                     </Border>
                     
-                    <!-- Inspector Tabs -->
-                    <TabControl Grid.Row="1" Margin="0">
-                        <!-- Summary Tab -->
-                        <TabItem Header="Summary">
+                    <!-- Inspector Content Area -->
+                    <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Segmented View Switcher -->
+                        <Border Grid.Row="0" 
+                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                                BorderBrush="{DynamicResource BorderSubtleBrush}" 
+                                BorderThickness="0,0,0,1"
+                                Padding="20,12">
+                            <Border.Resources>
+                                <!-- Segmented Button Style -->
+                                <Style x:Key="SegmentButtonStyle" TargetType="RadioButton">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Padding" Value="14,7"/>
+                                    <Setter Property="FontSize" Value="13"/>
+                                    <Setter Property="FontWeight" Value="Normal"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Margin" Value="0,0,8,0"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="RadioButton">
+                                                <Border x:Name="Border"
+                                                       Background="{TemplateBinding Background}"
+                                                       BorderThickness="0"
+                                                       CornerRadius="8"
+                                                       Padding="{TemplateBinding Padding}">
+                                                    <Grid>
+                                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                                        VerticalAlignment="Center"/>
+                                                        <Border x:Name="Underline"
+                                                               Height="2"
+                                                               VerticalAlignment="Bottom"
+                                                               Margin="4,0,4,-7"
+                                                               Background="{DynamicResource AccentFillColorDefaultBrush}"
+                                                               CornerRadius="1"
+                                                               Opacity="0"/>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource SubtleFillColorTertiaryBrush}"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                        <Setter TargetName="Underline" Property="Opacity" Value="1"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Border.Resources>
+                            
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="Summary" 
+                                           Style="{StaticResource SegmentButtonStyle}"
+                                           GroupName="DetailView"
+                                           IsChecked="{Binding SelectedDetailView, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Summary}"/>
+                                <RadioButton Content="Stdout" 
+                                           Style="{StaticResource SegmentButtonStyle}"
+                                           GroupName="DetailView"
+                                           IsChecked="{Binding SelectedDetailView, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Stdout}"/>
+                                <RadioButton Content="Stderr" 
+                                           Style="{StaticResource SegmentButtonStyle}"
+                                           GroupName="DetailView"
+                                           IsChecked="{Binding SelectedDetailView, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Stderr}"/>
+                                <RadioButton Content="Structured Events" 
+                                           Style="{StaticResource SegmentButtonStyle}"
+                                           GroupName="DetailView"
+                                           IsChecked="{Binding SelectedDetailView, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=StructuredEvents}"/>
+                                <RadioButton Content="Artifacts" 
+                                           Style="{StaticResource SegmentButtonStyle}"
+                                           GroupName="DetailView"
+                                           IsChecked="{Binding SelectedDetailView, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Artifacts}"/>
+                            </StackPanel>
+                        </Border>
+                        
+                        <!-- Content Area with View Switching -->
+                        <Grid Grid.Row="1">
+                            <!-- Summary View -->
+                            <Grid Visibility="{Binding SelectedDetailView, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Summary}">
                             <ScrollViewer VerticalScrollBarVisibility="Auto" 
                                          Padding="{StaticResource CardPadding}">
                                 <StackPanel>
@@ -426,10 +511,10 @@
                                     </ui:CardExpander>
                                 </StackPanel>
                             </ScrollViewer>
-                        </TabItem>
-                        
-                        <!-- Stdout Tab -->
-                        <TabItem Header="Stdout">
+                            </Grid>
+                            
+                            <!-- Stdout View -->
+                            <Grid Visibility="{Binding SelectedDetailView, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Stdout}">
                             <Border Margin="16" 
                                    Background="{DynamicResource TerminalBackgroundBrush}" 
                                    BorderBrush="{DynamicResource BorderSubtleBrush}"
@@ -464,10 +549,10 @@
                                     </TextBox>
                                 </ScrollViewer>
                             </Border>
-                        </TabItem>
-                        
-                        <!-- Stderr Tab -->
-                        <TabItem Header="Stderr">
+                            </Grid>
+                            
+                            <!-- Stderr View -->
+                            <Grid Visibility="{Binding SelectedDetailView, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Stderr}">
                             <Border Margin="16" 
                                    Background="{DynamicResource TerminalBackgroundBrush}" 
                                    BorderBrush="{DynamicResource BorderSubtleBrush}"
@@ -502,10 +587,10 @@
                                     </TextBox>
                                 </ScrollViewer>
                             </Border>
-                        </TabItem>
-                        
-                        <!-- Structured Events Tab -->
-                        <TabItem Header="Structured Events">
+                            </Grid>
+                            
+                            <!-- Structured Events View -->
+                            <Grid Visibility="{Binding SelectedDetailView, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=StructuredEvents}">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -567,10 +652,10 @@
                                     </ScrollViewer>
                                 </ui:CardExpander>
                             </Grid>
-                        </TabItem>
-                        
-                        <!-- Artifacts Tab -->
-                        <TabItem Header="Artifacts">
+                            </Grid>
+                            
+                            <!-- Artifacts View -->
+                            <Grid Visibility="{Binding SelectedDetailView, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Artifacts}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="250" MinWidth="200"/>
@@ -641,8 +726,9 @@
                                     </ScrollViewer>
                                 </Border>
                             </Grid>
-                        </TabItem>
-                    </TabControl>
+                            </Grid>
+                        </Grid>
+                    </Grid>
                 </Grid>
             </Grid>
             </Border>

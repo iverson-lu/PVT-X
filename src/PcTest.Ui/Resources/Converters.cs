@@ -387,3 +387,57 @@ public class IsExpandedToIconConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converts an enum value to a boolean for RadioButton binding.
+/// </summary>
+public class EnumToBooleanConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null)
+            return false;
+        
+        var parameterString = parameter.ToString();
+        if (string.IsNullOrEmpty(parameterString))
+            return false;
+        
+        return value.ToString() == parameterString;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue && boolValue && parameter != null)
+        {
+            var parameterString = parameter.ToString();
+            if (!string.IsNullOrEmpty(parameterString) && Enum.TryParse(targetType, parameterString, out var result))
+            {
+                return result;
+            }
+        }
+        return Binding.DoNothing;
+    }
+}
+
+/// <summary>
+/// Converts an enum value to Visibility based on matching a parameter.
+/// </summary>
+public class EnumToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null)
+            return Visibility.Collapsed;
+        
+        var parameterString = parameter.ToString();
+        if (string.IsNullOrEmpty(parameterString))
+            return Visibility.Collapsed;
+        
+        return value.ToString() == parameterString ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

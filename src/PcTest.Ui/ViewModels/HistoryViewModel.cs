@@ -9,6 +9,18 @@ using PcTest.Ui.Services;
 namespace PcTest.Ui.ViewModels;
 
 /// <summary>
+/// Detail view options for run inspector.
+/// </summary>
+public enum DetailView
+{
+    Summary,
+    Stdout,
+    Stderr,
+    StructuredEvents,
+    Artifacts
+}
+
+/// <summary>
 /// ViewModel for the History page.
 /// </summary>
 public partial class HistoryViewModel : ViewModelBase
@@ -116,7 +128,8 @@ public partial class HistoryViewModel : ViewModelBase
     [ObservableProperty] private string _artifactContent = string.Empty;
     [ObservableProperty] private string _artifactContentType = "text";
 
-
+    // Detail view selection
+    [ObservableProperty] private DetailView _selectedDetailView = DetailView.Summary;
 
     private List<RunIndexEntryViewModel> _allRuns = new();
 

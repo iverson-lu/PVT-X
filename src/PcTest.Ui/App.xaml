@@ -36,6 +36,8 @@
             <converters:DepthToIndentConverter x:Key="DepthToIndentConverter"/>
             <converters:HasChildrenToVisibilityConverter x:Key="HasChildrenToVisibilityConverter"/>
             <converters:IsExpandedToIconConverter x:Key="IsExpandedToIconConverter"/>
+            <converters:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
+            <converters:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
