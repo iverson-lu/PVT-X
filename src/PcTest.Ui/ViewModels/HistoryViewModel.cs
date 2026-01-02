@@ -8,6 +8,14 @@ using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
 
+public enum HistoryDetailsView
+{
+    Summary,
+    Stdout,
+    Stderr,
+    Artifacts
+}
+
 /// <summary>
 /// ViewModel for the History page.
 /// </summary>
@@ -51,6 +59,8 @@ public partial class HistoryViewModel : ViewModelBase
             ClearRunDetails();
             return;
         }
+
+        SelectedView = HistoryDetailsView.Summary;
         
         // Create new cancellation token for this load
         _loadCancellationTokenSource = new CancellationTokenSource();
@@ -115,6 +125,17 @@ public partial class HistoryViewModel : ViewModelBase
     [ObservableProperty] private ArtifactNodeViewModel? _selectedArtifact;
     [ObservableProperty] private string _artifactContent = string.Empty;
     [ObservableProperty] private string _artifactContentType = "text";
+
+    public IReadOnlyList<HistoryDetailsView> DetailViews { get; } = new[]
+    {
+        HistoryDetailsView.Summary,
+        HistoryDetailsView.Stdout,
+        HistoryDetailsView.Stderr,
+        HistoryDetailsView.Artifacts
+    };
+
+    [ObservableProperty]
+    private HistoryDetailsView _selectedView = HistoryDetailsView.Summary;
 
 
 

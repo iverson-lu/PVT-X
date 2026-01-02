@@ -10,6 +10,283 @@
       mc:Ignorable="d"
       Loaded="Page_Loaded"
       Background="{DynamicResource SurfaceBackgroundBrush}">
+
+    <Page.Resources>
+        <Style x:Key="HistoryViewSwitcherListBoxStyle" TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="HistoryViewSwitcherItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid>
+                            <Border x:Name="BackgroundBorder"
+                                    Background="Transparent"
+                                    CornerRadius="8">
+                                <ContentPresenter Margin="14,6"/>
+                            </Border>
+                            <Border x:Name="Underline"
+                                    Height="2"
+                                    Background="Transparent"
+                                    VerticalAlignment="Bottom"
+                                    CornerRadius="1"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BackgroundBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource ControlBackgroundSecondaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="BackgroundBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource BorderAccentBrush}"/>
+                                <Setter TargetName="BackgroundBorder"
+                                        Property="Opacity"
+                                        Value="0.12"/>
+                                <Setter Property="Foreground"
+                                        Value="{DynamicResource TextPrimaryBrush}"/>
+                                <Setter TargetName="Underline"
+                                        Property="Background"
+                                        Value="{DynamicResource BorderAccentBrush}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="BackgroundBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource BorderAccentBrush}"/>
+                                <Setter TargetName="BackgroundBorder"
+                                        Property="Opacity"
+                                        Value="0.12"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="HistorySummaryTemplate">
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Padding="{StaticResource CardPadding}">
+                <StackPanel>
+                    <ui:CardExpander Header="Run Information" IsExpanded="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Status:"
+                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunStatus}"
+                                      Style="{StaticResource BodyTextStyle}"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Start Time:"
+                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding StartTimeDisplay}"
+                                      Style="{StaticResource BodyTextStyle}"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="End Time:"
+                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EndTimeDisplay}"
+                                      Style="{StaticResource BodyTextStyle}"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Duration:"
+                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurationDisplay}"
+                                      Style="{StaticResource BodyTextStyle}"/>
+                            
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Exit Code:"
+                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ExitCode}"
+                                      Style="{StaticResource BodyTextStyle}"/>
+                            
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Error:"
+                                      Style="{StaticResource LabelTextStyle}"/>
+                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorMessage}"
+                                      Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
+                        </Grid>
+                    </ui:CardExpander>
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HistoryStdoutTemplate">
+            <Border Margin="16"
+                    Background="{DynamicResource TerminalBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="0"
+                    CornerRadius="6">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <TextBox Text="{Binding StdoutContent, Mode=OneWay}"
+                            IsReadOnly="True"
+                            FontFamily="Cascadia Code, Consolas"
+                            FontSize="11"
+                            Foreground="{DynamicResource TerminalTextBrush}"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            TextWrapping="NoWrap"
+                            Padding="12"
+                            Cursor="Arrow">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TextBox">
+                                            <Border Background="{TemplateBinding Background}"
+                                                   BorderBrush="{TemplateBinding BorderBrush}"
+                                                   BorderThickness="{TemplateBinding BorderThickness}">
+                                                <ScrollViewer x:Name="PART_ContentHost" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                </ScrollViewer>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HistoryStderrTemplate">
+            <Border Margin="16"
+                    Background="{DynamicResource TerminalBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderSubtleBrush}"
+                    BorderThickness="0"
+                    CornerRadius="6">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <TextBox Text="{Binding StderrContent, Mode=OneWay}"
+                            IsReadOnly="True"
+                            FontFamily="Cascadia Code, Consolas"
+                            FontSize="11"
+                            BorderThickness="0"
+                            Background="Transparent"
+                            Foreground="{DynamicResource TerminalErrorBrush}"
+                            TextWrapping="NoWrap"
+                            Padding="12"
+                            Cursor="Arrow">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TextBox">
+                                            <Border Background="{TemplateBinding Background}"
+                                                   BorderBrush="{TemplateBinding BorderBrush}"
+                                                   BorderThickness="{TemplateBinding BorderThickness}">
+                                                <ScrollViewer x:Name="PART_ContentHost" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                </ScrollViewer>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HistoryArtifactsTemplate">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250" MinWidth="200"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Artifacts Tree -->
+                <Border Grid.Column="0"
+                       BorderBrush="{DynamicResource BorderSubtleBrush}"
+                       BorderThickness="0,0,1,0"
+                       Padding="8">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TreeView ItemsSource="{Binding Artifacts}"
+                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                 SelectedItemChanged="ArtifactsTree_SelectedItemChanged">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}"/>
+                                        <TextBlock Text="{Binding SizeDisplay}"
+                                                  Foreground="{DynamicResource TextTertiaryBrush}"
+                                                  FontSize="{StaticResource FontSizeXS}"
+                                                  Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </ScrollViewer>
+                </Border>
+                
+                <GridSplitter Grid.Column="1"
+                             Width="4"
+                             HorizontalAlignment="Stretch"
+                             Background="Transparent"/>
+                
+                <!-- Artifact Content Viewer -->
+                <Border Grid.Column="2"
+                       Background="{DynamicResource TerminalBackgroundBrush}"
+                       Margin="8">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding ArtifactContent, Mode=OneWay}"
+                                IsReadOnly="True"
+                                FontFamily="Cascadia Code, Consolas"
+                                FontSize="11"
+                                Foreground="{DynamicResource TerminalTextBrush}"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                TextWrapping="NoWrap"
+                                Padding="12"
+                                Cursor="Arrow">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="TextBox">
+                                                <Border Background="{TemplateBinding Background}"
+                                                       BorderBrush="{TemplateBinding BorderBrush}"
+                                                       BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ScrollViewer x:Name="PART_ContentHost" />
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
     
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -325,12 +602,16 @@
                             CornerRadius="8,8,0,0"
                             Padding="20,16">
                         <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             
-                            <StackPanel Grid.Column="0">
+                            <StackPanel Grid.Row="0" Grid.Column="0">
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                                     <TextBlock Text="{Binding SelectedNode.Run.RunId}" 
                                               FontFamily="Consolas"
@@ -364,285 +645,53 @@
                                 </StackPanel>
                             </StackPanel>
                             
-                            <ui:Button Grid.Column="1" 
+                            <ui:Button Grid.Row="0" Grid.Column="1" 
                                       Icon="{ui:SymbolIcon FolderOpen24}" 
                                       Command="{Binding OpenFolderCommand}"
                                       ToolTip="Open Run Folder"/>
+
+                            <ListBox Grid.Row="1"
+                                     Grid.Column="0"
+                                     Grid.ColumnSpan="2"
+                                     ItemsSource="{Binding DetailViews}"
+                                     SelectedItem="{Binding SelectedView, Mode=TwoWay}"
+                                     Style="{StaticResource HistoryViewSwitcherListBoxStyle}"
+                                     ItemContainerStyle="{StaticResource HistoryViewSwitcherItemStyle}"
+                                     Margin="0,4,0,0">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}"
+                                                  FontSize="12"
+                                                  FontWeight="SemiBold"
+                                                  TextTrimming="CharacterEllipsis"
+                                                  MaxWidth="110"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </Grid>
                     </Border>
                     
-                    <!-- Inspector Tabs -->
-                    <TabControl Grid.Row="1" Margin="0">
-                        <!-- Summary Tab -->
-                        <TabItem Header="Summary">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" 
-                                         Padding="{StaticResource CardPadding}">
-                                <StackPanel>
-                                    <ui:CardExpander Header="Run Information" IsExpanded="True">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="150"/>
-                                                <ColumnDefinition Width="*"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-                                            
-                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Status:" 
-                                                      Style="{StaticResource LabelTextStyle}"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding RunStatus}" 
-                                                      Style="{StaticResource BodyTextStyle}"/>
-                                            
-                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Start Time:" 
-                                                      Style="{StaticResource LabelTextStyle}"/>
-                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding StartTimeDisplay}" 
-                                                      Style="{StaticResource BodyTextStyle}"/>
-                                            
-                                            <TextBlock Grid.Row="2" Grid.Column="0" Text="End Time:" 
-                                                      Style="{StaticResource LabelTextStyle}"/>
-                                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding EndTimeDisplay}" 
-                                                      Style="{StaticResource BodyTextStyle}"/>
-                                            
-                                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Duration:" 
-                                                      Style="{StaticResource LabelTextStyle}"/>
-                                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DurationDisplay}" 
-                                                      Style="{StaticResource BodyTextStyle}"/>
-                                            
-                                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Exit Code:" 
-                                                      Style="{StaticResource LabelTextStyle}"/>
-                                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ExitCode}" 
-                                                      Style="{StaticResource BodyTextStyle}"/>
-                                            
-                                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Error:" 
-                                                      Style="{StaticResource LabelTextStyle}"/>
-                                            <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding ErrorMessage}" 
-                                                      Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap"/>
-                                        </Grid>
-                                    </ui:CardExpander>
-                                </StackPanel>
-                            </ScrollViewer>
-                        </TabItem>
-                        
-                        <!-- Stdout Tab -->
-                        <TabItem Header="Stdout">
-                            <Border Margin="16" 
-                                   Background="{DynamicResource TerminalBackgroundBrush}" 
-                                   BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                   BorderThickness="0"
-                                   CornerRadius="6">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                    <TextBox Text="{Binding StdoutContent, Mode=OneWay}" 
-                                            IsReadOnly="True" 
-                                            FontFamily="Cascadia Code, Consolas" 
-                                            FontSize="11"
-                                            Foreground="{DynamicResource TerminalTextBrush}"
-                                            BorderThickness="0"
-                                            Background="Transparent"
-                                            TextWrapping="NoWrap"
-                                            Padding="12"
-                                            Cursor="Arrow">
-                                        <TextBox.Style>
-                                            <Style TargetType="TextBox">
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="TextBox">
-                                                            <Border Background="{TemplateBinding Background}"
-                                                                   BorderBrush="{TemplateBinding BorderBrush}"
-                                                                   BorderThickness="{TemplateBinding BorderThickness}">
-                                                                <ScrollViewer x:Name="PART_ContentHost" />
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Style>
-                                        </TextBox.Style>
-                                    </TextBox>
-                                </ScrollViewer>
-                            </Border>
-                        </TabItem>
-                        
-                        <!-- Stderr Tab -->
-                        <TabItem Header="Stderr">
-                            <Border Margin="16" 
-                                   Background="{DynamicResource TerminalBackgroundBrush}" 
-                                   BorderBrush="{DynamicResource BorderSubtleBrush}"
-                                   BorderThickness="0"
-                                   CornerRadius="6">
-                                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                    <TextBox Text="{Binding StderrContent, Mode=OneWay}" 
-                                            IsReadOnly="True" 
-                                            FontFamily="Cascadia Code, Consolas" 
-                                            FontSize="11"
-                                            BorderThickness="0"
-                                            Background="Transparent"
-                                            Foreground="{DynamicResource TerminalErrorBrush}"
-                                            TextWrapping="NoWrap"
-                                            Padding="12"
-                                            Cursor="Arrow">
-                                        <TextBox.Style>
-                                            <Style TargetType="TextBox">
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="TextBox">
-                                                            <Border Background="{TemplateBinding Background}"
-                                                                   BorderBrush="{TemplateBinding BorderBrush}"
-                                                                   BorderThickness="{TemplateBinding BorderThickness}">
-                                                                <ScrollViewer x:Name="PART_ContentHost" />
-                                                            </Border>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Style>
-                                        </TextBox.Style>
-                                    </TextBox>
-                                </ScrollViewer>
-                            </Border>
-                        </TabItem>
-                        
-                        <!-- Structured Events Tab -->
-                        <TabItem Header="Structured Events">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                
-                                <!-- Event Filters -->
-                                <Border Grid.Row="0" Background="{DynamicResource CardBackgroundBrush}" 
-                                        BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
-                                        Padding="{StaticResource CardPadding}">
-                                    <WrapPanel>
-                                        <ui:TextBox PlaceholderText="Filter events..." 
-                                                   Text="{Binding EventSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                                   Width="200" 
-                                                   Margin="{StaticResource ControlMarginMedium}"
-                                                   Icon="{ui:SymbolIcon Filter24}"/>
-                                        <CheckBox Content="Errors only" 
-                                                 IsChecked="{Binding ErrorsOnly}"
-                                                 VerticalAlignment="Center"
-                                                 Margin="{StaticResource ControlMarginMedium}"/>
-                                        <ui:Button Content="Refresh" Icon="{ui:SymbolIcon ArrowSync24}" 
-                                                  Command="{Binding RefreshEventsCommand}"
-                                                  Margin="{StaticResource ControlMarginMedium}"/>
-                                        <ui:Button Content="Clear" Icon="{ui:SymbolIcon Dismiss24}" 
-                                                  Command="{Binding ClearEventFiltersCommand}"/>
-                                    </WrapPanel>
-                                </Border>
-                                
-                                <!-- Events Grid -->
-                                <DataGrid Grid.Row="1" 
-                                         ItemsSource="{Binding FilteredEvents}"
-                                         SelectedItem="{Binding SelectedEvent}"
-                                         AutoGenerateColumns="False"
-                                         IsReadOnly="True"
-                                         SelectionMode="Single"
-                                         VirtualizingPanel.IsVirtualizing="True"
-                                         VirtualizingPanel.VirtualizationMode="Recycling"
-                                         EnableRowVirtualization="True">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Timestamp" Binding="{Binding TimestampDisplay}" Width="120"/>
-                                        <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80"/>
-                                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="150"/>
-                                        <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                                
-                                <!-- Event Details -->
-                                <ui:CardExpander Grid.Row="2" Header="Event Details" IsExpanded="True" MaxHeight="200">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                        <TextBox Text="{Binding EventDetailsJson, Mode=OneWay}" 
-                                                IsReadOnly="True" 
-                                                FontFamily="Cascadia Code, Consolas" 
-                                                FontSize="11"
-                                                Foreground="{DynamicResource TextPrimaryBrush}"
-                                                BorderThickness="0"
-                                                Background="Transparent"
-                                                Padding="8"/>
-                                    </ScrollViewer>
-                                </ui:CardExpander>
-                            </Grid>
-                        </TabItem>
-                        
-                        <!-- Artifacts Tab -->
-                        <TabItem Header="Artifacts">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="250" MinWidth="200"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <!-- Artifacts Tree -->
-                                <Border Grid.Column="0" 
-                                       BorderBrush="{DynamicResource BorderSubtleBrush}" 
-                                       BorderThickness="0,0,1,0"
-                                       Padding="8">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                        <TreeView ItemsSource="{Binding Artifacts}" 
-                                                 VirtualizingStackPanel.IsVirtualizing="True"
-                                                 SelectedItemChanged="ArtifactsTree_SelectedItemChanged">
-                                            <TreeView.ItemTemplate>
-                                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="{Binding Name}"/>
-                                                        <TextBlock Text="{Binding SizeDisplay}" 
-                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                  FontSize="{StaticResource FontSizeXS}"
-                                                                  Margin="8,0,0,0"/>
-                                                    </StackPanel>
-                                                </HierarchicalDataTemplate>
-                                            </TreeView.ItemTemplate>
-                                        </TreeView>
-                                    </ScrollViewer>
-                                </Border>
-                                
-                                <GridSplitter Grid.Column="1" 
-                                             Width="4" 
-                                             HorizontalAlignment="Stretch" 
-                                             Background="Transparent"/>
-                                
-                                <!-- Artifact Content Viewer -->
-                                <Border Grid.Column="2" 
-                                       Background="{DynamicResource TerminalBackgroundBrush}"
-                                       Margin="8">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                        <TextBox Text="{Binding ArtifactContent, Mode=OneWay}" 
-                                                IsReadOnly="True" 
-                                                FontFamily="Cascadia Code, Consolas" 
-                                                FontSize="11"
-                                                Foreground="{DynamicResource TerminalTextBrush}"
-                                                BorderThickness="0"
-                                                Background="Transparent"
-                                                TextWrapping="NoWrap"
-                                                Padding="12"
-                                                Cursor="Arrow">
-                                            <TextBox.Style>
-                                                <Style TargetType="TextBox">
-                                                    <Setter Property="Template">
-                                                        <Setter.Value>
-                                                            <ControlTemplate TargetType="TextBox">
-                                                                <Border Background="{TemplateBinding Background}"
-                                                                       BorderBrush="{TemplateBinding BorderBrush}"
-                                                                       BorderThickness="{TemplateBinding BorderThickness}">
-                                                                    <ScrollViewer x:Name="PART_ContentHost" />
-                                                                </Border>
-                                                            </ControlTemplate>
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                </Style>
-                                            </TextBox.Style>
-                                        </TextBox>
-                                    </ScrollViewer>
-                                </Border>
-                            </Grid>
-                        </TabItem>
-                    </TabControl>
+                    <ContentControl Grid.Row="1" Content="{Binding SelectedView}">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Setter Property="ContentTemplate" Value="{StaticResource HistorySummaryTemplate}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedView}"
+                                                 Value="{x:Static vm:HistoryDetailsView.Stdout}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource HistoryStdoutTemplate}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedView}"
+                                                 Value="{x:Static vm:HistoryDetailsView.Stderr}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource HistoryStderrTemplate}"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SelectedView}"
+                                                 Value="{x:Static vm:HistoryDetailsView.Artifacts}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource HistoryArtifactsTemplate}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
                 </Grid>
             </Grid>
             </Border>
