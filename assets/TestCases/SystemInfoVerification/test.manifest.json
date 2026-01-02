@@ -1,0 +1,78 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "SystemInfoVerification",
+  "name": "💻 System Information Verification",
+  "category": "System",
+  "description": "Comprehensive system information validation including CPU, OS version, activation status, installed software, and minimum hardware requirements.",
+  "version": "1.0.0",
+  "privilege": "User",
+  "timeoutSec": 120,
+  "tags": ["system", "hardware", "validation", "requirements"],
+  "parameters": [
+    {
+      "name": "CPU_ProcessorName",
+      "type": "string",
+      "required": false,
+      "default": "Intel Core Ultra",
+      "help": "Required processor name pattern (case-insensitive substring match)"
+    },
+    {
+      "name": "CPU_MaxTemperature",
+      "type": "int",
+      "required": false,
+      "default": 80,
+      "min": 0,
+      "max": 150,
+      "unit": "°C",
+      "help": "Maximum allowed CPU temperature in Celsius"
+    },
+    {
+      "name": "CPU_MaxFrequency",
+      "type": "double",
+      "required": false,
+      "default": 5.5,
+      "min": 0.1,
+      "max": 10.0,
+      "unit": "GHz",
+      "help": "Maximum allowed CPU frequency in GHz"
+    },
+    {
+      "name": "OS_Version",
+      "type": "enum",
+      "required": true,
+      "default": "Windows 24H2",
+      "enumValues": ["Windows 24H2", "Windows 25H1", "Windows 25H2"],
+      "help": "Expected Windows version (enum)"
+    },
+    {
+      "name": "Windows_MustBeActivated",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "Whether Windows must be activated (CLI: -Windows_MustBeActivated:$true or -Windows_MustBeActivated:$false)"
+    },
+    {
+      "name": "System_WindowsPath",
+      "type": "path",
+      "required": false,
+      "default": "C:\\Windows",
+      "help": "Expected Windows installation directory path"
+    },
+    {
+      "name": "RequiredSoftware",
+      "type": "json",
+      "required": false,
+      "default": "[\"Microsoft Edge\"]",
+      "uiHint": "textarea",
+      "help": "JSON array of software names that must be installed on the system"
+    },
+    {
+      "name": "MinimumRequirements",
+      "type": "json",
+      "required": false,
+      "default": "{\"cores\": 4, \"memoryGB\": 8, \"diskGB\": 50, \"webcamCount\": 1}",
+      "uiHint": "textarea",
+      "help": "JSON object defining minimum system requirements: cores (int), memoryGB (int), diskGB (int), webcamCount (int)"
+    }
+  ]
+}
