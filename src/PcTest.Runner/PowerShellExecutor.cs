@@ -416,9 +416,13 @@ public sealed class PowerShellExecutor
         switch (element.ValueKind)
         {
             case System.Text.Json.JsonValueKind.True:
+                // In array context, boolean values are passed as $true/$false strings
+                argumentList.Add("$true");
+                break;
             case System.Text.Json.JsonValueKind.False:
-                // Boolean JsonElements should be handled separately in the parameter loop
-                throw new InvalidOperationException("Boolean JsonElement values should be handled separately using -Name:$true syntax");
+                // In array context, boolean values are passed as $true/$false strings
+                argumentList.Add("$false");
+                break;
             case System.Text.Json.JsonValueKind.Number:
                 argumentList.Add(element.GetRawText());
                 break;
