@@ -8,6 +8,14 @@ using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
 
+public enum HistoryDetailView
+{
+    Summary,
+    Stdout,
+    Stderr,
+    Artifacts
+}
+
 /// <summary>
 /// ViewModel for the History page.
 /// </summary>
@@ -37,6 +45,17 @@ public partial class HistoryViewModel : ViewModelBase
 
     [ObservableProperty]
     private RunTreeNodeViewModel? _selectedNode;
+
+    [ObservableProperty]
+    private HistoryDetailView _selectedView = HistoryDetailView.Summary;
+
+    public IReadOnlyList<HistoryDetailView> DetailViews { get; } = new[]
+    {
+        HistoryDetailView.Summary,
+        HistoryDetailView.Stdout,
+        HistoryDetailView.Stderr,
+        HistoryDetailView.Artifacts
+    };
 
     partial void OnSelectedNodeChanged(RunTreeNodeViewModel? value)
     {
