@@ -81,6 +81,22 @@ public sealed class PlanOrchestrator
 
             await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
 
+            // Record plan started event
+            await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+            {
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Code = "TestPlan.Started",
+                Level = "info",
+                Message = $"Test plan '{plan.Manifest.Id}' (version {plan.Manifest.Version}) execution started",
+                Data = new Dictionary<string, object?>
+                {
+                    ["planId"] = plan.Manifest.Id,
+                    ["planVersion"] = plan.Manifest.Version,
+                    ["runId"] = groupRunId,
+                    ["suiteCount"] = plan.Manifest.Suites.Count
+                }
+            });
+
             // Report planned nodes - plan level shows suites as nodes
             var plannedNodes = new List<PlannedNode>();
             foreach (var suiteIdentity in plan.Manifest.Suites)
@@ -153,6 +169,22 @@ public sealed class PlanOrchestrator
                 childRunIds.AddRange(suiteResult.ChildRunIds);
                 UpdateCounts(statusCounts, suiteResult.Status);
 
+                // Forward suite completion event to plan events.jsonl
+                await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestSuite.Completed",
+                    Level = suiteResult.Status == RunStatus.Passed ? "info" : "warning",
+                    Message = $"Test suite '{suite.Manifest.Id}' completed with status: {suiteResult.Status}",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["suiteId"] = suite.Manifest.Id,
+                        ["suiteVersion"] = suite.Manifest.Version,
+                        ["status"] = suiteResult.Status.ToString(),
+                        ["childCaseCount"] = suiteResult.ChildRunIds.Count
+                    }
+                });
+
                 // Append to children.jsonl
                 await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
                 {
@@ -193,6 +225,26 @@ public sealed class PlanOrchestrator
             };
 
             await folderManager.WriteResultAsync(groupRunFolder, result);
+
+            // Record plan completed event
+            await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+            {
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Code = "TestPlan.Completed",
+                Level = aggregateStatus == RunStatus.Passed ? "info" : "warning",
+                Message = $"Test plan '{plan.Manifest.Id}' execution completed with status: {aggregateStatus}",
+                Data = new Dictionary<string, object?>
+                {
+                    ["planId"] = plan.Manifest.Id,
+                    ["planVersion"] = plan.Manifest.Version,
+                    ["runId"] = groupRunId,
+                    ["status"] = aggregateStatus.ToString(),
+                    ["duration"] = (endTime - startTime).TotalSeconds,
+                    ["totalSuites"] = plan.Manifest.Suites.Count,
+                    ["passedSuites"] = statusCounts.Passed,
+                    ["failedSuites"] = statusCounts.Failed
+                }
+            });
 
             // Append Plan run to index
             folderManager.AppendIndexEntry(new IndexEntry

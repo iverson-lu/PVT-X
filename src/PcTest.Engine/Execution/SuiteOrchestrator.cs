@@ -80,6 +80,24 @@ public sealed class SuiteOrchestrator
 
             await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
 
+            // Record suite started event
+            await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+            {
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Code = "TestSuite.Started",
+                Level = "info",
+                Message = $"Test suite '{suite.Manifest.Id}' (version {suite.Manifest.Version}) execution started",
+                Data = new Dictionary<string, object?>
+                {
+                    ["suiteId"] = suite.Manifest.Id,
+                    ["suiteVersion"] = suite.Manifest.Version,
+                    ["runId"] = groupRunId,
+                    ["planId"] = planId,
+                    ["planVersion"] = planVersion,
+                    ["parentRunId"] = parentPlanRunId
+                }
+            });
+
             // Log maxParallel warning if needed per spec section 6.5
             if (controls.MaxParallel > 1)
             {
@@ -244,6 +262,24 @@ public sealed class SuiteOrchestrator
                         nodeResult = await runner.ExecuteAsync(context);
                         childRunIds.Add(runId);
 
+                        // Forward test case events to suite events.jsonl
+                        await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+                        {
+                            Timestamp = DateTime.UtcNow.ToString("o"),
+                            Code = "TestCase.Completed",
+                            Level = nodeResult.Status == RunStatus.Passed ? "info" : "warning",
+                            Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') completed with status: {nodeResult.Status}",
+                            Data = new Dictionary<string, object?>
+                            {
+                                ["nodeId"] = node.NodeId,
+                                ["testId"] = testCaseManifest.Id,
+                                ["testVersion"] = testCaseManifest.Version,
+                                ["runId"] = runId,
+                                ["status"] = nodeResult.Status.ToString(),
+                                ["exitCode"] = nodeResult.ExitCode
+                            }
+                        });
+
                         // Append final status to children.jsonl after execution
                         await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
                         {
@@ -341,6 +377,26 @@ public sealed class SuiteOrchestrator
             };
 
             await folderManager.WriteResultAsync(groupRunFolder, result);
+
+            // Record suite completed event
+            await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+            {
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                Code = "TestSuite.Completed",
+                Level = aggregateStatus == RunStatus.Passed ? "info" : "warning",
+                Message = $"Test suite '{suite.Manifest.Id}' execution completed with status: {aggregateStatus}",
+                Data = new Dictionary<string, object?>
+                {
+                    ["suiteId"] = suite.Manifest.Id,
+                    ["suiteVersion"] = suite.Manifest.Version,
+                    ["runId"] = groupRunId,
+                    ["status"] = aggregateStatus.ToString(),
+                    ["duration"] = (endTime - startTime).TotalSeconds,
+                    ["totalCases"] = statusCounts.Passed + statusCounts.Failed + statusCounts.Error + statusCounts.Timeout + statusCounts.Aborted,
+                    ["passedCases"] = statusCounts.Passed,
+                    ["failedCases"] = statusCounts.Failed
+                }
+            });
 
             // Append Suite run to index
             folderManager.AppendIndexEntry(new IndexEntry

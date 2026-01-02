@@ -468,3 +468,31 @@ public class BooleanStringConverter : IValueConverter
     }
 }
 
+/// <summary>
+/// Converts event level string to appropriate color brush.
+/// </summary>
+public class EventLevelToBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is string level)
+        {
+            return level.ToLowerInvariant() switch
+            {
+                "error" => "#EF4444",   // Red
+                "warning" => "#F59E0B", // Orange
+                "info" => "#3B82F6",    // Blue
+                "debug" => "#9CA3AF",   // Gray
+                "trace" => "#6B7280",   // Dark gray
+                _ => "#9CA3AF"          // Default gray
+            };
+        }
+        return "#9CA3AF";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+

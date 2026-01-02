@@ -18,6 +18,7 @@ public partial class RunViewModel : ViewModelBase
     private readonly IDiscoveryService _discoveryService;
     private readonly ISuiteRepository _suiteRepository;
     private readonly IPlanRepository _planRepository;
+    private readonly IRunRepository _runRepository;
 
     private CancellationTokenSource? _runCts;
     private Dictionary<string, object?>? _parameterOverrides;
@@ -46,6 +47,9 @@ public partial class RunViewModel : ViewModelBase
     [ObservableProperty]
     private string _eventsOutput = string.Empty;
 
+    [ObservableProperty]
+    private ObservableCollection<StructuredEventViewModel> _events = new();
+
     private readonly StringBuilder _consoleBuffer = new();
     private readonly StringBuilder _eventsBuffer = new();
 
@@ -54,13 +58,15 @@ public partial class RunViewModel : ViewModelBase
         INavigationService navigationService,
         IDiscoveryService discoveryService,
         ISuiteRepository suiteRepository,
-        IPlanRepository planRepository)
+        IPlanRepository planRepository,
+        IRunRepository runRepository)
     {
         _runService = runService;
         _navigationService = navigationService;
         _discoveryService = discoveryService;
         _suiteRepository = suiteRepository;
         _planRepository = planRepository;
+        _runRepository = runRepository;
 
         _runService.StateChanged += OnStateChanged;
         _runService.ConsoleOutput += OnConsoleOutput;
@@ -138,6 +144,12 @@ public partial class RunViewModel : ViewModelBase
                 ? $"Running... Node: {state.CurrentNodeId}"
                 : state.FinalStatus?.ToString() ?? "Completed";
 
+            // Load events when run completes or periodically during execution
+            if (!string.IsNullOrEmpty(RunId))
+            {
+                _ = LoadEventsAsync(RunId);
+            }
+
             // Incremental node update - avoid clearing/rebuilding the collection
             // to prevent UI flicker and losing selection
             for (int i = 0; i < state.Nodes.Count; i++)
@@ -191,6 +203,41 @@ public partial class RunViewModel : ViewModelBase
                 }
             }
         });
+    }
+
+    private async Task LoadEventsAsync(string runId)
+    {
+        try
+        {
+            await foreach (var batch in _runRepository.StreamEventsAsync(runId))
+            {
+                foreach (var evt in batch.Events)
+                {
+                    // Check if event already exists
+                    if (!Events.Any(e => e.Timestamp == evt.Timestamp && e.Message == evt.Message))
+                    {
+                        Events.Add(new StructuredEventViewModel
+                        {
+                            Timestamp = evt.Timestamp,
+                            Level = evt.Level,
+                            Source = evt.Source,
+                            NodeId = evt.NodeId,
+                            Type = evt.Type,
+                            Code = evt.Code,
+                            Message = evt.Message,
+                            Exception = evt.Exception,
+                            StackTrace = evt.StackTrace,
+                            FilePath = evt.FilePath,
+                            RawJson = evt.RawJson
+                        });
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Silently ignore errors loading events
+        }
     }
 
     private void OnConsoleOutput(object? sender, string output)

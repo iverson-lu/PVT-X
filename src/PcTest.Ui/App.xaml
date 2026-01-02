@@ -41,6 +41,7 @@
             <converters:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
             <converters:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter"/>
             <converters:BooleanStringConverter x:Key="BooleanStringConverter"/>
+            <converters:EventLevelToBrushConverter x:Key="EventLevelToBrushConverter"/>
             
             <!-- Parameter Editor Template Selector (must be in App.xaml, not in merged dictionary) -->
             <converters:ParameterEditorTemplateSelector x:Key="ParameterEditorTemplateSelector">

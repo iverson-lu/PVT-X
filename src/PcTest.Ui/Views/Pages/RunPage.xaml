@@ -357,45 +357,94 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         
-                        <TextBlock Grid.Row="0" Text="Events (Simplified)" 
+                        <TextBlock Grid.Row="0" Text="Structured Events" 
                                   Style="{StaticResource SectionTitleStyle}"
                                   Margin="20,20,20,12"/>
                         
-                        <Border Grid.Row="1" 
-                               Margin="12,0,12,12" 
-                               Background="{DynamicResource TerminalBackgroundBrush}" 
-                               BorderBrush="{DynamicResource BorderSubtleBrush}"
-                               BorderThickness="0"
-                               CornerRadius="6">
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                                <TextBox Text="{Binding EventsOutput, Mode=OneWay}" 
-                                        IsReadOnly="True" 
-                                        FontFamily="Cascadia Code, Consolas" 
-                                        FontSize="11"
-                                        Foreground="{DynamicResource TerminalTextBrush}"
-                                        BorderThickness="0"
-                                        Background="Transparent"
-                                        TextWrapping="NoWrap"
-                                        Padding="12"
-                                        Cursor="Arrow">
-                                    <TextBox.Style>
-                                        <Style TargetType="TextBox">
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="TextBox">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                               BorderBrush="{TemplateBinding BorderBrush}"
-                                                               BorderThickness="{TemplateBinding BorderThickness}">
-                                                            <ScrollViewer x:Name="PART_ContentHost" />
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
+                        <DataGrid Grid.Row="1"
+                                 ItemsSource="{Binding Events}"
+                                 AutoGenerateColumns="False"
+                                 IsReadOnly="True"
+                                 HeadersVisibility="Column"
+                                 GridLinesVisibility="None"
+                                 BorderThickness="0"
+                                 Background="{DynamicResource CardBackgroundBrush}"
+                                 Margin="12,0,12,12"
+                                 CanUserAddRows="False"
+                                 CanUserDeleteRows="False"
+                                 CanUserReorderColumns="True"
+                                 CanUserResizeColumns="True"
+                                 CanUserResizeRows="False"
+                                 CanUserSortColumns="False"
+                                 SelectionMode="Single"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 EnableRowVirtualization="True">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                    <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
+                                    <Setter Property="FontSize" Value="{StaticResource FontSizeS}"/>
+                                    <Setter Property="Padding" Value="8,8"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+                                </Style>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Padding" Value="8,4"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                    <Setter Property="FontSize" Value="{StaticResource FontSizeS}"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="DataGridCell">
+                                                <Border Padding="{TemplateBinding Padding}"
+                                                       Background="{TemplateBinding Background}">
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat='HH:mm:ss.fff'}" Width="90"/>
+                                <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="70">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{Binding Level, Converter={StaticResource EventLevelToBrushConverter}}"/>
+                                            <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
                                         </Style>
-                                    </TextBox.Style>
-                                </TextBox>
-                            </ScrollViewer>
-                        </Border>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="140">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontFamily" Value="Cascadia Code, Consolas"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" MinWidth="200">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                            <Setter Property="ToolTip" Value="{Binding Message}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
                 </Border>
             </Grid>
