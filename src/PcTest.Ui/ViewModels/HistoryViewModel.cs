@@ -8,6 +8,14 @@ using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
 
+public enum HistoryDetailView
+{
+    Summary,
+    Stdout,
+    Stderr,
+    Artifacts
+}
+
 /// <summary>
 /// ViewModel for the History page.
 /// </summary>
@@ -57,6 +65,8 @@ public partial class HistoryViewModel : ViewModelBase
         
         // Load full run details when selection changes
         _ = LoadRunDetailsAsync(value.Run.RunId, _loadCancellationTokenSource.Token);
+
+        SelectedDetailView = HistoryDetailView.Summary;
     }
 
     /// <summary>
@@ -97,6 +107,17 @@ public partial class HistoryViewModel : ViewModelBase
     // Content properties
     [ObservableProperty] private string _stdoutContent = string.Empty;
     [ObservableProperty] private string _stderrContent = string.Empty;
+
+    [ObservableProperty]
+    private HistoryDetailView _selectedDetailView = HistoryDetailView.Summary;
+
+    public IReadOnlyList<HistoryDetailView> DetailViews { get; } = new[]
+    {
+        HistoryDetailView.Summary,
+        HistoryDetailView.Stdout,
+        HistoryDetailView.Stderr,
+        HistoryDetailView.Artifacts
+    };
 
     // Event properties
     [ObservableProperty] private string _eventSearchText = string.Empty;
