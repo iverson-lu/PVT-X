@@ -741,8 +741,8 @@ ResolvedRunsRoot/
   {RunId}/                    # Test Case run
     manifest.json
     params.json
-    stdout.log
-    stderr.log
+    stdout.log                # Real-time line-by-line append during execution
+    stderr.log                # Real-time line-by-line append during execution
     events.jsonl
     env.json
     result.json
@@ -774,6 +774,8 @@ Rules:
 - Scripts MAY write additional files only under:
   {RunId}/artifacts/
 - Runner MUST ignore unknown files and folders.
+- stdout.log and stderr.log MUST be written line-by-line in real-time during test execution with FileShare.ReadWrite to allow concurrent reading by UI for live monitoring.
+- Runner MUST apply secret redaction to each line before writing to stdout.log/stderr.log.
 
 ### 12.2 Immutability Rules
 - manifest.json is a snapshot computed by Engine (effective manifest, inputs, environment) and MUST be persisted by Runner inside the Case Run Folder using the redaction metadata provided by Engine.

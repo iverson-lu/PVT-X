@@ -188,6 +188,12 @@ Used for:
 - Right: Live output (Console / simplified Events)
 - Top: Run control bar
 
+### Console Output
+- Real-time streaming: UI tails stdout.log/stderr.log with polling (200ms interval)
+- Auto-scroll to bottom when new content arrives
+- Displays combined stdout/stderr with node headers
+- Throttled UI updates (100ms) to prevent excessive redraws
+
 ### Node Fields
 - nodeId
 - testId@version
