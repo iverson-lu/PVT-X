@@ -76,6 +76,11 @@
     <Color x:Key="RequiredBadgeBorderColor">#FECACA</Color>
     <Color x:Key="RequiredBadgeTextColor">#DC2626</Color>
     
+    <!-- Tag Badge Colors (neutral gray variant) -->
+    <Color x:Key="TagBadgeBackgroundColor">#F1F3F5</Color>
+    <Color x:Key="TagBadgeBorderColor">#DEE2E6</Color>
+    <Color x:Key="TagBadgeTextColor">#495057</Color>
+    
     <!-- Status Colors -->
     <Color x:Key="StatusSuccessColor">#28A745</Color>
     <Color x:Key="StatusSuccessLightColor">#D4EDDA</Color>
@@ -199,6 +204,10 @@
     <SolidColorBrush x:Key="RequiredBadgeBackgroundBrush" Color="{StaticResource RequiredBadgeBackgroundColor}"/>
     <SolidColorBrush x:Key="RequiredBadgeBorderBrush" Color="{StaticResource RequiredBadgeBorderColor}"/>
     <SolidColorBrush x:Key="RequiredBadgeTextBrush" Color="{StaticResource RequiredBadgeTextColor}"/>
+    
+    <SolidColorBrush x:Key="TagBadgeBackgroundBrush" Color="{StaticResource TagBadgeBackgroundColor}"/>
+    <SolidColorBrush x:Key="TagBadgeBorderBrush" Color="{StaticResource TagBadgeBorderColor}"/>
+    <SolidColorBrush x:Key="TagBadgeTextBrush" Color="{StaticResource TagBadgeTextColor}"/>
     
     <!-- Status Brushes -->
     <SolidColorBrush x:Key="StatusSuccessBrush" Color="{StaticResource StatusSuccessColor}"/>

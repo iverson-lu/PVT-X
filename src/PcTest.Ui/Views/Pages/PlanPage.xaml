@@ -259,12 +259,24 @@
                                                   Foreground="{DynamicResource TextTertiaryBrush}"
                                                   Margin="0,0,0,12"
                                                   VerticalAlignment="Top"/>
-                                        <TextBlock Grid.Row="6" Grid.Column="1" 
-                                                  Text="{Binding TagsDisplay}" 
-                                                  FontSize="{StaticResource FontSizeM}"
-                                                  Foreground="{DynamicResource TextPrimaryBrush}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,12"/>
+                                        <ItemsControl Grid.Row="6" Grid.Column="1"
+                                                     ItemsSource="{Binding Tags}"
+                                                     Margin="0,0,0,12">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <ui:Badge Content="{Binding}" 
+                                                             Style="{StaticResource TagBadgeStyle}"
+                                                             FontSize="10"
+                                                             Padding="6,2"
+                                                             Margin="0,0,4,4"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
                                         
                                         <!-- Description Row -->
                                         <TextBlock Grid.Row="7" Grid.Column="0" 
