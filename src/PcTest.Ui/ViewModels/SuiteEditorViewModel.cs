@@ -25,6 +25,8 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
 
     public event EventHandler? Saved;
 
+    [ObservableProperty] private bool _isEditing;
+    
     [ObservableProperty] private string _id = string.Empty;
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _version = string.Empty;
@@ -125,6 +127,7 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
 
         // Clear dirty state after loading
         ClearDirty();
+        IsEditing = false;
     }
 
     private async Task LoadAvailableTestCasesAsync()
@@ -294,6 +297,12 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     }
 
     [RelayCommand]
+    private void EditSuite()
+    {
+        IsEditing = true;
+    }
+
+    [RelayCommand]
     private void ValidateSuite()
     {
         Validate();
@@ -332,6 +341,7 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         }
 
         ClearDirty();
+        IsEditing = false;
         Saved?.Invoke(this, EventArgs.Empty);
     }
 
@@ -352,6 +362,7 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         {
             // Clear for new suite
             ClearDirty();
+            IsEditing = false;
         }
     }
 

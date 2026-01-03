@@ -573,47 +573,130 @@
                                 <!-- Metadata -->
                                 <ui:CardExpander Header="Metadata" IsExpanded="True" Margin="0,0,0,16">
                                     <StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="ID" 
+                                        <!-- Read-only view -->
+                                        <Grid Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <!-- ID Row -->
+                                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                                      Text="ID" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="Name" 
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" 
+                                                      Text="{Binding Id}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Name Row -->
+                                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                                      Text="Name" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="Version" 
+                                                      Margin="0,0,0,12"
+                                                      VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                                      Text="{Binding Name}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      FontWeight="{StaticResource FontWeightSemiBold}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      TextWrapping="Wrap"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Version Row -->
+                                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                                      Text="Version" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="Description" 
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                                                      Text="{Binding Version}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Description Row -->
+                                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                                      Text="Description" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel>
-                                            <TextBlock Text="Tags (comma-separated)" 
+                                                      Margin="0,0,0,12"
+                                                      VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                                      Text="{Binding Description}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      TextWrapping="Wrap"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Tags Row -->
+                                            <TextBlock Grid.Row="4" Grid.Column="0" 
+                                                      Text="Tags" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"/>
+                                                      VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Row="4" Grid.Column="1" 
+                                                      Text="{Binding TagsText}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      TextWrapping="Wrap"/>
+                                        </Grid>
+                                        
+                                        <!-- Edit view -->
+                                        <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="ID" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Name" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Version" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Description" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel>
+                                                <TextBlock Text="Tags (comma-separated)" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
                                         </StackPanel>
                                     </StackPanel>
                                 </ui:CardExpander>
                                 
                                 <!-- Controls -->
                                 <ui:CardExpander Header="Execution Controls" IsExpanded="False" Margin="0,0,0,16">
-                                    <Grid>
+                                    <Grid IsEnabled="{Binding IsEditing}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="16"/>
@@ -648,37 +731,43 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Test Flow -->
-                                <ui:CardExpander Header="Test Flow" IsExpanded="True" Margin="0,0,0,16">
-                                    <Grid>
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Test Flow" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" IsEnabled="{Binding IsEditing}" Margin="16,0,32,0">
+                                                <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
+                                                          Command="{Binding MoveNodeUpCommand}"
+                                                          ToolTip="Move Up"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
+                                                          Command="{Binding MoveNodeDownCommand}"
+                                                          ToolTip="Move Down"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Remove" 
+                                                          Icon="{ui:SymbolIcon Delete24}" 
+                                                          Command="{Binding RemoveNodeCommand}" 
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Add Case" 
+                                                          Icon="{ui:SymbolIcon Add24}" 
+                                                          Command="{Binding AddNodeCommand}"
+                                                          Appearance="Primary"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
+                                    <Grid IsEnabled="{Binding IsEditing}">
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="240"/>
                                             <RowDefinition Height="16"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         
-                                        <!-- Action Buttons -->
-                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
-                                            <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
-                                                      Command="{Binding MoveNodeUpCommand}"
-                                                      ToolTip="Move Up"
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
-                                                      Command="{Binding MoveNodeDownCommand}"
-                                                      ToolTip="Move Down"
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Content="Remove" 
-                                                      Icon="{ui:SymbolIcon Delete24}" 
-                                                      Command="{Binding RemoveNodeCommand}" 
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Content="Add Case" 
-                                                      Icon="{ui:SymbolIcon Add24}" 
-                                                      Command="{Binding AddNodeCommand}"
-                                                      Appearance="Primary"/>
-                                        </StackPanel>
-                                        
                                         <!-- Nodes List -->
-                                        <Border Grid.Row="1"
+                                        <Border Grid.Row="0"
                                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
                                                BorderThickness="1"
@@ -881,34 +970,34 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander Header="Environment Variables" IsExpanded="True" Margin="0,0,0,16">
-                                    <Grid>
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Environment Variables" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" IsEnabled="{Binding IsEditing}" Margin="16,0,32,0">
+                                                <ui:Button Content="Remove"
+                                                          Icon="{ui:SymbolIcon Delete24}"
+                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                          Appearance="Secondary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
+                                    <Grid IsEnabled="{Binding IsEditing}">
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
-                                        
-                                        <!-- Action Buttons -->
-                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
-                                            <ui:Button Content="Remove"
-                                                      Icon="{ui:SymbolIcon Delete24}"
-                                                      Command="{Binding EnvironmentEditor.RemoveRowCommand}"
-                                                      Appearance="Secondary"
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Content="Add"
-                                                      Icon="{ui:SymbolIcon Add24}"
-                                                      Command="{Binding EnvironmentEditor.AddRowCommand}"
-                                                      Appearance="Primary"/>
-                                        </StackPanel>
-
-                                        <Border Grid.Row="1"
-                                                Height="1"
-                                                Background="{DynamicResource BorderSubtleBrush}"
-                                                Margin="0,12,0,12"/>
 
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
+                                        <ContentControl Grid.Row="0"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">
@@ -1121,74 +1210,163 @@
                                 <!-- Metadata -->
                                 <ui:CardExpander Header="Metadata" IsExpanded="True" Margin="0,0,0,16">
                                     <StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="ID" 
+                                        <!-- Read-only view -->
+                                        <Grid Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            
+                                            <!-- ID Row -->
+                                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                                      Text="ID" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="Name" 
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" 
+                                                      Text="{Binding Id}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Name Row -->
+                                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                                      Text="Name" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="Version" 
+                                                      Margin="0,0,0,12"
+                                                      VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                                      Text="{Binding Name}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      FontWeight="{StaticResource FontWeightSemiBold}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      TextWrapping="Wrap"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Version Row -->
+                                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                                      Text="Version" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel Margin="0,0,0,16">
-                                            <TextBlock Text="Description" 
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                                                      Text="{Binding Version}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Description Row -->
+                                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                                      Text="Description" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
-                                        </StackPanel>
-                                        <StackPanel>
-                                            <TextBlock Text="Tags (comma-separated)" 
+                                                      Margin="0,0,0,12"
+                                                      VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                                      Text="{Binding Description}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      TextWrapping="Wrap"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Tags Row -->
+                                            <TextBlock Grid.Row="4" Grid.Column="0" 
+                                                      Text="Tags" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"/>
+                                                      VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Row="4" Grid.Column="1" 
+                                                      Text="{Binding TagsText}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      TextWrapping="Wrap"/>
+                                        </Grid>
+                                        
+                                        <!-- Edit view -->
+                                        <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="ID" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Name" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Version" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Description" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel>
+                                                <TextBlock Text="Tags (comma-separated)" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
                                         </StackPanel>
                                     </StackPanel>
                                 </ui:CardExpander>
                                 
                                 <!-- Execution Flow -->
-                                <ui:CardExpander Header="Execution Flow" IsExpanded="True" Margin="0,0,0,16">
-                                    <Grid>
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Execution Flow" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" IsEnabled="{Binding IsEditing}" Margin="16,0,32,0">
+                                                <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
+                                                          Command="{Binding MoveSuiteReferenceUpCommand}"
+                                                          ToolTip="Move Up"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
+                                                          Command="{Binding MoveSuiteReferenceDownCommand}"
+                                                          ToolTip="Move Down"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Remove" 
+                                                          Icon="{ui:SymbolIcon Delete24}" 
+                                                          Command="{Binding RemoveSuiteReferenceCommand}" 
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Add Suite" 
+                                                          Icon="{ui:SymbolIcon Add24}" 
+                                                          Command="{Binding AddSuiteReferenceCommand}"
+                                                          Appearance="Primary"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
+                                    <Grid IsEnabled="{Binding IsEditing}">
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="240"/>
                                         </Grid.RowDefinitions>
                                         
-                                        <!-- Action Buttons -->
-                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
-                                            <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
-                                                      Command="{Binding MoveSuiteReferenceUpCommand}"
-                                                      ToolTip="Move Up"
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
-                                                      Command="{Binding MoveSuiteReferenceDownCommand}"
-                                                      ToolTip="Move Down"
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Content="Remove" 
-                                                      Icon="{ui:SymbolIcon Delete24}" 
-                                                      Command="{Binding RemoveSuiteReferenceCommand}" 
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Content="Add Suite" 
-                                                      Icon="{ui:SymbolIcon Add24}" 
-                                                      Command="{Binding AddSuiteReferenceCommand}"
-                                                      Appearance="Primary"/>
-                                        </StackPanel>
-                                        
                                         <!-- Execution Flow List -->
-                                        <Border Grid.Row="1"
+                                        <Border Grid.Row="0"
                                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
                                                BorderThickness="1"
@@ -1247,34 +1425,34 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander Header="Environment Variables" IsExpanded="True" Margin="0,0,0,16">
-                                    <Grid>
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="Environment Variables" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" IsEnabled="{Binding IsEditing}" Margin="16,0,32,0">
+                                                <ui:Button Content="Remove"
+                                                          Icon="{ui:SymbolIcon Delete24}"
+                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                          Appearance="Secondary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
+                                    <Grid IsEnabled="{Binding IsEditing}">
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
-                                        
-                                        <!-- Action Buttons -->
-                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
-                                            <ui:Button Content="Remove"
-                                                      Icon="{ui:SymbolIcon Delete24}"
-                                                      Command="{Binding EnvironmentEditor.RemoveRowCommand}"
-                                                      Appearance="Secondary"
-                                                      Margin="0,0,8,0"/>
-                                            <ui:Button Content="Add"
-                                                      Icon="{ui:SymbolIcon Add24}"
-                                                      Command="{Binding EnvironmentEditor.AddRowCommand}"
-                                                      Appearance="Primary"/>
-                                        </StackPanel>
-
-                                        <Border Grid.Row="1"
-                                                Height="1"
-                                                Background="{DynamicResource BorderSubtleBrush}"
-                                                Margin="0,12,0,12"/>
 
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
+                                        <ContentControl Grid.Row="0"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">

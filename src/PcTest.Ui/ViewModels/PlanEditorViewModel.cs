@@ -23,6 +23,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
 
     public event EventHandler? Saved;
 
+    [ObservableProperty] private bool _isEditing;
+
     [ObservableProperty] private string _id = string.Empty;
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _version = string.Empty;
@@ -93,6 +95,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         await LoadAvailableSuitesAsync();
 
         ClearDirty();
+        IsEditing = false;
     }
 
     private async Task LoadAvailableSuitesAsync()
@@ -180,6 +183,12 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     }
 
     [RelayCommand]
+    private void EditPlan()
+    {
+        IsEditing = true;
+    }
+
+    [RelayCommand]
     private void ValidatePlan()
     {
         Validate();
@@ -218,6 +227,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         }
 
         ClearDirty();
+        IsEditing = false;
         Saved?.Invoke(this, EventArgs.Empty);
     }
 
@@ -236,6 +246,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         else
         {
             ClearDirty();
+            IsEditing = false;
         }
     }
 
