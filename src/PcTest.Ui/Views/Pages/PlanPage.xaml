@@ -48,11 +48,6 @@
                             
                             <!-- Action Buttons -->
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="20,16,20,0">
-                                <ui:Button Content="Run" 
-                                          Icon="{ui:SymbolIcon Play24}"
-                                          Command="{Binding CasesTab.RunCommand}"
-                                          Appearance="Primary"
-                                          Margin="0,0,8,0"/>
                                 <ui:Button Content="Discover" 
                                           Icon="{ui:SymbolIcon ArrowSync24}"
                                           Command="{Binding CasesTab.DiscoverCommand}"
@@ -61,7 +56,6 @@
                                 <ui:Button 
                                           Icon="{ui:SymbolIcon FolderOpen24}" 
                                           Command="{Binding CasesTab.OpenInExplorerCommand}"
-                                          Margin="0,0,8,0"
                                           ToolTip="Open Folder"/>
                             </StackPanel>
                             
@@ -168,24 +162,7 @@
                                         <ui:Button Content="Run" 
                                                   Icon="{ui:SymbolIcon Play24}" 
                                                   Command="{Binding DataContext.CasesTab.RunCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
-                                                  Appearance="Primary"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Edit"
-                                                  Icon="{ui:SymbolIcon Edit24}" 
-                                                  Command="{Binding EditCommand}"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Save" 
-                                                  Icon="{ui:SymbolIcon Save24}" 
-                                                  Command="{Binding SaveCommand}" 
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Validate"
-                                                  Icon="{ui:SymbolIcon Checkmark24}" 
-                                                  Command="{Binding ValidateCommand}"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Cancel"
-                                                  Icon="{ui:SymbolIcon Dismiss24}" 
-                                                  Command="{Binding CancelCommand}"
-                                                  Margin="0"/>
+                                                  Appearance="Primary"/>
                                     </StackPanel>
                                 </Grid>
                                 
@@ -638,9 +615,9 @@
                                                   Command="{Binding RunSuiteCommand}" 
                                                   Appearance="Primary"
                                                   Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon Edit24}" 
+                                        <ui:Button Content="Edit"
+                                                  Icon="{ui:SymbolIcon Edit24}" 
                                                   Command="{Binding EditSuiteCommand}"
-                                                  ToolTip="Edit"
                                                   Margin="0,0,8,0"/>
                                         <ui:Button Content="Save" 
                                                   Icon="{ui:SymbolIcon Save24}" 
@@ -1275,9 +1252,9 @@
                                                   Command="{Binding RunPlanCommand}" 
                                                   Appearance="Primary"
                                                   Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon Edit24}" 
+                                        <ui:Button Content="Edit"
+                                                  Icon="{ui:SymbolIcon Edit24}" 
                                                   Command="{Binding EditPlanCommand}"
-                                                  ToolTip="Edit"
                                                   Margin="0,0,8,0"/>
                                         <ui:Button Content="Save" 
                                                   Icon="{ui:SymbolIcon Save24}" 

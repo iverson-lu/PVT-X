@@ -4,6 +4,10 @@
   "name": "Regression Test",
   "description": "New test suite",
   "version": "1.0.0",
+  "tags": [
+    "regression",
+    "retest"
+  ],
   "controls": {
     "repeat": 1,
     "maxParallel": 1,
