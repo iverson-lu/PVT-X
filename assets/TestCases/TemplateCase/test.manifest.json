@@ -1,25 +1,78 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "1.5.0",
   "id": "TemplateCase",
   "name": "📋 Template Case",
-  "description": "Template case with a single TestMode parameter to force Pass/Fail/Timeout/Error, and writes predictable artifacts under artifacts/.",
-  "version": "1.0.0",
+  "description": "Template case demonstrating all parameter types and structured output format. Can force Pass/Fail/Timeout/Error outcomes.",
+  "version": "2.0.0",
   "category": "Template",
   "owner": "PVT-X",
-  "entry": {
-    "type": "powershell",
-    "script": "run.ps1"
-  },
+  "privilege": "User",
   "timeoutSec": 2,
   "parameters": [
     {
-      "name": "TestMode", 
+      "name": "E_Mode",
       "type": "enum",
       "required": true,
       "default": "pass",
       "enumValues": ["pass", "fail", "timeout", "error"],
-      "help": "Controls outcome: pass|fail|timeout|error"
+      "help": "Controls test outcome: pass|fail|timeout|error"
+    },
+    {
+      "name": "S_Text",
+      "type": "string",
+      "required": false,
+      "default": "hello",
+      "help": "String parameter example"
+    },
+    {
+      "name": "N_Int",
+      "type": "int",
+      "required": false,
+      "default": 42,
+      "min": -100,
+      "max": 100,
+      "help": "Integer parameter with min/max constraints"
+    },
+    {
+      "name": "B_Flag",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "Boolean parameter (CLI: -B_Flag:$true or -B_Flag:$false)"
+    },
+    {
+      "name": "N_Double",
+      "type": "double",
+      "required": false,
+      "default": 3.14,
+      "min": 0,
+      "max": 9999,
+      "unit": "unit",
+      "help": "Double parameter with min/max and unit"
+    },
+    {
+      "name": "P_Path",
+      "type": "path",
+      "required": false,
+      "default": "C:\\Windows",
+      "help": "Path parameter (string)"
+    },
+    {
+      "name": "ItemsJson",
+      "type": "json",
+      "required": false,
+      "default": "[1, 2, 3]",
+      "uiHint": "textarea",
+      "help": "JSON array example - parsed by script using ConvertFrom-Json"
+    },
+    {
+      "name": "ConfigJson",
+      "type": "json",
+      "required": false,
+      "default": "{\"timeout\": 30, \"retry\": true}",
+      "uiHint": "textarea",
+      "help": "JSON object example - parsed by script using ConvertFrom-Json"
     }
   ],
-  "tags": ["template", "mode", "artifacts", "timeout"]
+  "tags": ["template", "parameters", "demo", "all-types"]
 }
