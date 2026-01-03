@@ -164,7 +164,8 @@ public sealed class PlanOrchestrator
                     plan.Manifest.Version,
                     groupRunId,
                     suiteIdentity,
-                    groupRunFolder);
+                    groupRunFolder,
+                    plan.Manifest);  // Pass plan manifest for env resolution
 
                 childResults.Add(suiteResult);
                 childRunIds.AddRange(suiteResult.ChildRunIds);

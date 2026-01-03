@@ -7,6 +7,14 @@ namespace PcTest.Engine.Resolution;
 
 /// <summary>
 /// Computes Effective Environment per spec section 7.3.
+/// 
+/// Environment Variable Priority Order (low to high):
+/// 1. OS Environment (baseline)
+/// 2. Plan Environment (plan.manifest.json → environment.env)
+/// 3. Suite Environment (suite.manifest.json → environment.env)
+/// 4. RunRequest / CLI EnvironmentOverrides (highest priority)
+/// 
+/// Later sources override earlier sources for the same key.
 /// </summary>
 public sealed class EnvironmentResolver
 {
@@ -60,6 +68,47 @@ public sealed class EnvironmentResolver
         EnvironmentOverrides? runRequestOverrides)
     {
         var result = GetOsEnvironment();
+
+        // Apply Suite environment
+        if (suite.Environment?.Env is not null)
+        {
+            foreach (var (key, value) in suite.Environment.Env)
+            {
+                result[key] = value;
+            }
+        }
+
+        // Apply RunRequest overrides
+        if (runRequestOverrides?.Env is not null)
+        {
+            foreach (var (key, value) in runRequestOverrides.Env)
+            {
+                result[key] = value;
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Computes effective environment for a Suite run within a Plan context per spec section 7.3.
+    /// Order: RunRequest.env > Suite.env > Plan.env > OS environment
+    /// </summary>
+    public Dictionary<string, string> ComputeSuiteEnvironment(
+        TestPlanManifest? plan,
+        TestSuiteManifest suite,
+        EnvironmentOverrides? runRequestOverrides)
+    {
+        var result = GetOsEnvironment();
+
+        // Apply Plan environment
+        if (plan?.Environment?.Env is not null)
+        {
+            foreach (var (key, value) in plan.Environment.Env)
+            {
+                result[key] = value;
+            }
+        }
 
         // Apply Suite environment
         if (suite.Environment?.Env is not null)

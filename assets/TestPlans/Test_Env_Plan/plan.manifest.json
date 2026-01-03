@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "Test_Env_Plan",
+  "name": "Test Env Var Plan",
+  "description": "New test plan",
+  "version": "1.0.0",
+  "suites": [
+    "Test_Env@1.0.0"
+  ],
+  "environment": { 
+    "env": {
+      "FOO": "from_plan",
+      "FOO_PLAN": "from_plan"
+    }
+  }
+}

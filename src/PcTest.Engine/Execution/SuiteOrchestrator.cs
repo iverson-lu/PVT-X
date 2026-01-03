@@ -42,7 +42,8 @@ public sealed class SuiteOrchestrator
         string? planVersion = null,
         string? parentPlanRunId = null,
         string? parentNodeId = null,
-        string? parentPlanRunFolder = null)
+        string? parentPlanRunFolder = null,
+        TestPlanManifest? planManifest = null)
     {
         var startTime = DateTime.UtcNow;
         var groupRunId = GroupRunFolderManager.GenerateGroupRunId("S");
@@ -75,8 +76,9 @@ public sealed class SuiteOrchestrator
 
             // Compute effective environment
             var envResolver = new EnvironmentResolver();
-            var effectiveEnv = envResolver.ComputeSuiteEnvironment(
-                suite.Manifest, runRequest.EnvironmentOverrides);
+            var effectiveEnv = planManifest != null
+                ? envResolver.ComputeSuiteEnvironment(planManifest, suite.Manifest, runRequest.EnvironmentOverrides)
+                : envResolver.ComputeSuiteEnvironment(suite.Manifest, runRequest.EnvironmentOverrides);
             await folderManager.WriteEnvironmentAsync(groupRunFolder, effectiveEnv);
 
             await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
