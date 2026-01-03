@@ -906,7 +906,7 @@
                                                        Orientation="Horizontal"
                                                        VerticalAlignment="Top"
                                                        HorizontalAlignment="Right">
-                                                <ui:Button Content="+ Add"
+                                                <ui:Button Content="Add"
                                                           Icon="{ui:SymbolIcon Add24}"
                                                           Command="{Binding EnvironmentEditor.AddRowCommand}"
                                                           Appearance="Primary"
@@ -1294,7 +1294,7 @@
                                                        Orientation="Horizontal"
                                                        VerticalAlignment="Top"
                                                        HorizontalAlignment="Right">
-                                                <ui:Button Content="+ Add"
+                                                <ui:Button Content="Add"
                                                           Icon="{ui:SymbolIcon Add24}"
                                                           Command="{Binding EnvironmentEditor.AddRowCommand}"
                                                           Appearance="Primary"
