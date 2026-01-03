@@ -882,34 +882,48 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
-                                            <RowDefinition Height="280"/>
-                                        </Grid.RowDefinitions>
-                                        
-                                        <!-- Description -->
-                                        <TextBlock Grid.Row="0"
-                                                  Text="Key/value pairs available to tests under this suite."
-                                                  FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{DynamicResource TextSecondaryBrush}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,0"/>
-                                        
-                                        <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
-                                                       Content="{Binding EnvironmentEditor}"
-                                                       HorizontalAlignment="Stretch"
-                                                       VerticalAlignment="Stretch">
-                                            <ContentControl.ContentTemplate>
-                                                <DataTemplate>
-                                                    <local:EnvVarEditor/>
-                                                </DataTemplate>
-                                            </ContentControl.ContentTemplate>
-                                        </ContentControl>
-                                    </Grid>
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="Environment"
+                                                          FontSize="{StaticResource FontSizeXL}"
+                                                          FontWeight="{StaticResource FontWeightSemiBold}"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="Key/value pairs available to tests under this suite."
+                                                          Style="{StaticResource SecondaryTextStyle}"
+                                                          Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1"
+                                                       Orientation="Horizontal"
+                                                       VerticalAlignment="Top">
+                                                <ui:Button Content="+ Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Remove"
+                                                          Icon="{ui:SymbolIcon Delete24}"
+                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                          Style="{StaticResource EnvVarEditorGhostButtonStyle}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
+                                    <ContentControl Content="{Binding EnvironmentEditor}"
+                                                   HorizontalAlignment="Stretch"
+                                                   VerticalAlignment="Stretch"
+                                                   MinHeight="280"
+                                                   Margin="0,12,0,0">
+                                        <ContentControl.ContentTemplate>
+                                            <DataTemplate>
+                                                <local:EnvVarEditor/>
+                                            </DataTemplate>
+                                        </ContentControl.ContentTemplate>
+                                    </ContentControl>
                                 </ui:CardExpander>
                             </StackPanel>
                         </ScrollViewer>
@@ -1239,34 +1253,48 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
-                                            <RowDefinition Height="280"/>
-                                        </Grid.RowDefinitions>
-                                        
-                                        <!-- Description -->
-                                        <TextBlock Grid.Row="0"
-                                                  Text="Key/value pairs available to tests under this plan."
-                                                  FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{DynamicResource TextSecondaryBrush}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,0"/>
-                                        
-                                        <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
-                                                       Content="{Binding EnvironmentEditor}"
-                                                       HorizontalAlignment="Stretch"
-                                                       VerticalAlignment="Stretch">
-                                            <ContentControl.ContentTemplate>
-                                                <DataTemplate>
-                                                    <local:EnvVarEditor/>
-                                                </DataTemplate>
-                                            </ContentControl.ContentTemplate>
-                                        </ContentControl>
-                                    </Grid>
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="Environment"
+                                                          FontSize="{StaticResource FontSizeXL}"
+                                                          FontWeight="{StaticResource FontWeightSemiBold}"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="Key/value pairs available to tests under this plan."
+                                                          Style="{StaticResource SecondaryTextStyle}"
+                                                          Margin="0,4,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1"
+                                                       Orientation="Horizontal"
+                                                       VerticalAlignment="Top">
+                                                <ui:Button Content="+ Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Remove"
+                                                          Icon="{ui:SymbolIcon Delete24}"
+                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                          Style="{StaticResource EnvVarEditorGhostButtonStyle}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
+                                    <ContentControl Content="{Binding EnvironmentEditor}"
+                                                   HorizontalAlignment="Stretch"
+                                                   VerticalAlignment="Stretch"
+                                                   MinHeight="280"
+                                                   Margin="0,12,0,0">
+                                        <ContentControl.ContentTemplate>
+                                            <DataTemplate>
+                                                <local:EnvVarEditor/>
+                                            </DataTemplate>
+                                        </ContentControl.ContentTemplate>
+                                    </ContentControl>
                                 </ui:CardExpander>
                             </StackPanel>
                         </ScrollViewer>

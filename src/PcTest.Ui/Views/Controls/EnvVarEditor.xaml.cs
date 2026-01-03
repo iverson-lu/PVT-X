@@ -1,4 +1,5 @@
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace PcTest.Ui.Views.Controls;
 
@@ -10,5 +11,13 @@ public partial class EnvVarEditor : UserControl
     public EnvVarEditor()
     {
         InitializeComponent();
+    }
+
+    private void OnRowPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is ListViewItem item && !item.IsSelected)
+        {
+            item.IsSelected = true;
+        }
     }
 }
