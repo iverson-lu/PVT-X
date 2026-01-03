@@ -51,9 +51,7 @@ function Write-Stdout-Compact {
     Write-Output ("UTC:  {0}" -f $TsUtc)
     Write-Output "--------------------------------------------------"
     Write-Output $StepLine
-    foreach ($d in $StepDetails) {
-        Write-Output ("      " + $d)
-    }
+    foreach ($d in $StepDetails) { Write-Output ("      " + $d) }
     Write-Output "--------------------------------------------------"
     Write-Output ("SUMMARY: total={0} passed={1} failed={2} skipped={3}" -f $Total, $Passed, $Failed, $Skipped)
     Write-Output "=================================================="
@@ -72,20 +70,34 @@ Ensure-Dir $ArtifactsRoot
 $ReportPath = Join-Path $ArtifactsRoot "report.json"
 
 # Defaults
-$overallResult = "FAIL"
-$exitCode = 2
+$overallStatus = "FAIL"
+$exitCode = 2  # 2 = script/runtime error unless overridden
 
 # Single step definition
-$stepIndex   = 1
-$stepId      = "ping_target"
-$stepName    = "Ping target address"
-$stepStatus  = "FAIL"
-$stepReason  = ""
-$stepExpected = ""
-$stepActual   = ""
-$stepMetrics  = @{}
-$stepEvidence = @{}
-$stepError    = $null
+$step = @{
+    id      = "ping_target"
+    index   = 1
+    name    = "Ping target address"
+    status  = "FAIL"
+    expected = @{
+        reachable = $true
+        reply_time_ms_lte = $null  # set below if threshold enabled
+    }
+    actual = @{
+        reachable = $false
+        status = $null
+        resolved_address = $null
+        reply_time_ms = $null
+    }
+    metrics = @{}
+    message = $null
+    timing = @{ duration_ms = $null }
+    error = $null
+}
+
+# timers
+$swTotal = [System.Diagnostics.Stopwatch]::StartNew()
+$swStep = $null
 
 try {
     $TargetAddress = Normalize-Text $TargetAddress
@@ -97,23 +109,24 @@ try {
         throw "MaxReplyTimeMs must be >= 0."
     }
 
-    $stepExpected = ($MaxReplyTimeMs -gt 0) ?
-        "reply_time_ms <= $MaxReplyTimeMs" :
-        "ping succeeds"
+    if ($MaxReplyTimeMs -gt 0) {
+        $step.expected.reply_time_ms_lte = $MaxReplyTimeMs
+    }
 
-    $stepEvidence["target_address"] = $TargetAddress
-    $stepEvidence["max_reply_time_ms"] = $MaxReplyTimeMs
+    $swStep = [System.Diagnostics.Stopwatch]::StartNew()
 
+    # Do the ping (single probe). Note: ICMP can be blocked in some environments.
     $reply = Test-Connection -TargetName $TargetAddress -Count 1 -ErrorAction Stop |
              Select-Object -First 1
 
     if ($null -eq $reply) {
-        $stepReason = "No ping reply received"
+        $step.status = "FAIL"
+        $step.message = "No ping reply received"
         $exitCode = 1
     }
     else {
-        $status = ($reply.PSObject.Properties.Name -contains "Status") ?
-            [string]$reply.Status : "Success"
+        $status = ($reply.PSObject.Properties.Name -contains "Status") ? [string]$reply.Status : "Success"
+        $step.actual.status = $status
 
         $resolved = $null
         if ($reply.PSObject.Properties.Name -contains "DisplayAddress") {
@@ -121,48 +134,49 @@ try {
         } elseif ($reply.PSObject.Properties.Name -contains "Address") {
             $resolved = [string]$reply.Address
         }
+        if ($resolved) { $step.actual.resolved_address = $resolved }
 
         $replyTimeMs = $null
         if ($reply.PSObject.Properties.Name -contains "ResponseTime") {
             $replyTimeMs = [int]$reply.ResponseTime
+        } elseif ($reply.PSObject.Properties.Name -contains "Latency") {
+            $replyTimeMs = [int]$reply.Latency
         }
+        if ($replyTimeMs -ne $null) { $step.actual.reply_time_ms = $replyTimeMs }
 
-        $actualParts = @("status=$status")
-        if ($resolved) { $actualParts += "resolved=$resolved" }
-        if ($replyTimeMs -ne $null) { $actualParts += "reply_time_ms=$replyTimeMs" }
-        $stepActual = $actualParts -join " "
+        $reachable = ($status -eq "Success")
+        $step.actual.reachable = $reachable
 
-        if ($replyTimeMs -ne $null) {
-            $stepMetrics["reply_time_ms"] = $replyTimeMs
-        }
+        # metrics (structured, machine-friendly)
+        if ($replyTimeMs -ne $null) { $step.metrics.reply_time_ms = $replyTimeMs }
+        if ($resolved) { $step.metrics.resolved_address = $resolved }
+        $step.metrics.target_address = $TargetAddress
 
-        if ($status -ne "Success") {
-            $stepReason = "Ping failed (status=$status)"
+        if (-not $reachable) {
+            $step.status = "FAIL"
+            $step.message = "Ping failed (status=$status)"
             $exitCode = 1
         }
         elseif ($MaxReplyTimeMs -gt 0 -and $replyTimeMs -ne $null -and $replyTimeMs -gt $MaxReplyTimeMs) {
-            $stepReason = "Reply time exceeded threshold"
+            $step.status = "FAIL"
+            $step.message = "Reply time exceeded threshold"
             $exitCode = 1
         }
         else {
-            $stepStatus = "PASS"
+            $step.status = "PASS"
+            $step.message = $null
             $exitCode = 0
         }
     }
 
-    if ($exitCode -eq 0) {
-        $stepStatus = "PASS"
-        $overallResult = "PASS"
-    } else {
-        $stepStatus = "FAIL"
-        $overallResult = "FAIL"
-    }
+    $overallStatus = ($exitCode -eq 0) ? "PASS" : "FAIL"
 }
 catch {
-    $stepStatus = "FAIL"
-    $overallResult = "FAIL"
-    $stepReason = "Script error: $($_.Exception.Message)"
-    $stepError = @{
+    $overallStatus = "FAIL"
+    $step.status = "FAIL"
+    $step.message = "Script error: $($_.Exception.Message)"
+    $step.error = @{
+        kind = "SCRIPT"
         code = "SCRIPT_ERROR"
         message = $_.Exception.Message
         exception_type = $_.Exception.GetType().FullName
@@ -171,37 +185,42 @@ catch {
     $exitCode = 2
 }
 finally {
+    if ($swStep -ne $null) {
+        $swStep.Stop()
+        $step.timing.duration_ms = [int]$swStep.ElapsedMilliseconds
+    }
+    $swTotal.Stop()
+    $totalMs = [int]$swTotal.ElapsedMilliseconds
+
+    $passCount = ($step.status -eq "PASS") ? 1 : 0
+    $failCount = ($step.status -eq "FAIL") ? 1 : 0
+    $skipCount = ($step.status -eq "SKIP") ? 1 : 0
+
     # ----------------------------
-    # report.json (case truth)
+    # report.json (lightweight schema v1.0)
     # ----------------------------
     $report = @{
-        schema_version = "1.0"
+        schema = @{ version = "1.0" }
         test = @{
             id = $TestId
             name = $TestId
-        }
-        steps = @(
-            @{
-                id = $stepId
-                index = $stepIndex
-                name = $stepName
-                status = $stepStatus
-                expected = $stepExpected
-                actual = $stepActual
-                reason = $stepReason
-                metrics = $stepMetrics
-                evidence = $stepEvidence
-                error = $stepError
+            params = @{
+                target_address = $TargetAddress
+                max_reply_time_ms = $MaxReplyTimeMs
             }
-        )
-        summary = @{
-            total_steps = 1
-            passed = ($stepStatus -eq "PASS") ? 1 : 0
-            failed = ($stepStatus -eq "FAIL") ? 1 : 0
-            skipped = 0
-            overall_result = $overallResult
-            exit_code = $exitCode
         }
+        summary = @{
+            status = $overallStatus
+            exit_code = $exitCode
+            counts = @{
+                total = 1
+                pass = $passCount
+                fail = $failCount
+                skip = $skipCount
+            }
+            duration_ms = $totalMs
+        }
+        steps = @($step)
     }
 
     Write-JsonFile $ReportPath $report
@@ -209,33 +228,44 @@ finally {
     # ----------------------------
     # stdout (compact)
     # ----------------------------
-    $stepLine = "[1/1] $stepName " +
-                ("." * [Math]::Max(1, 30 - $stepName.Length)) +
-                " $stepStatus"
+    $dotCount = [Math]::Max(3, 30 - $step.name.Length)
+    $stepLine = "[1/1] {0} {1} {2}" -f $step.name, ("." * $dotCount), $step.status
 
-    $details = @()
-    if ($stepStatus -eq "PASS") {
-        if ($stepActual) {
-            $details += "target=$TargetAddress $stepActual"
-        }
+    $details = New-Object System.Collections.Generic.List[string]
+    if ($step.status -eq "PASS") {
+        $d = "target=$TargetAddress"
+        if ($step.actual.resolved_address) { $d += " resolved=$($step.actual.resolved_address)" }
+        if ($step.actual.reply_time_ms -ne $null) { $d += " reply_time_ms=$($step.actual.reply_time_ms)" }
+        $details.Add($d)
     }
     else {
-        if ($stepReason)   { $details += "reason: $stepReason" }
-        if ($stepExpected) { $details += "expected: $stepExpected" }
-        if ($stepActual)   { $details += "actual:   $stepActual" }
+        if ($step.message) { $details.Add("reason: $($step.message)") }
+
+        # show expected only when it matters
+        if ($MaxReplyTimeMs -gt 0) {
+            $details.Add("expected: reply_time_ms <= $MaxReplyTimeMs")
+        } else {
+            $details.Add("expected: reachable=true")
+        }
+
+        $act = @()
+        if ($step.actual.reply_time_ms -ne $null) { $act += "reply_time_ms=$($step.actual.reply_time_ms)" }
+        if ($step.actual.status) { $act += "status=$($step.actual.status)" }
+        if ($step.actual.resolved_address) { $act += "resolved=$($step.actual.resolved_address)" }
+        if ($act.Count -gt 0) { $details.Add(("actual:   " + ($act -join " "))) }
     }
 
     Write-Stdout-Compact `
         -TestName $TestId `
-        -Overall $overallResult `
+        -Overall $overallStatus `
         -ExitCode $exitCode `
         -TsUtc $TsUtc `
         -StepLine $stepLine `
-        -StepDetails $details `
+        -StepDetails $details.ToArray() `
         -Total 1 `
-        -Passed (($stepStatus -eq "PASS") ? 1 : 0) `
-        -Failed (($stepStatus -eq "FAIL") ? 1 : 0) `
-        -Skipped 0
+        -Passed $passCount `
+        -Failed $failCount `
+        -Skipped $skipCount
 
     exit $exitCode
 }
