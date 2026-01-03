@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "Test_Env",
+  "name": "Test Env",
+  "description": "New test suite",
+  "version": "1.0.0",
+  "controls": {
+    "repeat": 1,
+    "maxParallel": 1,
+    "continueOnFailure": false,
+    "retryOnError": 0,
+    "timeoutPolicy": "AbortOnTimeout"
+  },
+  "environment": { 
+    "env": {
+      "FOO": "from_suite"
+    }
+  },
+  "testCases": [
+    {
+      "nodeId": "TemplateCaseMinimal",
+      "ref": "TemplateCaseMinimal",
+      "inputs": {
+        "Message": "Hello from PVT-X"
+      }
+    }
+  ]
+}

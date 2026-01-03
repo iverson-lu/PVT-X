@@ -50,5 +50,6 @@
         "LogName": "System"
       }
     }
-  ]
+  ],
+  "environment": { "env": { "FOO": "from_suite" } }
 }
