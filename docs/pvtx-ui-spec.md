@@ -182,11 +182,18 @@ Used for:
 - Start execution
 - Monitor pipeline progress
 - Control Stop / Abort
+- **Navigate back to source** (when triggered from Plan page)
 
 ### Layout
+- **Back button** (top-left, shown when navigated from Plan page)
 - Left: Node list (Suite or Plan execution)
 - Right: Live output (Console / simplified Events)
 - Top: Run control bar
+
+### Navigation Context
+- **Back Navigation**: When execution is triggered from Plan page (Cases/Suites/Plans tab), a back button appears allowing return to the exact source item
+- **Context Preservation**: Back navigation restores the originating tab and selects the item that was executed
+- **Source Tracking**: Navigation parameter includes source page, tab index, and target identity for precise context restoration
 
 ### Console Output
 - Real-time streaming: UI tails stdout.log/stderr.log with polling (200ms interval)
@@ -263,7 +270,10 @@ Used for:
 #### Inspector Header (When Selected)
 - **Run ID Display**: Monospace, with copy button
 - **Status Badge**: Color-coded (Passed/Failed/Error/etc.)
-- **Action Buttons**: Open Folder, Rerun
+- **Action Buttons**: 
+  - **Go to Source**: Navigate to Plan page and select the corresponding Case/Suite/Plan that was executed
+  - **Open Folder**: Opens run directory in File Explorer
+  - **Rerun**: Re-execute the same target
 
 #### Detail View Selector (Radio Button Segmented Control)
 - **5 Views**: Summary / Stdout / Stderr / Structured Events / Artifacts
