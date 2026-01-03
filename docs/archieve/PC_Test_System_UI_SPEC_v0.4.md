@@ -92,7 +92,7 @@
 - Metadata:
   - name, description, tags
   - timeout, privilege (if supported)
-- Pipeline Nodes:
+- Test Flow:
   - Add / remove / reorder nodes
   - Each node references a Case
 - Node Inputs:

@@ -647,8 +647,8 @@
                                     </Grid>
                                 </ui:CardExpander>
                                 
-                                <!-- Pipeline Nodes -->
-                                <ui:CardExpander Header="Pipeline Nodes" IsExpanded="True" Margin="0,0,0,16">
+                                <!-- Test Flow -->
+                                <ui:CardExpander Header="Test Flow" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -660,7 +660,7 @@
                                         
                                         <!-- Node Actions -->
                                         <StackPanel Grid.Row="0" Orientation="Horizontal">
-                                            <ui:Button Content="Add Node" 
+                                            <ui:Button Content="Add Case" 
                                                       Icon="{ui:SymbolIcon Add24}" 
                                                       Command="{Binding AddNodeCommand}"
                                                       Appearance="Primary"
@@ -1181,8 +1181,8 @@
                                     </StackPanel>
                                 </ui:CardExpander>
                                 
-                                <!-- Suite References -->
-                                <ui:CardExpander Header="Suite References" IsExpanded="True" Margin="0,0,0,16">
+                                <!-- Execution Flow -->
+                                <ui:CardExpander Header="Execution Flow" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -1210,7 +1210,7 @@
                                                       ToolTip="Move Down"/>
                                         </StackPanel>
                                         
-                                        <!-- Suite References List -->
+                                        <!-- Execution Flow List -->
                                         <Border Grid.Row="2"
                                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
