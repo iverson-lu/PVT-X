@@ -46,6 +46,9 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     [ObservableProperty]
     private ObservableCollection<TestCaseItemViewModel> _availableTestCases = new();
 
+    [ObservableProperty]
+    private EnvVarEditorViewModel _environmentEditor = new();
+
     public SuiteEditorViewModel(
         ISuiteRepository suiteRepository,
         IDiscoveryService discoveryService,
@@ -56,6 +59,9 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         _discoveryService = discoveryService;
         _fileDialogService = fileDialogService;
         _navigationService = navigationService;
+
+        // Hook up environment editor to mark dirty on changes
+        EnvironmentEditor.OnRowChanged = MarkDirty;
     }
 
     // Track property changes for dirty state
@@ -113,6 +119,9 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             nodeVm.PropertyChanged += (s, e) => MarkDirty();
             Nodes.Add(nodeVm);
         }
+
+        // Load environment variables
+        EnvironmentEditor.LoadFromDictionary(m.Environment?.Env);
 
         // Clear dirty state after loading
         ClearDirty();
@@ -401,6 +410,16 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
                 RetryOnError = RetryOnError
             }
         };
+
+        // Add environment variables
+        var envDict = EnvironmentEditor.ToDictionary();
+        if (envDict is not null)
+        {
+            manifest.Environment = new SuiteEnvironment
+            {
+                Env = envDict
+            };
+        }
 
         foreach (var nodeVm in Nodes)
         {

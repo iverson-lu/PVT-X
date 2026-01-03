@@ -11,9 +11,10 @@
     "retryOnError": 0,
     "timeoutPolicy": "AbortOnTimeout"
   },
-  "environment": { 
+  "environment": {
     "env": {
-      "FOO": "from_suite"
+      "FOO": "from_suite",
+      "New": "ewew"
     }
   },
   "testCases": [

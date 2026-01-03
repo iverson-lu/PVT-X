@@ -139,7 +139,16 @@ public partial class PlansTabViewModel : ViewModelBase
 
     private async void OnEditorSaved(object? sender, EventArgs e)
     {
+        // Remember current selection
+        var currentIdentity = SelectedPlan?.Identity;
+        
         await LoadAsync();
+        
+        // Restore selection after reload
+        if (currentIdentity is not null)
+        {
+            SelectedPlan = Plans.FirstOrDefault(p => p.Identity == currentIdentity);
+        }
     }
 
     [RelayCommand]

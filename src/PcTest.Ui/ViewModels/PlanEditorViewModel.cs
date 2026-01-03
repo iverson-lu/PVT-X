@@ -38,6 +38,9 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     [ObservableProperty]
     private ObservableCollection<SuiteListItemViewModel> _availableSuites = new();
 
+    [ObservableProperty]
+    private EnvVarEditorViewModel _environmentEditor = new();
+
     public PlanEditorViewModel(
         IPlanRepository planRepository,
         ISuiteRepository suiteRepository,
@@ -50,6 +53,9 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         _discoveryService = discoveryService;
         _fileDialogService = fileDialogService;
         _navigationService = navigationService;
+
+        // Hook up environment editor to mark dirty on changes
+        EnvironmentEditor.OnRowChanged = MarkDirty;
     }
 
     // Track property changes for dirty state
@@ -79,6 +85,9 @@ public partial class PlanEditorViewModel : EditableViewModelBase
             refVm.PropertyChanged += (s, e) => MarkDirty();
             SuiteReferences.Add(refVm);
         }
+
+        // Load environment variables
+        EnvironmentEditor.LoadFromDictionary(m.Environment?.Env);
 
         // Load available suites
         await LoadAvailableSuitesAsync();
@@ -280,6 +289,16 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         };
 
         manifest.Suites = SuiteReferences.Select(sr => sr.SuiteIdentity).ToList();
+
+        // Add environment variables
+        var envDict = EnvironmentEditor.ToDictionary();
+        if (envDict is not null)
+        {
+            manifest.Environment = new PlanEnvironment
+            {
+                Env = envDict
+            };
+        }
 
         return manifest;
     }

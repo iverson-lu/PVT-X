@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:PcTest.Ui.ViewModels"
+      xmlns:local="clr-namespace:PcTest.Ui.Views.Controls"
       Title="Plan"
       d:DataContext="{d:DesignInstance vm:PlanViewModel}"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -879,6 +880,37 @@
                                         </Border>
                                     </Grid>
                                 </ui:CardExpander>
+                                
+                                <!-- Environment -->
+                                <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="16"/>
+                                            <RowDefinition Height="280"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- Description -->
+                                        <TextBlock Grid.Row="0"
+                                                  Text="Key/value pairs available to tests under this suite."
+                                                  FontSize="{StaticResource FontSizeS}"
+                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                  TextWrapping="Wrap"
+                                                  Margin="0,0,0,0"/>
+                                        
+                                        <!-- Environment Editor Control -->
+                                        <ContentControl Grid.Row="2"
+                                                       Content="{Binding EnvironmentEditor}"
+                                                       HorizontalAlignment="Stretch"
+                                                       VerticalAlignment="Stretch">
+                                            <ContentControl.ContentTemplate>
+                                                <DataTemplate>
+                                                    <local:EnvVarEditor/>
+                                                </DataTemplate>
+                                            </ContentControl.ContentTemplate>
+                                        </ContentControl>
+                                    </Grid>
+                                </ui:CardExpander>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
@@ -1203,6 +1235,37 @@
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
                                         </Border>
+                                    </Grid>
+                                </ui:CardExpander>
+                                
+                                <!-- Environment -->
+                                <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="16"/>
+                                            <RowDefinition Height="280"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- Description -->
+                                        <TextBlock Grid.Row="0"
+                                                  Text="Key/value pairs available to tests under this plan."
+                                                  FontSize="{StaticResource FontSizeS}"
+                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                  TextWrapping="Wrap"
+                                                  Margin="0,0,0,0"/>
+                                        
+                                        <!-- Environment Editor Control -->
+                                        <ContentControl Grid.Row="2"
+                                                       Content="{Binding EnvironmentEditor}"
+                                                       HorizontalAlignment="Stretch"
+                                                       VerticalAlignment="Stretch">
+                                            <ContentControl.ContentTemplate>
+                                                <DataTemplate>
+                                                    <local:EnvVarEditor/>
+                                                </DataTemplate>
+                                            </ContentControl.ContentTemplate>
+                                        </ContentControl>
                                     </Grid>
                                 </ui:CardExpander>
                             </StackPanel>
