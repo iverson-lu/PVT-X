@@ -167,6 +167,8 @@ public partial class CasesTabViewModel : ViewModelBase
 /// </summary>
 public partial class TestCaseItemViewModel : ViewModelBase
 {
+    [ObservableProperty] private bool _isEditing;
+    
     [ObservableProperty] private string _id = string.Empty;
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _version = string.Empty;
@@ -179,6 +181,16 @@ public partial class TestCaseItemViewModel : ViewModelBase
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
 
+    // Store original values for cancel operation
+    private string _originalId = string.Empty;
+    private string _originalName = string.Empty;
+    private string _originalVersion = string.Empty;
+    private string _originalCategory = string.Empty;
+    private string? _originalDescription;
+    private string _originalPrivilege = "User";
+    private int? _originalTimeoutSec;
+    private List<string> _originalTags = new();
+
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
     public bool HasParameters => ParameterWrappers.Count > 0;
@@ -188,6 +200,60 @@ public partial class TestCaseItemViewModel : ViewModelBase
     {
         get => ParameterWrappers;
         set => ParameterWrappers = value;
+    }
+
+    public void StoreOriginalValues()
+    {
+        _originalId = Id;
+        _originalName = Name;
+        _originalVersion = Version;
+        _originalCategory = Category;
+        _originalDescription = Description;
+        _originalPrivilege = Privilege;
+        _originalTimeoutSec = TimeoutSec;
+        _originalTags = new List<string>(Tags);
+    }
+
+    [RelayCommand]
+    private void Run()
+    {
+        // Placeholder - actual run logic is in CasesTabViewModel
+    }
+
+    [RelayCommand]
+    private void Edit()
+    {
+        StoreOriginalValues();
+        IsEditing = true;
+    }
+
+    [RelayCommand]
+    private void Save()
+    {
+        // TODO: Implement save logic to persist changes to manifest file
+        IsEditing = false;
+        StoreOriginalValues(); // Update stored values after save
+    }
+
+    [RelayCommand]
+    private void Validate()
+    {
+        // TODO: Implement validation logic
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        // Restore original values
+        Id = _originalId;
+        Name = _originalName;
+        Version = _originalVersion;
+        Category = _originalCategory;
+        Description = _originalDescription;
+        Privilege = _originalPrivilege;
+        TimeoutSec = _originalTimeoutSec;
+        Tags = new List<string>(_originalTags);
+        IsEditing = false;
     }
 }
 
