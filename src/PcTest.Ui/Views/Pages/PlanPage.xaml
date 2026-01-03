@@ -885,27 +885,17 @@
                                 <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
-                                        
-                                        <!-- Description -->
-                                        <TextBlock Grid.Row="0"
-                                                  Text="Key/value pairs available to tests under this suite."
-                                                  FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{DynamicResource TextSecondaryBrush}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,0"/>
-                                        
+
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
+                                        <ContentControl Grid.Row="0"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">
                                             <ContentControl.ContentTemplate>
                                                 <DataTemplate>
-                                                    <local:EnvVarEditor/>
+                                                    <local:EnvVarEditor HintText="Key/value pairs available to tests under this suite."/>
                                                 </DataTemplate>
                                             </ContentControl.ContentTemplate>
                                         </ContentControl>
@@ -1242,27 +1232,17 @@
                                 <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
-                                        
-                                        <!-- Description -->
-                                        <TextBlock Grid.Row="0"
-                                                  Text="Key/value pairs available to tests under this plan."
-                                                  FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{DynamicResource TextSecondaryBrush}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,0"/>
-                                        
+
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
+                                        <ContentControl Grid.Row="0"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">
                                             <ContentControl.ContentTemplate>
                                                 <DataTemplate>
-                                                    <local:EnvVarEditor/>
+                                                    <local:EnvVarEditor HintText="Key/value pairs available to tests under this plan."/>
                                                 </DataTemplate>
                                             </ContentControl.ContentTemplate>
                                         </ContentControl>
