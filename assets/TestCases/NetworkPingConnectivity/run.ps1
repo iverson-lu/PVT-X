@@ -9,11 +9,9 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-function Write-Log([string] $Level, [string] $Message) {
-    $ts = (Get-Date).ToString("s")
-    Write-Output "[$ts][$Level] $Message"
-}
-
+# ----------------------------
+# Helpers
+# ----------------------------
 function Ensure-Dir([string] $Path) {
     if (-not (Test-Path -LiteralPath $Path)) {
         New-Item -ItemType Directory -Path $Path -Force | Out-Null
@@ -21,34 +19,73 @@ function Ensure-Dir([string] $Path) {
 }
 
 function Write-JsonFile([string] $Path, $Obj) {
-    $Obj | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $Path -Encoding UTF8
+    $Obj | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $Path -Encoding UTF8
 }
 
 function Normalize-Text([string] $s) {
     if ($null -eq $s) { return "" }
     $t = $s.Trim()
-
-    # Remove wrapping quotes repeatedly (handles '"host"' / "'host'" / extra spaces)
     while (($t.StartsWith('"') -and $t.EndsWith('"')) -or ($t.StartsWith("'") -and $t.EndsWith("'"))) {
         if ($t.Length -lt 2) { break }
         $t = $t.Substring(1, $t.Length - 2).Trim()
     }
-
     return $t
 }
 
-# --- artifacts folders (must be under Case Run Folder) ---
+function Write-Stdout-Compact {
+    param(
+        [string]   $TestName,
+        [string]   $Overall,
+        [int]      $ExitCode,
+        [string]   $TsUtc,
+        [string]   $StepLine,
+        [string[]] $StepDetails,
+        [int]      $Total,
+        [int]      $Passed,
+        [int]      $Failed,
+        [int]      $Skipped
+    )
+
+    Write-Output "=================================================="
+    Write-Output ("TEST: {0}  RESULT: {1}  EXIT: {2}" -f $TestName, $Overall, $ExitCode)
+    Write-Output ("UTC:  {0}" -f $TsUtc)
+    Write-Output "--------------------------------------------------"
+    Write-Output $StepLine
+    foreach ($d in $StepDetails) {
+        Write-Output ("      " + $d)
+    }
+    Write-Output "--------------------------------------------------"
+    Write-Output ("SUMMARY: total={0} passed={1} failed={2} skipped={3}" -f $Total, $Passed, $Failed, $Skipped)
+    Write-Output "=================================================="
+    Write-Output ("MACHINE: overall={0} exit_code={1}" -f $Overall, $ExitCode)
+}
+
+# ----------------------------
+# Metadata (case-level only)
+# ----------------------------
+$TestId = "NetworkPingConnectivity"
+$TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+# Artifacts
 $ArtifactsRoot = Join-Path (Get-Location) "artifacts"
 Ensure-Dir $ArtifactsRoot
+$ReportPath = Join-Path $ArtifactsRoot "report.json"
 
-$TestId  = "NetworkPingConnectivity"
-$Outcome = "Fail"
-$Summary = ""
-$Details = @{}
-$Metrics = @{}
+# Defaults
+$overallResult = "FAIL"
+$exitCode = 2
 
-# ✅ Critical: initialize exitCode OUTSIDE try/catch so finally can always read it (StrictMode-safe)
-$exitCode = 2  # default: script/runtime error unless overridden
+# Single step definition
+$stepIndex   = 1
+$stepId      = "ping_target"
+$stepName    = "Ping target address"
+$stepStatus  = "FAIL"
+$stepReason  = ""
+$stepExpected = ""
+$stepActual   = ""
+$stepMetrics  = @{}
+$stepEvidence = @{}
+$stepError    = $null
 
 try {
     $TargetAddress = Normalize-Text $TargetAddress
@@ -56,115 +93,149 @@ try {
     if ([string]::IsNullOrWhiteSpace($TargetAddress)) {
         throw "TargetAddress is empty."
     }
-
     if ($MaxReplyTimeMs -lt 0) {
         throw "MaxReplyTimeMs must be >= 0."
     }
 
-    Write-Log "INFO" "Start test: $TestId"
-    Write-Log "INFO" "TargetAddress='$TargetAddress'"
-    Write-Log "INFO" "MaxReplyTimeMs=$MaxReplyTimeMs"
+    $stepExpected = ($MaxReplyTimeMs -gt 0) ?
+        "reply_time_ms <= $MaxReplyTimeMs" :
+        "ping succeeds"
 
-    $Details["targetAddress"] = $TargetAddress
-    $Details["maxReplyTimeMs"] = $MaxReplyTimeMs
+    $stepEvidence["target_address"] = $TargetAddress
+    $stepEvidence["max_reply_time_ms"] = $MaxReplyTimeMs
 
-    # Use Test-Connection for ICMP reachability.
-    # We prefer a single probe (Count=1). Some environments may block ICMP.
-    $replies = Test-Connection -TargetName $TargetAddress -Count 1 -ErrorAction Stop
-    $reply = $replies | Select-Object -First 1
+    $reply = Test-Connection -TargetName $TargetAddress -Count 1 -ErrorAction Stop |
+             Select-Object -First 1
 
     if ($null -eq $reply) {
-        $Outcome = "Fail"
-        $Summary = "No ping reply received."
+        $stepReason = "No ping reply received"
         $exitCode = 1
-        Write-Log "WARN" $Summary
     }
     else {
-        $status = $null
-        if ($reply.PSObject.Properties.Name -contains "Status") {
-            $status = [string]$reply.Status
-        }
-        else {
-            # If Status is missing, assume success when we got an object back.
-            $status = "Success"
-        }
-
-        $Details["status"] = $status
+        $status = ($reply.PSObject.Properties.Name -contains "Status") ?
+            [string]$reply.Status : "Success"
 
         $resolved = $null
         if ($reply.PSObject.Properties.Name -contains "DisplayAddress") {
             $resolved = [string]$reply.DisplayAddress
-        }
-        elseif ($reply.PSObject.Properties.Name -contains "Address") {
+        } elseif ($reply.PSObject.Properties.Name -contains "Address") {
             $resolved = [string]$reply.Address
-        }
-        if (-not [string]::IsNullOrWhiteSpace($resolved)) {
-            $Details["resolvedAddress"] = $resolved
         }
 
         $replyTimeMs = $null
         if ($reply.PSObject.Properties.Name -contains "ResponseTime") {
             $replyTimeMs = [int]$reply.ResponseTime
         }
-        elseif ($reply.PSObject.Properties.Name -contains "Latency") {
-            $replyTimeMs = [int]$reply.Latency
-        }
 
-        if ($null -ne $replyTimeMs) {
-            $Metrics["replyTimeMs"] = $replyTimeMs
+        $actualParts = @("status=$status")
+        if ($resolved) { $actualParts += "resolved=$resolved" }
+        if ($replyTimeMs -ne $null) { $actualParts += "reply_time_ms=$replyTimeMs" }
+        $stepActual = $actualParts -join " "
+
+        if ($replyTimeMs -ne $null) {
+            $stepMetrics["reply_time_ms"] = $replyTimeMs
         }
 
         if ($status -ne "Success") {
-            $Outcome = "Fail"
-            $Summary = "Ping failed. Status='$status'."
+            $stepReason = "Ping failed (status=$status)"
             $exitCode = 1
-            Write-Log "WARN" $Summary
         }
-        elseif ($MaxReplyTimeMs -gt 0 -and $null -ne $replyTimeMs -and $replyTimeMs -gt $MaxReplyTimeMs) {
-            $Outcome = "Fail"
-            $Summary = "Ping succeeded but reply time exceeded threshold: ${replyTimeMs}ms > ${MaxReplyTimeMs}ms."
+        elseif ($MaxReplyTimeMs -gt 0 -and $replyTimeMs -ne $null -and $replyTimeMs -gt $MaxReplyTimeMs) {
+            $stepReason = "Reply time exceeded threshold"
             $exitCode = 1
-            Write-Log "WARN" $Summary
         }
         else {
-            $Outcome = "Pass"
-            if ($MaxReplyTimeMs -gt 0 -and $null -ne $replyTimeMs) {
-                $Summary = "Ping succeeded within threshold (${replyTimeMs}ms <= ${MaxReplyTimeMs}ms)."
-            }
-            else {
-                $Summary = "Ping succeeded."
-            }
+            $stepStatus = "PASS"
             $exitCode = 0
-            Write-Log "INFO" $Summary
         }
+    }
+
+    if ($exitCode -eq 0) {
+        $stepStatus = "PASS"
+        $overallResult = "PASS"
+    } else {
+        $stepStatus = "FAIL"
+        $overallResult = "FAIL"
     }
 }
 catch {
-    Write-Log "ERROR" ("Unhandled exception: " + $_.Exception.Message)
-    Write-Error $_
-
-    $Outcome = "Fail"
-    $Summary = "Script error: $($_.Exception.Message)"
-    $Details["exceptionType"] = $_.Exception.GetType().FullName
-    $Details["stack"] = $_.ScriptStackTrace
+    $stepStatus = "FAIL"
+    $overallResult = "FAIL"
+    $stepReason = "Script error: $($_.Exception.Message)"
+    $stepError = @{
+        code = "SCRIPT_ERROR"
+        message = $_.Exception.Message
+        exception_type = $_.Exception.GetType().FullName
+        stack = $_.ScriptStackTrace
+    }
     $exitCode = 2
 }
 finally {
-    if ([string]::IsNullOrWhiteSpace($Summary)) {
-        $Summary = ($Outcome -eq "Pass") ? "OK" : "Check failed"
-    }
-
+    # ----------------------------
+    # report.json (case truth)
+    # ----------------------------
     $report = @{
-        testId  = $TestId
-        outcome = $Outcome
-        summary = $Summary
-        details = $Details
-        metrics = $Metrics
+        schema_version = "1.0"
+        test = @{
+            id = $TestId
+            name = $TestId
+        }
+        steps = @(
+            @{
+                id = $stepId
+                index = $stepIndex
+                name = $stepName
+                status = $stepStatus
+                expected = $stepExpected
+                actual = $stepActual
+                reason = $stepReason
+                metrics = $stepMetrics
+                evidence = $stepEvidence
+                error = $stepError
+            }
+        )
+        summary = @{
+            total_steps = 1
+            passed = ($stepStatus -eq "PASS") ? 1 : 0
+            failed = ($stepStatus -eq "FAIL") ? 1 : 0
+            skipped = 0
+            overall_result = $overallResult
+            exit_code = $exitCode
+        }
     }
 
-    Write-JsonFile (Join-Path $ArtifactsRoot "report.json") $report
-    Write-Log "INFO" "Artifacts written: artifacts/report.json"
-    Write-Output "[RESULT] $Outcome"
-    Write-Output "[DEBUG] exitCode=$exitCode"
+    Write-JsonFile $ReportPath $report
+
+    # ----------------------------
+    # stdout (compact)
+    # ----------------------------
+    $stepLine = "[1/1] $stepName " +
+                ("." * [Math]::Max(1, 30 - $stepName.Length)) +
+                " $stepStatus"
+
+    $details = @()
+    if ($stepStatus -eq "PASS") {
+        if ($stepActual) {
+            $details += "target=$TargetAddress $stepActual"
+        }
+    }
+    else {
+        if ($stepReason)   { $details += "reason: $stepReason" }
+        if ($stepExpected) { $details += "expected: $stepExpected" }
+        if ($stepActual)   { $details += "actual:   $stepActual" }
+    }
+
+    Write-Stdout-Compact `
+        -TestName $TestId `
+        -Overall $overallResult `
+        -ExitCode $exitCode `
+        -TsUtc $TsUtc `
+        -StepLine $stepLine `
+        -StepDetails $details `
+        -Total 1 `
+        -Passed (($stepStatus -eq "PASS") ? 1 : 0) `
+        -Failed (($stepStatus -eq "FAIL") ? 1 : 0) `
+        -Skipped 0
+
     exit $exitCode
 }

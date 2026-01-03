@@ -56,6 +56,29 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         }
         _nodeTailServices.Clear();
     }
+    
+    private async Task StopAllTailingAsync()
+    {
+        if (_tailService is not null)
+        {
+            await _tailService.StopTailingAsync();
+            _tailService = null;
+        }
+        
+        var tailServices = _nodeTailServices.Values.ToList();
+        foreach (var service in tailServices)
+        {
+            try
+            {
+                await service.StopTailingAsync();
+            }
+            catch
+            {
+                // Best effort
+            }
+        }
+        _nodeTailServices.Clear();
+    }
 
     private void LogDebug(string message)
     {
@@ -265,8 +288,11 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                 await Task.WhenAll(tasksToWait);
             }
             
-            // Stop all tailing services
-            StopAllTailing();
+            // Stop all tailing services and ensure final content is flushed
+            await StopAllTailingAsync();
+            
+            // Give a short delay to ensure all buffered output has been processed
+            await Task.Delay(150);
             
             // Notify completion
             ConsoleOutput?.Invoke(this, $"\nRun completed with status: {_currentState.FinalStatus}");
@@ -277,7 +303,10 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             _currentState.FinalStatus = RunStatus.Aborted;
             
             // Stop all tailing services
-            StopAllTailing();
+            await StopAllTailingAsync();
+            
+            // Give a short delay to ensure all buffered output has been processed
+            await Task.Delay(150);
             
             // Mark remaining pending nodes as Aborted
             foreach (var node in _nodesDict.Values)
@@ -298,11 +327,14 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         }
         catch (Exception ex)
         {
+            // Stop all tailing services
+            await StopAllTailingAsync();
+            
+            // Give a short delay to ensure all buffered output has been processed
+            await Task.Delay(150);
+            
             _currentState.IsRunning = false;
             _currentState.FinalStatus = RunStatus.Error;
-            
-            // Stop all tailing services
-            StopAllTailing();
             
             ConsoleOutput?.Invoke(this, $"\nError: {ex.Message}\n{ex.StackTrace}");
             StateChanged?.Invoke(this, _currentState);
