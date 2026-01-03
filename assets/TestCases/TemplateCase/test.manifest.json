@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "TemplateCase",
-  "name": "📋 Template Case",
+  "id": "TemplateCaseMinimal",
+  "name": "📋 Template Case Minimal",
   "description": "Template case demonstrating all parameter types and structured output format. Can force Pass/Fail/Timeout/Error outcomes.",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "category": "Template",
   "owner": "PVT-X",
   "privilege": "User",
