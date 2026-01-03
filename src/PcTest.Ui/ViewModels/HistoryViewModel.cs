@@ -812,6 +812,43 @@ public partial class HistoryViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void GoToSource()
+    {
+        if (SelectedRun is null) return;
+
+        // Determine tab index and target identity based on run type
+        int tabIndex;
+        string? targetIdentity = null;
+        
+        switch (SelectedRun.RunType)
+        {
+            case RunType.TestCase:
+                tabIndex = 0;   // Cases tab
+                targetIdentity = $"{SelectedRun.TestId}@{SelectedRun.TestVersion}";
+                break;
+            case RunType.TestSuite:
+                tabIndex = 1;  // Suites tab
+                targetIdentity = $"{SelectedRun.SuiteId}@{SelectedRun.SuiteVersion}";
+                break;
+            case RunType.TestPlan:
+                tabIndex = 2;  // Plans tab
+                targetIdentity = $"{SelectedRun.PlanId}@{SelectedRun.PlanVersion}";
+                break;
+            default:
+                tabIndex = 0;
+                break;
+        }
+
+        // Navigate to Plan page with tab index and target identity
+        var parameter = new PlanNavigationParameter
+        {
+            TabIndex = tabIndex,
+            TargetIdentity = targetIdentity
+        };
+        _navigationService.NavigateTo("Plan", parameter);
+    }
+
+    [RelayCommand]
     private async Task RefreshEvents()
     {
         if (SelectedRun is not null)

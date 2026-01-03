@@ -374,7 +374,9 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         {
             TargetIdentity = identity,
             RunType = RunType.TestSuite,
-            AutoStart = true
+            AutoStart = true,
+            SourcePage = "Plan",
+            SourceTabIndex = 1  // Suites tab is index 1
         };
         _navigationService.NavigateTo("Run", navParam);
     }

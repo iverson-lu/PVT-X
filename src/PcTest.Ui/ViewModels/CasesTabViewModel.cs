@@ -144,7 +144,9 @@ public partial class CasesTabViewModel : ViewModelBase
             TargetIdentity = SelectedCase.Identity,
             RunType = PcTest.Contracts.RunType.TestCase,
             ParameterOverrides = overrides.Count > 0 ? overrides : null,
-            AutoStart = true
+            AutoStart = true,
+            SourcePage = "Plan",
+            SourceTabIndex = 0  // Cases tab is index 0
         };
 
         _navigationService.NavigateTo("Run", navParam);

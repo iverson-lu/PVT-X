@@ -60,4 +60,34 @@ public partial class PlanViewModel : ViewModelBase
             SetBusy(false);
         }
     }
+
+    public void SelectItemByIdentity(int tabIndex, string? targetIdentity)
+    {
+        if (string.IsNullOrEmpty(targetIdentity)) return;
+
+        switch (tabIndex)
+        {
+            case 0: // Cases
+                var caseItem = CasesTab.Cases.FirstOrDefault(c => c.Identity == targetIdentity);
+                if (caseItem != null)
+                {
+                    CasesTab.SelectedCase = caseItem;
+                }
+                break;
+            case 1: // Suites
+                var suiteItem = SuitesTab.Suites.FirstOrDefault(s => s.Identity == targetIdentity);
+                if (suiteItem != null)
+                {
+                    SuitesTab.SelectedSuite = suiteItem;
+                }
+                break;
+            case 2: // Plans
+                var planItem = PlansTab.Plans.FirstOrDefault(p => p.Identity == targetIdentity);
+                if (planItem != null)
+                {
+                    PlansTab.SelectedPlan = planItem;
+                }
+                break;
+        }
+    }
 }

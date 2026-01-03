@@ -33,6 +33,13 @@ public partial class RunViewModel : ViewModelBase
     [ObservableProperty] private string _statusText = "Ready";
     [ObservableProperty] private RunStatus? _finalStatus;
 
+    // Navigation context
+    private string? _sourcePage;
+    private int? _sourceTabIndex;
+    private string? _sourceTargetIdentity;
+    
+    public bool HasBackButton => !string.IsNullOrEmpty(_sourcePage);
+
     [ObservableProperty]
     private ObservableCollection<string> _availableTargets = new();
 
@@ -105,8 +112,13 @@ public partial class RunViewModel : ViewModelBase
             TargetIdentity = navParam.TargetIdentity;
             RunType = navParam.RunType;
             _parameterOverrides = navParam.ParameterOverrides;
+            _sourcePage = navParam.SourcePage;
+            _sourceTabIndex = navParam.SourceTabIndex;
+            _sourceTargetIdentity = navParam.TargetIdentity;
             StatusText = $"Ready to run {RunType}: {TargetIdentity}";
             ShowTargetSelector = false;
+            
+            OnPropertyChanged(nameof(HasBackButton));
             
             // Auto-start if requested
             if (navParam.AutoStart)
@@ -116,7 +128,11 @@ public partial class RunViewModel : ViewModelBase
         }
         else
         {
+            _sourcePage = null;
+            _sourceTabIndex = null;
+            _sourceTargetIdentity = null;
             ShowTargetSelector = true;
+            OnPropertyChanged(nameof(HasBackButton));
             await LoadAvailableTargetsAsync();
         }
     }
@@ -361,6 +377,23 @@ public partial class RunViewModel : ViewModelBase
         if (!string.IsNullOrEmpty(RunId))
         {
             _navigationService.NavigateTo("History", RunId);
+        }
+    }
+
+    [RelayCommand]
+    private void GoBack()
+    {
+        if (!string.IsNullOrEmpty(_sourcePage))
+        {
+            // Navigate back with tab index and target identity
+            var parameter = _sourceTabIndex.HasValue
+                ? new PlanNavigationParameter
+                {
+                    TabIndex = _sourceTabIndex.Value,
+                    TargetIdentity = _sourceTargetIdentity
+                }
+                : null;
+            _navigationService.NavigateTo(_sourcePage, parameter);
         }
     }
 

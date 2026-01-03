@@ -258,7 +258,9 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         {
             TargetIdentity = identity,
             RunType = RunType.TestPlan,
-            AutoStart = true
+            AutoStart = true,
+            SourcePage = "Plan",
+            SourceTabIndex = 2  // Plans tab is index 2
         };
         _navigationService.NavigateTo("Run", navParam);
     }

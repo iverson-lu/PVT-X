@@ -67,4 +67,27 @@ public sealed class RunNavigationParameter
     public RunType RunType { get; set; }
     public Dictionary<string, object?>? ParameterOverrides { get; set; }
     public bool AutoStart { get; set; }
+    /// <summary>
+    /// Source page where the execution was triggered from (e.g., "Plan")
+    /// </summary>
+    public string? SourcePage { get; set; }
+    /// <summary>
+    /// Source tab index in the Plan page (0=Cases, 1=Suites, 2=Plans)
+    /// </summary>
+    public int? SourceTabIndex { get; set; }
+}
+
+/// <summary>
+/// Parameter for navigation to Plan page with item selection.
+/// </summary>
+public sealed class PlanNavigationParameter
+{
+    /// <summary>
+    /// Tab index (0=Cases, 1=Suites, 2=Plans)
+    /// </summary>
+    public int TabIndex { get; set; }
+    /// <summary>
+    /// Target identity to select (e.g., "test-id@1.0.0")
+    /// </summary>
+    public string? TargetIdentity { get; set; }
 }

@@ -364,10 +364,15 @@
                                 </StackPanel>
                             </StackPanel>
                             
-                            <ui:Button Grid.Column="1" 
-                                      Icon="{ui:SymbolIcon FolderOpen24}" 
-                                      Command="{Binding OpenFolderCommand}"
-                                      ToolTip="Open Run Folder"/>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <ui:Button Icon="{ui:SymbolIcon ArrowCircleLeft24}" 
+                                          Command="{Binding GoToSourceCommand}"
+                                          ToolTip="Go to Source (Case/Suite/Plan)"
+                                          Margin="0,0,8,0"/>
+                                <ui:Button Icon="{ui:SymbolIcon FolderOpen24}" 
+                                          Command="{Binding OpenFolderCommand}"
+                                          ToolTip="Open Run Folder"/>
+                            </StackPanel>
                         </Grid>
                     </Border>
                     
