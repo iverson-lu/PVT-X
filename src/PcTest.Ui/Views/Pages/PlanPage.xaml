@@ -147,24 +147,32 @@
                         <Border.Effect>
                             <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
                         </Border.Effect>
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
-                            <StackPanel DataContext="{Binding CasesTab.SelectedCase}">
-                                <!-- Header -->
-                                <Grid Margin="0,0,0,24">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Test Case Details"
-                                              Style="{StaticResource SectionTitleStyle}"
-                                              Margin="0"/>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <ui:Button Content="Run" 
-                                                  Icon="{ui:SymbolIcon Play24}" 
-                                                  Command="{Binding DataContext.CasesTab.RunCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
-                                                  Appearance="Primary"/>
-                                    </StackPanel>
-                                </Grid>
+                        <Grid DataContext="{Binding CasesTab.SelectedCase}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header -->
+                            <Grid Grid.Row="0" Margin="24,24,24,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="Test Case Details"
+                                          Style="{StaticResource SectionTitleStyle}"
+                                          Margin="0"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ui:Button Content="Run" 
+                                              Icon="{ui:SymbolIcon Play24}" 
+                                              Command="{Binding DataContext.CasesTab.RunCommand, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                              Appearance="Primary"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Scrollable Content -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
+                                <StackPanel>
                                 
                                 <ui:CardExpander Header="Basic Information" 
                                                 IsExpanded="True" 
@@ -435,9 +443,11 @@
                                         </ItemsControl>
                                     </StackPanel>
                                 </ui:CardExpander>
-                            </StackPanel>
-                        </ScrollViewer>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
+                    
                 </Grid>
             </TabItem>
             
@@ -591,47 +601,55 @@
                         <Border.Effect>
                             <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
                         </Border.Effect>
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
-                            <StackPanel DataContext="{Binding SuitesTab.Editor}">
-                                <!-- Header -->
-                                <Grid Margin="0,0,0,24">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Suite Details" 
-                                                  Style="{StaticResource SectionTitleStyle}"
-                                                  Margin="0"/>
-                                        <ui:Badge Content="Unsaved" 
-                                                 Appearance="Caution" 
-                                                 Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                 VerticalAlignment="Center"
-                                                 Margin="12,0,0,0"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <ui:Button Content="Run" 
-                                                  Icon="{ui:SymbolIcon Play24}" 
-                                                  Command="{Binding RunSuiteCommand}" 
-                                                  Appearance="Primary"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Edit"
-                                                  Icon="{ui:SymbolIcon Edit24}" 
-                                                  Command="{Binding EditSuiteCommand}"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Save" 
-                                                  Icon="{ui:SymbolIcon Save24}" 
-                                                  Command="{Binding SaveSuiteCommand}" 
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon CheckmarkCircle24}" 
-                                                  Command="{Binding ValidateSuiteCommand}"
-                                                  ToolTip="Validate"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon Dismiss24}" 
-                                                  Command="{Binding DiscardChangesCommand}"
-                                                  ToolTip="Cancel"/>
-                                    </StackPanel>
-                                </Grid>
+                        <Grid DataContext="{Binding SuitesTab.Editor}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header -->
+                            <Grid Grid.Row="0" Margin="24,24,24,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Suite Details" 
+                                              Style="{StaticResource SectionTitleStyle}"
+                                              Margin="0"/>
+                                    <ui:Badge Content="Unsaved" 
+                                             Appearance="Caution" 
+                                             Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibilityConverter}}"
+                                             VerticalAlignment="Center"
+                                             Margin="12,0,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ui:Button Content="Run" 
+                                              Icon="{ui:SymbolIcon Play24}" 
+                                              Command="{Binding RunSuiteCommand}" 
+                                              Appearance="Primary"
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Content="Edit"
+                                              Icon="{ui:SymbolIcon Edit24}" 
+                                              Command="{Binding EditSuiteCommand}"
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Content="Save" 
+                                              Icon="{ui:SymbolIcon Save24}" 
+                                              Command="{Binding SaveSuiteCommand}" 
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Icon="{ui:SymbolIcon CheckmarkCircle24}" 
+                                              Command="{Binding ValidateSuiteCommand}"
+                                              ToolTip="Validate"
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Icon="{ui:SymbolIcon Dismiss24}" 
+                                              Command="{Binding DiscardChangesCommand}"
+                                              ToolTip="Cancel"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Scrollable Content -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
+                                <StackPanel>
                                 
                                 <!-- Basic Information -->
                                 <ui:CardExpander Header="Basic Information" IsExpanded="True" Margin="0,0,0,16">
@@ -1080,8 +1098,9 @@
                                                  IsChecked="{Binding ContinueOnFailure}"/>
                                     </Grid>
                                 </ui:CardExpander>
-                            </StackPanel>
-                        </ScrollViewer>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
                 </Grid>
             </TabItem>
@@ -1236,47 +1255,55 @@
                         <Border.Effect>
                             <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
                         </Border.Effect>
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24">
-                            <StackPanel DataContext="{Binding PlansTab.Editor}">
-                                <!-- Header -->
-                                <Grid Margin="0,0,0,24">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Plan Details" 
-                                                  Style="{StaticResource SectionTitleStyle}"
-                                                  Margin="0"/>
-                                        <ui:Badge Content="Unsaved" 
-                                                 Appearance="Caution" 
-                                                 Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                 VerticalAlignment="Center"
-                                                 Margin="12,0,0,0"/>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <ui:Button Content="Run" 
-                                                  Icon="{ui:SymbolIcon Play24}" 
-                                                  Command="{Binding RunPlanCommand}" 
-                                                  Appearance="Primary"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Edit"
-                                                  Icon="{ui:SymbolIcon Edit24}" 
-                                                  Command="{Binding EditPlanCommand}"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Content="Save" 
-                                                  Icon="{ui:SymbolIcon Save24}" 
-                                                  Command="{Binding SavePlanCommand}" 
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon CheckmarkCircle24}" 
-                                                  Command="{Binding ValidatePlanCommand}"
-                                                  ToolTip="Validate"
-                                                  Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon Dismiss24}" 
-                                                  Command="{Binding DiscardChangesCommand}"
-                                                  ToolTip="Cancel"/>
-                                    </StackPanel>
-                                </Grid>
+                        <Grid DataContext="{Binding PlansTab.Editor}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            
+                            <!-- Header -->
+                            <Grid Grid.Row="0" Margin="24,24,24,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Plan Details" 
+                                              Style="{StaticResource SectionTitleStyle}"
+                                              Margin="0"/>
+                                    <ui:Badge Content="Unsaved" 
+                                             Appearance="Caution" 
+                                             Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibilityConverter}}"
+                                             VerticalAlignment="Center"
+                                             Margin="12,0,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <ui:Button Content="Run" 
+                                              Icon="{ui:SymbolIcon Play24}" 
+                                              Command="{Binding RunPlanCommand}" 
+                                              Appearance="Primary"
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Content="Edit"
+                                              Icon="{ui:SymbolIcon Edit24}" 
+                                              Command="{Binding EditPlanCommand}"
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Content="Save" 
+                                              Icon="{ui:SymbolIcon Save24}" 
+                                              Command="{Binding SavePlanCommand}" 
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Icon="{ui:SymbolIcon CheckmarkCircle24}" 
+                                              Command="{Binding ValidatePlanCommand}"
+                                              ToolTip="Validate"
+                                              Margin="0,0,8,0"/>
+                                    <ui:Button Icon="{ui:SymbolIcon Dismiss24}" 
+                                              Command="{Binding DiscardChangesCommand}"
+                                              ToolTip="Cancel"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Scrollable Content -->
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="24,0,24,24">
+                                <StackPanel>
                                 
                                 <!-- Basic Information -->
                                 <ui:CardExpander Header="Basic Information" IsExpanded="True" Margin="0,0,0,16">
@@ -1543,8 +1570,9 @@
                                         </ContentControl>
                                     </Grid>
                                 </ui:CardExpander>
-                            </StackPanel>
-                        </ScrollViewer>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
                     </Border>
                 </Grid>
             </TabItem>
