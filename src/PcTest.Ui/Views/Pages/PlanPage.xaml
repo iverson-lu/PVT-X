@@ -538,7 +538,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Suite Details" 
-                                                  Style="{StaticResource PageTitleStyle}"
+                                                  Style="{StaticResource SectionTitleStyle}"
                                                   Margin="0"/>
                                         <ui:Badge Content="Unsaved" 
                                                  Appearance="Caution" 
@@ -648,50 +648,37 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Test Flow -->
-                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
-                                    <ui:CardExpander.Header>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <TextBlock Grid.Column="0"
-                                                      Text="Test Flow"
-                                                      FontSize="{StaticResource FontSizeXL}"
-                                                      FontWeight="{StaticResource FontWeightSemiBold}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      VerticalAlignment="Center"/>
-                                            
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,32,0">
-                                                <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
-                                                          Command="{Binding MoveNodeUpCommand}"
-                                                          ToolTip="Move Up"
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
-                                                          Command="{Binding MoveNodeDownCommand}"
-                                                          ToolTip="Move Down"
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Content="Remove" 
-                                                          Icon="{ui:SymbolIcon Delete24}" 
-                                                          Command="{Binding RemoveNodeCommand}" 
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Content="Add Case" 
-                                                          Icon="{ui:SymbolIcon Add24}" 
-                                                          Command="{Binding AddNodeCommand}"
-                                                          Appearance="Primary"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </ui:CardExpander.Header>
+                                <ui:CardExpander Header="Test Flow" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="240"/>
                                             <RowDefinition Height="16"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
+                                            <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
+                                                      Command="{Binding MoveNodeUpCommand}"
+                                                      ToolTip="Move Up"
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
+                                                      Command="{Binding MoveNodeDownCommand}"
+                                                      ToolTip="Move Down"
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Content="Remove" 
+                                                      Icon="{ui:SymbolIcon Delete24}" 
+                                                      Command="{Binding RemoveNodeCommand}" 
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Content="Add Case" 
+                                                      Icon="{ui:SymbolIcon Add24}" 
+                                                      Command="{Binding AddNodeCommand}"
+                                                      Appearance="Primary"/>
+                                        </StackPanel>
+                                        
                                         <!-- Nodes List -->
-                                        <Border Grid.Row="0"
+                                        <Border Grid.Row="1"
                                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
                                                BorderThickness="1"
@@ -766,7 +753,7 @@
                                         </Border>
                                         
                                         <!-- Node Editor -->
-                                        <Border Grid.Row="2" 
+                                        <Border Grid.Row="3" 
                                                Padding="16" 
                                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
@@ -894,56 +881,34 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
-                                    <ui:CardExpander.Header>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Environment Variables"
-                                                          FontSize="{StaticResource FontSizeXL}"
-                                                          FontWeight="{StaticResource FontWeightSemiBold}"
-                                                          Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                                <TextBlock Text="Environment variables available to tests under this suite."
-                                                          FontSize="{StaticResource FontSizeS}"
-                                                          Foreground="{DynamicResource TextSecondaryBrush}"
-                                                          Margin="0,4,0,0"
-                                                          TextWrapping="Wrap"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1"
-                                                       Orientation="Horizontal"
-                                                       VerticalAlignment="Top"
-                                                       HorizontalAlignment="Right"
-                                                       Margin="0,0,32,0">
-                                                <ui:Button Content="Remove"
-                                                          Icon="{ui:SymbolIcon Delete24}"
-                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
-                                                          Appearance="Secondary"
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Content="Add"
-                                                          Icon="{ui:SymbolIcon Add24}"
-                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
-                                                          Appearance="Primary"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </ui:CardExpander.Header>
+                                <ui:CardExpander Header="Environment Variables" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
+                                        
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
+                                            <ui:Button Content="Remove"
+                                                      Icon="{ui:SymbolIcon Delete24}"
+                                                      Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                      Appearance="Secondary"
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Content="Add"
+                                                      Icon="{ui:SymbolIcon Add24}"
+                                                      Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                      Appearance="Primary"/>
+                                        </StackPanel>
 
-                                        <Border Grid.Row="0"
+                                        <Border Grid.Row="1"
                                                 Height="1"
                                                 Background="{DynamicResource BorderSubtleBrush}"
                                                 Margin="0,12,0,12"/>
 
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="1"
+                                        <ContentControl Grid.Row="2"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">
@@ -1121,7 +1086,7 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="Plan Details" 
-                                                  Style="{StaticResource PageTitleStyle}"
+                                                  Style="{StaticResource SectionTitleStyle}"
                                                   Margin="0"/>
                                         <ui:Badge Content="Unsaved" 
                                                  Appearance="Caution" 
@@ -1195,48 +1160,35 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Execution Flow -->
-                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
-                                    <ui:CardExpander.Header>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <TextBlock Grid.Column="0"
-                                                      Text="Execution Flow"
-                                                      FontSize="{StaticResource FontSizeXL}"
-                                                      FontWeight="{StaticResource FontWeightSemiBold}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      VerticalAlignment="Center"/>
-                                            
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,32,0">
-                                                <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
-                                                          Command="{Binding MoveSuiteReferenceUpCommand}"
-                                                          ToolTip="Move Up"
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
-                                                          Command="{Binding MoveSuiteReferenceDownCommand}"
-                                                          ToolTip="Move Down"
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Content="Remove" 
-                                                          Icon="{ui:SymbolIcon Delete24}" 
-                                                          Command="{Binding RemoveSuiteReferenceCommand}" 
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Content="Add Suite" 
-                                                          Icon="{ui:SymbolIcon Add24}" 
-                                                          Command="{Binding AddSuiteReferenceCommand}"
-                                                          Appearance="Primary"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </ui:CardExpander.Header>
+                                <ui:CardExpander Header="Execution Flow" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="240"/>
                                         </Grid.RowDefinitions>
                                         
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
+                                            <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
+                                                      Command="{Binding MoveSuiteReferenceUpCommand}"
+                                                      ToolTip="Move Up"
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
+                                                      Command="{Binding MoveSuiteReferenceDownCommand}"
+                                                      ToolTip="Move Down"
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Content="Remove" 
+                                                      Icon="{ui:SymbolIcon Delete24}" 
+                                                      Command="{Binding RemoveSuiteReferenceCommand}" 
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Content="Add Suite" 
+                                                      Icon="{ui:SymbolIcon Add24}" 
+                                                      Command="{Binding AddSuiteReferenceCommand}"
+                                                      Appearance="Primary"/>
+                                        </StackPanel>
+                                        
                                         <!-- Execution Flow List -->
-                                        <Border Grid.Row="0"
+                                        <Border Grid.Row="1"
                                                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
                                                BorderBrush="{DynamicResource BorderSubtleBrush}"
                                                BorderThickness="1"
@@ -1295,56 +1247,34 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
-                                    <ui:CardExpander.Header>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Environment Variables"
-                                                          FontSize="{StaticResource FontSizeXL}"
-                                                          FontWeight="{StaticResource FontWeightSemiBold}"
-                                                          Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                                <TextBlock Text="Environment variables available to tests under this plan."
-                                                          FontSize="{StaticResource FontSizeS}"
-                                                          Foreground="{DynamicResource TextSecondaryBrush}"
-                                                          Margin="0,4,0,0"
-                                                          TextWrapping="Wrap"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1"
-                                                       Orientation="Horizontal"
-                                                       VerticalAlignment="Top"
-                                                       HorizontalAlignment="Right"
-                                                       Margin="0,0,32,0">
-                                                <ui:Button Content="Remove"
-                                                          Icon="{ui:SymbolIcon Delete24}"
-                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
-                                                          Appearance="Secondary"
-                                                          Margin="0,0,8,0"/>
-                                                <ui:Button Content="Add"
-                                                          Icon="{ui:SymbolIcon Add24}"
-                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
-                                                          Appearance="Primary"/>
-                                            </StackPanel>
-                                        </Grid>
-                                    </ui:CardExpander.Header>
+                                <ui:CardExpander Header="Environment Variables" IsExpanded="True" Margin="0,0,0,16">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
+                                        
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,12">
+                                            <ui:Button Content="Remove"
+                                                      Icon="{ui:SymbolIcon Delete24}"
+                                                      Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                      Appearance="Secondary"
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Content="Add"
+                                                      Icon="{ui:SymbolIcon Add24}"
+                                                      Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                      Appearance="Primary"/>
+                                        </StackPanel>
 
-                                        <Border Grid.Row="0"
+                                        <Border Grid.Row="1"
                                                 Height="1"
                                                 Background="{DynamicResource BorderSubtleBrush}"
                                                 Margin="0,12,0,12"/>
 
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="1"
+                                        <ContentControl Grid.Row="2"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">
