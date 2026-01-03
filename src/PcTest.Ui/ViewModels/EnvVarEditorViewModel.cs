@@ -100,12 +100,13 @@ public partial class EnvVarEditorViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void RemoveRow()
+    private void RemoveRow(EnvVarRowViewModel? row)
     {
-        if (SelectedItem is null) return;
+        var item = row ?? SelectedItem;
+        if (item is null) return;
 
-        SelectedItem.PropertyChanged -= OnRowPropertyChanged;
-        Items.Remove(SelectedItem);
+        item.PropertyChanged -= OnRowPropertyChanged;
+        Items.Remove(item);
         SelectedItem = Items.FirstOrDefault();
         ValidateAll();
         OnRowChanged?.Invoke();

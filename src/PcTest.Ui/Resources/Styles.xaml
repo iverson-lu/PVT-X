@@ -213,6 +213,75 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- ========================================
+         ENVIRONMENT EDITOR STYLES
+         Clean list layout and compact inputs
+         ======================================== -->
+
+    <Style x:Key="EnvEditorListContainerStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource ControlBackgroundSecondaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusM}"/>
+    </Style>
+
+    <Style x:Key="EnvEditorListViewStyle" TargetType="ListView">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+    </Style>
+
+    <Style x:Key="EnvEditorListViewItemStyle" TargetType="ListViewItem">
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="MinHeight" Value="40"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="EnvEditorTextBoxStyle" TargetType="{x:Type TextBox}" BasedOn="{StaticResource ModernTextBoxStyle}">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeM}"/>
+    </Style>
+
+    <Style x:Key="EnvEditorKeyTextBoxStyle" TargetType="{x:Type TextBox}" BasedOn="{StaticResource EnvEditorTextBoxStyle}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding HasError}" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBrush}"/>
+                <Setter Property="BorderThickness" Value="2"/>
+                <Setter Property="ToolTip" Value="{Binding Error}"/>
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="EnvEditorToolbarButtonStyle" TargetType="{x:Type ui:Button}">
+        <Setter Property="Appearance" Value="Secondary"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+    </Style>
+
+    <Style x:Key="EnvEditorIconButtonStyle" TargetType="{x:Type ui:Button}">
+        <Setter Property="Appearance" Value="Secondary"/>
+        <Setter Property="Width" Value="28"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="8,0,0,0"/>
+    </Style>
     
     <!-- ========================================
          SEGMENTED CONTROL (PILL-STYLE TABS)
