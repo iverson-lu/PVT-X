@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "TemplateCaseSimple",
-  "name": "📝 Template Case Simple",
+  "id": "TemplateCaseMinimal",
+  "name": "📝 Template Case Minimal",
   "description": "Minimal template case with a single string parameter. Script simply prints the parameter value.",
   "version": "1.0.0",
   "category": "Template",
@@ -13,7 +13,7 @@
       "name": "Message",
       "type": "string",
       "required": false,
-      "default": "Hello from TemplateCaseSimple",
+      "default": "Hello from PVT-X",
       "help": "Message to print"
     }
   ],

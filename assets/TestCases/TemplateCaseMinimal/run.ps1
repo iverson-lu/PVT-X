@@ -1,6 +1,4 @@
-param(
-    [Parameter(Mandatory=$false)][string] $Message = "Hello from TemplateCaseSimple"
-)
+param([string] $Message)
 
 Write-Output $Message
 
