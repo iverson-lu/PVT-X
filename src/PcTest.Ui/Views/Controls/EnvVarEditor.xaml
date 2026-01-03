@@ -9,143 +9,75 @@
              d:DesignHeight="300" d:DesignWidth="600"
              d:DataContext="{d:DesignInstance vm:EnvVarEditorViewModel}">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="16"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        
-        <!-- Action Buttons -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal">
-            <ui:Button Content="Add" 
-                      Icon="{ui:SymbolIcon Add24}" 
-                      Command="{Binding AddRowCommand}"
-                      Appearance="Primary"
-                      Margin="0,0,8,0"/>
-            <ui:Button Content="Remove" 
-                      Icon="{ui:SymbolIcon Delete24}" 
-                      Command="{Binding RemoveRowCommand}"/>
-        </StackPanel>
-        
         <!-- Environment Variables List -->
-        <Border Grid.Row="2"
-               Background="{DynamicResource ControlBackgroundSecondaryBrush}"
-               BorderBrush="{DynamicResource BorderSubtleBrush}"
-               BorderThickness="1"
-               CornerRadius="8">
+        <Border Style="{StaticResource EnvEditorListBorderStyle}">
             <Grid>
                 <!-- DataGrid for editing key-value pairs -->
                 <DataGrid ItemsSource="{Binding Items}"
                          SelectedItem="{Binding SelectedItem}"
-                         AutoGenerateColumns="False"
-                         CanUserAddRows="False"
-                         CanUserDeleteRows="False"
-                         CanUserReorderColumns="False"
-                         CanUserSortColumns="False"
-                         GridLinesVisibility="Horizontal"
-                         HeadersVisibility="Column"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         RowBackground="Transparent"
-                         AlternatingRowBackground="{DynamicResource ControlBackgroundTertiaryBrush}"
-                         HorizontalGridLinesBrush="{DynamicResource BorderSubtleBrush}"
-                         SelectionMode="Single"
-                         SelectionUnit="FullRow">
-                    
-                    <DataGrid.Resources>
-                        <!-- Style for column headers -->
-                        <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="{DynamicResource ControlBackgroundTertiaryBrush}"/>
-                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
-                            <Setter Property="FontSize" Value="{StaticResource FontSizeXS}"/>
-                            <Setter Property="FontWeight" Value="{StaticResource FontWeightSemiBold}"/>
-                            <Setter Property="Padding" Value="12,8"/>
-                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
-                        </Style>
-                        
-                        <!-- Style for cells -->
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="Padding" Value="12,8"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
-                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                        
-                        <!-- Style for rows -->
-                        <Style TargetType="DataGridRow">
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.Resources>
-                    
+                         Style="{StaticResource EnvEditorDataGridStyle}"
+                         ColumnHeaderStyle="{StaticResource EnvEditorColumnHeaderStyle}"
+                         CellStyle="{StaticResource EnvEditorCellStyle}"
+                         RowStyle="{StaticResource EnvEditorRowStyle}">
                     <DataGrid.Columns>
                         <!-- Key Column -->
-                        <DataGridTemplateColumn Header="Key" Width="*">
+                        <DataGridTemplateColumn Header="Key" Width="2*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Key}" 
-                                              VerticalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                            <DataGridTemplateColumn.CellEditingTemplate>
-                                <DataTemplate>
-                                    <Grid>
+                                    <Grid Margin="12,6,8,6">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         <TextBox Grid.Row="0"
+                                                Style="{StaticResource EnvEditorKeyTextBoxStyle}"
                                                 Text="{Binding Key, UpdateSourceTrigger=PropertyChanged}"
-                                                BorderThickness="0"
-                                                Background="Transparent"
-                                                Margin="-2,0"/>
+                                                Tag="Key"
+                                                ToolTip="{Binding Error}"
+                                                ToolTipService.IsEnabled="{Binding HasError}"/>
                                         <TextBlock Grid.Row="1"
                                                   Text="{Binding Error}"
-                                                  FontSize="11"
-                                                  Foreground="Red"
-                                                  Margin="0,4,0,0"
+                                                  FontSize="{StaticResource FontSizeXS}"
+                                                  Foreground="{DynamicResource StatusErrorBrush}"
+                                                  Margin="2,4,0,0"
                                                   Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                     </Grid>
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        
+
                         <!-- Value Column -->
-                        <DataGridTemplateColumn Header="Value" Width="*">
+                        <DataGridTemplateColumn Header="Value" Width="3*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Value}" 
-                                              VerticalAlignment="Center"/>
+                                    <Grid Margin="12,6,8,6">
+                                        <TextBox Style="{StaticResource EnvEditorTextBoxStyle}"
+                                                Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
+                                                Tag="Value"/>
+                                    </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
-                            <DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Delete Column -->
+                        <DataGridTemplateColumn Header="" Width="44">
+                            <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}"
-                                            BorderThickness="0"
-                                            Background="Transparent"
-                                            Margin="-2,0"/>
+                                    <Button Style="{StaticResource EnvEditorIconButtonStyle}"
+                                            Command="{Binding DataContext.RemoveRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            ToolTip="Remove"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Delete24"/>
+                                    </Button>
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellEditingTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-                
+
                 <!-- Empty state message -->
-                <TextBlock Text="No environment variables defined. Click 'Add' to create one."
+                <TextBlock Text="No environment variables. Click Add to create one."
                           Foreground="{DynamicResource TextTertiaryBrush}"
                           FontSize="{StaticResource FontSizeS}"
                           HorizontalAlignment="Center"

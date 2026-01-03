@@ -882,24 +882,55 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Environment"
+                                                          FontSize="{StaticResource FontSizeXL}"
+                                                          FontWeight="{StaticResource FontWeightSemiBold}"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="Key/value pairs available to tests under this suite."
+                                                          FontSize="{StaticResource FontSizeS}"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}"
+                                                          Margin="0,4,0,0"
+                                                          TextWrapping="Wrap"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1"
+                                                       Orientation="Horizontal"
+                                                       VerticalAlignment="Top"
+                                                       HorizontalAlignment="Right">
+                                                <ui:Button Content="+ Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Remove"
+                                                          Icon="{ui:SymbolIcon Delete24}"
+                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                          Appearance="Secondary"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
-                                        
-                                        <!-- Description -->
-                                        <TextBlock Grid.Row="0"
-                                                  Text="Key/value pairs available to tests under this suite."
-                                                  FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{DynamicResource TextSecondaryBrush}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,0"/>
-                                        
+
+                                        <Border Grid.Row="0"
+                                                Height="1"
+                                                Background="{DynamicResource BorderSubtleBrush}"
+                                                Margin="0,12,0,12"/>
+
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
+                                        <ContentControl Grid.Row="1"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">
@@ -1239,24 +1270,55 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander Header="Environment" IsExpanded="True" Margin="0,0,0,16">
+                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                    <ui:CardExpander.Header>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Environment"
+                                                          FontSize="{StaticResource FontSizeXL}"
+                                                          FontWeight="{StaticResource FontWeightSemiBold}"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                <TextBlock Text="Key/value pairs available to tests under this plan."
+                                                          FontSize="{StaticResource FontSizeS}"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}"
+                                                          Margin="0,4,0,0"
+                                                          TextWrapping="Wrap"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1"
+                                                       Orientation="Horizontal"
+                                                       VerticalAlignment="Top"
+                                                       HorizontalAlignment="Right">
+                                                <ui:Button Content="+ Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Remove"
+                                                          Icon="{ui:SymbolIcon Delete24}"
+                                                          Command="{Binding EnvironmentEditor.RemoveRowCommand}"
+                                                          Appearance="Secondary"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </ui:CardExpander.Header>
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
                                             <RowDefinition Height="280"/>
                                         </Grid.RowDefinitions>
-                                        
-                                        <!-- Description -->
-                                        <TextBlock Grid.Row="0"
-                                                  Text="Key/value pairs available to tests under this plan."
-                                                  FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{DynamicResource TextSecondaryBrush}"
-                                                  TextWrapping="Wrap"
-                                                  Margin="0,0,0,0"/>
-                                        
+
+                                        <Border Grid.Row="0"
+                                                Height="1"
+                                                Background="{DynamicResource BorderSubtleBrush}"
+                                                Margin="0,12,0,12"/>
+
                                         <!-- Environment Editor Control -->
-                                        <ContentControl Grid.Row="2"
+                                        <ContentControl Grid.Row="1"
                                                        Content="{Binding EnvironmentEditor}"
                                                        HorizontalAlignment="Stretch"
                                                        VerticalAlignment="Stretch">
