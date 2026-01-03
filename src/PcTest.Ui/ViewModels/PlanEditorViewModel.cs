@@ -31,6 +31,11 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     [ObservableProperty] private string _description = string.Empty;
     [ObservableProperty] private string _tagsText = string.Empty;
 
+    // Computed property for tags as a collection
+    public List<string> Tags => string.IsNullOrWhiteSpace(TagsText)
+        ? new List<string>()
+        : TagsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
     [ObservableProperty]
     private ObservableCollection<SuiteReferenceViewModel> _suiteReferences = new();
 
@@ -65,7 +70,11 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     partial void OnNameChanged(string value) => MarkDirty();
     partial void OnVersionChanged(string value) => MarkDirty();
     partial void OnDescriptionChanged(string value) => MarkDirty();
-    partial void OnTagsTextChanged(string value) => MarkDirty();
+    partial void OnTagsTextChanged(string value)
+    {
+        MarkDirty();
+        OnPropertyChanged(nameof(Tags));
+    }
 
     public async Task LoadAsync(PlanInfo planInfo, bool isNew = false)
     {

@@ -33,6 +33,11 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     [ObservableProperty] private string _description = string.Empty;
     [ObservableProperty] private string _tagsText = string.Empty;
     
+    // Computed property for tags as a collection
+    public List<string> Tags => string.IsNullOrWhiteSpace(TagsText)
+        ? new List<string>()
+        : TagsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+    
     // Controls
     [ObservableProperty] private int _repeat = 1;
     [ObservableProperty] private int _maxParallel = 1;
@@ -71,7 +76,11 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     partial void OnNameChanged(string value) => MarkDirty();
     partial void OnVersionChanged(string value) => MarkDirty();
     partial void OnDescriptionChanged(string value) => MarkDirty();
-    partial void OnTagsTextChanged(string value) => MarkDirty();
+    partial void OnTagsTextChanged(string value)
+    {
+        MarkDirty();
+        OnPropertyChanged(nameof(Tags));
+    }
     partial void OnRepeatChanged(int value) => MarkDirty();
     partial void OnMaxParallelChanged(int value) => MarkDirty();
     partial void OnContinueOnFailureChanged(bool value) => MarkDirty();

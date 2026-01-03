@@ -202,76 +202,88 @@
                                                       TextWrapping="Wrap"
                                                       Margin="0,0,0,12"/>
                                             
-                                            <!-- ID Row -->
+                                            <!-- Description Row -->
                                             <TextBlock Grid.Row="1" Grid.Column="0" 
+                                                      Text="Description" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,12"
+                                                      VerticalAlignment="Top"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                                      Text="{Binding Description}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      TextWrapping="Wrap"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- ID Row -->
+                                            <TextBlock Grid.Row="2" Grid.Column="0" 
                                                       Text="ID" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                            <TextBlock Grid.Row="2" Grid.Column="1" 
                                                       Text="{Binding Id}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       Margin="0,0,0,12"/>
                                             
                                             <!-- Version Row -->
-                                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                            <TextBlock Grid.Row="3" Grid.Column="0" 
                                                       Text="Version" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                                            <TextBlock Grid.Row="3" Grid.Column="1" 
                                                       Text="{Binding Version}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       Margin="0,0,0,12"/>
                                             
                                             <!-- Category Row -->
-                                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                            <TextBlock Grid.Row="4" Grid.Column="0" 
                                                       Text="Category" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                            <TextBlock Grid.Row="4" Grid.Column="1" 
                                                       Text="{Binding Category}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       Margin="0,0,0,12"/>
                                             
                                             <!-- Privilege Row -->
-                                            <TextBlock Grid.Row="4" Grid.Column="0" 
+                                            <TextBlock Grid.Row="5" Grid.Column="0" 
                                                       Text="Privilege" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="4" Grid.Column="1" 
+                                            <TextBlock Grid.Row="5" Grid.Column="1" 
                                                       Text="{Binding Privilege}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       Margin="0,0,0,12"/>
                                             
                                             <!-- Timeout Row -->
-                                            <TextBlock Grid.Row="5" Grid.Column="0" 
+                                            <TextBlock Grid.Row="6" Grid.Column="0" 
                                                       Text="Timeout" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="5" Grid.Column="1" 
+                                            <TextBlock Grid.Row="6" Grid.Column="1" 
                                                       Text="{Binding TimeoutSec, StringFormat={}{0}s}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       Margin="0,0,0,12"/>
                                             
                                             <!-- Tags Row -->
-                                            <TextBlock Grid.Row="6" Grid.Column="0" 
+                                            <TextBlock Grid.Row="7" Grid.Column="0" 
                                                       Text="Tags" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
-                                            <ItemsControl Grid.Row="6" Grid.Column="1"
-                                                         ItemsSource="{Binding Tags}"
-                                                         Margin="0,0,0,12">
+                                            <ItemsControl Grid.Row="7" Grid.Column="1"
+                                                         ItemsSource="{Binding Tags}">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate>
                                                         <WrapPanel Orientation="Horizontal"/>
@@ -287,18 +299,6 @@
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
-                                            
-                                            <!-- Description Row -->
-                                            <TextBlock Grid.Row="7" Grid.Column="0" 
-                                                      Text="Description" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Row="7" Grid.Column="1" 
-                                                      Text="{Binding Description}" 
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      TextWrapping="Wrap"/>
                                         </Grid>
                                         
                                         <!-- Edit view -->
@@ -623,7 +623,7 @@
                                                   Icon="{ui:SymbolIcon Save24}" 
                                                   Command="{Binding SaveSuiteCommand}" 
                                                   Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon Checkmark24}" 
+                                        <ui:Button Icon="{ui:SymbolIcon CheckmarkCircle24}" 
                                                   Command="{Binding ValidateSuiteCommand}"
                                                   ToolTip="Validate"
                                                   Margin="0,0,8,0"/>
@@ -650,26 +650,14 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             
-                                            <!-- ID Row -->
-                                            <TextBlock Grid.Row="0" Grid.Column="0" 
-                                                      Text="ID" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="1" 
-                                                      Text="{Binding Id}" 
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            
                                             <!-- Name Row -->
-                                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                            <TextBlock Grid.Row="0" Grid.Column="0" 
                                                       Text="Name" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                            <TextBlock Grid.Row="0" Grid.Column="1" 
                                                       Text="{Binding Name}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       FontWeight="{StaticResource FontWeightSemiBold}"
@@ -677,30 +665,42 @@
                                                       TextWrapping="Wrap"
                                                       Margin="0,0,0,12"/>
                                             
-                                            <!-- Version Row -->
-                                            <TextBlock Grid.Row="2" Grid.Column="0" 
-                                                      Text="Version" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="2" Grid.Column="1" 
-                                                      Text="{Binding Version}" 
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            
                                             <!-- Description Row -->
-                                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                            <TextBlock Grid.Row="1" Grid.Column="0" 
                                                       Text="Description" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                            <TextBlock Grid.Row="1" Grid.Column="1" 
                                                       Text="{Binding Description}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       TextWrapping="Wrap"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- ID Row -->
+                                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                                      Text="ID" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                                                      Text="{Binding Id}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Version Row -->
+                                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                                      Text="Version" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                                      Text="{Binding Version}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                                       Margin="0,0,0,12"/>
                                             
                                             <!-- Tags Row -->
@@ -708,23 +708,30 @@
                                                       Text="Tags" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Row="4" Grid.Column="1" 
-                                                      Text="{Binding TagsText}" 
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      TextWrapping="Wrap"/>
+                                            <ItemsControl Grid.Row="4" Grid.Column="1"
+                                                         ItemsSource="{Binding Tags}"
+                                                         Margin="0,0,0,12">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <ui:Badge Content="{Binding}" 
+                                                                 Style="{StaticResource TagBadgeStyle}"
+                                                                 FontSize="10"
+                                                                 Padding="6,2"
+                                                                 Margin="0,0,4,4"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </Grid>
                                         
                                         <!-- Edit view -->
                                         <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <StackPanel Margin="0,0,0,16">
-                                                <TextBlock Text="ID" 
-                                                          FontSize="{StaticResource FontSizeXS}"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,0,6"/>
-                                                <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </StackPanel>
                                             <StackPanel Margin="0,0,0,16">
                                                 <TextBlock Text="Name" 
                                                           FontSize="{StaticResource FontSizeXS}"
@@ -733,18 +740,25 @@
                                                 <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                             <StackPanel Margin="0,0,0,16">
-                                                <TextBlock Text="Version" 
-                                                          FontSize="{StaticResource FontSizeXS}"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,0,6"/>
-                                                <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </StackPanel>
-                                            <StackPanel Margin="0,0,0,16">
                                                 <TextBlock Text="Description" 
                                                           FontSize="{StaticResource FontSizeXS}"
                                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                                           Margin="0,0,0,6"/>
                                                 <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="ID" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Version" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                             <StackPanel>
                                                 <TextBlock Text="Tags (comma-separated)" 
@@ -1260,7 +1274,7 @@
                                                   Icon="{ui:SymbolIcon Save24}" 
                                                   Command="{Binding SavePlanCommand}" 
                                                   Margin="0,0,8,0"/>
-                                        <ui:Button Icon="{ui:SymbolIcon Checkmark24}" 
+                                        <ui:Button Icon="{ui:SymbolIcon CheckmarkCircle24}" 
                                                   Command="{Binding ValidatePlanCommand}"
                                                   ToolTip="Validate"
                                                   Margin="0,0,8,0"/>
@@ -1287,26 +1301,14 @@
                                                 <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
                                             
-                                            <!-- ID Row -->
-                                            <TextBlock Grid.Row="0" Grid.Column="0" 
-                                                      Text="ID" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="0" Grid.Column="1" 
-                                                      Text="{Binding Id}" 
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            
                                             <!-- Name Row -->
-                                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                            <TextBlock Grid.Row="0" Grid.Column="0" 
                                                       Text="Name" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Row="1" Grid.Column="1" 
+                                            <TextBlock Grid.Row="0" Grid.Column="1" 
                                                       Text="{Binding Name}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       FontWeight="{StaticResource FontWeightSemiBold}"
@@ -1314,30 +1316,42 @@
                                                       TextWrapping="Wrap"
                                                       Margin="0,0,0,12"/>
                                             
-                                            <!-- Version Row -->
-                                            <TextBlock Grid.Row="2" Grid.Column="0" 
-                                                      Text="Version" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            <TextBlock Grid.Row="2" Grid.Column="1" 
-                                                      Text="{Binding Version}" 
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      Margin="0,0,0,12"/>
-                                            
                                             <!-- Description Row -->
-                                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                            <TextBlock Grid.Row="1" Grid.Column="0" 
                                                       Text="Description" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                            <TextBlock Grid.Row="1" Grid.Column="1" 
                                                       Text="{Binding Description}" 
                                                       FontSize="{StaticResource FontSizeM}"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       TextWrapping="Wrap"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- ID Row -->
+                                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                                      Text="ID" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="2" Grid.Column="1" 
+                                                      Text="{Binding Id}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            
+                                            <!-- Version Row -->
+                                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                                      Text="Version" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,12"/>
+                                            <TextBlock Grid.Row="3" Grid.Column="1" 
+                                                      Text="{Binding Version}" 
+                                                      FontSize="{StaticResource FontSizeM}"
+                                                      Foreground="{DynamicResource TextPrimaryBrush}"
                                                       Margin="0,0,0,12"/>
                                             
                                             <!-- Tags Row -->
@@ -1345,23 +1359,30 @@
                                                       Text="Tags" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
-                                            <TextBlock Grid.Row="4" Grid.Column="1" 
-                                                      Text="{Binding TagsText}" 
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      TextWrapping="Wrap"/>
+                                            <ItemsControl Grid.Row="4" Grid.Column="1"
+                                                         ItemsSource="{Binding Tags}"
+                                                         Margin="0,0,0,12">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel Orientation="Horizontal"/>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <ui:Badge Content="{Binding}" 
+                                                                 Style="{StaticResource TagBadgeStyle}"
+                                                                 FontSize="10"
+                                                                 Padding="6,2"
+                                                                 Margin="0,0,4,4"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </Grid>
                                         
                                         <!-- Edit view -->
                                         <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <StackPanel Margin="0,0,0,16">
-                                                <TextBlock Text="ID" 
-                                                          FontSize="{StaticResource FontSizeXS}"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,0,6"/>
-                                                <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </StackPanel>
                                             <StackPanel Margin="0,0,0,16">
                                                 <TextBlock Text="Name" 
                                                           FontSize="{StaticResource FontSizeXS}"
@@ -1370,18 +1391,25 @@
                                                 <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                             <StackPanel Margin="0,0,0,16">
-                                                <TextBlock Text="Version" 
-                                                          FontSize="{StaticResource FontSizeXS}"
-                                                          Foreground="{DynamicResource TextTertiaryBrush}"
-                                                          Margin="0,0,0,6"/>
-                                                <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
-                                            </StackPanel>
-                                            <StackPanel Margin="0,0,0,16">
                                                 <TextBlock Text="Description" 
                                                           FontSize="{StaticResource FontSizeXS}"
                                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                                           Margin="0,0,0,6"/>
                                                 <ui:TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="ID" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
+                                            </StackPanel>
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Version" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,0,0,6"/>
+                                                <ui:TextBox Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}"/>
                                             </StackPanel>
                                             <StackPanel>
                                                 <TextBlock Text="Tags (comma-separated)" 
