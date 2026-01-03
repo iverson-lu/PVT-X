@@ -142,6 +142,10 @@ public sealed class SuiteOrchestrator
             var continueOnFailure = controls.ContinueOnFailure;
             var retryOnError = Math.Max(0, controls.RetryOnError);
 
+            // Flag to stop the entire pipeline (both repeat iterations and test case nodes)
+            // when continueOnFailure=false and a non-Passed status occurs
+            var shouldStopPipeline = false;
+
             // Report planned nodes (only report once for first iteration)
             // When under a plan, report with parent suite information for nested display
             var plannedNodes = new List<PlannedNode>();
@@ -164,6 +168,10 @@ public sealed class SuiteOrchestrator
 
             for (var iteration = 0; iteration < repeat; iteration++)
             {
+                // Check if pipeline should stop (continueOnFailure=false and a test failed)
+                if (shouldStopPipeline)
+                    break;
+
                 foreach (var node in suite.Manifest.TestCases)
                 {
                     if (_cancellationToken.IsCancellationRequested)
@@ -200,7 +208,10 @@ public sealed class SuiteOrchestrator
                             });
 
                         if (!continueOnFailure)
+                        {
+                            shouldStopPipeline = true;
                             break;
+                        }
                         continue;
                     }
 
@@ -232,7 +243,10 @@ public sealed class SuiteOrchestrator
                             });
 
                         if (!continueOnFailure)
+                        {
+                            shouldStopPipeline = true;
                             break;
+                        }
                         continue;
                     }
 
@@ -427,7 +441,10 @@ public sealed class SuiteOrchestrator
 
                             // Check continue on failure
                             if (!continueOnFailure && nodeResult.Status != RunStatus.Passed)
+                            {
+                                shouldStopPipeline = true;
                                 break;
+                            }
                         }
                     }
                     catch (Exception nodeEx)
@@ -483,7 +500,10 @@ public sealed class SuiteOrchestrator
 
                         // Check continue on failure
                         if (!continueOnFailure)
+                        {
+                            shouldStopPipeline = true;
                             break;
+                        }
                     }
                 }
 

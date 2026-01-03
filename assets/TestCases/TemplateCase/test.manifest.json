@@ -14,9 +14,10 @@
   "parameters": [
     {
       "name": "TestMode", 
-      "type": "string",
+      "type": "enum",
       "required": true,
       "default": "pass",
+      "enumValues": ["pass", "fail", "timeout", "error"],
       "help": "Controls outcome: pass|fail|timeout|error"
     }
   ],
