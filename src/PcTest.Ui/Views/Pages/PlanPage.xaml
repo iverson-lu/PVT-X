@@ -633,8 +633,8 @@
                                     </StackPanel>
                                 </Grid>
                                 
-                                <!-- Metadata -->
-                                <ui:CardExpander Header="Metadata" IsExpanded="True" Margin="0,0,0,16">
+                                <!-- Basic Information -->
+                                <ui:CardExpander Header="Basic Information" IsExpanded="True" Margin="0,0,0,16">
                                     <StackPanel>
                                         <!-- Read-only view -->
                                         <Grid Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVisibilityConverter}}">
@@ -708,11 +708,9 @@
                                                       Text="Tags" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
                                             <ItemsControl Grid.Row="4" Grid.Column="1"
-                                                         ItemsSource="{Binding Tags}"
-                                                         Margin="0,0,0,12">
+                                                         ItemsSource="{Binding Tags}">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate>
                                                         <WrapPanel Orientation="Horizontal"/>
@@ -769,42 +767,6 @@
                                             </StackPanel>
                                         </StackPanel>
                                     </StackPanel>
-                                </ui:CardExpander>
-                                
-                                <!-- Controls -->
-                                <ui:CardExpander Header="Execution Controls" IsExpanded="False" Margin="0,0,0,16">
-                                    <Grid IsEnabled="{Binding IsEditing}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="16"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        
-                                        <StackPanel Grid.Row="0" Grid.Column="0">
-                                            <TextBlock Text="Repeat Count" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:NumberBox Value="{Binding Repeat}" Minimum="1" Maximum="100"/>
-                                        </StackPanel>
-                                        
-                                        <StackPanel Grid.Row="0" Grid.Column="2">
-                                            <TextBlock Text="Retry on Error" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:NumberBox Value="{Binding RetryOnError}" Minimum="0" Maximum="10"/>
-                                        </StackPanel>
-                                        
-                                        <CheckBox Grid.Row="2" Grid.Column="0" 
-                                                 Content="Continue on Failure" 
-                                                 IsChecked="{Binding ContinueOnFailure}"/>
-                                    </Grid>
                                 </ui:CardExpander>
                                 
                                 <!-- Test Flow -->
@@ -1047,7 +1009,7 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                <ui:CardExpander IsExpanded="False" Margin="0,0,0,16">
                                     <ui:CardExpander.Header>
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -1084,6 +1046,42 @@
                                                 </DataTemplate>
                                             </ContentControl.ContentTemplate>
                                         </ContentControl>
+                                    </Grid>
+                                </ui:CardExpander>
+                                
+                                <!-- Controls -->
+                                <ui:CardExpander Header="Execution Controls" IsExpanded="False" Margin="0,0,0,16">
+                                    <Grid IsEnabled="{Binding IsEditing}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="16"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <StackPanel Grid.Row="0" Grid.Column="0">
+                                            <TextBlock Text="Repeat Count" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,6"/>
+                                            <ui:NumberBox Value="{Binding Repeat}" Minimum="1" Maximum="100"/>
+                                        </StackPanel>
+                                        
+                                        <StackPanel Grid.Row="0" Grid.Column="2">
+                                            <TextBlock Text="Retry on Error" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,6"/>
+                                            <ui:NumberBox Value="{Binding RetryOnError}" Minimum="0" Maximum="10"/>
+                                        </StackPanel>
+                                        
+                                        <CheckBox Grid.Row="2" Grid.Column="0" 
+                                                 Content="Continue on Failure" 
+                                                 IsChecked="{Binding ContinueOnFailure}"/>
                                     </Grid>
                                 </ui:CardExpander>
                             </StackPanel>
@@ -1284,8 +1282,8 @@
                                     </StackPanel>
                                 </Grid>
                                 
-                                <!-- Metadata -->
-                                <ui:CardExpander Header="Metadata" IsExpanded="True" Margin="0,0,0,16">
+                                <!-- Basic Information -->
+                                <ui:CardExpander Header="Basic Information" IsExpanded="True" Margin="0,0,0,16">
                                     <StackPanel>
                                         <!-- Read-only view -->
                                         <Grid Visibility="{Binding IsEditing, Converter={StaticResource InverseBoolToVisibilityConverter}}">
@@ -1359,11 +1357,9 @@
                                                       Text="Tags" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,12"
                                                       VerticalAlignment="Top"/>
                                             <ItemsControl Grid.Row="4" Grid.Column="1"
-                                                         ItemsSource="{Binding Tags}"
-                                                         Margin="0,0,0,12">
+                                                         ItemsSource="{Binding Tags}">
                                                 <ItemsControl.ItemsPanel>
                                                     <ItemsPanelTemplate>
                                                         <WrapPanel Orientation="Horizontal"/>
@@ -1516,7 +1512,7 @@
                                 </ui:CardExpander>
                                 
                                 <!-- Environment -->
-                                <ui:CardExpander IsExpanded="True" Margin="0,0,0,16">
+                                <ui:CardExpander IsExpanded="False" Margin="0,0,0,16">
                                     <ui:CardExpander.Header>
                                         <Grid>
                                             <Grid.ColumnDefinitions>

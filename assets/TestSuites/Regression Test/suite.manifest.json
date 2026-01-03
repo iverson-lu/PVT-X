@@ -9,9 +9,9 @@
     "retest"
   ],
   "controls": {
-    "repeat": 1,
+    "repeat": 2,
     "maxParallel": 1,
-    "continueOnFailure": false,
+    "continueOnFailure": true,
     "retryOnError": 0,
     "timeoutPolicy": "AbortOnTimeout"
   },
@@ -38,20 +38,20 @@
       }
     },
     {
-      "nodeId": "NetworkPingConnectivity",
-      "ref": "NetworkPingConnectivity",
-      "inputs": {
-        "TargetAddress": "www.microsoft.com",
-        "MaxReplyTimeMs": "0"
-      }
-    },
-    {
       "nodeId": "EventViewerCheck",
       "ref": "EventViewerCheck",
       "inputs": {
         "EventCount": "100",
         "ProhibitedLevel": "Error",
         "LogName": "System"
+      }
+    },
+    {
+      "nodeId": "NetworkPingConnectivity",
+      "ref": "NetworkPingConnectivity",
+      "inputs": {
+        "TargetAddress": "www.microsoft.com",
+        "MaxReplyTimeMs": "0"
       }
     }
   ]
