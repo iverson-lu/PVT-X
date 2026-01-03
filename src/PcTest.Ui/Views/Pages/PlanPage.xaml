@@ -663,7 +663,7 @@
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       VerticalAlignment="Center"/>
                                             
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,32,0">
                                                 <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
                                                           Command="{Binding MoveNodeUpCommand}"
                                                           ToolTip="Move Up"
@@ -917,16 +917,17 @@
                                             <StackPanel Grid.Column="1"
                                                        Orientation="Horizontal"
                                                        VerticalAlignment="Top"
-                                                       HorizontalAlignment="Right">
-                                                <ui:Button Content="Add"
-                                                          Icon="{ui:SymbolIcon Add24}"
-                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
-                                                          Appearance="Primary"
-                                                          Margin="0,0,8,0"/>
+                                                       HorizontalAlignment="Right"
+                                                       Margin="0,0,32,0">
                                                 <ui:Button Content="Remove"
                                                           Icon="{ui:SymbolIcon Delete24}"
                                                           Command="{Binding EnvironmentEditor.RemoveRowCommand}"
-                                                          Appearance="Secondary"/>
+                                                          Appearance="Secondary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"/>
                                             </StackPanel>
                                         </Grid>
                                     </ui:CardExpander.Header>
@@ -1209,7 +1210,7 @@
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       VerticalAlignment="Center"/>
                                             
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,32,0">
                                                 <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
                                                           Command="{Binding MoveSuiteReferenceUpCommand}"
                                                           ToolTip="Move Up"
@@ -1317,16 +1318,17 @@
                                             <StackPanel Grid.Column="1"
                                                        Orientation="Horizontal"
                                                        VerticalAlignment="Top"
-                                                       HorizontalAlignment="Right">
-                                                <ui:Button Content="Add"
-                                                          Icon="{ui:SymbolIcon Add24}"
-                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
-                                                          Appearance="Primary"
-                                                          Margin="0,0,8,0"/>
+                                                       HorizontalAlignment="Right"
+                                                       Margin="0,0,32,0">
                                                 <ui:Button Content="Remove"
                                                           Icon="{ui:SymbolIcon Delete24}"
                                                           Command="{Binding EnvironmentEditor.RemoveRowCommand}"
-                                                          Appearance="Secondary"/>
+                                                          Appearance="Secondary"
+                                                          Margin="0,0,8,0"/>
+                                                <ui:Button Content="Add"
+                                                          Icon="{ui:SymbolIcon Add24}"
+                                                          Command="{Binding EnvironmentEditor.AddRowCommand}"
+                                                          Appearance="Primary"/>
                                             </StackPanel>
                                         </Grid>
                                     </ui:CardExpander.Header>
