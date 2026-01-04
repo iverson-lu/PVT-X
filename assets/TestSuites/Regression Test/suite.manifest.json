@@ -1,35 +1,21 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "RegressionTest",
-  "name": "Regression Test",
-  "description": "New test suite",
+  "id": "SmokeTest",
+  "name": "Smoke Test",
+  "description": "Sample smoke test suite",
   "version": "1.0.0",
   "tags": [
-    "regression",
-    "retest"
+    "smoke",
+    "sanity"
   ],
   "controls": {
-    "repeat": 2,
+    "repeat": 1,
     "maxParallel": 1,
-    "continueOnFailure": true,
+    "continueOnFailure": false,
     "retryOnError": 0,
     "timeoutPolicy": "AbortOnTimeout"
   },
   "testCases": [
-    {
-      "nodeId": "CameraVerify",
-      "ref": "CameraVerify",
-      "inputs": {
-        "MinExpectedCount": "1"
-      }
-    },
-    {
-      "nodeId": "WindowsUpdateHistoryVerify",
-      "ref": "WindowsUpdateHistoryVerify",
-      "inputs": {
-        "MinExpectedCount": "1"
-      }
-    },
     {
       "nodeId": "TimezoneCheck",
       "ref": "TimezoneCheck",
@@ -38,20 +24,17 @@
       }
     },
     {
-      "nodeId": "EventViewerCheck",
-      "ref": "EventViewerCheck",
+      "nodeId": "DeviceHealthCheck",
+      "ref": "DeviceHealthCheck",
       "inputs": {
-        "EventCount": "100",
-        "ProhibitedLevel": "Error",
-        "LogName": "System"
+        "RestrictedMode": false
       }
     },
     {
-      "nodeId": "NetworkPingConnectivity",
-      "ref": "NetworkPingConnectivity",
+      "nodeId": "CameraVerify",
+      "ref": "CameraVerify",
       "inputs": {
-        "TargetAddress": "www.microsoft.com",
-        "MaxReplyTimeMs": "0"
+        "MinExpectedCount": "1"
       }
     }
   ]

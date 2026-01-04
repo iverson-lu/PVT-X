@@ -17,13 +17,6 @@
   },
   "testCases": [
     {
-      "nodeId": "memory-check",
-      "ref": "MemoryCheck",
-      "inputs": {
-        "MinMemoryMB": "50"
-      }
-    },
-    {
       "nodeId": "SystemInfoVerification",
       "ref": "SystemInfoVerification",
       "inputs": {

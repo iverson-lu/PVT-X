@@ -1,97 +1,240 @@
 param(
-    [Parameter(Mandatory = $false)][string] $VersionContains
+    [Parameter(Mandatory=$false)] [string] $VersionContains = ""
 )
 
-# Removes the surrounding quotes injected by the runner so comparisons use the raw string.
-function Normalize-QuotedString {
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+# ----------------------------
+# Helpers
+# ----------------------------
+function Ensure-Dir([string] $Path) {
+    if (-not (Test-Path -LiteralPath $Path)) {
+        New-Item -ItemType Directory -Path $Path -Force | Out-Null
+    }
+}
+
+function Write-JsonFile([string] $Path, $Obj) {
+    $Obj | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $Path -Encoding UTF8
+}
+
+function Normalize-Text([string] $s) {
+    if ($null -eq $s) { return "" }
+    $t = $s.Trim()
+    while (($t.StartsWith('"') -and $t.EndsWith('"')) -or ($t.StartsWith("'") -and $t.EndsWith("'"))) {
+        if ($t.Length -lt 2) { break }
+        $t = $t.Substring(1, $t.Length - 2).Trim()
+    }
+    return $t
+}
+
+function Write-Stdout-Compact {
     param(
-        [string] $Value
+        [string]   $TestName,
+        [string]   $Overall,
+        [int]      $ExitCode,
+        [string]   $TsUtc,
+        [string]   $StepLine,
+        [string[]] $StepDetails,
+        [int]      $Total,
+        [int]      $Passed,
+        [int]      $Failed,
+        [int]      $Skipped
     )
 
-    if ([string]::IsNullOrWhiteSpace($Value)) {
-        return $Value
-    }
-
-    $trimmed = $Value.Trim()
-
-    if ($trimmed.Length -ge 2 -and $trimmed.StartsWith("'") -and $trimmed.EndsWith("'")) {
-        $inner = $trimmed.Substring(1, $trimmed.Length - 2)
-        return $inner.Replace("''", "'")
-    }
-
-    if ($trimmed.Length -ge 2 -and $trimmed.StartsWith('"') -and $trimmed.EndsWith('"')) {
-        $inner = $trimmed.Substring(1, $trimmed.Length - 2)
-        return $inner.Replace('`"', '"')
-    }
-
-    return $trimmed
+    Write-Output "=================================================="
+    Write-Output ("TEST: {0}  RESULT: {1}  EXIT: {2}" -f $TestName, $Overall, $ExitCode)
+    Write-Output ("UTC:  {0}" -f $TsUtc)
+    Write-Output "--------------------------------------------------"
+    Write-Output $StepLine
+    foreach ($d in $StepDetails) { Write-Output ("      " + $d) }
+    Write-Output "--------------------------------------------------"
+    Write-Output ("SUMMARY: total={0} passed={1} failed={2} skipped={3}" -f $Total, $Passed, $Failed, $Skipped)
+    Write-Output "=================================================="
+    Write-Output ("MACHINE: overall={0} exit_code={1}" -f $Overall, $ExitCode)
 }
 
-$VersionContains = Normalize-QuotedString -Value $VersionContains
+# ----------------------------
+# Metadata
+# ----------------------------
+$TestId = "BiosVersionCheck"
+$TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
-$biosInfo = $null
-$biosVersion = ""
-$biosManufacturer = ""
-$biosReleaseDate = ""
-$failures = @()
+# Normalize parameters
+$VersionContains = Normalize-Text $VersionContains
+
+# Artifacts
+$ArtifactsRoot = Join-Path (Get-Location) "artifacts"
+Ensure-Dir $ArtifactsRoot
+$ReportPath = Join-Path $ArtifactsRoot "report.json"
+
+# Defaults
+$overallStatus = "FAIL"
+$exitCode = 2
+
+# Step definition
+$step = @{
+    id      = "check_bios_version"
+    index   = 1
+    name    = "Check BIOS version"
+    status  = "FAIL"
+    expected = @{
+        bios_info_available = $true
+        version_contains = if ([string]::IsNullOrWhiteSpace($VersionContains)) { $null } else { $VersionContains }
+    }
+    actual = @{
+        bios_version = $null
+        manufacturer = $null
+        release_date = $null
+        serial_number = $null
+    }
+    metrics = @{}
+    message = $null
+    timing = @{ duration_ms = $null }
+    error = $null
+}
+
+# Timers
+$swTotal = [System.Diagnostics.Stopwatch]::StartNew()
+$swStep = $null
 
 try {
+    $swStep = [System.Diagnostics.Stopwatch]::StartNew()
+
+    # Query BIOS information
     $bios = Get-CimInstance -ClassName Win32_BIOS -ErrorAction Stop
     
-    if ($bios) {
-        $biosVersion = $bios.SMBIOSBIOSVersion
-        $biosManufacturer = $bios.Manufacturer
-        $biosReleaseDate = $bios.ReleaseDate
-        
-        $biosInfo = [ordered]@{
-            Version = $biosVersion
-            Manufacturer = $biosManufacturer
-            ReleaseDate = if ($biosReleaseDate) { $biosReleaseDate.ToString("yyyy-MM-dd") } else { "" }
-            SerialNumber = $bios.SerialNumber
+    if (-not $bios) {
+        throw "Unable to retrieve BIOS information"
+    }
+
+    $biosVersion = $bios.SMBIOSBIOSVersion
+    $biosManufacturer = $bios.Manufacturer
+    $biosReleaseDate = $bios.ReleaseDate
+    $biosSerialNumber = $bios.SerialNumber
+
+    $step.actual.bios_version = $biosVersion
+    $step.actual.manufacturer = $biosManufacturer
+    $step.actual.serial_number = $biosSerialNumber
+    
+    if ($biosReleaseDate) {
+        $step.actual.release_date = $biosReleaseDate.ToString("yyyy-MM-dd")
+    }
+
+    # Metrics
+    $step.metrics.bios_version = $biosVersion
+    $step.metrics.manufacturer = $biosManufacturer
+
+    # Validation
+    if ([string]::IsNullOrWhiteSpace($biosVersion)) {
+        throw "BIOS version could not be determined"
+    }
+
+    # Check version contains if specified
+    if (-not [string]::IsNullOrWhiteSpace($VersionContains)) {
+        if ($biosVersion -notmatch [regex]::Escape($VersionContains)) {
+            $step.status = "FAIL"
+            $step.message = "BIOS version does not contain required string"
+            $exitCode = 1
         }
-    } else {
-        $failures += "Unable to retrieve BIOS information."
+        else {
+            $step.status = "PASS"
+            $exitCode = 0
+        }
     }
-} catch {
-    $failures += "Error querying BIOS information: $($_.Exception.Message)"
-    Write-Host "Error: $($_.Exception.Message)"
-}
-
-Write-Host "BIOS Information:"
-Write-Host "  Manufacturer: $biosManufacturer"
-Write-Host "  Version: $biosVersion"
-Write-Host "  Release Date: $($biosInfo.ReleaseDate)"
-Write-Host ""
-
-if ([string]::IsNullOrWhiteSpace($biosVersion)) {
-    $failures += "BIOS version could not be determined."
-} elseif (-not [string]::IsNullOrWhiteSpace($VersionContains)) {
-    $escaped = [regex]::Escape($VersionContains)
-    if ($biosVersion -notmatch $escaped) {
-        $failures += "BIOS version '$biosVersion' does not contain '$VersionContains'."
-    } else {
-        Write-Host "✓ BIOS version contains required string: '$VersionContains'"
+    else {
+        # No validation required, just report BIOS info
+        $step.status = "PASS"
+        $exitCode = 0
     }
-}
 
-New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
-$report = [ordered]@{
-    versionContains = $VersionContains
-    biosInfo = $biosInfo
-    failures = $failures
+    $overallStatus = ($exitCode -eq 0) ? "PASS" : "FAIL"
 }
-$report | ConvertTo-Json -Depth 4 | Set-Content -Path "artifacts/bios-check.json"
-
-if ($failures.Count -gt 0) {
-    Write-Host ""
-    Write-Host "Result: FAIL"
-    foreach ($failure in $failures) {
-        Write-Host "  ✗ $failure"
+catch {
+    $overallStatus = "FAIL"
+    $step.status = "FAIL"
+    $step.message = "Script error: $($_.Exception.Message)"
+    $step.error = @{
+        kind = "SCRIPT"
+        code = "SCRIPT_ERROR"
+        message = $_.Exception.Message
+        exception_type = $_.Exception.GetType().FullName
+        stack = $_.ScriptStackTrace
     }
-    exit 1
+    $exitCode = 2
 }
+finally {
+    if ($swStep -ne $null) {
+        $swStep.Stop()
+        $step.timing.duration_ms = [int]$swStep.ElapsedMilliseconds
+    }
+    $swTotal.Stop()
+    $totalMs = [int]$swTotal.ElapsedMilliseconds
 
-Write-Host ""
-Write-Host "Result: PASS"
-Write-Host "  ✓ BIOS version validated successfully."
-exit 0
+    $passCount = ($step.status -eq "PASS") ? 1 : 0
+    $failCount = ($step.status -eq "FAIL") ? 1 : 0
+    $skipCount = ($step.status -eq "SKIP") ? 1 : 0
+
+    # ----------------------------
+    # report.json
+    # ----------------------------
+    $report = @{
+        schema = @{ version = "1.0" }
+        test = @{
+            id = $TestId
+            name = $TestId
+            params = @{
+                version_contains = $VersionContains
+            }
+        }
+        summary = @{
+            status = $overallStatus
+            exit_code = $exitCode
+            counts = @{
+                total = 1
+                pass = $passCount
+                fail = $failCount
+                skip = $skipCount
+            }
+            duration_ms = $totalMs
+        }
+        steps = @($step)
+    }
+
+    Write-JsonFile $ReportPath $report
+
+    # ----------------------------
+    # stdout
+    # ----------------------------
+    $dotCount = [Math]::Max(3, 30 - $step.name.Length)
+    $stepLine = "[1/1] {0} {1} {2}" -f $step.name, ("." * $dotCount), $step.status
+
+    $details = New-Object System.Collections.Generic.List[string]
+    if ($step.status -eq "PASS") {
+        $d = "version='$($step.actual.bios_version)' manufacturer='$($step.actual.manufacturer)'"
+        if ($step.actual.release_date) { $d += " date=$($step.actual.release_date)" }
+        $details.Add($d)
+        if (-not [string]::IsNullOrWhiteSpace($VersionContains)) {
+            $details.Add("validation: version contains '$VersionContains'")
+        }
+    }
+    else {
+        if ($step.message) { $details.Add("reason: $($step.message)") }
+        $details.Add("expected: version_contains='$VersionContains'")
+        $details.Add("actual:   version='$($step.actual.bios_version)'")
+    }
+
+    Write-Stdout-Compact `
+        -TestName $TestId `
+        -Overall $overallStatus `
+        -ExitCode $exitCode `
+        -TsUtc $TsUtc `
+        -StepLine $stepLine `
+        -StepDetails $details.ToArray() `
+        -Total 1 `
+        -Passed $passCount `
+        -Failed $failCount `
+        -Skipped $skipCount
+
+    exit $exitCode
+}

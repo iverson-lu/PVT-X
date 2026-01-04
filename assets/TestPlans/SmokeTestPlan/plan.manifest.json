@@ -5,7 +5,7 @@
   "description": "New test plan",
   "version": "1.0.0",
   "suites": [
-    "RepeatTest@1.0.0",
-    "ThermalSuite@1.0.0"
+    "TestEnv@1.0.0",
+    "SmokeTest@1.0.0"
   ]
 }

@@ -1,53 +1,86 @@
 param(
-    [Parameter(Mandatory = $false)][string] $EventCount = "100",
-    [Parameter(Mandatory = $false)][string] $ProhibitedLevel = "Error",
-    [Parameter(Mandatory = $false)][string] $LogName = "System"
+    [Parameter(Mandatory = $false)]
+    [int] $EventCount = 100,
+
+    [Parameter(Mandatory = $false)]
+    [string] $ProhibitedLevel = "Error",
+
+    [Parameter(Mandatory = $false)]
+    [string] $LogName = "System"
 )
 
-# Removes the surrounding quotes injected by the runner so comparisons use the raw string.
-function Normalize-QuotedString {
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+# ----------------------------
+# Helpers
+# ----------------------------
+function Ensure-Dir([string] $Path) {
+    if (-not (Test-Path -LiteralPath $Path)) {
+        New-Item -ItemType Directory -Path $Path -Force | Out-Null
+    }
+}
+
+function Write-JsonFile([string] $Path, $Obj) {
+    $Obj | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $Path -Encoding UTF8
+}
+
+function Normalize-Text([string] $s) {
+    if ($null -eq $s) { return "" }
+    $t = $s.Trim()
+    while (($t.StartsWith('"') -and $t.EndsWith('"')) -or ($t.StartsWith("'") -and $t.EndsWith("'"))) {
+        if ($t.Length -lt 2) { break }
+        $t = $t.Substring(1, $t.Length - 2).Trim()
+    }
+    return $t
+}
+
+function Write-Stdout-Compact {
     param(
-        [string] $Value
+        [string]   $TestName,
+        [string]   $Overall,
+        [int]      $ExitCode,
+        [string]   $TsUtc,
+        [string]   $StepLine,
+        [string[]] $StepDetails,
+        [int]      $Total,
+        [int]      $Passed,
+        [int]      $Failed,
+        [int]      $Skipped
     )
 
-    if ([string]::IsNullOrWhiteSpace($Value)) {
-        return $Value
-    }
-
-    $trimmed = $Value.Trim()
-
-    if ($trimmed.Length -ge 2 -and $trimmed.StartsWith("'") -and $trimmed.EndsWith("'")) {
-        $inner = $trimmed.Substring(1, $trimmed.Length - 2)
-        return $inner.Replace("''", "'")
-    }
-
-    if ($trimmed.Length -ge 2 -and $trimmed.StartsWith('"') -and $trimmed.EndsWith('"')) {
-        $inner = $trimmed.Substring(1, $trimmed.Length - 2)
-        return $inner.Replace('`"', '"')
-    }
-
-    return $trimmed
+    Write-Output "=================================================="
+    Write-Output ("TEST: {0}  RESULT: {1}  EXIT: {2}" -f $TestName, $Overall, $ExitCode)
+    Write-Output ("UTC:  {0}" -f $TsUtc)
+    Write-Output "--------------------------------------------------"
+    Write-Output $StepLine
+    foreach ($d in $StepDetails) { Write-Output ("      " + $d) }
+    Write-Output "--------------------------------------------------"
+    Write-Output ("SUMMARY: total={0} passed={1} failed={2} skipped={3}" -f $Total, $Passed, $Failed, $Skipped)
+    Write-Output "=================================================="
+    Write-Output ("MACHINE: overall={0} exit_code={1}" -f $Overall, $ExitCode)
 }
+
+# ----------------------------
+# Metadata
+# ----------------------------
+$TestId = "EventViewerCheck"
+$TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize parameters
-$EventCount = Normalize-QuotedString -Value $EventCount
-$ProhibitedLevel = Normalize-QuotedString -Value $ProhibitedLevel
-$LogName = Normalize-QuotedString -Value $LogName
+$ProhibitedLevel = Normalize-Text $ProhibitedLevel
+$LogName = Normalize-Text $LogName
 
-# Convert EventCount to integer
-try {
-    $EventCountInt = [int]$EventCount
-    if ($EventCountInt -le 0) {
-        Write-Host "Error: EventCount must be a positive integer."
-        exit 1
-    }
-} catch {
-    Write-Host "Error: EventCount '$EventCount' is not a valid integer."
-    exit 1
-}
+# Artifacts
+$ArtifactsRoot = Join-Path (Get-Location) "artifacts"
+Ensure-Dir $ArtifactsRoot
+$ReportPath = Join-Path $ArtifactsRoot "report.json"
+
+# Defaults
+$overallStatus = "FAIL"
+$exitCode = 2
 
 # Map level string to level integer
-# https://docs.microsoft.com/en-us/windows/win32/eventlog/event-levels
 $levelMap = @{
     "Critical" = 1
     "Error" = 2
@@ -56,109 +89,195 @@ $levelMap = @{
     "Verbose" = 5
 }
 
-$prohibitedLevelInt = $null
-if ($levelMap.ContainsKey($ProhibitedLevel)) {
-    $prohibitedLevelInt = $levelMap[$ProhibitedLevel]
-} else {
-    Write-Host "Error: Invalid ProhibitedLevel '$ProhibitedLevel'. Valid values are: Critical, Error, Warning, Information, Verbose"
-    exit 1
+# Step definition
+$step = @{
+    id      = "check_event_log"
+    index   = 1
+    name    = "Check Event Viewer for prohibited level"
+    status  = "FAIL"
+    expected = @{
+        prohibited_count = 0
+        log_accessible = $true
+    }
+    actual = @{
+        log_name = $LogName
+        total_checked = 0
+        prohibited_count = 0
+        prohibited_level = $ProhibitedLevel
+        prohibited_events = @()
+    }
+    metrics = @{}
+    message = $null
+    timing = @{ duration_ms = $null }
+    error = $null
 }
 
-Write-Host "Event Viewer Level Check"
-Write-Host "  Log Name: $LogName"
-Write-Host "  Event Count: $EventCountInt"
-Write-Host "  Prohibited Level: $ProhibitedLevel (Level $prohibitedLevelInt)"
-Write-Host ""
-
-$allEvents = @()
-$prohibitedEvents = @()
+# Timers
+$swTotal = [System.Diagnostics.Stopwatch]::StartNew()
+$swStep = $null
 
 try {
-    Write-Host "Retrieving the most recent $EventCountInt events from '$LogName' log..."
+    # Validate EventCount
+    if ($EventCount -le 0) {
+        throw "EventCount must be a positive integer"
+    }
+
+    # Validate ProhibitedLevel
+    if (-not $levelMap.ContainsKey($ProhibitedLevel)) {
+        $validLevels = $levelMap.Keys -join ", "
+        throw "Invalid ProhibitedLevel '$ProhibitedLevel'. Valid values are: $validLevels"
+    }
+
+    $prohibitedLevelInt = $levelMap[$ProhibitedLevel]
     
-    # Get events from the specified log
-    $events = Get-WinEvent -LogName $LogName -MaxEvents $EventCountInt -ErrorAction Stop
+    $swStep = [System.Diagnostics.Stopwatch]::StartNew()
+
+    # Query Event Viewer
+    $events = Get-WinEvent -LogName $LogName -MaxEvents $EventCount -ErrorAction Stop
     
-    Write-Host "Retrieved $($events.Count) events."
-    Write-Host ""
+    $allEvents = @()
+    $prohibitedEvents = @()
     
     foreach ($event in $events) {
         $eventInfo = [ordered]@{
-            TimeCreated = $event.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss")
-            Level = $event.Level
-            LevelDisplayName = $event.LevelDisplayName
-            Id = $event.Id
-            ProviderName = $event.ProviderName
-            Message = if ($event.Message) { $event.Message.Substring(0, [Math]::Min(200, $event.Message.Length)) } else { "" }
+            time_created = $event.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss")
+            level = $event.Level
+            level_name = $event.LevelDisplayName
+            id = $event.Id
+            provider = $event.ProviderName
+            message = if ($event.Message) { $event.Message.Substring(0, [Math]::Min(200, $event.Message.Length)) } else { "" }
         }
         
         $allEvents += $eventInfo
         
-        # Check if this event has the prohibited level
         if ($event.Level -eq $prohibitedLevelInt) {
             $prohibitedEvents += $eventInfo
         }
     }
-} catch {
-    Write-Host "Error querying Event Viewer: $_"
-    Write-Host ""
-    Write-Host "Common causes:"
-    Write-Host "  - Log name '$LogName' does not exist"
-    Write-Host "  - Insufficient permissions to access the log"
-    Write-Host "  - The log is empty"
-    exit 1
+
+    $totalCount = $allEvents.Count
+    $prohibitedCount = $prohibitedEvents.Count
+
+    $step.actual.total_checked = $totalCount
+    $step.actual.prohibited_count = $prohibitedCount
+    $step.actual.prohibited_events = $prohibitedEvents
+
+    # Metrics
+    $step.metrics.log_name = $LogName
+    $step.metrics.event_count_requested = $EventCount
+    $step.metrics.total_checked = $totalCount
+    $step.metrics.prohibited_count = $prohibitedCount
+    $step.metrics.prohibited_level = $ProhibitedLevel
+
+    # Validation
+    if ($prohibitedCount -gt 0) {
+        $step.status = "FAIL"
+        $step.message = "Found $prohibitedCount event(s) with prohibited level '$ProhibitedLevel'"
+        $exitCode = 1
+    }
+    else {
+        $step.status = "PASS"
+        $exitCode = 0
+    }
+
+    $overallStatus = ($exitCode -eq 0) ? "PASS" : "FAIL"
 }
+catch {
+    $overallStatus = "FAIL"
+    $step.status = "FAIL"
+    $step.message = "Script error: $($_.Exception.Message)"
+    $step.error = @{
+        kind = "SCRIPT"
+        code = "SCRIPT_ERROR"
+        message = $_.Exception.Message
+        exception_type = $_.Exception.GetType().FullName
+        stack = $_.ScriptStackTrace
+    }
+    $exitCode = 2
+}
+finally {
+    if ($swStep -ne $null) {
+        $swStep.Stop()
+        $step.timing.duration_ms = [int]$swStep.ElapsedMilliseconds
+    }
+    $swTotal.Stop()
+    $totalMs = [int]$swTotal.ElapsedMilliseconds
 
-$totalCount = $allEvents.Count
-$prohibitedCount = $prohibitedEvents.Count
+    $passCount = ($step.status -eq "PASS") ? 1 : 0
+    $failCount = ($step.status -eq "FAIL") ? 1 : 0
+    $skipCount = ($step.status -eq "SKIP") ? 1 : 0
 
-Write-Host "Event Summary:"
-Write-Host "  Total events checked: $totalCount"
-Write-Host "  Events with '$ProhibitedLevel' level: $prohibitedCount"
-Write-Host ""
+    # ----------------------------
+    # report.json
+    # ----------------------------
+    $report = @{
+        schema = @{ version = "1.0" }
+        test = @{
+            id = $TestId
+            name = $TestId
+            params = @{
+                event_count = $EventCount
+                prohibited_level = $ProhibitedLevel
+                log_name = $LogName
+            }
+        }
+        summary = @{
+            status = $overallStatus
+            exit_code = $exitCode
+            counts = @{
+                total = 1
+                pass = $passCount
+                fail = $failCount
+                skip = $skipCount
+            }
+            duration_ms = $totalMs
+        }
+        steps = @($step)
+    }
 
-$failures = @()
+    Write-JsonFile $ReportPath $report
 
-if ($prohibitedCount -gt 0) {
-    $failures += "Found $prohibitedCount event(s) with prohibited level '$ProhibitedLevel' in the most recent $EventCountInt events."
-    Write-Host "Prohibited level events:"
-    $displayCount = [Math]::Min(10, $prohibitedCount)
-    for ($i = 0; $i -lt $displayCount; $i++) {
-        $evt = $prohibitedEvents[$i]
-        Write-Host "  - [$($evt.TimeCreated)] $($evt.LevelDisplayName) - ID $($evt.Id) - $($evt.ProviderName)"
-        if ($evt.Message) {
-            $msgPreview = $evt.Message.Replace("`r", "").Replace("`n", " ")
-            Write-Host "    $msgPreview"
+    # ----------------------------
+    # stdout
+    # ----------------------------
+    $dotCount = [Math]::Max(3, 30 - $step.name.Length)
+    $stepLine = "[1/1] {0} {1} {2}" -f $step.name, ("." * $dotCount), $step.status
+
+    $details = New-Object System.Collections.Generic.List[string]
+    if ($step.status -eq "PASS") {
+        $d = "log='$LogName' checked=$($step.actual.total_checked) prohibited_level='$ProhibitedLevel' found=0"
+        $details.Add($d)
+    }
+    else {
+        if ($step.message) { $details.Add("reason: $($step.message)") }
+        $details.Add("expected: prohibited_count=0")
+        $details.Add("actual:   prohibited_count=$($step.actual.prohibited_count) total_checked=$($step.actual.total_checked)")
+        
+        # Show sample of prohibited events
+        if ($step.actual.prohibited_events.Count -gt 0) {
+            $displayCount = [Math]::Min(3, $step.actual.prohibited_events.Count)
+            $details.Add("sample events:")
+            for ($i = 0; $i -lt $displayCount; $i++) {
+                $evt = $step.actual.prohibited_events[$i]
+                $details.Add("  [$($evt.time_created)] $($evt.level_name) ID=$($evt.id) $($evt.provider)")
+            }
+            if ($step.actual.prohibited_events.Count -gt $displayCount) {
+                $details.Add("  ... and $($step.actual.prohibited_events.Count - $displayCount) more")
+            }
         }
     }
-    if ($prohibitedCount -gt $displayCount) {
-        Write-Host "  ... and $($prohibitedCount - $displayCount) more event(s)"
-    }
-    Write-Host ""
-}
 
-# Create artifacts directory and save report
-New-Item -ItemType Directory -Force -Path "artifacts" | Out-Null
-$report = [ordered]@{
-    logName = $LogName
-    eventCount = $EventCountInt
-    prohibitedLevel = $ProhibitedLevel
-    prohibitedLevelInt = $prohibitedLevelInt
-    totalCount = $totalCount
-    prohibitedCount = $prohibitedCount
-    prohibitedEvents = $prohibitedEvents
-    failures = $failures
-}
-$report | ConvertTo-Json -Depth 4 | Set-Content -Path "artifacts/event-viewer-check.json"
+    Write-Stdout-Compact `
+        -TestName $TestId `
+        -Overall $overallStatus `
+        -ExitCode $exitCode `
+        -TsUtc $TsUtc `
+        -StepLine $stepLine `
+        -StepDetails $details.ToArray() `
+        -Total 1 `
+        -Passed $passCount `
+        -Failed $failCount `
+        -Skipped $skipCount
 
-if ($failures.Count -gt 0) {
-    Write-Host "Result: FAIL"
-    foreach ($failure in $failures) {
-        Write-Host "  ✗ $failure"
-    }
-    exit 1
+    exit $exitCode
 }
-
-Write-Host "Result: PASS"
-Write-Host "  ✓ No events with prohibited level '$ProhibitedLevel' found in the most recent $EventCountInt events."
-exit 0

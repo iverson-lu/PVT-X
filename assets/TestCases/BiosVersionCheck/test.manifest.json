@@ -2,18 +2,20 @@
   "schemaVersion": "1.5.0",
   "id": "BiosVersionCheck",
   "name": "BIOS Version Check",
-  "category": "Hardware",
   "description": "Validates that the system BIOS version contains the specified string.",
   "version": "1.0.0",
+  "category": "Hardware",
+  "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 30,
-  "tags": ["bios", "hardware", "version"],
   "parameters": [
     {
       "name": "VersionContains",
       "type": "string",
       "required": false,
-      "help": "String that BIOS version should contain"
+      "default": "",
+      "help": "String that BIOS version should contain (empty string means no validation)"
     }
-  ]
+  ],
+  "tags": ["bios", "hardware", "version"]
 }

@@ -2,12 +2,12 @@
   "schemaVersion": "1.5.0",
   "id": "WindowsUpdateHistoryVerify",
   "name": "Windows Update History Verification",
-  "category": "System",
   "description": "Validates that Windows Update history contains at least a minimum number of update records.",
   "version": "1.0.0",
+  "category": "System",
+  "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 60,
-  "tags": ["windows-update", "system", "verify"],
   "parameters": [
     {
       "name": "MinExpectedCount",
@@ -17,5 +17,6 @@
       "min": 0,
       "help": "Minimum number of update records expected in Windows Update history"
     }
-  ]
+  ],
+  "tags": ["windows-update", "system", "verify"]
 }

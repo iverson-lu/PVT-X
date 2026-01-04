@@ -2,19 +2,20 @@
   "schemaVersion": "1.5.0",
   "id": "TimezoneCheck",
   "name": "Timezone Verification",
-  "category": "System",
   "description": "Validates that the system timezone matches the expected UTC offset.",
   "version": "1.0.0",
+  "category": "System",
+  "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 30,
-  "tags": ["timezone", "system", "configuration"],
   "parameters": [
     {
       "name": "ExpectedUtcOffset",
       "type": "string",
       "required": false,
       "default": "+08:00",
-      "help": "Expected UTC offset in format '+HH:MM' or '-HH:MM' (default: +08:00 for UTC+8)"
+      "help": "Expected UTC offset in format '+HH:MM' or '-HH:MM' (e.g., +08:00 for UTC+8)"
     }
-  ]
+  ],
+  "tags": ["timezone", "system", "configuration"]
 }

@@ -2,19 +2,23 @@
   "schemaVersion": "1.5.0",
   "id": "MemoryCheck",
   "name": "Memory Check Test",
-  "category": "System",
-  "description": "Checks available system memory",
+  "description": "Checks available system memory against minimum requirements.",
   "version": "1.0.0",
+  "category": "System",
+  "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 30,
-  "tags": ["memory", "system"],
   "parameters": [
     {
       "name": "MinMemoryMB",
       "type": "int",
       "required": false,
       "default": 100,
-      "help": "Minimum required memory in MB"
+      "min": 1,
+      "max": 999999,
+      "unit": "MB",
+      "help": "Minimum required available memory in megabytes"
     }
-  ]
+  ],
+  "tags": ["memory", "system", "hardware"]
 }

@@ -9,7 +9,7 @@
     "full"
   ],
   "suites": [
-    "RegressionTest@1.0.0",
+    "SmokeTest@1.0.0",
     "SystemSuite@1.0.0"
   ]
 }

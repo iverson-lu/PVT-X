@@ -2,12 +2,12 @@
   "schemaVersion": "1.5.0",
   "id": "DeviceHealthCheck",
   "name": "Device Health Check",
-  "category": "Hardware",
   "description": "Validates that devices in Device Manager have no errors or warnings.",
   "version": "1.0.0",
+  "category": "Hardware",
+  "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 60,
-  "tags": ["device", "hardware", "health"],
   "parameters": [
     {
       "name": "RestrictedMode",
@@ -16,5 +16,6 @@
       "default": false,
       "help": "If true, all devices must be enabled and working; if false, only fail on problem devices"
     }
-  ]
+  ],
+  "tags": ["device", "hardware", "health"]
 }

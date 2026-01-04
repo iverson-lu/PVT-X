@@ -2,12 +2,12 @@
   "schemaVersion": "1.5.0",
   "id": "EventViewerCheck",
   "name": "Event Viewer Level Check",
-  "category": "System",
   "description": "Checks the most recent N events in Event Viewer to ensure none have a specified severity level.",
   "version": "1.0.0",
+  "category": "System",
+  "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 60,
-  "tags": ["eventviewer", "system", "logs", "events"],
   "parameters": [
     {
       "name": "EventCount",
@@ -33,5 +33,6 @@
       "default": "System",
       "help": "Event log name to check (System, Application, Security, etc.)"
     }
-  ]
+  ],
+  "tags": ["eventviewer", "system", "logs", "events"]
 }

@@ -13,6 +13,6 @@
     }
   },
   "suites": [
-    "Test_Env@1.0.0"
+    "TestEnv@1.0.0"
   ]
 }

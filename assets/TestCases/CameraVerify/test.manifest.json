@@ -2,12 +2,12 @@
   "schemaVersion": "1.5.0",
   "id": "CameraVerify",
   "name": "Camera Verification",
-  "category": "Hardware",
   "description": "Validates camera count and name substrings using PnP device discovery.",
   "version": "1.0.0",
+  "category": "Hardware",
+  "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 60,
-  "tags": ["camera", "hardware", "verify"],
   "parameters": [
     {
       "name": "MinExpectedCount",
@@ -21,7 +21,9 @@
       "name": "NameContains",
       "type": "string",
       "required": false,
-      "help": "String that at least one camera name should contain"
+      "default": "",
+      "help": "String that at least one camera name should contain (empty string means no name validation)"
     }
-  ]
+  ],
+  "tags": ["camera", "hardware", "verify"]
 }

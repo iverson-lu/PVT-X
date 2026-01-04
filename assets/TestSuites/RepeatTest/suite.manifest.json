@@ -1,13 +1,13 @@
 {
   "schemaVersion": "1.5.0",
   "id": "RepeatTest",
-  "name": "RepeatTest",
-  "description": "New test suite",
+  "name": "Repeat Test",
+  "description": "For repeatly testing",
   "version": "1.0.0",
   "controls": {
-    "repeat": 1,
+    "repeat": 2,
     "maxParallel": 1,
-    "continueOnFailure": false,
+    "continueOnFailure": true,
     "retryOnError": 1,
     "timeoutPolicy": "AbortOnTimeout"
   },
@@ -20,17 +20,10 @@
       }
     },
     {
-      "nodeId": "TemplateCase",
-      "ref": "TemplateCase",
+      "nodeId": "DeviceHealthCheck",
+      "ref": "DeviceHealthCheck",
       "inputs": {
-        "TestMode": "error"
-      }
-    },
-    {
-      "nodeId": "CameraVerify",
-      "ref": "CameraVerify",
-      "inputs": {
-        "MinExpectedCount": "1"
+        "RestrictedMode": false
       }
     }
   ]
