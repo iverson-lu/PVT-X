@@ -54,6 +54,10 @@
                                           Command="{Binding CasesTab.DiscoverCommand}"
                                           IsEnabled="{Binding CasesTab.IsDiscovering, Converter={StaticResource InverseBoolConverter}}"
                                           Margin="0,0,8,0"/>
+                                <ui:Button Content="Import"
+                                          Icon="{ui:SymbolIcon ArrowDownload24}"
+                                          Command="{Binding CasesTab.ImportCommand}"
+                                          Margin="0,0,8,0"/>
                                 <ui:Button 
                                           Icon="{ui:SymbolIcon FolderOpen24}" 
                                           Command="{Binding CasesTab.OpenInExplorerCommand}"

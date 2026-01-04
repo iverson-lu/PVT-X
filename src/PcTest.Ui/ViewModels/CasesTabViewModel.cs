@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.IO.Compression;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -16,6 +18,7 @@ public partial class CasesTabViewModel : ViewModelBase
 {
     private readonly IDiscoveryService _discoveryService;
     private readonly IFileSystemService _fileSystemService;
+    private readonly IFileDialogService _fileDialogService;
     private readonly INavigationService _navigationService;
 
     [ObservableProperty]
@@ -30,10 +33,15 @@ public partial class CasesTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDiscovering;
 
-    public CasesTabViewModel(IDiscoveryService discoveryService, IFileSystemService fileSystemService, INavigationService navigationService)
+    public CasesTabViewModel(
+        IDiscoveryService discoveryService,
+        IFileSystemService fileSystemService,
+        IFileDialogService fileDialogService,
+        INavigationService navigationService)
     {
         _discoveryService = discoveryService;
         _fileSystemService = fileSystemService;
+        _fileDialogService = fileDialogService;
         _navigationService = navigationService;
     }
 
@@ -122,6 +130,127 @@ public partial class CasesTabViewModel : ViewModelBase
         }
         
         ApplyFilter();
+    }
+
+    [RelayCommand]
+    private async Task ImportAsync()
+    {
+        var filePath = _fileDialogService.ShowOpenFileDialog(
+            "Import Test Case",
+            "Zip Files (*.zip)|*.zip|All Files (*.*)|*.*");
+
+        if (string.IsNullOrEmpty(filePath)) return;
+
+        var tempDirectory = Path.Combine(Path.GetTempPath(), $"PcTestCaseImport_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            ZipFile.ExtractToDirectory(filePath, tempDirectory, true);
+
+            var manifestPaths = Directory.EnumerateFiles(tempDirectory, "test.manifest.json", SearchOption.AllDirectories)
+                .ToList();
+
+            if (manifestPaths.Count == 0)
+            {
+                _fileDialogService.ShowError("Import Failed", "No test.manifest.json was found in the zip file.");
+                return;
+            }
+
+            if (manifestPaths.Count > 1)
+            {
+                _fileDialogService.ShowError("Import Failed", "Multiple test.manifest.json files were found in the zip file.");
+                return;
+            }
+
+            var manifestPath = manifestPaths[0];
+            var manifestJson = await File.ReadAllTextAsync(manifestPath);
+            var manifest = JsonDefaults.Deserialize<TestCaseManifest>(manifestJson);
+
+            if (manifest is null || string.IsNullOrWhiteSpace(manifest.Id) || string.IsNullOrWhiteSpace(manifest.Version))
+            {
+                _fileDialogService.ShowError("Import Failed", "The test case manifest is invalid.");
+                return;
+            }
+
+            var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+            if (string.IsNullOrWhiteSpace(discovery.ResolvedTestCaseRoot))
+            {
+                _fileDialogService.ShowError("Import Failed", "Test case root is not configured.");
+                return;
+            }
+
+            var identityConflict = discovery.TestCases.ContainsKey(manifest.Identity);
+            var nameConflict = discovery.TestCases.Values.Any(tc =>
+                tc.Manifest.Name.Equals(manifest.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (identityConflict)
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"A test case with identity '{manifest.Identity}' already exists.");
+                return;
+            }
+
+            if (nameConflict)
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"A test case named '{manifest.Name}' already exists.");
+                return;
+            }
+
+            var sourceRoot = Path.GetDirectoryName(manifestPath);
+            if (string.IsNullOrWhiteSpace(sourceRoot))
+            {
+                _fileDialogService.ShowError("Import Failed", "Unable to locate the test case folder in the zip file.");
+                return;
+            }
+
+            Directory.CreateDirectory(discovery.ResolvedTestCaseRoot);
+            var destinationRoot = Path.Combine(discovery.ResolvedTestCaseRoot, manifest.Id);
+
+            if (Directory.Exists(destinationRoot))
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"A folder already exists at '{destinationRoot}'.");
+                return;
+            }
+
+            CopyDirectory(sourceRoot, destinationRoot);
+
+            await DiscoverAsync();
+            _fileDialogService.ShowInfo("Import Successful", $"Test case '{manifest.Name}' imported successfully.");
+        }
+        catch (Exception ex)
+        {
+            _fileDialogService.ShowError("Import Failed", ex.Message);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
+    }
+
+    private static void CopyDirectory(string sourceDir, string destinationDir)
+    {
+        Directory.CreateDirectory(destinationDir);
+
+        foreach (var file in Directory.GetFiles(sourceDir))
+        {
+            var destinationFile = Path.Combine(destinationDir, Path.GetFileName(file));
+            File.Copy(file, destinationFile);
+        }
+
+        foreach (var directory in Directory.GetDirectories(sourceDir))
+        {
+            var destinationSubDir = Path.Combine(destinationDir, Path.GetFileName(directory));
+            CopyDirectory(directory, destinationSubDir);
+        }
     }
 
     [RelayCommand]

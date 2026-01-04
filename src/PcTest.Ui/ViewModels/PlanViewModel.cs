@@ -42,7 +42,7 @@ public partial class PlanViewModel : ViewModelBase
         _navigationService = navigationService;
         _fileDialogService = fileDialogService;
 
-        CasesTab = new CasesTabViewModel(discoveryService, fileSystemService, navigationService);
+        CasesTab = new CasesTabViewModel(discoveryService, fileSystemService, fileDialogService, navigationService);
         SuitesTab = new SuitesTabViewModel(suiteRepository, discoveryService, fileDialogService, navigationService);
         PlansTab = new PlansTabViewModel(planRepository, suiteRepository, discoveryService, fileDialogService, navigationService);
     }
