@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "suite.sys.smoke_test",
+  "id": "plan.sys.smoke_test",
   "name": "Smoke Test",
   "description": "Smoke test plan",
   "version": "1.0.0",

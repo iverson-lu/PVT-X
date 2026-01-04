@@ -1,13 +1,9 @@
 {
   "schemaVersion": "1.5.0",
   "id": "suite.sw.os.sanity_check",
-  "name": "OS Sanity Check",
-  "description": "Basic OS sanity check",
+  "name": "New Suite",
+  "description": "New test suite",
   "version": "1.0.0",
-  "tags": [
-    "sanity",
-    "smoke"
-  ],
   "controls": {
     "repeat": 1,
     "maxParallel": 1,
@@ -15,27 +11,5 @@
     "retryOnError": 0,
     "timeoutPolicy": "AbortOnTimeout"
   },
-  "testCases": [
-    {
-      "nodeId": "hw.devices.health_check",
-      "ref": "Device Health Check",
-      "inputs": {
-        "RestrictedMode": false
-      }
-    },
-    {
-      "nodeId": "hw.memory.size_check",
-      "ref": "Memory Check Test",
-      "inputs": {
-        "MinMemoryMB": "100"
-      }
-    },
-    {
-      "nodeId": "sw.os.windows.timezone_verify",
-      "ref": "Timezone Verification",
-      "inputs": {
-        "ExpectedUtcOffset": "\u002B08:00"
-      }
-    }
-  ]
+  "testCases": []
 }

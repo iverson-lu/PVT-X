@@ -95,7 +95,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         SuiteReferences.Clear();
         foreach (var suiteRef in m.Suites)
         {
-            var refVm = new SuiteReferenceViewModel { SuiteIdentity = suiteRef };
+            var refVm = new SuiteReferenceViewModel(_discoveryService) { SuiteIdentity = suiteRef };
             refVm.PropertyChanged += (s, e) => MarkDirty();
             SuiteReferences.Add(refVm);
         }
@@ -141,7 +141,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         // Add suite references for each selected suite
         foreach (var identity in selected)
         {
-            var refVm = new SuiteReferenceViewModel
+            var refVm = new SuiteReferenceViewModel(_discoveryService)
             {
                 SuiteIdentity = identity
             };
@@ -227,6 +227,40 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         }
 
         var manifest = BuildManifest();
+        var identity = $"{manifest.Id}@{manifest.Version}";
+
+        // Check for duplicate identity (id@version)
+        if (_isNew)
+        {
+            var allPlans = await _planRepository.GetAllAsync();
+            var duplicate = allPlans.FirstOrDefault(p => 
+                $"{p.Manifest.Id}@{p.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
+            
+            if (duplicate != null)
+            {
+                _fileDialogService.ShowError("Cannot Save", 
+                    $"A plan with identity '{identity}' already exists.\nEach plan must have a unique combination of ID and Version.");
+                return;
+            }
+        }
+        else if (_originalPlanInfo is not null)
+        {
+            // Check if identity changed and conflicts with another plan
+            var originalIdentity = $"{_originalPlanInfo.Manifest.Id}@{_originalPlanInfo.Manifest.Version}";
+            if (!identity.Equals(originalIdentity, StringComparison.OrdinalIgnoreCase))
+            {
+                var allPlans = await _planRepository.GetAllAsync();
+                var duplicate = allPlans.FirstOrDefault(p => 
+                    $"{p.Manifest.Id}@{p.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
+                
+                if (duplicate != null)
+                {
+                    _fileDialogService.ShowError("Cannot Save", 
+                        $"A plan with identity '{identity}' already exists.\nEach plan must have a unique combination of ID and Version.");
+                    return;
+                }
+            }
+        }
 
         if (_isNew)
         {
@@ -341,7 +375,48 @@ public partial class PlanEditorViewModel : EditableViewModelBase
 /// </summary>
 public partial class SuiteReferenceViewModel : ViewModelBase
 {
+    private readonly IDiscoveryService? _discoveryService;
+    
     [ObservableProperty] private string _suiteIdentity = string.Empty;
 
     public string DisplayName => SuiteIdentity;
+    
+    // Parse identity to extract Name and Id
+    public string Name
+    {
+        get
+        {
+            // Try to get suite name from discovery service
+            if (_discoveryService?.CurrentDiscovery?.TestSuites != null)
+            {
+                var suite = _discoveryService.CurrentDiscovery.TestSuites.Values
+                    .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == SuiteIdentity);
+                if (suite != null)
+                    return suite.Manifest.Name;
+            }
+            
+            // Fallback: return the full identity
+            return SuiteIdentity;
+        }
+    }
+    
+    public string Id
+    {
+        get
+        {
+            // Return full identity (id@version) to show version information
+            return SuiteIdentity;
+        }
+    }
+    
+    public SuiteReferenceViewModel(IDiscoveryService? discoveryService = null)
+    {
+        _discoveryService = discoveryService;
+    }
+    
+    partial void OnSuiteIdentityChanged(string value)
+    {
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(Id));
+    }
 }

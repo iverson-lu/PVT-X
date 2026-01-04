@@ -22,7 +22,7 @@
   },
   "testCases": [
     {
-      "nodeId": "template.demo_all_types",
+      "nodeId": "template.demo_all_types@1.0.0",
       "ref": "Template Case",
       "inputs": {
         "E_Mode": "pass",
@@ -36,7 +36,7 @@
       }
     },
     {
-      "nodeId": "template.minimal_demo",
+      "nodeId": "template.minimal_demo@1.0.0",
       "ref": "Template Case Minimal",
       "inputs": {
         "Message": "Hello from PVT-X"

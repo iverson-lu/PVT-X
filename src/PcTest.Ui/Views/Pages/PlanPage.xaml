@@ -771,7 +771,7 @@
                                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                                           Margin="0,0,0,6"/>
                                                 <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
-                                                <TextBlock Text="Must be globally unique. Examples: case.sw.os.ver_check; suite.hw.camera_check; plan.sys.regression_test" 
+                                                <TextBlock Text="Must be globally unique. Examples: suite.sw.os.ver_check; suite.hw.camera_check" 
                                                           FontSize="{StaticResource FontSizeXS}"
                                                           Foreground="{DynamicResource TextSecondaryBrush}"
                                                           TextWrapping="Wrap"
@@ -1431,6 +1431,11 @@
                                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                                           Margin="0,0,0,6"/>
                                                 <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="Must be globally unique. Examples: plan.sys.full_test; plan.hw.comprehensive" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                          Margin="0,4,0,0"
+                                                          TextWrapping="Wrap"/>
                                             </StackPanel>
                                             <StackPanel Margin="0,0,0,16">
                                                 <TextBlock Text="Version" 
@@ -1526,16 +1531,36 @@
                                                 </ListBox.ItemContainerStyle>
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate>
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Ellipse Width="6" Height="6"
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+                                                            
+                                                            <Ellipse Grid.Column="0" Grid.RowSpan="2"
+                                                                    Width="6" Height="6"
                                                                     Fill="{StaticResource BrandPrimaryBrush}"
                                                                     VerticalAlignment="Center"
                                                                     Margin="0,0,10,0"/>
-                                                            <TextBlock Text="{Binding SuiteIdentity}" 
+                                                            
+                                                            <TextBlock Grid.Column="1" Grid.Row="0"
+                                                                      Text="{Binding Name}" 
                                                                       FontSize="{StaticResource FontSizeM}"
+                                                                      FontWeight="{StaticResource FontWeightSemiBold}"
                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                      VerticalAlignment="Center"/>
-                                                        </StackPanel>
+                                                                      TextTrimming="CharacterEllipsis"/>
+                                                            
+                                                            <TextBlock Grid.Column="1" Grid.Row="1"
+                                                                      Text="{Binding Id}" 
+                                                                      FontSize="{StaticResource FontSizeXS}"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                      Margin="0,2,0,0"
+                                                                      TextTrimming="CharacterEllipsis"/>
+                                                        </Grid>
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>

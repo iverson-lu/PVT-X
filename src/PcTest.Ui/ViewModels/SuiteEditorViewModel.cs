@@ -176,13 +176,13 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             discovery = await _discoveryService.DiscoverAsync();
         }
         
-        // Strip _1, _2, etc. suffix from nodeId to get the actual test case ID
-        // e.g., "hw.bios.version_check_1" -> "hw.bios.version_check"
-        var testCaseId = StripNodeIdSuffix(nodeVm.NodeId);
+        // Strip _1, _2, etc. suffix from nodeId to get the actual test case identity
+        // e.g., "hw.bios.version_check@1.0.0_1" -> "hw.bios.version_check@1.0.0"
+        var testCaseIdentity = StripNodeIdSuffix(nodeVm.NodeId);
         
-        // Find the test case by the stripped ID
+        // Find the test case by the stripped identity (id@version)
         var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
-            tc.Manifest.Id.Equals(testCaseId, StringComparison.OrdinalIgnoreCase));
+            tc.Identity.Equals(testCaseIdentity, StringComparison.OrdinalIgnoreCase));
             
         if (testCase?.Manifest.Parameters is null)
             return;
@@ -237,7 +237,9 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         // Add nodes for each selected test case
         foreach (var tc in selected)
         {
-            var nodeId = GenerateUniqueNodeId(tc.Id);
+            // Use id@version format for nodeId
+            var baseNodeId = $"{tc.Id}@{tc.Version}";
+            var nodeId = GenerateUniqueNodeId(baseNodeId);
             var nodeVm = new TestCaseNodeViewModel
             {
                 NodeId = nodeId,
@@ -272,8 +274,8 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     }
 
     /// <summary>
-    /// Strips the _1, _2, etc. suffix from a nodeId to get the base test case ID.
-    /// e.g., "hw.bios.version_check_1" -> "hw.bios.version_check"
+    /// Strips the _1, _2, etc. suffix from a nodeId to get the base test case identity.
+    /// e.g., "hw.bios.version_check@1.0.0_1" -> "hw.bios.version_check@1.0.0"
     /// </summary>
     private static string StripNodeIdSuffix(string nodeId)
     {
@@ -355,6 +357,40 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         }
 
         var manifest = BuildManifest();
+        var identity = $"{manifest.Id}@{manifest.Version}";
+
+        // Check for duplicate identity (id@version)
+        if (_isNew)
+        {
+            var allSuites = await _suiteRepository.GetAllAsync();
+            var duplicate = allSuites.FirstOrDefault(s => 
+                $"{s.Manifest.Id}@{s.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
+            
+            if (duplicate != null)
+            {
+                _fileDialogService.ShowError("Cannot Save", 
+                    $"A suite with identity '{identity}' already exists.\nEach suite must have a unique combination of ID and Version.");
+                return;
+            }
+        }
+        else if (_originalSuiteInfo is not null)
+        {
+            // Check if identity changed and conflicts with another suite
+            var originalIdentity = $"{_originalSuiteInfo.Manifest.Id}@{_originalSuiteInfo.Manifest.Version}";
+            if (!identity.Equals(originalIdentity, StringComparison.OrdinalIgnoreCase))
+            {
+                var allSuites = await _suiteRepository.GetAllAsync();
+                var duplicate = allSuites.FirstOrDefault(s => 
+                    $"{s.Manifest.Id}@{s.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
+                
+                if (duplicate != null)
+                {
+                    _fileDialogService.ShowError("Cannot Save", 
+                        $"A suite with identity '{identity}' already exists.\nEach suite must have a unique combination of ID and Version.");
+                    return;
+                }
+            }
+        }
 
         if (_isNew)
         {
