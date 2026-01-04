@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "plan.sys.full_test",
+  "name": "System Test",
+  "description": "System Test Plan",
+  "version": "1.0.0",
+  "tags": [
+    "system",
+    "regression",
+    "full"
+  ],
+  "suites": [
+    "suite.sw.os.sanity_check@1.0.0",
+    "suite.sys.full_test@1.0.0"
+  ]
+}
