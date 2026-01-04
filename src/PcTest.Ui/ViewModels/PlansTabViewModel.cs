@@ -186,7 +186,7 @@ public partial class PlansTabViewModel : ViewModelBase
         var manifest = new TestPlanManifest
         {
             SchemaVersion = "1.5.0",
-            Id = "plan.<input_unique_id>",
+            Id = "plan.<domain>.<feature>.<action>",
             Name = "New Plan",
             Version = "1.0.0",
             Description = "New test plan"
