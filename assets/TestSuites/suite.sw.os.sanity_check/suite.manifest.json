@@ -13,21 +13,21 @@
   },
   "testCases": [
     {
-      "nodeId": "hw.devices.health_check@1.0.0",
+      "nodeId": "case.hw.device.core.health_check@1.0.0",
       "ref": "Device Health Check",
       "inputs": {
         "RestrictedMode": false
       }
     },
     {
-      "nodeId": "hw.memory.size_check@1.0.0",
+      "nodeId": "case.hw.memory.core.size_check@1.0.0",
       "ref": "Memory Check Test",
       "inputs": {
         "MinMemoryMB": "100"
       }
     },
     {
-      "nodeId": "sw.os.windows.timezone_verify@1.0.0",
+      "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
       "ref": "Timezone Verification",
       "inputs": {
         "ExpectedUtcOffset": "\u002B08:00"

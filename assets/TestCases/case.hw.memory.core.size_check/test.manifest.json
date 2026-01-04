@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "hw.memory.size_check",
+  "id": "case.hw.memory.core.size_check",
   "name": "Memory Check Test",
   "description": "Checks available system memory against minimum requirements.",
   "version": "1.0.0",

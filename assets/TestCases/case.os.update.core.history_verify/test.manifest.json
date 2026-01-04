@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "sw.os.windows.update_history_verify",
+  "id": "case.os.update.core.history_verify",
   "name": "Windows Update History Verification",
   "description": "Validates that Windows Update history contains at least a minimum number of update records.",
   "version": "1.0.0",

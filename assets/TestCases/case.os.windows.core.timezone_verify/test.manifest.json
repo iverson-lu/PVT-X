@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "sw.os.windows.timezone_verify",
+  "id": "case.os.windows.core.timezone_verify",
   "name": "Timezone Verification",
   "description": "Validates that the system timezone matches the expected UTC offset.",
   "version": "1.0.0",

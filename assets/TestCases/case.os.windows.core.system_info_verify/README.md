@@ -1,83 +1,36 @@
-# SystemInfoVerification Test Case
-
-## Overview
-Comprehensive system information verification test case that validates CPU, OS version, activation status, installed software, and minimum hardware requirements.
+# System Information Verification
 
 ## Purpose
-This test case demonstrates all supported parameter types in a real-world scenario:
-- **String**: Validates processor name contains specific text
-- **Int**: Validates CPU temperature is below threshold
-- **Double**: Validates CPU frequency is below threshold
-- **Enum**: Validates specific Windows version
-- **Boolean**: Validates Windows activation status
-- **Path**: Validates Windows installation directory
-- **JSON Array**: Validates required software is installed
-- **JSON Object**: Validates minimum system requirements
+Comprehensive system information validation including CPU, OS version, activation status, installed software, and minimum hardware requirements.
+
+## Test Logic
+- Queries CPU information (name, frequency, temperature if available) using WMI
+- Validates OS version against expected Windows DisplayVersion from registry
+- Checks Windows activation status using Software Licensing service
+- Validates Windows installation path
+- Queries installed software from registry and checks against required software list
+- Validates minimum system requirements (cores, memory, disk, webcam count)
+- Pass if all validations succeed
+- Fail if any validation fails
 
 ## Parameters
+- **CPU_ProcessorName** (string, optional, default: "Intel"): Required processor name pattern (case-insensitive substring match)
+- **WindowsUpdate_MaxDaysSinceLastUpdate** (int, optional, default: 30, range: 1-365): Maximum days since last Windows Update
+- **CPU_MinFrequency** (double, optional, default: 1.0, range: 0.1-10.0 GHz): Minimum required current CPU running frequency in GHz
+- **OS_Version** (enum, required, default: "Windows 25H2"): Expected Windows version ("Windows 24H2", "Windows 25H1", "Windows 25H2")
+- **Windows_MustBeActivated** (boolean, optional): Whether Windows must be activated
+- **System_WindowsPath** (string, optional, default: "C:\\Windows"): Expected Windows installation directory
+- **RequiredSoftware** (json array, optional): JSON array of required software names for substring matching
+- **MinimumRequirements** (json object, optional): JSON object with minimum system requirements (cores, memoryGB, diskGB, webcamCount)
 
-### CPU_ProcessorName (string)
-Required processor name pattern that must appear in the CPU name (case-insensitive substring match).
-- **Default**: `"Intel Core Ultra"`
-- **Example**: If set to "Intel Core Ultra", the actual processor name must contain this text
+## How to Run Manually
+```powershell
+pwsh ./run.ps1 -CPU_ProcessorName "Intel" -OS_Version "Windows 25H2" -Windows_MustBeActivated $true
+```
 
-### CPU_MaxTemperature (int)
-Maximum allowed CPU temperature in Celsius. Test fails if current temperature exceeds this value.
-- **Default**: `80`
-- **Range**: 0-150
-- **Unit**: °C
-- **Note**: Requires thermal sensor support; skipped if not available
-
-### CPU_MaxFrequency (double)
-Maximum allowed CPU frequency in GHz. Test fails if current frequency exceeds this value.
-- **Default**: `5.5`
-- **Range**: 0.1-10.0
-- **Unit**: GHz
-
-### OS_Version (enum) **[Required]**
-Expected Windows version. Test fails if the actual DisplayVersion doesn't match exactly.
-- **Options**: 
-  - `"Windows 24H2"`
-  - `"Windows 25H1"`
-  - `"Windows 25H2"`
-- **Default**: `"Windows 24H2"`
-- **Validation**: Strict match against DisplayVersion registry value (e.g., "24H2", "25H1", "25H2"). No fallback to Windows 11 detection.
-
-### Windows_MustBeActivated (boolean)
-Whether Windows must be activated.
-- **Default**: `true`
-- **Behavior**:
-  - If `true`: Test fails if Windows is NOT activated
-  - If `false`: Test fails if Windows IS activated (useful for testing non-activated systems)
-- **CLI Usage**: `-Windows_MustBeActivated:$true` or `-Windows_MustBeActivated:$false`
-
-### System_WindowsPath (path)
-Expected Windows installation directory path.
-- **Default**: `"C:\\Windows"`
-
-### RequiredSoftware (json)
-JSON array of software names that must be installed on the system. Performs substring matching against installed software list.
-- **Type**: JSON Array of strings
-- **Default**: `["Microsoft Edge"]`
-- **Example**: 
-  ```json
-  ["Microsoft Edge", "Google Chrome", "Visual Studio Code"]
-  ```
-
-### MinimumRequirements (json)
-JSON object defining minimum system requirements. All checks must pass.
-- **Type**: JSON Object
-- **Default**: 
-  ```json
-  {
-    "cores": 4,
-    "memoryGB": 8,
-    "diskGB": 50,
-    "webcamCount": 1
-  }
-  ```
-- **Properties**:
-  - `cores` (int): Minimum CPU core count
+## Expected Result
+- **Success**: All system information validations pass. Exit code 0.
+- **Failure**: One or more validations fail (CPU mismatch, OS version mismatch, not activated, missing software, insufficient hardware). Exit code 1.
   - `memoryGB` (int): Minimum total physical memory in GB
   - `diskGB` (int): Minimum free disk space on system drive in GB
   - `webcamCount` (int): Minimum number of camera devices

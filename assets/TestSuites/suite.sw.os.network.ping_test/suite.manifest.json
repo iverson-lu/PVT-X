@@ -16,7 +16,7 @@
   },
   "testCases": [
     {
-      "nodeId": "sw.network.ping_connectivity@1.0.0",
+      "nodeId": "case.network.core.connectivity.ping@1.0.0",
       "ref": "Network Ping Connectivity - MS",
       "inputs": {
         "TargetAddress": "www.microsoft.com",
@@ -24,7 +24,7 @@
       }
     },
     {
-      "nodeId": "sw.network.ping_connectivity@1.0.0_1",
+      "nodeId": "case.network.core.connectivity.ping@1.0.0_1",
       "ref": "Network Ping Connectivity - Baidu",
       "inputs": {
         "TargetAddress": "www.baidu.com",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "sw.os.windows.system_info_verify",
+  "id": "case.os.windows.core.system_info_verify",
   "name": "System Information Verification",
   "category": "System",
   "description": "Comprehensive system information validation including CPU, OS version, activation status, installed software, and minimum hardware requirements.",
