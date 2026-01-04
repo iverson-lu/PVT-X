@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.hw.storage.core.min_capacity_check",
+  "name": "Storage Count & Capacity Check",
+  "description": "Validates that the system has at least a minimum number of eligible storage disks and that each eligible disk meets a minimum capacity requirement.",
+  "version": "1.0.0",
+  "category": "Storage",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "MinimumDiskCount",
+      "type": "int",
+      "required": false,
+      "default": 1,
+      "min": 1,
+      "max": 256,
+      "help": "Minimum number of eligible storage disks required to be present."
+    },
+    {
+      "name": "MinimumDiskSizeGB",
+      "type": "int",
+      "required": false,
+      "default": 64,
+      "min": 1,
+      "max": 1048576,
+      "help": "Minimum capacity (in GB) required for each eligible disk."
+    },
+    {
+      "name": "E_Scope",
+      "type": "enum",
+      "required": false,
+      "default": "internal",
+      "enumValues": [
+        "internal",
+        "all"
+      ],
+      "help": "Disk scope to evaluate: internal (exclude typical removable/external bus types) or all (include all disks)."
+    },
+    {
+      "name": "B_IgnoreVirtual",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "When true, exclude disks that appear to be virtual (to avoid counting software/virtual disks)."
+    }
+  ],
+  "tags": [
+    "storage",
+    "hardware",
+    "validation"
+  ]
+}
