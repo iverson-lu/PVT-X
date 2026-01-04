@@ -13,7 +13,7 @@
       "name": "CPU_ProcessorName",
       "type": "string",
       "required": false,
-      "default": "Intel Core Ultra",
+      "default": "Intel",
       "help": "Required processor name pattern (case-insensitive substring match)"
     },
     {
