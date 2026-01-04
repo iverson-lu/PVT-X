@@ -21,7 +21,7 @@
       "nodeId": "ReadFileCase",
       "ref": "ReadFileCase",
       "inputs": {
-        "P_FilePath": "C:\\Windows\\System32\\drivers\\etc\\hosts"
+        "P_FilePath": "data\\test-data.txt"
       }
     }
   ]
