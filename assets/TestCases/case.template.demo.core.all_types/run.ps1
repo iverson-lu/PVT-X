@@ -9,7 +9,6 @@ param(
     [Parameter(Mandatory=$false)] [string]  $ConfigJson = "{`"timeout`": 30, `"retry`": true}"
 )
 
-Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # ----------------------------
@@ -64,7 +63,7 @@ function Write-Stdout-Compact {
 # ----------------------------
 # Metadata
 # ----------------------------
-$TestId = "TemplateCase"
+$TestId = $env:PVTX_TESTCASE_ID
 $TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize E_Mode
@@ -123,7 +122,15 @@ try {
     try {
         $parsedItems = $ItemsJson | ConvertFrom-Json
         $parsedConfig = $ConfigJson | ConvertFrom-Json
-        
+
+        # Validate JSON shapes (mirror manifest intent)
+        if ($null -eq $parsedItems -or $parsedItems -isnot [System.Array]) {
+            throw "ItemsJson must be a JSON array (e.g., [1,2,3])."
+        }
+        if ($null -eq $parsedConfig -or $parsedConfig -is [System.Array]) {
+            throw "ConfigJson must be a JSON object (e.g., {""timeout"":30})."
+        }
+
         $step.actual.items_parsed = $parsedItems
         $step.actual.config_parsed = $parsedConfig
         $step.metrics.items_count = $parsedItems.Count
@@ -193,7 +200,7 @@ try {
             $step.message = "Forcing timeout by sleeping longer than allowed (Runner should mark as Timeout)"
             $exitCode = 1
             $overallStatus = "FAIL"
-            Start-Sleep -Seconds 150  # exceeds timeoutSec=120
+            Start-Sleep -Seconds 5    # exceeds timeoutSec=2 (manifest); Runner should terminate and mark Timeout
         }
         "error" {
             throw "Forced error from E_Mode=error"
