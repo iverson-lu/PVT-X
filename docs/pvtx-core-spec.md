@@ -488,6 +488,30 @@ Security Note (Normative):
 - When any secret=true input would be passed via command-line, Engine/Runner MUST emit a warning with code "EnvRef.SecretOnCommandLine", include the affected parameter name (and nodeId when applicable), and record it in the run log (e.g., events.jsonl or equivalent).
 - Sensitive information SHOULD be provided via environment variables pointing to credential files/paths rather than passing raw secret values directly.
 
+### 7.5 Predefined Environment Variables (Normative)
+
+Runner MUST inject the following predefined environment variables into every Test Case execution. These variables are automatically added to the effective environment after applying all environment resolution rules per section 7.3, and MUST be included in the manifest.json snapshot.
+
+| Variable Name       | Type   | Description                                        | Example Value                                      |
+|---------------------|--------|----------------------------------------------------|----------------------------------------------------|
+| PVTX_TESTCASE_PATH  | string | Absolute path to the Test Case source folder       | `D:\Dev\PVT-X-1\assets\TestCases\ReadFileCase`    |
+| PVTX_TESTCASE_NAME  | string | Display name from Test Case manifest (name field)  | `Read File Case`                                   |
+| PVTX_TESTCASE_ID    | string | Unique identifier from Test Case manifest (id)     | `ReadFileCase`                                     |
+| PVTX_TESTCASE_VER   | string | Version string from Test Case manifest (version)   | `1.0.0`                                            |
+
+Rules:
+- These variables MUST be injected by Runner immediately before script execution.
+- If any of these variable names already exist in the effectiveEnvironment computed per section 7.3, Runner MUST overwrite them with the correct predefined values (predefined variables take precedence).
+- Scripts MAY access these variables via standard PowerShell syntax: `$env:PVTX_TESTCASE_PATH`, `$env:PVTX_TESTCASE_NAME`, `$env:PVTX_TESTCASE_ID`, `$env:PVTX_TESTCASE_VER`.
+- These variables are NOT secret and MUST NOT be redacted in artifacts.
+- These variables MUST appear in the manifest.json effectiveEnvironment snapshot for full reproducibility and traceability.
+- The PVTX_TESTCASE_PATH value MUST be the absolute, normalized path to the Test Case source folder (containing test.manifest.json and run.ps1), NOT the Case Run Folder.
+
+Rationale:
+- Enables Test Cases to reference companion files (test data, reference outputs, configuration files) relative to their source folder.
+- Provides Test Cases with self-awareness for logging, reporting, and dynamic behavior.
+- Ensures full traceability by recording these values in manifest.json.
+
 ---
 
 ## 8. RunRequest
@@ -779,7 +803,7 @@ Rules:
 
 ### 12.2 Immutability Rules
 - manifest.json is a snapshot computed by Engine (effective manifest, inputs, environment) and MUST be persisted by Runner inside the Case Run Folder using the redaction metadata provided by Engine.
-- manifest.json snapshot MUST include at minimum: sourceManifest (full original manifest object), resolvedRef (canonical resolved path or ref), resolvedIdentity (id and version), effectiveEnvironment (flattened map after applying section 7.3), and effectiveInputs (after EnvRef resolution). The snapshot MUST represent the exact inputs used for this run to enable reproduction. It MAY include inputTemplates (inputs before EnvRef resolution), resolvedAt (timestamp), and engineVersion.
+- manifest.json snapshot MUST include at minimum: sourceManifest (full original manifest object), resolvedRef (canonical resolved path or ref), resolvedIdentity (id and version), effectiveEnvironment (flattened map after applying section 7.3 and including predefined variables per section 7.5), and effectiveInputs (after EnvRef resolution). The snapshot MUST represent the exact inputs used for this run to enable reproduction. It MAY include inputTemplates (inputs before EnvRef resolution), resolvedAt (timestamp), and engineVersion.
 - If any input was marked secret via EnvRef.secret=true, manifest.json and result.json (and any artifact that records inputs or environment values, such as params.json when present) MUST store a redacted value (e.g., "***") while execution uses the real value in memory. Runner MUST apply redaction based on metadata from Engine.
 - For Test Case runs, params.json contains effectiveInputs passed to the script.
 - For Test Suite / Test Plan runs, params.json MUST NOT be generated.

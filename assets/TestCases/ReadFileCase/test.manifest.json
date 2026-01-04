@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "ReadFileCase",
+  "name": "Read File Case",
+  "description": "Simple case that reads and outputs file content to console",
+  "version": "1.0.0",
+  "category": "Basic",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 10,
+  "parameters": [
+    {
+      "name": "P_FilePath",
+      "type": "path",
+      "required": true,
+      "default": "C:\\Windows\\System32\\drivers\\etc\\hosts",
+      "help": "Path to the file to read and output"
+    }
+  ],
+  "tags": ["basic", "file", "read"]
+}

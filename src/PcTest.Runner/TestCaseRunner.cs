@@ -50,6 +50,15 @@ public sealed class TestCaseRunner
             }
         }
 
+        // Inject PVT-X standard environment variables (before try block so it's available in catch)
+        var enhancedEnvironment = new Dictionary<string, string>(context.EffectiveEnvironment)
+        {
+            ["PVTX_TESTCASE_PATH"] = context.TestCasePath,
+            ["PVTX_TESTCASE_NAME"] = context.Manifest.Name,
+            ["PVTX_TESTCASE_ID"] = context.Manifest.Id,
+            ["PVTX_TESTCASE_VER"] = context.Manifest.Version
+        };
+
         try
         {
             // Pre-node validation: workingDir containment
@@ -61,12 +70,12 @@ public sealed class TestCaseRunner
                 // Per spec section 7.2.1: fail with status=Error, error.type=RunnerError, don't start script
                 var errorResult = CreateErrorResult(context, startTime,
                     ErrorType.RunnerError, workDirError ?? "workingDir validation failed");
-                await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues);
+                await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
                 return errorResult;
             }
 
             // Write manifest snapshot
-            var manifestSnapshot = CreateManifestSnapshot(context);
+            var manifestSnapshot = CreateManifestSnapshot(context, enhancedEnvironment);
             await folderManager.WriteManifestSnapshotAsync(caseRunFolder, manifestSnapshot, context.SecretInputs);
 
             // Write params.json
@@ -115,7 +124,7 @@ public sealed class TestCaseRunner
             {
                 var errorResult = CreateErrorResult(context, startTime,
                     ErrorType.RunnerError, $"Script not found: {scriptPath}");
-                await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues);
+                await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
                 return errorResult;
             }
 
@@ -139,7 +148,7 @@ public sealed class TestCaseRunner
             var execResult = await executor.ExecuteAsync(
                 scriptPath,
                 context.EffectiveInputs,
-                context.EffectiveEnvironment,
+                enhancedEnvironment,
                 resolvedWorkDir,
                 context.TimeoutSec,
                 context.SecretInputs,
@@ -229,7 +238,7 @@ public sealed class TestCaseRunner
         }
     }
 
-    private static CaseManifestSnapshot CreateManifestSnapshot(RunContext context)
+    private static CaseManifestSnapshot CreateManifestSnapshot(RunContext context, Dictionary<string, string> enhancedEnvironment)
     {
         return new CaseManifestSnapshot
         {
@@ -240,7 +249,7 @@ public sealed class TestCaseRunner
                 Id = context.Manifest.Id,
                 Version = context.Manifest.Version
             },
-            EffectiveEnvironment = context.EffectiveEnvironment,
+            EffectiveEnvironment = enhancedEnvironment,
             EffectiveInputs = context.EffectiveInputs,
             InputTemplates = context.InputTemplates,
             ResolvedAt = DateTime.UtcNow.ToString("o"),
@@ -311,11 +320,13 @@ public sealed class TestCaseRunner
         string caseRunFolder,
         RunContext context,
         TestCaseResult result,
-        List<string> secretValues)
+        List<string> secretValues,
+        Dictionary<string, string>? enhancedEnvironment = null)
     {
         try
         {
-            var manifestSnapshot = CreateManifestSnapshot(context);
+            var envToUse = enhancedEnvironment ?? context.EffectiveEnvironment;
+            var manifestSnapshot = CreateManifestSnapshot(context, envToUse);
             await folderManager.WriteManifestSnapshotAsync(caseRunFolder, manifestSnapshot, context.SecretInputs);
             await folderManager.WriteParamsAsync(caseRunFolder, context.EffectiveInputs, context.SecretInputs);
             await folderManager.WriteEnvSnapshotAsync(caseRunFolder, CreateEnvSnapshot());

@@ -15,6 +15,19 @@ Template test case demonstrating all supported parameter types and structured ou
 | ItemsJson  | json    | No       | [1, 2, 3]                          | JSON array example - parsed using ConvertFrom-Json             |
 | ConfigJson | json    | No       | {"timeout": 30, "retry": true}     | JSON object example - parsed using ConvertFrom-Json            |
 
+## PVT-X Environment Variables
+
+The Runner automatically injects these environment variables into all test cases:
+
+| Variable            | Description                                    | Example                                  |
+|---------------------|------------------------------------------------|------------------------------------------|
+| PVTX_TESTCASE_PATH  | Absolute path to test case source folder       | `D:\Dev\PVT-X-1\assets\TestCases\TemplateCase` |
+| PVTX_TESTCASE_NAME  | Test case display name from manifest           | `Template Case`                          |
+| PVTX_TESTCASE_ID    | Test case unique identifier                    | `TemplateCase`                           |
+| PVTX_TESTCASE_VER   | Test case version from manifest                | `1.0.0`                                  |
+
+Access in PowerShell: `$env:PVTX_TESTCASE_PATH`, `$env:PVTX_TESTCASE_NAME`, `$env:PVTX_TESTCASE_ID`, `$env:PVTX_TESTCASE_VER`
+
 ## Execution Flow
 
 1. **Normalize & Validate** - Normalizes E_Mode, validates all parameters
