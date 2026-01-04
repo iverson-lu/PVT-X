@@ -18,7 +18,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _currentPageName = "Plan";
 
     [ObservableProperty]
-    private string _appTitle = "PC Test System";
+    private string _appTitle = "PVT-X | PC Validation Platform";
 
     [ObservableProperty]
     private string _statusMessage = "Ready";
