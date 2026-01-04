@@ -109,7 +109,9 @@ try {
     $cameraNames = @()
     try {
         $devices = Get-CimInstance -ClassName Win32_PnPEntity -Filter "PNPClass = 'Camera' OR PNPClass = 'Image'" -ErrorAction Stop
-        $cameraNames = $devices | Select-Object -ExpandProperty Name -ErrorAction SilentlyContinue
+        if ($devices) {
+            $cameraNames = @($devices | Select-Object -ExpandProperty Name -ErrorAction SilentlyContinue)
+        }
     }
     catch {
         $cameraNames = @()
@@ -119,14 +121,16 @@ try {
     if (-not $cameraNames -or $cameraNames.Count -eq 0) {
         try {
             $fallback = Get-CimInstance -ClassName Win32_PnPEntity -ErrorAction Stop | Where-Object { $_.Name -match "Camera" }
-            $cameraNames = $fallback | Select-Object -ExpandProperty Name -ErrorAction SilentlyContinue
+            if ($fallback) {
+                $cameraNames = @($fallback | Select-Object -ExpandProperty Name -ErrorAction SilentlyContinue)
+            }
         }
         catch {
             $cameraNames = @()
         }
     }
 
-    $cameraNames = $cameraNames | Where-Object { $_ } | Sort-Object -Unique
+    $cameraNames = @($cameraNames | Where-Object { $_ } | Sort-Object -Unique)
     $detectedCount = $cameraNames.Count
 
     $step.actual.detected_count = $detectedCount

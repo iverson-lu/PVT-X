@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "TimezoneCheck",
+  "id": "pvt.software.os.windows.timezone_verify",
   "name": "Timezone Verification",
   "description": "Validates that the system timezone matches the expected UTC offset.",
   "version": "1.0.0",

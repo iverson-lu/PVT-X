@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "TemplateCase",
+  "id": "pvt.template.demo_all_types",
   "name": "Template Case",
   "description": "Template case demonstrating all parameter types and structured output format. Can force Pass/Fail/Timeout/Error outcomes.",
   "version": "1.0.0",

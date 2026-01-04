@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "BiosVersionCheck",
+  "id": "pvt.firmware.bios.version_check",
   "name": "BIOS Version Check",
   "description": "Validates that the system BIOS version contains the specified string.",
   "version": "1.0.0",

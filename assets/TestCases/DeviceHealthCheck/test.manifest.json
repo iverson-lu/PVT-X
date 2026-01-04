@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "DeviceHealthCheck",
+  "id": "pvt.hardware.devices.health_check",
   "name": "Device Health Check",
   "description": "Validates that devices in Device Manager have no errors or warnings.",
   "version": "1.0.0",

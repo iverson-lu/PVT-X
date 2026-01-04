@@ -24,6 +24,20 @@
       "inputs": {
         "Message": "Hello from PVT-X"
       }
+    },
+    {
+      "nodeId": "TemplateCase",
+      "ref": "TemplateCase",
+      "inputs": {
+        "E_Mode": "pass",
+        "S_Text": "hello",
+        "N_Int": "42",
+        "B_Flag": true,
+        "N_Double": "3.14",
+        "P_Path": "C:\\Windows",
+        "ItemsJson": "[1, 2, 3]",
+        "ConfigJson": "{\u0022timeout\u0022: 30, \u0022retry\u0022: true}"
+      }
     }
   ]
 }
