@@ -197,10 +197,10 @@ public class SuiteEditorViewModelTests
 
         // Assert
         vm.Nodes.Should().HaveCount(2);
-        vm.Nodes[0].NodeId.Should().Be("TestCase1");
-        vm.Nodes[0].Ref.Should().Be("TestCase1");
-        vm.Nodes[1].NodeId.Should().Be("TestCase2");
-        vm.Nodes[1].Ref.Should().Be("TestCase2");
+        vm.Nodes[0].NodeId.Should().Be("TestCase1@1.0.0");
+        vm.Nodes[0].Ref.Should().Be("Test Case 1");
+        vm.Nodes[1].NodeId.Should().Be("TestCase2@1.0.0");
+        vm.Nodes[1].Ref.Should().Be("Test Case 2");
         vm.IsDirty.Should().BeTrue();
     }
 
@@ -231,8 +231,8 @@ public class SuiteEditorViewModelTests
         var vm = CreateViewModel();
         var discovery = new DiscoveryResult();
         
-        // Add existing node with ID "TestCase1"
-        vm.Nodes.Add(new TestCaseNodeViewModel { NodeId = "TestCase1", Ref = "TestCase1" });
+        // Add existing node with ID "TestCase1@1.0.0"
+        vm.Nodes.Add(new TestCaseNodeViewModel { NodeId = "TestCase1@1.0.0", Ref = "Test Case 1" });
         
         _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
         _fileDialogMock
@@ -247,7 +247,7 @@ public class SuiteEditorViewModelTests
 
         // Assert
         vm.Nodes.Should().HaveCount(2);
-        vm.Nodes[1].NodeId.Should().Be("TestCase1_1"); // Should have unique suffix
+        vm.Nodes[1].NodeId.Should().Be("TestCase1@1.0.0_1"); // Should have unique suffix
     }
 
     [Fact]
@@ -356,7 +356,7 @@ public class SuiteEditorViewModelTests
                 {
                     new()
                     {
-                        NodeId = "node1",
+                        NodeId = "SampleCase@1.0.0",
                         Ref = "SampleCase",
                         Inputs = new Dictionary<string, System.Text.Json.JsonElement>
                         {

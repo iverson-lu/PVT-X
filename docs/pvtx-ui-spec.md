@@ -95,9 +95,10 @@
 - Detail panel: manifest metadata, parameter definitions summary
 - Actions:
   - **Discover…** (scan and refresh Case assets)
+  - **Import** (import test case from zip archive)
   - Open in Explorer
 
-> Cases are not created in UI. They originate from discovered manifests.
+> Cases are not created in UI. They originate from discovered manifests or imported from zip archives.
 
 ---
 
@@ -396,10 +397,29 @@ The unified History page provides:
 ## 4. Import / Export Rules
 
 ### 4.1 File Types
+- Test Case: `*.zip` (contains test.manifest.json and test files)
 - Suite: `*.suite.json`
 - Plan: `*.plan.json`
 
 ### 4.2 Behavior
+
+#### Test Case Import
+- Import from zip archive containing test.manifest.json
+- Import flow:
+  1. Select zip file
+  2. Extract and validate manifest
+  3. Check for identity conflicts (id@version)
+  4. Check for name conflicts
+  5. Copy to test case root directory
+  6. Refresh discovery
+- Validation rules:
+  - Zip must contain exactly one test.manifest.json
+  - Manifest must have valid id and version
+  - No existing case with same identity (id@version)
+  - No existing case with same name (case-insensitive)
+  - Target folder (id) must not already exist
+
+#### Suite and Plan Import
 - File location is chosen by user each time
 - Import flow:
   1. Parse
