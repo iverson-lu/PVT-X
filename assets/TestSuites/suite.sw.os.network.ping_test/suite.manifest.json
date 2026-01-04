@@ -4,6 +4,9 @@
   "name": "Network Test",
   "description": "Network test with ping multiple websites",
   "version": "1.0.0",
+  "tags": [
+    "network"
+  ],
   "controls": {
     "repeat": 1,
     "maxParallel": 1,
