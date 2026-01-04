@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO.Compression;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -17,6 +18,8 @@ public partial class CasesTabViewModel : ViewModelBase
     private readonly IDiscoveryService _discoveryService;
     private readonly IFileSystemService _fileSystemService;
     private readonly INavigationService _navigationService;
+    private readonly IFileDialogService _fileDialogService;
+    private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
     private ObservableCollection<TestCaseItemViewModel> _cases = new();
@@ -30,11 +33,18 @@ public partial class CasesTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDiscovering;
 
-    public CasesTabViewModel(IDiscoveryService discoveryService, IFileSystemService fileSystemService, INavigationService navigationService)
+    public CasesTabViewModel(
+        IDiscoveryService discoveryService,
+        IFileSystemService fileSystemService,
+        INavigationService navigationService,
+        IFileDialogService fileDialogService,
+        ISettingsService settingsService)
     {
         _discoveryService = discoveryService;
         _fileSystemService = fileSystemService;
         _navigationService = navigationService;
+        _fileDialogService = fileDialogService;
+        _settingsService = settingsService;
     }
 
     partial void OnSearchTextChanged(string value)
@@ -92,6 +102,27 @@ public partial class CasesTabViewModel : ViewModelBase
         finally
         {
             IsDiscovering = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportAsync()
+    {
+        var filePath = _fileDialogService.ShowOpenFileDialog(
+            "Import Test Case",
+            "Zip Files (*.zip)|*.zip|All Files (*.*)|*.*");
+
+        if (string.IsNullOrEmpty(filePath)) return;
+
+        try
+        {
+            await ImportTestCaseFromZipAsync(filePath);
+            await DiscoverAsync();
+            _fileDialogService.ShowInfo("Import Successful", "Test case imported successfully.");
+        }
+        catch (Exception ex)
+        {
+            _fileDialogService.ShowError("Import Failed", ex.Message);
         }
     }
 
@@ -158,6 +189,135 @@ public partial class CasesTabViewModel : ViewModelBase
         if (SelectedCase is not null)
         {
             _fileSystemService.OpenInExplorer(SelectedCase.FolderPath);
+        }
+    }
+
+    private async Task ImportTestCaseFromZipAsync(string filePath)
+    {
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException("Zip file not found.", filePath);
+        }
+
+        using var archive = ZipFile.OpenRead(filePath);
+        var manifest = await ReadManifestAsync(archive);
+
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+        if (discovery.TestCases.Values.Any(tc => tc.Manifest.Identity == manifest.Identity))
+        {
+            throw new InvalidOperationException($"Test case identity already exists: {manifest.Identity}");
+        }
+
+        if (discovery.TestCases.Values.Any(tc => string.Equals(tc.Manifest.Name, manifest.Name, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new InvalidOperationException($"Test case name already exists: {manifest.Name}");
+        }
+
+        var testCasesRoot = _settingsService.CurrentSettings.ResolvedTestCasesRoot;
+        if (!Directory.Exists(testCasesRoot))
+        {
+            Directory.CreateDirectory(testCasesRoot);
+        }
+
+        var targetFolder = Path.Combine(testCasesRoot, manifest.Id);
+        if (Directory.Exists(targetFolder))
+        {
+            throw new InvalidOperationException($"Target folder already exists: {targetFolder}");
+        }
+
+        ExtractArchiveToFolder(archive, targetFolder);
+    }
+
+    private static async Task<TestCaseManifest> ReadManifestAsync(ZipArchive archive)
+    {
+        var manifestEntries = archive.Entries
+            .Where(entry => string.Equals(Path.GetFileName(entry.FullName), "test.manifest.json", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (manifestEntries.Count == 0)
+        {
+            throw new InvalidOperationException("Zip file does not contain test.manifest.json.");
+        }
+
+        if (manifestEntries.Count > 1)
+        {
+            throw new InvalidOperationException("Zip file contains multiple test.manifest.json files.");
+        }
+
+        await using var stream = manifestEntries[0].Open();
+        using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer);
+        var manifest = JsonDefaults.Deserialize<TestCaseManifest>(buffer.ToArray());
+
+        if (manifest is null || string.IsNullOrWhiteSpace(manifest.Id) || string.IsNullOrWhiteSpace(manifest.Version))
+        {
+            throw new InvalidOperationException("Invalid test.manifest.json in zip file.");
+        }
+
+        return manifest;
+    }
+
+    private static void ExtractArchiveToFolder(ZipArchive archive, string targetFolder)
+    {
+        var entries = archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.FullName)).ToList();
+        var entrySegments = entries
+            .Where(entry => !string.IsNullOrEmpty(entry.Name))
+            .Select(entry => entry.FullName.Split('/', StringSplitOptions.RemoveEmptyEntries))
+            .ToList();
+
+        var commonRoot = entrySegments.Count > 0
+            ? entrySegments[0].Length > 1 ? entrySegments[0][0] : null
+            : null;
+
+        if (!string.IsNullOrEmpty(commonRoot))
+        {
+            foreach (var segments in entrySegments)
+            {
+                if (segments.Length <= 1 || !string.Equals(segments[0], commonRoot, StringComparison.Ordinal))
+                {
+                    commonRoot = null;
+                    break;
+                }
+            }
+        }
+
+        Directory.CreateDirectory(targetFolder);
+        var targetRootFullPath = Path.GetFullPath(targetFolder);
+
+        foreach (var entry in entries)
+        {
+            var relativePath = entry.FullName;
+            if (!string.IsNullOrEmpty(commonRoot) && relativePath.StartsWith($"{commonRoot}/", StringComparison.Ordinal))
+            {
+                relativePath = relativePath[(commonRoot.Length + 1)..];
+            }
+
+            if (string.IsNullOrWhiteSpace(relativePath))
+            {
+                continue;
+            }
+
+            var destinationPath = Path.GetFullPath(Path.Combine(targetFolder, relativePath.Replace('/', Path.DirectorySeparatorChar)));
+            if (!destinationPath.StartsWith(targetRootFullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Zip entry has an invalid path.");
+            }
+
+            if (string.IsNullOrEmpty(entry.Name))
+            {
+                Directory.CreateDirectory(destinationPath);
+                continue;
+            }
+
+            var destinationDirectory = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrEmpty(destinationDirectory))
+            {
+                Directory.CreateDirectory(destinationDirectory);
+            }
+
+            using var entryStream = entry.Open();
+            using var destinationStream = File.Create(destinationPath);
+            entryStream.CopyTo(destinationStream);
         }
     }
 }

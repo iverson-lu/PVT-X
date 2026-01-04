@@ -15,6 +15,7 @@ public partial class PlanViewModel : ViewModelBase
     private readonly IPlanRepository _planRepository;
     private readonly INavigationService _navigationService;
     private readonly IFileDialogService _fileDialogService;
+    private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
     private int _selectedTabIndex;
@@ -34,15 +35,17 @@ public partial class PlanViewModel : ViewModelBase
         IPlanRepository planRepository,
         INavigationService navigationService,
         IFileDialogService fileDialogService,
-        IFileSystemService fileSystemService)
+        IFileSystemService fileSystemService,
+        ISettingsService settingsService)
     {
         _discoveryService = discoveryService;
         _suiteRepository = suiteRepository;
         _planRepository = planRepository;
         _navigationService = navigationService;
         _fileDialogService = fileDialogService;
+        _settingsService = settingsService;
 
-        CasesTab = new CasesTabViewModel(discoveryService, fileSystemService, navigationService);
+        CasesTab = new CasesTabViewModel(discoveryService, fileSystemService, navigationService, fileDialogService, settingsService);
         SuitesTab = new SuitesTabViewModel(suiteRepository, discoveryService, fileDialogService, navigationService);
         PlansTab = new PlansTabViewModel(planRepository, suiteRepository, discoveryService, fileDialogService, navigationService);
     }
