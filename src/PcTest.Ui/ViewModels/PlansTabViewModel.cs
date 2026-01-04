@@ -17,6 +17,7 @@ public partial class PlansTabViewModel : ViewModelBase
     private readonly IDiscoveryService _discoveryService;
     private readonly IFileDialogService _fileDialogService;
     private readonly INavigationService _navigationService;
+    private bool _isChangingSelection;
 
     [ObservableProperty]
     private ObservableCollection<PlanListItemViewModel> _plans = new();
@@ -47,11 +48,39 @@ public partial class PlansTabViewModel : ViewModelBase
         _navigationService = navigationService;
     }
 
-    partial void OnSelectedPlanChanged(PlanListItemViewModel? value)
+    partial void OnSelectedPlanChanged(PlanListItemViewModel? oldValue, PlanListItemViewModel? newValue)
     {
-        if (value is not null)
+        // Prevent recursive calls when reverting selection
+        if (_isChangingSelection) return;
+
+        // Check for unsaved changes before switching
+        if (Editor?.IsDirty == true)
         {
-            LoadPlanForEditing(value);
+            var result = _fileDialogService.ShowYesNoCancel(
+                "Unsaved Changes",
+                "You have unsaved changes to the current plan. Do you want to save before switching?");
+
+            if (result is null) // Cancel - revert selection
+            {
+                // Prevent infinite loop by temporarily removing the handler
+                _isChangingSelection = true;
+                SelectedPlan = oldValue;
+                _isChangingSelection = false;
+                return;
+            }
+            else if (result == true) // Yes - save
+            {
+                _ = Editor.SaveAsync();
+            }
+            else // No - discard
+            {
+                Editor.Discard();
+            }
+        }
+
+        if (newValue is not null)
+        {
+            LoadPlanForEditing(newValue);
         }
         else
         {
@@ -176,6 +205,7 @@ public partial class PlansTabViewModel : ViewModelBase
             _navigationService);
 
         await Editor.LoadAsync(planInfo, isNew: true);
+        Editor.IsEditing = true;  // Enter edit mode immediately for new plans
         Editor.Saved += OnEditorSaved;
         IsEditorVisible = true;
     }
@@ -206,6 +236,7 @@ public partial class PlansTabViewModel : ViewModelBase
             _navigationService);
 
         await Editor.LoadAsync(planInfo, isNew: true);
+        Editor.IsEditing = true;  // Enter edit mode immediately for duplicated plans
         Editor.Saved += OnEditorSaved;
         IsEditorVisible = true;
     }

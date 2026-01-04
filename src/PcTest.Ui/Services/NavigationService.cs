@@ -14,6 +14,7 @@ public sealed class NavigationService : INavigationService
     private object? _currentParameter;
 
     public event EventHandler<NavigationEventArgs>? Navigated;
+    public event EventHandler<NavigatingEventArgs>? Navigating;
 
     public string CurrentPage => _currentPage;
     public object? CurrentParameter => _currentParameter;
@@ -26,6 +27,22 @@ public sealed class NavigationService : INavigationService
     public void NavigateTo(string pageName, object? parameter = null)
     {
         if (_frame is null) return;
+        
+        // Raise Navigating event to allow cancellation
+        var navigatingArgs = new NavigatingEventArgs
+        {
+            FromPage = _currentPage,
+            ToPage = pageName,
+            Parameter = parameter,
+            Cancel = false
+        };
+        Navigating?.Invoke(this, navigatingArgs);
+        
+        // If navigation was cancelled, return
+        if (navigatingArgs.Cancel)
+        {
+            return;
+        }
         
         _currentPage = pageName;
         _currentParameter = parameter;

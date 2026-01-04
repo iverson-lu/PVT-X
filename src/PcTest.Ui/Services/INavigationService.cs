@@ -33,6 +33,11 @@ public interface INavigationService
     event EventHandler<NavigationEventArgs>? Navigated;
     
     /// <summary>
+    /// Event raised before navigation to allow cancellation.
+    /// </summary>
+    event EventHandler<NavigatingEventArgs>? Navigating;
+    
+    /// <summary>
     /// Sets the frame for navigation.
     /// </summary>
     void SetFrame(Frame frame);
@@ -45,4 +50,15 @@ public sealed class NavigationEventArgs : EventArgs
 {
     public string PageName { get; set; } = string.Empty;
     public object? Parameter { get; set; }
+}
+
+/// <summary>
+/// Event args for navigating (before navigation).
+/// </summary>
+public sealed class NavigatingEventArgs : EventArgs
+{
+    public string FromPage { get; set; } = string.Empty;
+    public string ToPage { get; set; } = string.Empty;
+    public object? Parameter { get; set; }
+    public bool Cancel { get; set; }
 }

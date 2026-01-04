@@ -16,6 +16,7 @@ public partial class SuitesTabViewModel : ViewModelBase
     private readonly IDiscoveryService _discoveryService;
     private readonly IFileDialogService _fileDialogService;
     private readonly INavigationService _navigationService;
+    private bool _isChangingSelection;
 
     [ObservableProperty]
     private ObservableCollection<SuiteListItemViewModel> _suites = new();
@@ -44,11 +45,39 @@ public partial class SuitesTabViewModel : ViewModelBase
         _navigationService = navigationService;
     }
 
-    partial void OnSelectedSuiteChanged(SuiteListItemViewModel? value)
+    partial void OnSelectedSuiteChanged(SuiteListItemViewModel? oldValue, SuiteListItemViewModel? newValue)
     {
-        if (value is not null)
+        // Prevent recursive calls when reverting selection
+        if (_isChangingSelection) return;
+
+        // Check for unsaved changes before switching
+        if (Editor?.IsDirty == true)
         {
-            LoadSuiteForEditing(value);
+            var result = _fileDialogService.ShowYesNoCancel(
+                "Unsaved Changes",
+                "You have unsaved changes to the current suite. Do you want to save before switching?");
+
+            if (result is null) // Cancel - revert selection
+            {
+                // Prevent infinite loop by temporarily removing the handler
+                _isChangingSelection = true;
+                SelectedSuite = oldValue;
+                _isChangingSelection = false;
+                return;
+            }
+            else if (result == true) // Yes - save
+            {
+                _ = Editor.SaveAsync();
+            }
+            else // No - discard
+            {
+                Editor.Discard();
+            }
+        }
+
+        if (newValue is not null)
+        {
+            LoadSuiteForEditing(newValue);
         }
         else
         {
@@ -176,6 +205,7 @@ public partial class SuitesTabViewModel : ViewModelBase
             _navigationService);
         
         await Editor.LoadAsync(suiteInfo, isNew: true);
+        Editor.IsEditing = true;  // Enter edit mode immediately for new suites
         Editor.Saved += OnEditorSaved;
         IsEditorVisible = true;
     }
@@ -205,6 +235,7 @@ public partial class SuitesTabViewModel : ViewModelBase
             _navigationService);
         
         await Editor.LoadAsync(suiteInfo, isNew: true);
+        Editor.IsEditing = true;  // Enter edit mode immediately for duplicated suites
         Editor.Saved += OnEditorSaved;
         IsEditorVisible = true;
     }

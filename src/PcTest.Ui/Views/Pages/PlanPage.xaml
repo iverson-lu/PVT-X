@@ -12,7 +12,8 @@
       Background="{DynamicResource SurfaceBackgroundBrush}">
     
     <Grid Margin="16">
-        <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+        <TabControl x:Name="MainTabControl"
+                    SelectedIndex="{Binding SelectedTabIndex}"
                     Style="{StaticResource SegmentedControlTabControl}">
             <!-- Cases Tab -->
             <TabItem Header="Cases" Style="{StaticResource SegmentedControlTabItem}">

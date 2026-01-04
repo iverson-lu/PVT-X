@@ -25,7 +25,10 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
 
     public event EventHandler? Saved;
 
-    [ObservableProperty] private bool _isEditing;
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(EditSuiteCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveSuiteCommand))]
+    private bool _isEditing;
     
     [ObservableProperty] private string _id = string.Empty;
     [ObservableProperty] private string _name = string.Empty;
@@ -305,11 +308,13 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             : string.Join("\n", result.Errors);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditSuite))]
     private void EditSuite()
     {
         IsEditing = true;
     }
+
+    private bool CanEditSuite() => !IsEditing;
 
     [RelayCommand]
     private void ValidateSuite()
@@ -354,10 +359,17 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         Saved?.Invoke(this, EventArgs.Empty);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSaveSuite))]
     private async Task SaveSuiteAsync()
     {
         await SaveAsync();
+    }
+
+    private bool CanSaveSuite() => IsEditing || IsDirty;
+
+    protected override void OnIsDirtyChanged()
+    {
+        SaveSuiteCommand.NotifyCanExecuteChanged();
     }
 
     public override void Discard()

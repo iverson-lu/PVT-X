@@ -23,7 +23,10 @@ public partial class PlanEditorViewModel : EditableViewModelBase
 
     public event EventHandler? Saved;
 
-    [ObservableProperty] private bool _isEditing;
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(EditPlanCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SavePlanCommand))]
+    private bool _isEditing;
 
     [ObservableProperty] private string _id = string.Empty;
     [ObservableProperty] private string _name = string.Empty;
@@ -191,11 +194,13 @@ public partial class PlanEditorViewModel : EditableViewModelBase
             : string.Join("\n", result.Errors);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanEditPlan))]
     private void EditPlan()
     {
         IsEditing = true;
     }
+
+    private bool CanEditPlan() => !IsEditing;
 
     [RelayCommand]
     private void ValidatePlan()
@@ -240,10 +245,17 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         Saved?.Invoke(this, EventArgs.Empty);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanSavePlan))]
     private async Task SavePlanAsync()
     {
         await SaveAsync();
+    }
+
+    private bool CanSavePlan() => IsEditing || IsDirty;
+
+    protected override void OnIsDirtyChanged()
+    {
+        SavePlanCommand.NotifyCanExecuteChanged();
     }
 
     public override void Discard()

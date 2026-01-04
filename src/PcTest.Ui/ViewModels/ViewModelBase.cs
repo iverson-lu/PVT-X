@@ -43,8 +43,16 @@ public abstract class EditableViewModelBase : ViewModelBase
     public bool IsDirty
     {
         get => _isDirty;
-        set => SetProperty(ref _isDirty, value);
+        set
+        {
+            if (SetProperty(ref _isDirty, value))
+            {
+                OnIsDirtyChanged();
+            }
+        }
     }
+
+    protected virtual void OnIsDirtyChanged() { }
 
     public bool IsValid
     {

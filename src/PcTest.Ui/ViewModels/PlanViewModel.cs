@@ -14,6 +14,7 @@ public partial class PlanViewModel : ViewModelBase
     private readonly ISuiteRepository _suiteRepository;
     private readonly IPlanRepository _planRepository;
     private readonly INavigationService _navigationService;
+    private readonly IFileDialogService _fileDialogService;
 
     [ObservableProperty]
     private int _selectedTabIndex;
@@ -39,6 +40,7 @@ public partial class PlanViewModel : ViewModelBase
         _suiteRepository = suiteRepository;
         _planRepository = planRepository;
         _navigationService = navigationService;
+        _fileDialogService = fileDialogService;
 
         CasesTab = new CasesTabViewModel(discoveryService, fileSystemService, navigationService);
         SuitesTab = new SuitesTabViewModel(suiteRepository, discoveryService, fileDialogService, navigationService);
@@ -89,5 +91,101 @@ public partial class PlanViewModel : ViewModelBase
                 }
                 break;
         }
+    }
+
+    /// <summary>
+    /// Check if there are unsaved changes before switching tabs.
+    /// Returns true if tab switch should proceed, false if cancelled.
+    /// </summary>
+    public bool CheckUnsavedChanges(int newTabIndex)
+    {
+        EditableViewModelBase? editor = null;
+        string itemType = "";
+
+        // Get the current editor based on current tab
+        switch (SelectedTabIndex)
+        {
+            case 1: // Suites
+                editor = SuitesTab.Editor;
+                itemType = "suite";
+                break;
+            case 2: // Plans
+                editor = PlansTab.Editor;
+                itemType = "plan";
+                break;
+        }
+
+        // If there's an editor with unsaved changes, prompt the user
+        if (editor?.IsDirty == true)
+        {
+            var result = _fileDialogService.ShowYesNoCancel(
+                "Unsaved Changes",
+                $"You have unsaved changes to the current {itemType}. Do you want to save before switching?");
+
+            if (result is null) // Cancel
+            {
+                return false;
+            }
+            else if (result == true) // Yes - save
+            {
+                _ = editor.SaveAsync();
+            }
+            else // No - discard
+            {
+                editor.Discard();
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Check if there are any unsaved changes in any tab.
+    /// Returns true if it's safe to navigate away, false if cancelled.
+    /// </summary>
+    public bool CheckUnsavedChangesBeforeNavigate()
+    {
+        // Check each tab for unsaved changes
+        if (SuitesTab.Editor?.IsDirty == true)
+        {
+            var result = _fileDialogService.ShowYesNoCancel(
+                "Unsaved Changes",
+                "You have unsaved changes to a suite. Do you want to save before leaving?");
+
+            if (result is null) // Cancel
+            {
+                return false;
+            }
+            else if (result == true) // Yes - save
+            {
+                _ = SuitesTab.Editor.SaveAsync();
+            }
+            else // No - discard
+            {
+                SuitesTab.Editor.Discard();
+            }
+        }
+
+        if (PlansTab.Editor?.IsDirty == true)
+        {
+            var result = _fileDialogService.ShowYesNoCancel(
+                "Unsaved Changes",
+                "You have unsaved changes to a plan. Do you want to save before leaving?");
+
+            if (result is null) // Cancel
+            {
+                return false;
+            }
+            else if (result == true) // Yes - save
+            {
+                _ = PlansTab.Editor.SaveAsync();
+            }
+            else // No - discard
+            {
+                PlansTab.Editor.Discard();
+            }
+        }
+
+        return true;
     }
 }
