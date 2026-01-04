@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "pvt.software.os.windows.event_log_check",
+  "id": "sw.os.windows.event_log_check",
   "name": "Event Viewer Level Check",
   "description": "Checks the most recent N events in Event Viewer to ensure none have a specified severity level.",
   "version": "1.0.0",

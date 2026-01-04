@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "pvt.hardware.memory.size_check",
+  "id": "hw.memory.size_check",
   "name": "Memory Check Test",
   "description": "Checks available system memory against minimum requirements.",
   "version": "1.0.0",

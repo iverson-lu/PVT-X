@@ -771,6 +771,11 @@
                                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                                           Margin="0,0,0,6"/>
                                                 <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
+                                                <TextBlock Text="Must be globally unique. Examples: hw.camera_check; sw.os.version_check" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}"
+                                                          TextWrapping="Wrap"
+                                                          Margin="0,6,0,0"/>
                                             </StackPanel>
                                             <StackPanel Margin="0,0,0,16">
                                                 <TextBlock Text="Version" 
@@ -885,13 +890,13 @@
                                                                     Margin="0,0,10,0"/>
                                                             
                                                             <TextBlock Grid.Row="0" Grid.Column="1"
-                                                                      Text="{Binding NodeId}" 
+                                                                      Text="{Binding Ref}" 
                                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                                       FontSize="{StaticResource FontSizeM}"
                                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
                                                             
                                                             <TextBlock Grid.Row="1" Grid.Column="1"
-                                                                      Text="{Binding Ref}" 
+                                                                      Text="{Binding NodeId}" 
                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       FontSize="{StaticResource FontSizeXS}"
                                                                       Margin="0,2,0,0"/>
@@ -922,7 +927,7 @@
                                                               FontSize="{StaticResource FontSizeXS}"
                                                               Foreground="{DynamicResource TextTertiaryBrush}"
                                                               Margin="0,0,0,6"/>
-                                                    <ui:TextBox Text="{Binding NodeId, UpdateSourceTrigger=PropertyChanged}"/>
+                                                    <ui:TextBox Text="{Binding NodeId, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="True"/>
                                                 </StackPanel>
                                                 
                                                 <StackPanel Margin="0,0,0,16">

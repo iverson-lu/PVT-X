@@ -176,9 +176,9 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             discovery = await _discoveryService.DiscoverAsync();
         }
         
-        // Find the test case by ref
+        // Find the test case by NodeId (which is the test case ID)
         var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
-            Path.GetFileName(tc.FolderPath).Equals(nodeVm.Ref, StringComparison.OrdinalIgnoreCase));
+            tc.Manifest.Id.Equals(nodeVm.NodeId, StringComparison.OrdinalIgnoreCase));
             
         if (testCase?.Manifest.Parameters is null)
             return;
@@ -237,7 +237,7 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             var nodeVm = new TestCaseNodeViewModel
             {
                 NodeId = nodeId,
-                Ref = tc.FolderName,
+                Ref = tc.Name,
                 InputsJson = "{}"
             };
             

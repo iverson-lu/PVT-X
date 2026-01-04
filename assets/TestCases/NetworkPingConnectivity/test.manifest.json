@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "id": "pvt.software.network.ping_connectivity",
+  "id": "sw.network.ping_connectivity",
   "name": "Network Ping Connectivity",
   "description": "Checks basic network reachability by pinging a target address (ICMP). Optionally enforces a maximum reply time in milliseconds.",
   "version": "1.0.0",

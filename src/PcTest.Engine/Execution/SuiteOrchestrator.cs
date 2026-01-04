@@ -153,7 +153,7 @@ public sealed class SuiteOrchestrator
             var plannedNodes = new List<PlannedNode>();
             foreach (var node in suite.Manifest.TestCases)
             {
-                var (testCaseManifest, _, _) = refResolver.ResolveRef(suite.ManifestPath, node.Ref);
+                var (testCaseManifest, _, _) = ResolveTestCase(node, suite.ManifestPath, refResolver);
                 plannedNodes.Add(new PlannedNode
                 {
                     NodeId = node.NodeId,
@@ -181,9 +181,8 @@ public sealed class SuiteOrchestrator
                         break;
                     }
 
-                    // Resolve ref
-                    var (testCaseManifest, testCasePath, refError) = refResolver.ResolveRef(
-                        suite.ManifestPath, node.Ref);
+                    // Resolve test case: try NodeId first (as test case ID), then fall back to ref
+                    var (testCaseManifest, testCasePath, refError) = ResolveTestCase(node, suite.ManifestPath, refResolver);
 
                     if (refError is not null || testCaseManifest is null || testCasePath is null)
                     {
@@ -688,6 +687,28 @@ public sealed class SuiteOrchestrator
             case RunStatus.Timeout: counts.Timeout++; break;
             case RunStatus.Aborted: counts.Aborted++; break;
         }
+    }
+
+    /// <summary>
+    /// Resolves test case by NodeId (as test case ID) first, then falls back to ref path.
+    /// </summary>
+    private (TestCaseManifest?, string?, ValidationError?) ResolveTestCase(
+        TestCaseNode node,
+        string suiteManifestPath,
+        SuiteRefResolver refResolver)
+    {
+        // Try to find test case by NodeId first (assuming NodeId is the test case ID)
+        var testCaseByNodeId = _discovery.TestCases.Values.FirstOrDefault(tc =>
+            tc.Manifest.Id.Equals(node.NodeId, StringComparison.OrdinalIgnoreCase));
+
+        if (testCaseByNodeId != null)
+        {
+            // Found by NodeId, return the manifest and path
+            return (testCaseByNodeId.Manifest, testCaseByNodeId.FolderPath, null);
+        }
+
+        // Fall back to ref-based resolution
+        return refResolver.ResolveRef(suiteManifestPath, node.Ref);
     }
 
     private static RunStatus ComputeAggregateStatus(List<TestCaseResult> results, bool wasAborted)

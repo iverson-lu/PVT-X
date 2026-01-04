@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "pvt.template.minimal_demo",
+  "id": "template.minimal_demo",
   "name": "Template Case Minimal",
   "description": "Minimal template case with a single string parameter. Script simply prints the parameter value.",
   "version": "1.0.0",

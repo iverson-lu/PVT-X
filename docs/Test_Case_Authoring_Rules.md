@@ -58,9 +58,9 @@ CaseName/
 Examples:
 
 ```
-pvt.hardware.power.powersupply.voltage_check
-pvt.software.os.windows.service_status
-pvt.firmware.bios.version_check
+hw.power.powersupply.voltage_check
+sw.os.windows.service_status
+hw.bios.version_check
 ```
 
 ##### Rules

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "pvt.hardware.camera.detect_devices",
+  "id": "hw.camera.detect_devices",
   "name": "Camera Verification",
   "description": "Validates camera count and name substrings using PnP device discovery.",
   "version": "1.0.0",

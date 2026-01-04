@@ -13,17 +13,17 @@
   },
   "testCases": [
     {
-      "nodeId": "TimezoneCheck",
-      "ref": "TimezoneCheck",
+      "nodeId": "hw.devices.health_check",
+      "ref": "Device Health Check",
       "inputs": {
-        "ExpectedUtcOffset": "\u002B08:00"
+        "RestrictedMode": false
       }
     },
     {
-      "nodeId": "DeviceHealthCheck",
-      "ref": "DeviceHealthCheck",
+      "nodeId": "sw.os.windows.timezone_verify",
+      "ref": "Timezone Verification",
       "inputs": {
-        "RestrictedMode": false
+        "ExpectedUtcOffset": "\u002B08:00"
       }
     }
   ]

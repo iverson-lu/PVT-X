@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "pvt.utility.file.read_test",
+  "id": "uitl.file.read_test",
   "name": "Read File Case",
   "description": "Simple case that reads and outputs file content to console",
   "version": "1.0.0",

@@ -17,10 +17,17 @@
   },
   "testCases": [
     {
-      "nodeId": "SystemInfoVerification",
-      "ref": "SystemInfoVerification",
+      "nodeId": "hw.devices.health_check",
+      "ref": "Device Health Check",
       "inputs": {
-        "CPU_ProcessorName": "Intel Core Ultra",
+        "RestrictedMode": false
+      }
+    },
+    {
+      "nodeId": "sw.os.windows.system_info_verify",
+      "ref": "System Information Verification",
+      "inputs": {
+        "CPU_ProcessorName": "Intel",
         "WindowsUpdate_MaxDaysSinceLastUpdate": "30",
         "CPU_MinFrequency": "1.0",
         "OS_Version": "Windows 25H2",

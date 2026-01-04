@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "TestEnv",
+  "id": "template.demo",
   "name": "Template Suite",
-  "description": "For template suite test",
+  "description": "For tempalte suite testing",
   "version": "1.0.0",
   "controls": {
     "repeat": 1,
@@ -13,20 +13,12 @@
   },
   "environment": {
     "env": {
-      "FOO": "from_suite",
-      "New": "ewew"
+      "pvt_suite_var": "from_suite"
     }
   },
   "testCases": [
     {
-      "nodeId": "TemplateCaseMinimal",
-      "ref": "TemplateCaseMinimal",
-      "inputs": {
-        "Message": "Hello from PVT-X"
-      }
-    },
-    {
-      "nodeId": "TemplateCase",
+      "nodeId": "template.demo_all_types",
       "ref": "TemplateCase",
       "inputs": {
         "E_Mode": "pass",
@@ -37,6 +29,13 @@
         "P_Path": "C:\\Windows",
         "ItemsJson": "[1, 2, 3]",
         "ConfigJson": "{\u0022timeout\u0022: 30, \u0022retry\u0022: true}"
+      }
+    },
+    {
+      "nodeId": "template.minimal_demo",
+      "ref": "TemplateCaseMinimal",
+      "inputs": {
+        "Message": "Hello from PVT-X"
       }
     }
   ]

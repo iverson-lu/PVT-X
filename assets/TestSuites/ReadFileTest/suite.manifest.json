@@ -18,10 +18,10 @@
   },
   "testCases": [
     {
-      "nodeId": "ReadFileCase",
-      "ref": "ReadFileCase",
+      "nodeId": "uitl.file.read_test",
+      "ref": "Read File Case",
       "inputs": {
-        "P_FilePath": "data\\test-data.txt"
+        "P_FilePath": "C:\\Windows\\System32\\drivers\\etc\\hosts"
       }
     }
   ]
