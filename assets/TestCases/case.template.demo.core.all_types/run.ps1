@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory=$false)] [int]     $N_Int = 42,
     [Parameter(Mandatory=$false)] [bool]    $B_Flag = $true,
     [Parameter(Mandatory=$false)] [double]  $N_Double = 3.14,
-    [Parameter(Mandatory=$false)] [string]  $P_Path = "C:\\Windows",
+    [Parameter(Mandatory=$false)] [string]  $P_Path = "data/test-data.txt",
     [Parameter(Mandatory=$false)] [string]  $ItemsJson = "[1, 2, 3]",
     [Parameter(Mandatory=$false)] [string]  $ConfigJson = "{`"timeout`": 30, `"retry`": true}"
 )
@@ -132,6 +132,13 @@ try {
         throw "Failed to parse JSON parameters: $($_.Exception.Message)"
     }
 
+    # Resolve relative path using PVTX_TESTCASE_PATH if available
+    $resolvedPath = $P_Path
+    if (-not [System.IO.Path]::IsPathRooted($P_Path)) {
+        $baseDir = if ($env:PVTX_TESTCASE_PATH) { $env:PVTX_TESTCASE_PATH } else { $PSScriptRoot }
+        $resolvedPath = Join-Path $baseDir $P_Path
+    }
+    
     # Validate parameter types
     $validationErrors = @()
     if ($E_Mode -isnot [string]) { $validationErrors += "E_Mode: Expected string" }
@@ -151,7 +158,21 @@ try {
     $step.metrics.int_value = $N_Int
     $step.metrics.flag = $B_Flag
     $step.metrics.double_value = $N_Double
-    $step.metrics.path_exists = (Test-Path -LiteralPath $P_Path -ErrorAction SilentlyContinue)
+    $step.metrics.path_exists = (Test-Path -LiteralPath $resolvedPath -ErrorAction SilentlyContinue)
+    $step.metrics.path_resolved = $resolvedPath
+    
+    # Try to read file content if path exists
+    if ($step.metrics.path_exists) {
+        try {
+            $fileContent = Get-Content -LiteralPath $resolvedPath -Raw -ErrorAction Stop
+            $step.metrics.file_size = $fileContent.Length
+            $step.metrics.file_lines = ($fileContent -split '\r?\n').Count
+            $step.actual.file_content_preview = if ($fileContent.Length -gt 100) { $fileContent.Substring(0, 100) + "..." } else { $fileContent }
+        }
+        catch {
+            $step.metrics.file_read_error = $_.Exception.Message
+        }
+    }
 
     # Execute test based on mode
     switch ($E_Mode) {

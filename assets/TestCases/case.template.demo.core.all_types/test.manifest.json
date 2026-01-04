@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "template.demo_all_types",
+  "id": "case.template.demo.core.all_types",
   "name": "Template Case",
   "description": "Template case demonstrating all parameter types and structured output format. Can force Pass/Fail/Timeout/Error outcomes.",
   "version": "1.0.0",
@@ -54,8 +54,8 @@
       "name": "P_Path",
       "type": "path",
       "required": false,
-      "default": "C:\\Windows",
-      "help": "Path parameter (string)"
+      "default": "data/test-data.txt",
+      "help": "Path parameter (relative to test case directory, resolved using PVTX_TESTCASE_PATH)"
     },
     {
       "name": "ItemsJson",

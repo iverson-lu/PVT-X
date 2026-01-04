@@ -22,7 +22,7 @@
   },
   "testCases": [
     {
-      "nodeId": "template.demo_all_types@1.0.0",
+      "nodeId": "case.template.demo.core.all_types@1.0.0",
       "ref": "Template Case",
       "inputs": {
         "E_Mode": "pass",
@@ -30,13 +30,13 @@
         "N_Int": "42",
         "B_Flag": true,
         "N_Double": "3.14",
-        "P_Path": "C:\\Windows",
+        "P_Path": "data/test-data.txt",
         "ItemsJson": "[1, 2, 3]",
         "ConfigJson": "{\u0022timeout\u0022: 30, \u0022retry\u0022: true}"
       }
     },
     {
-      "nodeId": "template.minimal_demo@1.0.0",
+      "nodeId": "case.template.demo.core.minimal@1.0.0",
       "ref": "Template Case Minimal",
       "inputs": {
         "Message": "Hello from PVT-X"
