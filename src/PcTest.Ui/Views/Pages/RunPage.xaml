@@ -226,47 +226,20 @@
                                                       Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
                                     </Grid>
                                     
-                                    <!-- First row: NodeId or Identity -->
+                                    <!-- First row: Name -->
                                     <TextBlock Grid.Row="0" Grid.Column="1" 
                                               FontWeight="{StaticResource FontWeightSemiBold}"
                                               FontSize="{StaticResource FontSizeM}"
                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                              Margin="0,0,10,0">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Text" Value="{Binding NodeId}"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding NodeId}" Value="">
-                                                        <Setter Property="Text" Value="{Binding Identity}"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding NodeId}" Value="standalone">
-                                                        <Setter Property="Text" Value="{Binding Identity}"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                              Margin="0,0,10,0"
+                                              Text="{Binding DisplayName}"/>
                                     
-                                    <!-- Second row: Identity (only visible if NodeId is not empty and not standalone) -->
+                                    <!-- Second row: Id@Version -->
                                     <TextBlock Grid.Row="1" Grid.Column="1" 
                                               Foreground="{DynamicResource TextSecondaryBrush}" 
                                               FontSize="{StaticResource FontSizeS}"
-                                              Margin="0,0,10,0">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Text" Value="{Binding Identity}"/>
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding NodeId}" Value="">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding NodeId}" Value="standalone">
-                                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                              Margin="0,0,10,0"
+                                              Text="{Binding DisplayIdentity}"/>
                                     
                                     <!-- Status column - spans both rows -->
                                     <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" HorizontalAlignment="Right">

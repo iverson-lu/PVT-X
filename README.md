@@ -135,7 +135,7 @@ Each line is a JSON object representing a test case result:
     },
     {
       "nodeId": "memory-01",
-      "ref": "MemoryCheck"
+      "ref": "hw.memory.size_check"
     }
   ]
 }

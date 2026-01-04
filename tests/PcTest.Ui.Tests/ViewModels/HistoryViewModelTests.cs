@@ -16,6 +16,7 @@ public class HistoryViewModelTests
     private readonly Mock<INavigationService> _navigationServiceMock;
     private readonly Mock<IFileSystemService> _fileSystemServiceMock;
     private readonly Mock<IFileDialogService> _fileDialogServiceMock;
+    private readonly Mock<IDiscoveryService> _discoveryServiceMock;
 
     public HistoryViewModelTests()
     {
@@ -23,6 +24,7 @@ public class HistoryViewModelTests
         _navigationServiceMock = new Mock<INavigationService>();
         _fileSystemServiceMock = new Mock<IFileSystemService>();
         _fileDialogServiceMock = new Mock<IFileDialogService>();
+        _discoveryServiceMock = new Mock<IDiscoveryService>();
     }
 
     [Fact]
@@ -264,6 +266,7 @@ public class HistoryViewModelTests
             _runRepositoryMock.Object,
             _navigationServiceMock.Object,
             _fileSystemServiceMock.Object,
-            _fileDialogServiceMock.Object);
+            _fileDialogServiceMock.Object,
+            _discoveryServiceMock.Object);
     }
 }

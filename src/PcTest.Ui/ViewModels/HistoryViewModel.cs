@@ -29,6 +29,7 @@ public partial class HistoryViewModel : ViewModelBase
     private readonly INavigationService _navigationService;
     private readonly IFileSystemService _fileSystemService;
     private readonly IFileDialogService _fileDialogService;
+    private readonly IDiscoveryService _discoveryService;
     private CancellationTokenSource? _loadCancellationTokenSource;
 
     /// <summary>
@@ -137,12 +138,14 @@ public partial class HistoryViewModel : ViewModelBase
         IRunRepository runRepository,
         INavigationService navigationService,
         IFileSystemService fileSystemService,
-        IFileDialogService fileDialogService)
+        IFileDialogService fileDialogService,
+        IDiscoveryService discoveryService)
     {
         _runRepository = runRepository;
         _navigationService = navigationService;
         _fileSystemService = fileSystemService;
         _fileDialogService = fileDialogService;
+        _discoveryService = discoveryService;
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
@@ -693,8 +696,37 @@ public partial class HistoryViewModel : ViewModelBase
             var runs = await _runRepository.GetRunsAsync(filter);
             _allRuns.Clear();
 
+            // Get discovery for name lookup
+            var discovery = _discoveryService.CurrentDiscovery;
+            if (discovery == null)
+            {
+                discovery = await _discoveryService.DiscoverAsync();
+            }
+
             foreach (var run in runs)
             {
+                // Find names based on run type
+                string? testName = null, suiteName = null, planName = null;
+                
+                if (run.RunType == RunType.TestCase && run.TestId != null)
+                {
+                    var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
+                        tc.Manifest.Id.Equals(run.TestId, StringComparison.OrdinalIgnoreCase));
+                    testName = testCase?.Manifest.Name;
+                }
+                else if (run.RunType == RunType.TestSuite && run.SuiteId != null)
+                {
+                    var suite = discovery.TestSuites.Values.FirstOrDefault(s => 
+                        s.Manifest.Id.Equals(run.SuiteId, StringComparison.OrdinalIgnoreCase));
+                    suiteName = suite?.Manifest.Name;
+                }
+                else if (run.RunType == RunType.TestPlan && run.PlanId != null)
+                {
+                    var plan = discovery.TestPlans.Values.FirstOrDefault(p => 
+                        p.Manifest.Id.Equals(run.PlanId, StringComparison.OrdinalIgnoreCase));
+                    planName = plan?.Manifest.Name;
+                }
+
                 _allRuns.Add(new RunIndexEntryViewModel
                 {
                     RunId = run.RunId,
@@ -702,10 +734,13 @@ public partial class HistoryViewModel : ViewModelBase
                     NodeId = run.NodeId,
                     TestId = run.TestId,
                     TestVersion = run.TestVersion,
+                    TestName = testName,
                     SuiteId = run.SuiteId,
                     SuiteVersion = run.SuiteVersion,
+                    SuiteName = suiteName,
                     PlanId = run.PlanId,
                     PlanVersion = run.PlanVersion,
+                    PlanName = planName,
                     ParentRunId = run.ParentRunId,
                     StartTime = run.StartTime,
                     EndTime = run.EndTime,
@@ -927,10 +962,13 @@ public partial class RunIndexEntryViewModel : ViewModelBase
     [ObservableProperty] private string? _nodeId;
     [ObservableProperty] private string? _testId;
     [ObservableProperty] private string? _testVersion;
+    [ObservableProperty] private string? _testName;
     [ObservableProperty] private string? _suiteId;
     [ObservableProperty] private string? _suiteVersion;
+    [ObservableProperty] private string? _suiteName;
     [ObservableProperty] private string? _planId;
     [ObservableProperty] private string? _planVersion;
+    [ObservableProperty] private string? _planName;
     [ObservableProperty] private string? _parentRunId;
     [ObservableProperty] private DateTime _startTime;
     [ObservableProperty] private DateTime? _endTime;
@@ -1007,9 +1045,9 @@ public partial class RunIndexEntryViewModel : ViewModelBase
         {
             return RunType switch
             {
-                RunType.TestCase => TestId ?? string.Empty,
-                RunType.TestSuite => SuiteId ?? string.Empty,
-                RunType.TestPlan => PlanId ?? string.Empty,
+                RunType.TestCase => TestName ?? TestId ?? string.Empty,
+                RunType.TestSuite => SuiteName ?? SuiteId ?? string.Empty,
+                RunType.TestPlan => PlanName ?? PlanId ?? string.Empty,
                 _ => DisplayName
             };
         }

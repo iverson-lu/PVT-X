@@ -176,9 +176,13 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             discovery = await _discoveryService.DiscoverAsync();
         }
         
-        // Find the test case by NodeId (which is the test case ID)
+        // Strip _1, _2, etc. suffix from nodeId to get the actual test case ID
+        // e.g., "hw.bios.version_check_1" -> "hw.bios.version_check"
+        var testCaseId = StripNodeIdSuffix(nodeVm.NodeId);
+        
+        // Find the test case by the stripped ID
         var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
-            tc.Manifest.Id.Equals(nodeVm.NodeId, StringComparison.OrdinalIgnoreCase));
+            tc.Manifest.Id.Equals(testCaseId, StringComparison.OrdinalIgnoreCase));
             
         if (testCase?.Manifest.Parameters is null)
             return;
@@ -265,6 +269,16 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         }
         
         return nodeId;
+    }
+
+    /// <summary>
+    /// Strips the _1, _2, etc. suffix from a nodeId to get the base test case ID.
+    /// e.g., "hw.bios.version_check_1" -> "hw.bios.version_check"
+    /// </summary>
+    private static string StripNodeIdSuffix(string nodeId)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
+        return match.Success ? match.Groups[1].Value : nodeId;
     }
 
     [RelayCommand]

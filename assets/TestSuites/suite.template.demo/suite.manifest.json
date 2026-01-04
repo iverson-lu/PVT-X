@@ -1,9 +1,13 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "template.demo",
+  "id": "suite.template.demo",
   "name": "Template Suite",
-  "description": "For tempalte suite testing",
+  "description": "Template suite for demo",
   "version": "1.0.0",
+  "tags": [
+    "template",
+    "sample"
+  ],
   "controls": {
     "repeat": 1,
     "maxParallel": 1,
@@ -19,7 +23,7 @@
   "testCases": [
     {
       "nodeId": "template.demo_all_types",
-      "ref": "TemplateCase",
+      "ref": "Template Case",
       "inputs": {
         "E_Mode": "pass",
         "S_Text": "hello",
@@ -33,7 +37,7 @@
     },
     {
       "nodeId": "template.minimal_demo",
-      "ref": "TemplateCaseMinimal",
+      "ref": "Template Case Minimal",
       "inputs": {
         "Message": "Hello from PVT-X"
       }

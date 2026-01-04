@@ -237,7 +237,7 @@ The Runner injects the following **system-level environment variables** for each
 
 ## 5. Template Case Positioning
 
-### 5.1 TemplateCase
+### 5.1 template.demo_all_types
 
 **Purpose**:
 
@@ -247,7 +247,7 @@ The Runner injects the following **system-level environment variables** for each
 
 ---
 
-### 5.2 TemplateCaseMinimal (Recommended Starting Point)
+### 5.2 template.minimal_demo (Recommended Starting Point)
 
 **Purpose**:
 
@@ -256,7 +256,7 @@ The Runner injects the following **system-level environment variables** for each
 - May use very few parameters, but structure must be complete
 
 > Strongly recommended:
-> New Case → TemplateCaseMinimal → Extend as needed
+> New Case → template.minimal_demo → Extend as needed
 
 ---
 

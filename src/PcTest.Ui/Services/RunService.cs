@@ -109,11 +109,40 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             if (_nodesDict.ContainsKey(planned.NodeId))
                 continue;
 
+            // Find name based on node type and ID
+            string? testName = null, suiteName = null, planName = null;
+            
+            if (_engine.Discovery != null)
+            {
+                if (planned.NodeType == RunType.TestCase)
+                {
+                    var testCase = _engine.Discovery.TestCases.Values.FirstOrDefault(tc => 
+                        tc.Manifest.Id.Equals(planned.TestId, StringComparison.OrdinalIgnoreCase));
+                    testName = testCase?.Manifest.Name;
+                }
+                else if (planned.NodeType == RunType.TestSuite)
+                {
+                    var suite = _engine.Discovery.TestSuites.Values.FirstOrDefault(s => 
+                        s.Manifest.Id.Equals(planned.TestId, StringComparison.OrdinalIgnoreCase));
+                    suiteName = suite?.Manifest.Name;
+                }
+                else if (planned.NodeType == RunType.TestPlan)
+                {
+                    var plan = _engine.Discovery.TestPlans.Values.FirstOrDefault(p => 
+                        p.Manifest.Id.Equals(planned.TestId, StringComparison.OrdinalIgnoreCase));
+                    planName = plan?.Manifest.Name;
+                }
+            }
+
             var node = new NodeExecutionState
             {
                 NodeId = planned.NodeId,
+                NodeType = planned.NodeType,
                 TestId = planned.TestId,
                 TestVersion = planned.TestVersion,
+                TestName = testName,
+                SuiteName = suiteName,
+                PlanName = planName,
                 Status = null, // Pending
                 IsRunning = false,
                 ParentNodeId = planned.ParentNodeId

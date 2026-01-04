@@ -222,8 +222,12 @@ public partial class RunViewModel : ViewModelBase
                     var newVm = new NodeExecutionStateViewModel
                     {
                         NodeId = nodeState.NodeId,
+                        NodeType = nodeState.NodeType,
                         TestId = nodeState.TestId,
                         TestVersion = nodeState.TestVersion,
+                        TestName = nodeState.TestName,
+                        SuiteName = nodeState.SuiteName,
+                        PlanName = nodeState.PlanName,
                         Status = nodeState.Status,
                         Duration = nodeState.Duration,
                         RetryCount = nodeState.RetryCount,
@@ -409,6 +413,10 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
     [ObservableProperty] private string _nodeId = string.Empty;
     [ObservableProperty] private string _testId = string.Empty;
     [ObservableProperty] private string _testVersion = string.Empty;
+    [ObservableProperty] private string? _testName;
+    [ObservableProperty] private string? _suiteName;
+    [ObservableProperty] private string? _planName;
+    [ObservableProperty] private RunType _nodeType;
     [ObservableProperty] private RunStatus? _status;
     [ObservableProperty] private TimeSpan? _duration;
     [ObservableProperty] private int _retryCount;
@@ -422,5 +430,41 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
     partial void OnStatusChanged(RunStatus? value) => OnPropertyChanged(nameof(StatusDisplay));
     partial void OnIsRunningChanged(bool value) => OnPropertyChanged(nameof(StatusDisplay));
     partial void OnDurationChanged(TimeSpan? value) => OnPropertyChanged(nameof(DurationDisplay));
-    public string Identity => $"{TestId}@{TestVersion}";
+    
+    /// <summary>
+    /// Display name only (without version).
+    /// </summary>
+    public string DisplayName
+    {
+        get
+        {
+            return NodeType switch
+            {
+                RunType.TestCase => TestName ?? TestId,
+                RunType.TestSuite => SuiteName ?? TestId,
+                RunType.TestPlan => PlanName ?? TestId,
+                _ => TestId
+            };
+        }
+    }
+    
+    /// <summary>
+    /// Display identity as Id@Version.
+    /// </summary>
+    public string DisplayIdentity => $"{TestId}@{TestVersion}";
+    
+    public string Identity
+    {
+        get
+        {
+            var name = NodeType switch
+            {
+                RunType.TestCase => TestName ?? TestId,
+                RunType.TestSuite => SuiteName ?? TestId,
+                RunType.TestPlan => PlanName ?? TestId,
+                _ => TestId
+            };
+            return $"{name}@{TestVersion}";
+        }
+    }
 }

@@ -70,8 +70,12 @@ public sealed class RunExecutionState
 public sealed class NodeExecutionState
 {
     public string NodeId { get; set; } = string.Empty;
+    public RunType NodeType { get; set; }
     public string TestId { get; set; } = string.Empty;
     public string TestVersion { get; set; } = string.Empty;
+    public string? TestName { get; set; }
+    public string? SuiteName { get; set; }
+    public string? PlanName { get; set; }
     public RunStatus? Status { get; set; }
     public TimeSpan? Duration { get; set; }
     public int RetryCount { get; set; }

@@ -771,7 +771,7 @@
                                                           Foreground="{DynamicResource TextTertiaryBrush}"
                                                           Margin="0,0,0,6"/>
                                                 <ui:TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}"/>
-                                                <TextBlock Text="Must be globally unique. Examples: hw.camera_check; sw.os.version_check" 
+                                                <TextBlock Text="Must be globally unique. Examples: case.sw.os.ver_check; suite.hw.camera_check; plan.sys.regression_test" 
                                                           FontSize="{StaticResource FontSizeXS}"
                                                           Foreground="{DynamicResource TextSecondaryBrush}"
                                                           TextWrapping="Wrap"

@@ -697,9 +697,13 @@ public sealed class SuiteOrchestrator
         string suiteManifestPath,
         SuiteRefResolver refResolver)
     {
-        // Try to find test case by NodeId first (assuming NodeId is the test case ID)
+        // Strip _1, _2, etc. suffix from NodeId to get the actual test case ID
+        // e.g., "hw.bios.version_check_1" -> "hw.bios.version_check"
+        var testCaseId = StripNodeIdSuffix(node.NodeId);
+        
+        // Try to find test case by the stripped ID
         var testCaseByNodeId = _discovery.TestCases.Values.FirstOrDefault(tc =>
-            tc.Manifest.Id.Equals(node.NodeId, StringComparison.OrdinalIgnoreCase));
+            tc.Manifest.Id.Equals(testCaseId, StringComparison.OrdinalIgnoreCase));
 
         if (testCaseByNodeId != null)
         {
@@ -709,6 +713,15 @@ public sealed class SuiteOrchestrator
 
         // Fall back to ref-based resolution
         return refResolver.ResolveRef(suiteManifestPath, node.Ref);
+    }
+
+    /// <summary>
+    /// Strips the _1, _2, etc. suffix from a nodeId to get the base test case ID.
+    /// </summary>
+    private static string StripNodeIdSuffix(string nodeId)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
+        return match.Success ? match.Groups[1].Value : nodeId;
     }
 
     private static RunStatus ComputeAggregateStatus(List<TestCaseResult> results, bool wasAborted)
