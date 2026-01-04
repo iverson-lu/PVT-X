@@ -7,7 +7,7 @@
         xmlns:vm="clr-namespace:PcTest.Ui.ViewModels"
         mc:Ignorable="d"
         Title="{Binding AppTitle}"
-        Icon="pack://application:,,,/Resources/hp_logo.png"
+        Icon="pack://application:,,,/Resources/pvtx_logo.png"
         Height="800" Width="1400"
         MinHeight="600" MinWidth="1000"
         WindowStartupLocation="CenterScreen"
@@ -45,6 +45,13 @@
                     
                     <!-- Main Navigation Items (Top) -->
                     <StackPanel Grid.Row="0" VerticalAlignment="Top" Margin="0,12,0,0">
+                        <!-- Logo -->
+                        <Image Source="pack://application:,,,/Resources/pvtx_logo.png" 
+                               Width="40" 
+                               Height="40" 
+                               Margin="10,8,0,20"
+                               HorizontalAlignment="Center"/>
+                        
                         <ui:Button x:Name="PlanNavButton"
                                   Icon="{ui:SymbolIcon Clipboard24}" 
                                   Tag="Plan" 
