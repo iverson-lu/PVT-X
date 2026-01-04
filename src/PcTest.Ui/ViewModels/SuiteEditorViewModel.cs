@@ -363,13 +363,26 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         if (_isNew)
         {
             var allSuites = await _suiteRepository.GetAllAsync();
-            var duplicate = allSuites.FirstOrDefault(s => 
+            
+            // Check for duplicate identity
+            var duplicateIdentity = allSuites.FirstOrDefault(s => 
                 $"{s.Manifest.Id}@{s.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
             
-            if (duplicate != null)
+            if (duplicateIdentity != null)
             {
                 _fileDialogService.ShowError("Cannot Save", 
                     $"A suite with identity '{identity}' already exists.\nEach suite must have a unique combination of ID and Version.");
+                return;
+            }
+            
+            // Check for duplicate name
+            var duplicateName = allSuites.FirstOrDefault(s => 
+                s.Manifest.Name.Equals(manifest.Name, StringComparison.OrdinalIgnoreCase));
+            
+            if (duplicateName != null)
+            {
+                _fileDialogService.ShowError("Cannot Save", 
+                    $"A suite with name '{manifest.Name}' already exists.\nEach suite must have a unique name.");
                 return;
             }
         }
@@ -380,13 +393,29 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             if (!identity.Equals(originalIdentity, StringComparison.OrdinalIgnoreCase))
             {
                 var allSuites = await _suiteRepository.GetAllAsync();
-                var duplicate = allSuites.FirstOrDefault(s => 
+                var duplicateIdentity = allSuites.FirstOrDefault(s => 
                     $"{s.Manifest.Id}@{s.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
                 
-                if (duplicate != null)
+                if (duplicateIdentity != null)
                 {
                     _fileDialogService.ShowError("Cannot Save", 
                         $"A suite with identity '{identity}' already exists.\nEach suite must have a unique combination of ID and Version.");
+                    return;
+                }
+            }
+            
+            // Check if name changed and conflicts with another suite
+            var originalName = _originalSuiteInfo.Manifest.Name;
+            if (!manifest.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase))
+            {
+                var allSuites = await _suiteRepository.GetAllAsync();
+                var duplicateName = allSuites.FirstOrDefault(s => 
+                    s.Manifest.Name.Equals(manifest.Name, StringComparison.OrdinalIgnoreCase));
+                
+                if (duplicateName != null)
+                {
+                    _fileDialogService.ShowError("Cannot Save", 
+                        $"A suite with name '{manifest.Name}' already exists.\nEach suite must have a unique name.");
                     return;
                 }
             }

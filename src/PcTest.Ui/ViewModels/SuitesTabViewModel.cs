@@ -187,7 +187,7 @@ public partial class SuitesTabViewModel : ViewModelBase
         var manifest = new TestSuiteManifest
         {
             SchemaVersion = "1.5.0",
-            Id = string.Empty,
+            Id = "suite.<input_unique_id>",
             Name = "New Suite",
             Version = "1.0.0",
             Description = "New test suite"

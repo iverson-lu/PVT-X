@@ -233,13 +233,26 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         if (_isNew)
         {
             var allPlans = await _planRepository.GetAllAsync();
-            var duplicate = allPlans.FirstOrDefault(p => 
+            
+            // Check for duplicate identity
+            var duplicateIdentity = allPlans.FirstOrDefault(p => 
                 $"{p.Manifest.Id}@{p.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
             
-            if (duplicate != null)
+            if (duplicateIdentity != null)
             {
                 _fileDialogService.ShowError("Cannot Save", 
                     $"A plan with identity '{identity}' already exists.\nEach plan must have a unique combination of ID and Version.");
+                return;
+            }
+            
+            // Check for duplicate name
+            var duplicateName = allPlans.FirstOrDefault(p => 
+                p.Manifest.Name.Equals(manifest.Name, StringComparison.OrdinalIgnoreCase));
+            
+            if (duplicateName != null)
+            {
+                _fileDialogService.ShowError("Cannot Save", 
+                    $"A plan with name '{manifest.Name}' already exists.\nEach plan must have a unique name.");
                 return;
             }
         }
@@ -250,13 +263,29 @@ public partial class PlanEditorViewModel : EditableViewModelBase
             if (!identity.Equals(originalIdentity, StringComparison.OrdinalIgnoreCase))
             {
                 var allPlans = await _planRepository.GetAllAsync();
-                var duplicate = allPlans.FirstOrDefault(p => 
+                var duplicateIdentity = allPlans.FirstOrDefault(p => 
                     $"{p.Manifest.Id}@{p.Manifest.Version}".Equals(identity, StringComparison.OrdinalIgnoreCase));
                 
-                if (duplicate != null)
+                if (duplicateIdentity != null)
                 {
                     _fileDialogService.ShowError("Cannot Save", 
                         $"A plan with identity '{identity}' already exists.\nEach plan must have a unique combination of ID and Version.");
+                    return;
+                }
+            }
+            
+            // Check if name changed and conflicts with another plan
+            var originalName = _originalPlanInfo.Manifest.Name;
+            if (!manifest.Name.Equals(originalName, StringComparison.OrdinalIgnoreCase))
+            {
+                var allPlans = await _planRepository.GetAllAsync();
+                var duplicateName = allPlans.FirstOrDefault(p => 
+                    p.Manifest.Name.Equals(manifest.Name, StringComparison.OrdinalIgnoreCase));
+                
+                if (duplicateName != null)
+                {
+                    _fileDialogService.ShowError("Cannot Save", 
+                        $"A plan with name '{manifest.Name}' already exists.\nEach plan must have a unique name.");
                     return;
                 }
             }
