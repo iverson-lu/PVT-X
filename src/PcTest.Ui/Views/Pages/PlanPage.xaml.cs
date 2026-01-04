@@ -92,6 +92,9 @@ public partial class PlanPage : Page
             _lastConfirmedTabIndex = planNav.TabIndex;
             await _viewModel.InitializeAsync();
             _viewModel.SelectItemByIdentity(planNav.TabIndex, planNav.TargetIdentity);
+            
+            // Scroll the selected item into view
+            ScrollSelectedItemIntoView(planNav.TabIndex);
         }
         // Handle simple tab index (legacy compatibility)
         else if (parameter is int tabIndex)
@@ -104,5 +107,34 @@ public partial class PlanPage : Page
         {
             await _viewModel.InitializeAsync();
         }
+    }
+
+    private void ScrollSelectedItemIntoView(int tabIndex)
+    {
+        // Use Dispatcher to ensure the UI has been updated
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            switch (tabIndex)
+            {
+                case 0: // Cases
+                    if (_viewModel.CasesTab.SelectedCase != null)
+                    {
+                        CasesListBox.ScrollIntoView(_viewModel.CasesTab.SelectedCase);
+                    }
+                    break;
+                case 1: // Suites
+                    if (_viewModel.SuitesTab.SelectedSuite != null)
+                    {
+                        SuitesListBox.ScrollIntoView(_viewModel.SuitesTab.SelectedSuite);
+                    }
+                    break;
+                case 2: // Plans
+                    if (_viewModel.PlansTab.SelectedPlan != null)
+                    {
+                        PlansListBox.ScrollIntoView(_viewModel.PlansTab.SelectedPlan);
+                    }
+                    break;
+            }
+        }), System.Windows.Threading.DispatcherPriority.Loaded);
     }
 }

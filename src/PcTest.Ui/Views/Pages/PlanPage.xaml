@@ -68,7 +68,8 @@
                                        Icon="{ui:SymbolIcon Search24}"/>
                             
                             <!-- Cases List -->
-                            <ListBox Grid.Row="3" 
+                            <ListBox x:Name="CasesListBox"
+                                    Grid.Row="3" 
                                     ItemsSource="{Binding CasesTab.Cases}"
                                     SelectedItem="{Binding CasesTab.SelectedCase}"
                                     BorderThickness="0"
@@ -517,7 +518,8 @@
                                        Icon="{ui:SymbolIcon Search24}"/>
                             
                             <!-- Suites List -->
-                            <ListBox Grid.Row="3" 
+                            <ListBox x:Name="SuitesListBox"
+                                    Grid.Row="3" 
                                     ItemsSource="{Binding SuitesTab.Suites}"
                                     SelectedItem="{Binding SuitesTab.SelectedSuite}"
                                     BorderThickness="0"
@@ -1171,7 +1173,8 @@
                                        Icon="{ui:SymbolIcon Search24}"/>
                             
                             <!-- Plans List -->
-                            <ListBox Grid.Row="3" 
+                            <ListBox x:Name="PlansListBox"
+                                    Grid.Row="3" 
                                     ItemsSource="{Binding PlansTab.Plans}"
                                     SelectedItem="{Binding PlansTab.SelectedPlan}"
                                     BorderThickness="0"

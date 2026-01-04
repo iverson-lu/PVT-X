@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.5.0",
   "id": "TestEnv",
-  "name": "Environment Variable Test",
-  "description": "For testing env vars effectiveness11",
+  "name": "Template Suite",
+  "description": "For template suite test",
   "version": "1.0.0",
   "controls": {
     "repeat": 1,
