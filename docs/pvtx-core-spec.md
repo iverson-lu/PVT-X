@@ -156,13 +156,14 @@ Rules:
 
 ```
 TestCases/
-  CpuStress/
+  hw.bios.version_check/
     test.manifest.json
     run.ps1
     README.md (optional)
 ```
 
 Rules:
+- Test Case folder name SHOULD match the manifest id for clarity (e.g., folder `hw.bios.version_check` for id `hw.bios.version_check`).
 - Test Case folders are immutable during execution.
 - Discovery is read-only.
 - All outputs MUST be written to the Run Folder.
@@ -322,6 +323,7 @@ TestCaseNode schema:
 Rules:
 - testCases MUST be an ordered array that defines the pipeline (no branching in v1).
 - nodeId identifies the execution node, not the Test Case definition.
+- nodeId SHOULD use id@version format (e.g., `hw.cpu.stress@1.0.0`). Multiple instances MAY append `_1`, `_2` suffixes.
 - The same Test Case (id@version) MAY appear multiple times with different nodeId and inputs.
 - ref MUST resolve to a folder under ResolvedTestCaseRoot, and the manifest MUST be located at `<ResolvedTestCaseRoot>/<ref>/test.manifest.json` after normalization. The resolution algorithm is: normalize ref relative to ResolvedTestCaseRoot; reject if the normalized path escapes the root; load the manifest at the normalized location.
 - If ref resolution fails (OutOfRoot, NotFound, or MissingManifest), Engine MUST fail validation with code "Suite.TestCaseRef.Invalid" and a message that includes suite path, ref, resolvedPath, expectedRoot, and reason (OutOfRoot / NotFound / MissingManifest). OutOfRoot applies when the normalized path escapes the root; NotFound applies when the target folder does not exist; MissingManifest applies when the folder exists but test.manifest.json is missing.
@@ -333,20 +335,20 @@ Example:
 ```json
 {
   "schemaVersion": "1.5.0",
-  "id": "ThermalSuite",
-  "name": "Thermal Suite",
+  "id": "suite.thermal.stress",
+  "name": "Thermal Stress Suite",
   "version": "1.0.0",
   "controls": { "repeat": 1, "continueOnFailure": false },
   "environment": { "env": { "LAB_MODE": "1" }, "workingDir": "work" },
   "testCases": [
     {
-      "nodeId": "cpu-quick",
-      "ref": "CpuStress",
+      "nodeId": "hw.cpu.stress@1.0.0",
+      "ref": "CPU Stress Test",
       "inputs": { "DurationSec": 30, "Mode": "A" }
     },
     {
-      "nodeId": "cpu-long",
-      "ref": "CpuStress",
+      "nodeId": "hw.cpu.stress@1.0.0_1",
+      "ref": "CPU Stress Test",
       "inputs": { "DurationSec": 120, "Mode": "B" }
     }
   ]

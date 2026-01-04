@@ -1,6 +1,6 @@
 # Test Case Authoring Rules v1
 
-> Official authoring rules for **all Test Cases** in the PVT-X PC Test Suite.
+> Unified authoring rules for **all Test Cases** in the PVT-X PC Test Suite.
 >
 > Goals:
 
@@ -40,9 +40,9 @@ CaseName/
 - It is **strongly recommended** that a Case produces:
   - `report.json` (describing the Case’s own execution result)
 - Producing other files is completely optional
-- Pass / Fail is determined by the **exit code**, not by output files
+- Pass / Fail is determined by the **exit code**, not by output artifacts
 - The directory name is used only for physical organization and loading
-- The **only stable, unique identifier** is the ID (Case / Suite / Plan)
+- The **only stable and unique identifier** is the ID
 
 ---
 
@@ -53,32 +53,46 @@ CaseName/
 #### ID Rules (Mandatory)
 
 - Every **Case / Suite / Plan** must define a **globally unique, stable ID**
-- IDs must follow **reverse-domain style naming**
-- IDs are globally unique across **Case / Suite / Plan namespaces**
+- IDs follow **reverse-domain style naming** with controlled semantic layers
+- Case / Suite / Plan share a **single global ID namespace**, distinguished by prefixes
 
 Examples:
 
 ```
-case.hw.power.sleep_test
+case.hw.power.core.sleep_resume
 case.sw.os.windows.service_status
 suite.fw.bios_ver_check
 plan.sw.smoke_test
 ```
 
+##### Core Design Principles (Summary)
+
+> A complete and scalable ID structure is the foundation of long-term system governance.
+
+- ID semantics are split into **fixed layers** to avoid ambiguity as the library grows
+- Recommended structure (Case example):
+  ```
+  case.<domain>.<subsystem>.<feature>.<action>
+  ```
+- Layer responsibilities:
+  - `domain`: top-level technical area (hw / sw / fw / os / network)
+  - `subsystem`: major functional block (power / storage / wifi)
+  - `feature`: specific capability or focus area (use `core` when not applicable)
+  - `action`: test intent or behavior (check / verify / stress, etc.)
+
+> Notes:
+> - This is a **recommended and governed standard** for scalability, UI grouping, and analytics
+> - Full definitions, whitelists, and constraints are defined in: `pvtx-id-schema.md`
+
 ##### Rules
 
 - IDs **must be globally unique** and **must not change once published**
-- Case / Suite / Plan share a **single ID namespace**, distinguished by prefixes:
+- Case / Suite / Plan use unified prefixes:
   - `case.*`
   - `suite.*`
   - `plan.*`
-- It is **strongly recommended** that directory names match their IDs
-  - This is not mandatory, but greatly improves long-term maintenance and management
+- It is **strongly recommended** that directory names match their IDs (not mandatory)
 - IDs are **decoupled from UI display names**
-- Recommended structure:
-  ```
-  <type>.<domain>.<subsystem>.<feature>
-  ```
 - IDs must appear in:
   - `test.manifest.json` (meta section)
   - `report.json` produced by the Case
@@ -144,7 +158,7 @@ One sentence describing what this test validates.
 - Semantic explanation of manifest parameters
 
 ## How to Run Manually
-Example command for local debugging:
+Provide an example command to run `run.ps1` directly for debugging:
 
 ```powershell
 pwsh ./run.ps1 -ParamA valueA -ParamB valueB
@@ -167,9 +181,9 @@ Injected automatically by Runner:
 | Variable | Description |
 |--------|-------------|
 | `PVTX_TESTCASE_PATH` | Absolute path of the Test Case |
-| `PVTX_TESTCASE_NAME` | Display name |
-| `PVTX_TESTCASE_ID` | Execution ID |
-| `PVTX_TESTCASE_VER` | Version identifier |
+| `PVTX_TESTCASE_NAME` | Test Case display name |
+| `PVTX_TESTCASE_ID` | Unique execution ID |
+| `PVTX_TESTCASE_VER` | Test Case version identifier |
 
 > Plan- and Suite-level environment variable injection is also supported.
 

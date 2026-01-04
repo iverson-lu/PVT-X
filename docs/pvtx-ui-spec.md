@@ -31,6 +31,13 @@
 - Dependency Injection: `Microsoft.Extensions.DependencyInjection`
 - JSON: `System.Text.Json`
 
+### 1.1 Naming Conventions
+
+- Suite IDs SHOULD use prefix `suite.` (e.g., `suite.hw.full_test`)
+- Plan IDs SHOULD use prefix `plan.` (e.g., `plan.sys.regression`)
+- UI pre-fills these prefixes when creating new Suites/Plans
+- Identity format: `id@version` is used for uniqueness validation and discovery keys
+
 ---
 
 ## 2. Top-Level Information Architecture (Frozen)
