@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
-using System.Text.Json;
+using System.IO;
+using System.IO.Compression;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
@@ -15,8 +16,10 @@ namespace PcTest.Ui.ViewModels;
 public partial class CasesTabViewModel : ViewModelBase
 {
     private readonly IDiscoveryService _discoveryService;
+    private readonly IFileDialogService _fileDialogService;
     private readonly IFileSystemService _fileSystemService;
     private readonly INavigationService _navigationService;
+    private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
     private ObservableCollection<TestCaseItemViewModel> _cases = new();
@@ -30,11 +33,18 @@ public partial class CasesTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDiscovering;
 
-    public CasesTabViewModel(IDiscoveryService discoveryService, IFileSystemService fileSystemService, INavigationService navigationService)
+    public CasesTabViewModel(
+        IDiscoveryService discoveryService,
+        IFileDialogService fileDialogService,
+        IFileSystemService fileSystemService,
+        INavigationService navigationService,
+        ISettingsService settingsService)
     {
         _discoveryService = discoveryService;
+        _fileDialogService = fileDialogService;
         _fileSystemService = fileSystemService;
         _navigationService = navigationService;
+        _settingsService = settingsService;
     }
 
     partial void OnSearchTextChanged(string value)
@@ -92,6 +102,131 @@ public partial class CasesTabViewModel : ViewModelBase
         finally
         {
             IsDiscovering = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportAsync()
+    {
+        var zipPath = _fileDialogService.ShowOpenFileDialog(
+            "Import Test Case",
+            "Zip files (*.zip)|*.zip");
+
+        if (string.IsNullOrWhiteSpace(zipPath))
+        {
+            return;
+        }
+
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"pc-testcase-import-{Guid.NewGuid()}");
+
+        try
+        {
+            Directory.CreateDirectory(tempRoot);
+            ZipFile.ExtractToDirectory(zipPath, tempRoot);
+
+            var manifestCandidates = Directory
+                .EnumerateFiles(tempRoot, "test.manifest.json", SearchOption.AllDirectories)
+                .ToList();
+
+            if (manifestCandidates.Count == 0)
+            {
+                _fileDialogService.ShowError("Import Failed", "No test.manifest.json found in the archive.");
+                return;
+            }
+
+            if (manifestCandidates.Count > 1)
+            {
+                _fileDialogService.ShowError("Import Failed", "Multiple test.manifest.json files were found. Please import a single test case.");
+                return;
+            }
+
+            var manifestPath = manifestCandidates[0];
+            var manifestJson = await _fileSystemService.ReadAllTextAsync(manifestPath);
+            var manifest = JsonDefaults.Deserialize<TestCaseManifest>(manifestJson);
+
+            if (manifest is null || string.IsNullOrWhiteSpace(manifest.Id) || string.IsNullOrWhiteSpace(manifest.Version))
+            {
+                _fileDialogService.ShowError("Import Failed", "The test case manifest is invalid.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(manifest.Name))
+            {
+                _fileDialogService.ShowError("Import Failed", "The test case manifest must define a name.");
+                return;
+            }
+
+            var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+            if (discovery.TestCases.ContainsKey(manifest.Identity))
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"A test case with identity {manifest.Identity} already exists.");
+                return;
+            }
+
+            var hasNameConflict = discovery.TestCases.Values.Any(tc =>
+                string.Equals(tc.Manifest.Name, manifest.Name, StringComparison.OrdinalIgnoreCase));
+            if (hasNameConflict)
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"A test case named \"{manifest.Name}\" already exists.");
+                return;
+            }
+
+            var sourceFolder = Path.GetDirectoryName(manifestPath);
+            if (string.IsNullOrWhiteSpace(sourceFolder))
+            {
+                _fileDialogService.ShowError("Import Failed", "Unable to locate the test case folder in the archive.");
+                return;
+            }
+
+            var destinationRoot = _settingsService.CurrentSettings.ResolvedTestCasesRoot;
+            var destinationFolder = Path.Combine(destinationRoot, manifest.Id);
+
+            if (Directory.Exists(destinationFolder))
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"The destination folder already exists: {destinationFolder}.");
+                return;
+            }
+
+            Directory.CreateDirectory(destinationRoot);
+            CopyDirectory(sourceFolder, destinationFolder);
+
+            await DiscoverAsync();
+            _fileDialogService.ShowInfo("Import Complete", $"Imported test case \"{manifest.Name}\".");
+        }
+        catch (Exception ex)
+        {
+            _fileDialogService.ShowError("Import Failed", ex.Message);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, true);
+            }
+        }
+    }
+
+    private static void CopyDirectory(string sourcePath, string destinationPath)
+    {
+        Directory.CreateDirectory(destinationPath);
+
+        foreach (var file in Directory.EnumerateFiles(sourcePath, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(sourcePath, file);
+            var targetPath = Path.Combine(destinationPath, relativePath);
+            var targetDirectory = Path.GetDirectoryName(targetPath);
+            if (!string.IsNullOrEmpty(targetDirectory))
+            {
+                Directory.CreateDirectory(targetDirectory);
+            }
+
+            File.Copy(file, targetPath, overwrite: false);
         }
     }
 

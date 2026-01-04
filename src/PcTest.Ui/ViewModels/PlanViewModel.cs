@@ -34,7 +34,8 @@ public partial class PlanViewModel : ViewModelBase
         IPlanRepository planRepository,
         INavigationService navigationService,
         IFileDialogService fileDialogService,
-        IFileSystemService fileSystemService)
+        IFileSystemService fileSystemService,
+        ISettingsService settingsService)
     {
         _discoveryService = discoveryService;
         _suiteRepository = suiteRepository;
@@ -42,7 +43,12 @@ public partial class PlanViewModel : ViewModelBase
         _navigationService = navigationService;
         _fileDialogService = fileDialogService;
 
-        CasesTab = new CasesTabViewModel(discoveryService, fileSystemService, navigationService);
+        CasesTab = new CasesTabViewModel(
+            discoveryService,
+            fileDialogService,
+            fileSystemService,
+            navigationService,
+            settingsService);
         SuitesTab = new SuitesTabViewModel(suiteRepository, discoveryService, fileDialogService, navigationService);
         PlansTab = new PlansTabViewModel(planRepository, suiteRepository, discoveryService, fileDialogService, navigationService);
     }
