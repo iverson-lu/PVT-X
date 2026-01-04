@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.IO.Compression;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -15,7 +17,9 @@ namespace PcTest.Ui.ViewModels;
 public partial class CasesTabViewModel : ViewModelBase
 {
     private readonly IDiscoveryService _discoveryService;
+    private readonly IFileDialogService _fileDialogService;
     private readonly IFileSystemService _fileSystemService;
+    private readonly ISettingsService _settingsService;
     private readonly INavigationService _navigationService;
 
     [ObservableProperty]
@@ -30,10 +34,17 @@ public partial class CasesTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDiscovering;
 
-    public CasesTabViewModel(IDiscoveryService discoveryService, IFileSystemService fileSystemService, INavigationService navigationService)
+    public CasesTabViewModel(
+        IDiscoveryService discoveryService,
+        IFileDialogService fileDialogService,
+        IFileSystemService fileSystemService,
+        ISettingsService settingsService,
+        INavigationService navigationService)
     {
         _discoveryService = discoveryService;
+        _fileDialogService = fileDialogService;
         _fileSystemService = fileSystemService;
+        _settingsService = settingsService;
         _navigationService = navigationService;
     }
 
@@ -92,6 +103,118 @@ public partial class CasesTabViewModel : ViewModelBase
         finally
         {
             IsDiscovering = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportAsync()
+    {
+        var filePath = _fileDialogService.ShowOpenFileDialog(
+            "Import Test Case",
+            "Zip Files (*.zip)|*.zip|All Files (*.*)|*.*");
+
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return;
+        }
+
+        var tempRoot = Path.Combine(Path.GetTempPath(), "PcTestCaseImport", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempRoot);
+
+        try
+        {
+            ZipFile.ExtractToDirectory(filePath, tempRoot);
+
+            var manifestPath = Directory.EnumerateFiles(tempRoot, "test.manifest.json", SearchOption.AllDirectories)
+                .FirstOrDefault();
+
+            if (manifestPath is null)
+            {
+                _fileDialogService.ShowError("Import Failed", "No test.manifest.json found in the archive.");
+                return;
+            }
+
+            var json = await _fileSystemService.ReadAllTextAsync(manifestPath);
+            var manifest = JsonDefaults.Deserialize<TestCaseManifest>(json);
+            if (manifest is null)
+            {
+                _fileDialogService.ShowError("Import Failed", "Unable to read test.manifest.json.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(manifest.Id) ||
+                string.IsNullOrWhiteSpace(manifest.Version) ||
+                string.IsNullOrWhiteSpace(manifest.Name))
+            {
+                _fileDialogService.ShowError("Import Failed", "Manifest must include id, version, and name.");
+                return;
+            }
+
+            var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+            var duplicateIdentity = discovery.TestCases.Values.FirstOrDefault(tc =>
+                tc.Manifest.Id.Equals(manifest.Id, StringComparison.OrdinalIgnoreCase) &&
+                tc.Manifest.Version.Equals(manifest.Version, StringComparison.OrdinalIgnoreCase));
+
+            if (duplicateIdentity is not null)
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"Test case '{manifest.Id}@{manifest.Version}' already exists.");
+                return;
+            }
+
+            var duplicateName = discovery.TestCases.Values.FirstOrDefault(tc =>
+                tc.Manifest.Name.Equals(manifest.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (duplicateName is not null)
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"Test case name '{manifest.Name}' already exists.");
+                return;
+            }
+
+            var settings = _settingsService.CurrentSettings;
+            var casesRoot = settings.ResolvedTestCasesRoot;
+            Directory.CreateDirectory(casesRoot);
+
+            var destinationPath = Path.Combine(casesRoot, manifest.Id);
+            if (Directory.Exists(destinationPath))
+            {
+                _fileDialogService.ShowError(
+                    "Import Failed",
+                    $"Destination folder already exists: {destinationPath}");
+                return;
+            }
+
+            var sourceRoot = Path.GetDirectoryName(manifestPath);
+            if (string.IsNullOrWhiteSpace(sourceRoot))
+            {
+                _fileDialogService.ShowError("Import Failed", "Unable to locate manifest folder.");
+                return;
+            }
+
+            Directory.Move(sourceRoot, destinationPath);
+            _fileDialogService.ShowInfo("Import Successful", $"Imported '{manifest.Name}'.");
+            await DiscoverAsync();
+        }
+        catch (Exception ex)
+        {
+            _fileDialogService.ShowError("Import Failed", ex.Message);
+        }
+        finally
+        {
+            try
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, true);
+                }
+            }
+            catch
+            {
+                // Ignore cleanup errors
+            }
         }
     }
 
