@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.5.0",
   "id": "DeviceHealthCheck",
-  "name": "🔧 Device Health Check",
+  "name": "Device Health Check",
   "category": "Hardware",
   "description": "Validates that devices in Device Manager have no errors or warnings.",
   "version": "1.0.0",
