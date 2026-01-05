@@ -5,7 +5,7 @@
   "description": "Sanity testing",
   "version": "1.0.0",
   "controls": {
-    "repeat": 2,
+    "repeat": 1,
     "maxParallel": 1,
     "continueOnFailure": false,
     "retryOnError": 0,

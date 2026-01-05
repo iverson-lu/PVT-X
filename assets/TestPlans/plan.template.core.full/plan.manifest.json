@@ -9,7 +9,7 @@
   ],
   "suites": [
     "suite.sw.os.sanity_check@1.0.0",
-    "suite.template.demo_fail@1.0.0",
-    "suite.template.demo@1.0.0"
+    "suite.template.demo@1.0.0",
+    "suite.template.demo_fail@1.0.0"
   ]
 }
