@@ -224,16 +224,16 @@
                                         
                                         <!-- Target Name + Version -->
                                         <StackPanel Margin="4,0,0,0">
-                                            <TextBlock Text="{Binding Run.NameWithIteration}" 
+                                            <TextBlock Text="{Binding Run.NameWithoutVersion}" 
                                                       FontSize="13"
                                                       FontWeight="Medium"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       TextTrimming="CharacterEllipsis"
                                                       MaxWidth="200"/>
-                                            <TextBlock Text="{Binding Run.VersionDisplay}" 
+                                            <TextBlock Text="{Binding Run.SecondaryLineDisplay}" 
                                                       FontSize="10"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Visibility="{Binding Run.VersionDisplay, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                                      Visibility="{Binding Run.SecondaryLineDisplay, Converter={StaticResource StringToVisibilityConverter}}"/>
                                         </StackPanel>
                                     </StackPanel>
                                     

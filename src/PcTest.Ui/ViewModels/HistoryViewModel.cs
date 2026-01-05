@@ -1107,21 +1107,73 @@ public partial class RunIndexEntryViewModel : ViewModelBase
         }
     }
 
-    public string NameWithIteration
+    public string IterationDisplay
     {
         get
         {
             if (IterationIndex.HasValue && IterationTotal.HasValue)
             {
-                return $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value} · {NameWithoutVersion}";
+                return $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value}";
             }
 
-            return NameWithoutVersion;
+            return string.Empty;
         }
     }
 
-    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
-    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
+    public string SecondaryLineDisplay
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(VersionDisplay))
+            {
+                return IterationDisplay;
+            }
+
+            if (string.IsNullOrEmpty(IterationDisplay))
+            {
+                return VersionDisplay;
+            }
+
+            return $"{VersionDisplay} · {IterationDisplay}";
+        }
+    }
+
+    partial void OnIterationIndexChanged(int? value)
+    {
+        OnPropertyChanged(nameof(IterationDisplay));
+        OnPropertyChanged(nameof(SecondaryLineDisplay));
+    }
+
+    partial void OnIterationTotalChanged(int? value)
+    {
+        OnPropertyChanged(nameof(IterationDisplay));
+        OnPropertyChanged(nameof(SecondaryLineDisplay));
+    }
+
+    partial void OnRunTypeChanged(RunType value)
+    {
+        OnPropertyChanged(nameof(VersionDisplay));
+        OnPropertyChanged(nameof(NameWithoutVersion));
+        OnPropertyChanged(nameof(SecondaryLineDisplay));
+    }
+
+    partial void OnTestVersionChanged(string? value)
+    {
+        OnPropertyChanged(nameof(VersionDisplay));
+        OnPropertyChanged(nameof(SecondaryLineDisplay));
+    }
+
+    partial void OnSuiteVersionChanged(string? value)
+    {
+        OnPropertyChanged(nameof(VersionDisplay));
+        OnPropertyChanged(nameof(SecondaryLineDisplay));
+    }
+
+    partial void OnPlanVersionChanged(string? value)
+    {
+        OnPropertyChanged(nameof(VersionDisplay));
+        OnPropertyChanged(nameof(SecondaryLineDisplay));
+    }
 }
 
 /// <summary>
