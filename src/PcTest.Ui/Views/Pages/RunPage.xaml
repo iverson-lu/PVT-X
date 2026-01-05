@@ -10,6 +10,121 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
       Background="{DynamicResource SurfaceBackgroundBrush}">
+
+    <Page.Resources>
+        <Style x:Key="PipelineItemContainerStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="2,0,12,2"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border Background="{TemplateBinding Background}"
+                               BorderBrush="{TemplateBinding BorderBrush}"
+                               BorderThickness="{TemplateBinding BorderThickness}"
+                               Padding="{TemplateBinding Padding}"
+                               CornerRadius="6">
+                            <ContentPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <DataTemplate x:Key="PipelineCaseTemplate">
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Margin" Value="12,8"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IndentLevel}" Value="1">
+                                <Setter Property="Margin" Value="32,8,12,8"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Status Icon - aligned to first row only -->
+                <Grid Grid.Row="0" Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Top">
+                    <!-- Running state icon -->
+                    <ui:SymbolIcon Symbol="Play20" 
+                                  Foreground="{DynamicResource StatusRunningBrush}"
+                                  FontSize="20" 
+                                  ToolTip="Running"
+                                  Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    <!-- Other status icons -->
+                    <ui:SymbolIcon Symbol="{Binding Status, Converter={StaticResource RunStatusToIconConverter}}" 
+                                  Foreground="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                  FontSize="20" 
+                                  ToolTip="{Binding Status}"
+                                  Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                </Grid>
+                
+                <!-- First row: Name -->
+                <TextBlock Grid.Row="0" Grid.Column="1" 
+                          FontWeight="{StaticResource FontWeightSemiBold}"
+                          FontSize="{StaticResource FontSizeM}"
+                          Foreground="{DynamicResource TextPrimaryBrush}"
+                          Margin="0,0,10,0"
+                          Text="{Binding DisplayName}"/>
+                
+                <!-- Second row: Id@Version -->
+                <TextBlock Grid.Row="1" Grid.Column="1" 
+                          Foreground="{DynamicResource TextSecondaryBrush}" 
+                          FontSize="{StaticResource FontSizeS}"
+                          Margin="0,-4,10,0"
+                          Text="{Binding DisplayIdentity}"/>
+                
+                <!-- Status column - spans both rows -->
+                <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" HorizontalAlignment="Right">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="{Binding StatusDisplay}" 
+                              FontSize="{StaticResource FontSizeS}"
+                              Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <TextBlock Grid.Row="1" Text="{Binding DurationDisplay}" 
+                              Foreground="{DynamicResource TextTertiaryBrush}" 
+                              FontSize="{StaticResource FontSizeXS}"/>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+        
+        <Style x:Key="IterationStatusBadgeStyle" TargetType="ui:Badge">
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource StatusRunningBrush}"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Null}">
+                    <Setter Property="Background" Value="{DynamicResource BorderSubtleBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
     
     <Grid Margin="16">
         <Grid.RowDefinitions>
@@ -95,6 +210,10 @@
                               FontSize="{StaticResource FontSizeL}"
                               Foreground="{DynamicResource TextPrimaryBrush}"
                               VerticalAlignment="Center"/>
+                    <ui:Badge Content="{Binding RepeatStatusText}"
+                             Margin="8,0,0,0"
+                             VerticalAlignment="Center"
+                             Visibility="{Binding ShowRepeatStatus, Converter={StaticResource BoolToVisibilityConverter}}"/>
                 </StackPanel>
                 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
@@ -150,114 +269,81 @@
                               Style="{StaticResource SectionTitleStyle}"
                               Margin="20,20,20,12"/>
                     
-                    <ListBox Grid.Row="1" 
-                            ItemsSource="{Binding Nodes}"
-                            SelectedItem="{Binding SelectedNode}"
-                            BorderThickness="0"
-                            Background="Transparent"
-                            VirtualizingPanel.IsVirtualizing="True"
-                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                            Padding="8,0,8,8">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="Margin" Value="2,0,12,2"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <Border Background="{TemplateBinding Background}"
-                                                   BorderBrush="{TemplateBinding BorderBrush}"
-                                                   BorderThickness="{TemplateBinding BorderThickness}"
-                                                   Padding="{TemplateBinding Padding}"
-                                                   CornerRadius="6">
-                                                <ContentPresenter/>
+                    <ScrollViewer Grid.Row="1"
+                                VerticalScrollBarVisibility="Auto"
+                                HorizontalScrollBarVisibility="Disabled"
+                                Padding="8,0,8,8">
+                        <ItemsControl ItemsSource="{Binding Iterations}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}">
+                                        <Expander.Header>
+                                            <Border Background="{DynamicResource SurfaceAlternateBrush}"
+                                                   BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                                   BorderThickness="1"
+                                                   CornerRadius="8"
+                                                   Padding="12,8"
+                                                   Margin="8,6,8,4">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding IterationLabel}"
+                                                                      FontWeight="{StaticResource FontWeightSemiBold}"
+                                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                      FontSize="{StaticResource FontSizeS}"/>
+                                                            <ui:Badge Content="{Binding StatusDisplay}"
+                                                                     Style="{StaticResource IterationStatusBadgeStyle}"
+                                                                     Margin="8,0,0,0"
+                                                                     VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0" VerticalAlignment="Center">
+                                                            <ProgressBar Width="140"
+                                                                        Height="4"
+                                                                        Minimum="0"
+                                                                        Maximum="1"
+                                                                        Value="{Binding ProgressValue}"
+                                                                        Background="{DynamicResource BorderSubtleBrush}"
+                                                                        Foreground="{DynamicResource StatusRunningBrush}"
+                                                                        BorderThickness="0"/>
+                                                            <TextBlock Text="{Binding ProgressDisplay}"
+                                                                      Margin="8,0,0,0"
+                                                                      FontSize="{StaticResource FontSizeXS}"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding DurationDisplay}"
+                                                                  FontSize="{StaticResource FontSizeXS}"
+                                                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    </StackPanel>
+                                                </Grid>
                                             </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid>
-                                    <Grid.Style>
-                                        <Style TargetType="Grid">
-                                            <Setter Property="Margin" Value="12,8"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IndentLevel}" Value="1">
-                                                    <Setter Property="Margin" Value="32,8,12,8"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Grid.Style>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Status Icon - aligned to first row only -->
-                                    <Grid Grid.Row="0" Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Top">
-                                        <!-- Running state icon -->
-                                        <ui:SymbolIcon Symbol="Play20" 
-                                                      Foreground="{DynamicResource StatusRunningBrush}"
-                                                      FontSize="20" 
-                                                      ToolTip="Running"
-                                                      Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                        <!-- Other status icons -->
-                                        <ui:SymbolIcon Symbol="{Binding Status, Converter={StaticResource RunStatusToIconConverter}}" 
-                                                      Foreground="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"
-                                                      FontSize="20" 
-                                                      ToolTip="{Binding Status}"
-                                                      Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
-                                    </Grid>
-                                    
-                                    <!-- First row: Name -->
-                                    <TextBlock Grid.Row="0" Grid.Column="1" 
-                                              FontWeight="{StaticResource FontWeightSemiBold}"
-                                              FontSize="{StaticResource FontSizeM}"
-                                              Foreground="{DynamicResource TextPrimaryBrush}"
-                                              Margin="0,0,10,0"
-                                              Text="{Binding DisplayName}"/>
-                                    
-                                    <!-- Second row: Id@Version -->
-                                    <TextBlock Grid.Row="1" Grid.Column="1" 
-                                              Foreground="{DynamicResource TextSecondaryBrush}" 
-                                              FontSize="{StaticResource FontSizeS}"
-                                              Margin="0,-4,10,0"
-                                              Text="{Binding DisplayIdentity}"/>
-                                    
-                                    <!-- Status column - spans both rows -->
-                                    <Grid Grid.Row="0" Grid.RowSpan="2" Grid.Column="2" HorizontalAlignment="Right">
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Grid.Row="0" Text="{Binding StatusDisplay}" 
-                                                  FontSize="{StaticResource FontSizeS}"
-                                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                        <TextBlock Grid.Row="1" Text="{Binding DurationDisplay}" 
-                                                  Foreground="{DynamicResource TextTertiaryBrush}" 
-                                                  FontSize="{StaticResource FontSizeXS}"/>
-                                    </Grid>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
+                                        </Expander.Header>
+                                        <Border Margin="8,0,8,8"
+                                               Background="{DynamicResource CardBackgroundBrush}"
+                                               BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                               BorderThickness="1"
+                                               CornerRadius="8">
+                                            <ListBox ItemsSource="{Binding Cases}"
+                                                    SelectedItem="{Binding DataContext.SelectedNode, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                    BorderThickness="0"
+                                                    Background="Transparent"
+                                                    VirtualizingPanel.IsVirtualizing="True"
+                                                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                    ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                                    Padding="0,4,0,4"
+                                                    ItemContainerStyle="{StaticResource PipelineItemContainerStyle}"
+                                                    ItemTemplate="{StaticResource PipelineCaseTemplate}"/>
+                                        </Border>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </Grid>
             </Border>
             

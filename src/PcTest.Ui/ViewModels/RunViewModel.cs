@@ -58,8 +58,25 @@ public partial class RunViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<StructuredEventViewModel> _events = new();
 
+    [ObservableProperty]
+    private ObservableCollection<IterationExecutionStateViewModel> _iterations = new();
+
+    [ObservableProperty]
+    private int _repeatCount = 1;
+
+    [ObservableProperty]
+    private int _currentIterationIndex = 1;
+
+    [ObservableProperty]
+    private bool _showRepeatStatus;
+
+    [ObservableProperty]
+    private string _repeatStatusText = string.Empty;
+
     private readonly StringBuilder _consoleBuffer = new();
     private readonly StringBuilder _eventsBuffer = new();
+    private readonly Dictionary<string, NodeExecutionSnapshot> _nodeSnapshots = new();
+    private bool _iterationsInitialized;
 
     public RunViewModel(
         IRunService runService, 
@@ -248,6 +265,8 @@ public partial class RunViewModel : ViewModelBase
                     }
                 }
             }
+
+            UpdateIterations(state);
         });
     }
 
@@ -303,6 +322,21 @@ public partial class RunViewModel : ViewModelBase
         }
     }
 
+    partial void OnRepeatCountChanged(int value)
+    {
+        ShowRepeatStatus = value > 1;
+        UpdateRepeatStatusText();
+    }
+
+    partial void OnCurrentIterationIndexChanged(int value) => UpdateRepeatStatusText();
+
+    private void UpdateRepeatStatusText()
+    {
+        RepeatStatusText = RepeatCount > 1
+            ? $"Repeat {RepeatCount}x \u00b7 Iteration {CurrentIterationIndex}/{RepeatCount}"
+            : string.Empty;
+    }
+
     [RelayCommand]
     private async Task StartAsync()
     {
@@ -320,10 +354,12 @@ public partial class RunViewModel : ViewModelBase
         // Clear previous nodes for new run
         _nodeViewModelDict.Clear();
         Nodes.Clear();
+        ResetIterations();
 
         _runCts = new CancellationTokenSource();
 
         var request = new RunRequest();
+        RepeatCount = await ResolveRepeatCountAsync();
         
         // Apply parameter overrides if available (for test cases)
         if (_parameterOverrides is not null && _parameterOverrides.Count > 0 && RunType == RunType.TestCase)
@@ -403,6 +439,187 @@ public partial class RunViewModel : ViewModelBase
 
     public bool CanStart => !IsRunning && !string.IsNullOrEmpty(TargetIdentity);
     public bool CanStop => IsRunning;
+
+    private async Task<int> ResolveRepeatCountAsync()
+    {
+        if (RunType != RunType.TestSuite)
+        {
+            return 1;
+        }
+
+        var suite = await _suiteRepository.GetByIdentityAsync(TargetIdentity);
+        return Math.Max(1, suite?.Manifest.Controls?.Repeat ?? 1);
+    }
+
+    private void ResetIterations()
+    {
+        Iterations.Clear();
+        _nodeSnapshots.Clear();
+        _iterationsInitialized = false;
+        CurrentIterationIndex = 1;
+    }
+
+    private void InitializeIterations(IReadOnlyList<NodeExecutionState> nodes)
+    {
+        Iterations.Clear();
+        if (nodes.Count == 0)
+        {
+            return;
+        }
+
+        var totalCases = nodes.Count;
+        for (var index = 1; index <= RepeatCount; index++)
+        {
+            var iteration = new IterationExecutionStateViewModel(index, RepeatCount, totalCases)
+            {
+                IsExpanded = index == CurrentIterationIndex
+            };
+
+            foreach (var node in nodes)
+            {
+                iteration.AddCase(BuildCaseViewModel(node, isRunning: false, status: null));
+            }
+            iteration.RefreshSummary();
+            Iterations.Add(iteration);
+        }
+
+        _iterationsInitialized = true;
+    }
+
+    private void UpdateIterations(RunExecutionState state)
+    {
+        if (!_iterationsInitialized && state.Nodes.Count > 0)
+        {
+            InitializeIterations(state.Nodes);
+        }
+
+        if (Iterations.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var nodeState in state.Nodes)
+        {
+            if (!_nodeSnapshots.TryGetValue(nodeState.NodeId, out var snapshot))
+            {
+                snapshot = new NodeExecutionSnapshot();
+            }
+
+            var started = !snapshot.IsRunning && nodeState.IsRunning;
+            var finished = snapshot.IsRunning && !nodeState.IsRunning;
+
+            if (started)
+            {
+                var currentIteration = Iterations[CurrentIterationIndex - 1];
+                if (currentIteration.CompletedCount >= currentIteration.TotalCount
+                    && CurrentIterationIndex < RepeatCount)
+                {
+                    SetCurrentIteration(CurrentIterationIndex + 1);
+                }
+
+                UpdateIterationCase(CurrentIterationIndex, nodeState, isRunning: true);
+            }
+            else if (finished)
+            {
+                UpdateIterationCase(CurrentIterationIndex, nodeState, isRunning: false);
+            }
+            else
+            {
+                if (nodeState.IsRunning)
+                {
+                    UpdateIterationCase(CurrentIterationIndex, nodeState, isRunning: true, preserveStatus: true);
+                }
+                else if (nodeState.Status is not null)
+                {
+                    UpdateIterationCase(CurrentIterationIndex, nodeState, isRunning: false, preserveStatus: true);
+                }
+            }
+
+            snapshot.IsRunning = nodeState.IsRunning;
+            snapshot.Status = nodeState.Status;
+            _nodeSnapshots[nodeState.NodeId] = snapshot;
+        }
+
+        foreach (var iteration in Iterations)
+        {
+            iteration.RefreshSummary();
+        }
+    }
+
+    private void UpdateIterationCase(
+        int iterationIndex,
+        NodeExecutionState nodeState,
+        bool isRunning,
+        bool preserveStatus = false)
+    {
+        if (iterationIndex < 1 || iterationIndex > Iterations.Count)
+        {
+            return;
+        }
+
+        var iteration = Iterations[iterationIndex - 1];
+        var caseVm = iteration.GetOrCreateCase(
+            nodeState.NodeId,
+            () => BuildCaseViewModel(nodeState, isRunning: false, status: null));
+
+        caseVm.IsRunning = isRunning;
+        if (isRunning)
+        {
+            caseVm.Status = null;
+            caseVm.Duration = null;
+            return;
+        }
+
+        if (!preserveStatus)
+        {
+            caseVm.Status = nodeState.Status;
+            caseVm.Duration = nodeState.Duration;
+        }
+        else
+        {
+            caseVm.Status = nodeState.Status;
+            caseVm.Duration = nodeState.Duration;
+        }
+    }
+
+    private static NodeExecutionStateViewModel BuildCaseViewModel(
+        NodeExecutionState nodeState,
+        bool isRunning,
+        RunStatus? status)
+    {
+        var indentLevel = string.IsNullOrEmpty(nodeState.ParentNodeId) ? 0 : 1;
+
+        return new NodeExecutionStateViewModel
+        {
+            NodeId = nodeState.NodeId,
+            NodeType = nodeState.NodeType,
+            TestId = nodeState.TestId,
+            TestVersion = nodeState.TestVersion,
+            TestName = nodeState.TestName,
+            SuiteName = nodeState.SuiteName,
+            PlanName = nodeState.PlanName,
+            Status = status,
+            Duration = nodeState.Duration,
+            RetryCount = nodeState.RetryCount,
+            IsRunning = isRunning,
+            ParentNodeId = nodeState.ParentNodeId,
+            IndentLevel = indentLevel
+        };
+    }
+
+    private void SetCurrentIteration(int index)
+    {
+        if (index < 1 || index > RepeatCount)
+        {
+            return;
+        }
+
+        CurrentIterationIndex = index;
+        for (var i = 0; i < Iterations.Count; i++)
+        {
+            Iterations[i].IsExpanded = Iterations[i].Index == index;
+        }
+    }
 }
 
 /// <summary>
@@ -467,4 +684,160 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
             return $"{name}@{TestVersion}";
         }
     }
+}
+
+public sealed partial class IterationExecutionStateViewModel : ViewModelBase
+{
+    private readonly Dictionary<string, NodeExecutionStateViewModel> _caseLookup = new();
+
+    public IterationExecutionStateViewModel(int index, int totalIterations, int totalCount)
+    {
+        Index = index;
+        TotalIterations = totalIterations;
+        TotalCount = totalCount;
+    }
+
+    [ObservableProperty] private int _index;
+    [ObservableProperty] private int _totalIterations;
+    [ObservableProperty] private RunStatus? _status;
+    [ObservableProperty] private TimeSpan? _duration;
+    [ObservableProperty] private int _completedCount;
+    [ObservableProperty] private int _totalCount;
+    [ObservableProperty] private bool _isRunning;
+    [ObservableProperty] private bool _isExpanded;
+
+    public ObservableCollection<NodeExecutionStateViewModel> Cases { get; } = new();
+
+    public string IterationLabel => $"Iteration {Index}/{TotalIterations}";
+    public string StatusDisplay => IsRunning ? "Running" : Status?.ToString() ?? "Pending";
+    public string DurationDisplay => Duration?.ToString(@"mm\:ss") ?? "-";
+    public string ProgressDisplay => $"{CompletedCount}/{TotalCount}";
+    public double ProgressValue => TotalCount == 0 ? 0 : (double)CompletedCount / TotalCount;
+
+    public void AddCase(NodeExecutionStateViewModel caseVm)
+    {
+        if (_caseLookup.ContainsKey(caseVm.NodeId))
+        {
+            return;
+        }
+
+        _caseLookup[caseVm.NodeId] = caseVm;
+        Cases.Add(caseVm);
+    }
+
+    public NodeExecutionStateViewModel GetOrCreateCase(string nodeId, Func<NodeExecutionStateViewModel> factory)
+    {
+        if (_caseLookup.TryGetValue(nodeId, out var existing))
+        {
+            return existing;
+        }
+
+        var created = factory();
+        AddCase(created);
+        return created;
+    }
+
+    public void RefreshSummary()
+    {
+        var completed = 0;
+        var running = false;
+        var hasPassed = false;
+        var hasFailed = false;
+        var hasError = false;
+        var hasTimeout = false;
+        var hasAborted = false;
+        TimeSpan totalDuration = TimeSpan.Zero;
+        var hasDuration = false;
+
+        foreach (var caseVm in Cases)
+        {
+            running |= caseVm.IsRunning;
+
+            if (caseVm.Status.HasValue)
+            {
+                completed++;
+                switch (caseVm.Status.Value)
+                {
+                    case RunStatus.Passed:
+                        hasPassed = true;
+                        break;
+                    case RunStatus.Failed:
+                        hasFailed = true;
+                        break;
+                    case RunStatus.Error:
+                        hasError = true;
+                        break;
+                    case RunStatus.Timeout:
+                        hasTimeout = true;
+                        break;
+                    case RunStatus.Aborted:
+                        hasAborted = true;
+                        break;
+                }
+            }
+
+            if (caseVm.Duration.HasValue)
+            {
+                totalDuration += caseVm.Duration.Value;
+                hasDuration = true;
+            }
+        }
+
+        CompletedCount = completed;
+        IsRunning = running;
+        Duration = hasDuration ? totalDuration : null;
+
+        if (running)
+        {
+            Status = null;
+            return;
+        }
+
+        if (hasFailed)
+        {
+            Status = RunStatus.Failed;
+        }
+        else if (hasError)
+        {
+            Status = RunStatus.Error;
+        }
+        else if (hasTimeout)
+        {
+            Status = RunStatus.Timeout;
+        }
+        else if (hasAborted)
+        {
+            Status = RunStatus.Aborted;
+        }
+        else if (completed == TotalCount && hasPassed)
+        {
+            Status = RunStatus.Passed;
+        }
+        else
+        {
+            Status = null;
+        }
+    }
+
+    partial void OnIndexChanged(int value) => OnPropertyChanged(nameof(IterationLabel));
+    partial void OnTotalIterationsChanged(int value) => OnPropertyChanged(nameof(IterationLabel));
+    partial void OnStatusChanged(RunStatus? value) => OnPropertyChanged(nameof(StatusDisplay));
+    partial void OnIsRunningChanged(bool value) => OnPropertyChanged(nameof(StatusDisplay));
+    partial void OnDurationChanged(TimeSpan? value) => OnPropertyChanged(nameof(DurationDisplay));
+    partial void OnCompletedCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(ProgressDisplay));
+        OnPropertyChanged(nameof(ProgressValue));
+    }
+    partial void OnTotalCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(ProgressDisplay));
+        OnPropertyChanged(nameof(ProgressValue));
+    }
+}
+
+public sealed class NodeExecutionSnapshot
+{
+    public bool IsRunning { get; set; }
+    public RunStatus? Status { get; set; }
 }
