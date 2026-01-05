@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
+using PcTest.Contracts.Validation;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -50,6 +51,15 @@ public partial class RunViewModel : ViewModelBase
     private NodeExecutionStateViewModel? _selectedNode;
 
     [ObservableProperty]
+    private ObservableCollection<ExecutionIterationViewModel> _iterations = new();
+
+    [ObservableProperty]
+    private int _repeatCount = 1;
+
+    [ObservableProperty]
+    private int _currentIterationIndex = 1;
+
+    [ObservableProperty]
     private string _consoleOutput = string.Empty;
 
     [ObservableProperty]
@@ -60,6 +70,12 @@ public partial class RunViewModel : ViewModelBase
 
     private readonly StringBuilder _consoleBuffer = new();
     private readonly StringBuilder _eventsBuffer = new();
+    private readonly Dictionary<string, RunStatus?> _lastKnownStatus = new();
+    private readonly Dictionary<string, TimeSpan?> _lastKnownDuration = new();
+    private readonly List<string> _nodeOrder = new();
+    private int _currentNodeIndex;
+    private bool _pendingIterationAdvance;
+    private ExecutionCaseViewModel? _currentRunningCase;
 
     public RunViewModel(
         IRunService runService, 
@@ -192,11 +208,15 @@ public partial class RunViewModel : ViewModelBase
                 _ = LoadEventsAsync(RunId);
             }
 
+            EnsureIterationsInitialized(state.Nodes);
+
             // Incremental node update - avoid clearing/rebuilding the collection
             // to prevent UI flicker and losing selection
             for (int i = 0; i < state.Nodes.Count; i++)
             {
                 var nodeState = state.Nodes[i];
+                _lastKnownStatus.TryGetValue(nodeState.NodeId, out var previousStatus);
+                _lastKnownDuration.TryGetValue(nodeState.NodeId, out var previousDuration);
                 
                 if (_nodeViewModelDict.TryGetValue(nodeState.NodeId, out var existingVm))
                 {
@@ -247,7 +267,20 @@ public partial class RunViewModel : ViewModelBase
                         Nodes.Add(newVm);
                     }
                 }
+
+                if (nodeState.Status is not null
+                    && !nodeState.IsRunning
+                    && (previousStatus != nodeState.Status || previousDuration != nodeState.Duration))
+                {
+                    RecordNodeCompletion(nodeState);
+                }
+
+                _lastKnownStatus[nodeState.NodeId] = nodeState.Status;
+                _lastKnownDuration[nodeState.NodeId] = nodeState.Duration;
             }
+
+            UpdateRunningCase(state.CurrentNodeId);
+            RefreshIterationSummaries();
         });
     }
 
@@ -320,6 +353,9 @@ public partial class RunViewModel : ViewModelBase
         // Clear previous nodes for new run
         _nodeViewModelDict.Clear();
         Nodes.Clear();
+        ResetIterationTracking();
+
+        RepeatCount = await ResolveRepeatCountAsync();
 
         _runCts = new CancellationTokenSource();
 
@@ -403,6 +439,234 @@ public partial class RunViewModel : ViewModelBase
 
     public bool CanStart => !IsRunning && !string.IsNullOrEmpty(TargetIdentity);
     public bool CanStop => IsRunning;
+
+    public bool IsRepeatVisible => RepeatCount > 1;
+    public string RepeatBadgeText => RepeatCount > 1
+        ? $"Repeat {RepeatCount}x · Iteration {CurrentIterationIndex}/{RepeatCount}"
+        : string.Empty;
+
+    partial void OnRepeatCountChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsRepeatVisible));
+        OnPropertyChanged(nameof(RepeatBadgeText));
+    }
+
+    partial void OnCurrentIterationIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(RepeatBadgeText));
+    }
+
+    private async Task<int> ResolveRepeatCountAsync()
+    {
+        if (RunType != RunType.TestSuite)
+        {
+            return 1;
+        }
+
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+        var parseResult = IdentityParser.Parse(TargetIdentity);
+        if (!parseResult.Success)
+        {
+            return 1;
+        }
+
+        var suite = discovery.TestSuites.Values.FirstOrDefault(suite =>
+            suite.Manifest.Id.Equals(parseResult.Id, StringComparison.OrdinalIgnoreCase)
+            && suite.Manifest.Version.Equals(parseResult.Version, StringComparison.OrdinalIgnoreCase));
+
+        return Math.Max(1, suite?.Manifest.Controls?.Repeat ?? 1);
+    }
+
+    private void ResetIterationTracking()
+    {
+        Iterations.Clear();
+        _nodeOrder.Clear();
+        _lastKnownStatus.Clear();
+        _lastKnownDuration.Clear();
+        _currentIterationIndex = 1;
+        _currentNodeIndex = 0;
+        _pendingIterationAdvance = false;
+        _currentRunningCase = null;
+        CurrentIterationIndex = 1;
+    }
+
+    private void EnsureIterationsInitialized(IReadOnlyList<NodeExecutionState> nodes)
+    {
+        if (Iterations.Count > 0 || nodes.Count == 0)
+        {
+            return;
+        }
+
+        var orderedNodes = nodes.Where(node => node.NodeType == RunType.TestCase || RunType != RunType.TestSuite).ToList();
+        if (orderedNodes.Count == 0)
+        {
+            orderedNodes = nodes.ToList();
+        }
+
+        _nodeOrder.Clear();
+        _nodeOrder.AddRange(orderedNodes.Select(node => node.NodeId));
+
+        var totalIterations = Math.Max(1, RepeatCount);
+
+        for (int i = 0; i < totalIterations; i++)
+        {
+            var iteration = new ExecutionIterationViewModel
+            {
+                Index = i + 1,
+                Total = totalIterations,
+                IsExpanded = i == 0
+            };
+
+            foreach (var node in orderedNodes)
+            {
+                iteration.Cases.Add(new ExecutionCaseViewModel
+                {
+                    NodeId = node.NodeId,
+                    NodeType = node.NodeType,
+                    TestId = node.TestId,
+                    TestVersion = node.TestVersion,
+                    TestName = node.TestName,
+                    SuiteName = node.SuiteName,
+                    PlanName = node.PlanName,
+                    Status = null,
+                    Duration = null,
+                    IsRunning = false
+                });
+            }
+
+            iteration.TotalCount = iteration.Cases.Count;
+            Iterations.Add(iteration);
+        }
+    }
+
+    private bool TryGetNodeIndex(string nodeId, out int index)
+    {
+        index = _nodeOrder.IndexOf(nodeId);
+        return index >= 0;
+    }
+
+    private void UpdateRunningCase(string currentNodeId)
+    {
+        if (_currentRunningCase is not null && string.IsNullOrEmpty(currentNodeId))
+        {
+            _currentRunningCase.IsRunning = false;
+            _currentRunningCase = null;
+            return;
+        }
+
+        if (!TryGetNodeIndex(currentNodeId, out var nodeIndex))
+        {
+            return;
+        }
+
+        if (_pendingIterationAdvance && nodeIndex == 0 && _currentIterationIndex < Iterations.Count)
+        {
+            Iterations[_currentIterationIndex - 1].IsExpanded = false;
+            _currentIterationIndex++;
+            CurrentIterationIndex = _currentIterationIndex;
+            _currentNodeIndex = 0;
+            _pendingIterationAdvance = false;
+            Iterations[_currentIterationIndex - 1].IsExpanded = true;
+        }
+
+        var iteration = Iterations[Math.Min(_currentIterationIndex - 1, Iterations.Count - 1)];
+        var caseVm = iteration.Cases[nodeIndex];
+
+        if (_currentRunningCase != caseVm)
+        {
+            if (_currentRunningCase is not null)
+            {
+                _currentRunningCase.IsRunning = false;
+            }
+            _currentRunningCase = caseVm;
+        }
+
+        if (!iteration.StartTime.HasValue)
+        {
+            iteration.StartTime = DateTime.UtcNow;
+        }
+
+        caseVm.IsRunning = true;
+        _currentNodeIndex = Math.Max(_currentNodeIndex, nodeIndex);
+    }
+
+    private void RecordNodeCompletion(NodeExecutionState nodeState)
+    {
+        if (!TryGetNodeIndex(nodeState.NodeId, out var nodeIndex))
+        {
+            return;
+        }
+
+        var iteration = Iterations[Math.Min(_currentIterationIndex - 1, Iterations.Count - 1)];
+
+        if (nodeIndex >= iteration.Cases.Count)
+        {
+            return;
+        }
+
+        if (!iteration.StartTime.HasValue)
+        {
+            iteration.StartTime = DateTime.UtcNow;
+        }
+
+        var caseVm = iteration.Cases[nodeIndex];
+        caseVm.Status = nodeState.Status;
+        caseVm.Duration = nodeState.Duration;
+        caseVm.IsRunning = false;
+
+        iteration.EndTime = DateTime.UtcNow;
+        _currentNodeIndex = Math.Max(_currentNodeIndex, nodeIndex + 1);
+
+        if (_currentNodeIndex >= _nodeOrder.Count)
+        {
+            _pendingIterationAdvance = true;
+        }
+    }
+
+    private void RefreshIterationSummaries()
+    {
+        var now = DateTime.UtcNow;
+
+        foreach (var iteration in Iterations)
+        {
+            iteration.CompletedCount = iteration.Cases.Count(c => c.Status is not null);
+            iteration.TotalCount = iteration.Cases.Count;
+            iteration.IsRunning = iteration.Cases.Any(c => c.IsRunning);
+            iteration.AggregatedStatus = ComputeAggregateStatus(iteration);
+            iteration.UpdateDuration(now);
+        }
+    }
+
+    private static RunStatus? ComputeAggregateStatus(ExecutionIterationViewModel iteration)
+    {
+        if (iteration.IsRunning)
+        {
+            return null;
+        }
+
+        var statuses = iteration.Cases
+            .Select(c => c.Status)
+            .Where(status => status.HasValue)
+            .Select(status => status!.Value)
+            .ToList();
+
+        if (statuses.Count == 0)
+        {
+            return null;
+        }
+
+        if (statuses.Contains(RunStatus.Aborted))
+        {
+            return RunStatus.Aborted;
+        }
+
+        if (statuses.Any(status => status is RunStatus.Failed or RunStatus.Error or RunStatus.Timeout))
+        {
+            return RunStatus.Failed;
+        }
+
+        return statuses.Count == iteration.TotalCount ? RunStatus.Passed : null;
+    }
 }
 
 /// <summary>
@@ -467,4 +731,82 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
             return $"{name}@{TestVersion}";
         }
     }
+}
+
+public partial class ExecutionIterationViewModel : ViewModelBase
+{
+    [ObservableProperty] private int _index;
+    [ObservableProperty] private int _total;
+    [ObservableProperty] private ObservableCollection<ExecutionCaseViewModel> _cases = new();
+    [ObservableProperty] private bool _isExpanded;
+    [ObservableProperty] private bool _isRunning;
+    [ObservableProperty] private RunStatus? _aggregatedStatus;
+    [ObservableProperty] private int _completedCount;
+    [ObservableProperty] private int _totalCount;
+    [ObservableProperty] private TimeSpan? _duration;
+    [ObservableProperty] private DateTime? _startTime;
+    [ObservableProperty] private DateTime? _endTime;
+
+    public string IterationLabel => $"Iteration {Index}/{Total}";
+    public string ProgressDisplay => $"{CompletedCount}/{TotalCount}";
+    public string DurationDisplay => Duration?.ToString(@"mm\:ss\.fff") ?? "-";
+    public string StatusText => IsRunning ? "Running" : AggregatedStatus?.ToString() ?? "Pending";
+
+    public void UpdateDuration(DateTime now)
+    {
+        if (StartTime.HasValue)
+        {
+            var endTime = EndTime ?? now;
+            Duration = endTime - StartTime.Value;
+        }
+        else
+        {
+            Duration = null;
+        }
+        OnPropertyChanged(nameof(DurationDisplay));
+    }
+
+    partial void OnIndexChanged(int value) => OnPropertyChanged(nameof(IterationLabel));
+    partial void OnTotalChanged(int value) => OnPropertyChanged(nameof(IterationLabel));
+    partial void OnCompletedCountChanged(int value) => OnPropertyChanged(nameof(ProgressDisplay));
+    partial void OnTotalCountChanged(int value) => OnPropertyChanged(nameof(ProgressDisplay));
+    partial void OnAggregatedStatusChanged(RunStatus? value) => OnPropertyChanged(nameof(StatusText));
+    partial void OnIsRunningChanged(bool value) => OnPropertyChanged(nameof(StatusText));
+}
+
+public partial class ExecutionCaseViewModel : ViewModelBase
+{
+    [ObservableProperty] private string _nodeId = string.Empty;
+    [ObservableProperty] private string _testId = string.Empty;
+    [ObservableProperty] private string _testVersion = string.Empty;
+    [ObservableProperty] private string? _testName;
+    [ObservableProperty] private string? _suiteName;
+    [ObservableProperty] private string? _planName;
+    [ObservableProperty] private RunType _nodeType;
+    [ObservableProperty] private RunStatus? _status;
+    [ObservableProperty] private TimeSpan? _duration;
+    [ObservableProperty] private bool _isRunning;
+
+    public string StatusDisplay => Status?.ToString() ?? (IsRunning ? "Running..." : "Pending");
+    public string DurationDisplay => Duration?.ToString(@"mm\:ss\.fff") ?? "-";
+
+    partial void OnStatusChanged(RunStatus? value) => OnPropertyChanged(nameof(StatusDisplay));
+    partial void OnIsRunningChanged(bool value) => OnPropertyChanged(nameof(StatusDisplay));
+    partial void OnDurationChanged(TimeSpan? value) => OnPropertyChanged(nameof(DurationDisplay));
+
+    public string DisplayName
+    {
+        get
+        {
+            return NodeType switch
+            {
+                RunType.TestCase => TestName ?? TestId,
+                RunType.TestSuite => SuiteName ?? TestId,
+                RunType.TestPlan => PlanName ?? TestId,
+                _ => TestId
+            };
+        }
+    }
+
+    public string DisplayIdentity => $"{TestId}@{TestVersion}";
 }
