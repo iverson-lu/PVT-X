@@ -65,6 +65,15 @@ public partial class RunViewModel : ViewModelBase
     private ObservableCollection<PlanSuiteExecutionViewModel> _suiteGroups = new();
 
     [ObservableProperty]
+    private string _suiteDisplayName = string.Empty;
+
+    [ObservableProperty]
+    private string _suiteDisplayIdentity = string.Empty;
+
+    [ObservableProperty]
+    private bool _suiteIsExpanded = true;
+
+    [ObservableProperty]
     private string _consoleOutput = string.Empty;
 
     [ObservableProperty]
@@ -80,9 +89,12 @@ public partial class RunViewModel : ViewModelBase
     public string RepeatIterationBadgeText => RepeatCount > 1
         ? $"Repeat {RepeatCount}x · Iteration {CurrentIterationIndex}/{RepeatCount}"
         : string.Empty;
-    public bool ShowIterationGroups => RunType == RunType.TestSuite;
+    public bool ShowSuitePipeline => RunType == RunType.TestSuite;
     public bool ShowPlanPipeline => RunType == RunType.TestPlan;
     public bool ShowFlatPipeline => RunType == RunType.TestCase;
+    public RunStatus? SuiteStatus => FinalStatus;
+    public bool SuiteIsRunning => IsRunning;
+    public string SuiteStatusDisplay => SuiteIsRunning ? "Running" : SuiteStatus?.ToString() ?? "Pending";
 
     public RunViewModel(
         IRunService runService, 
@@ -126,6 +138,15 @@ public partial class RunViewModel : ViewModelBase
         {
             _eventRefreshTimer?.Stop();
         }
+
+        OnPropertyChanged(nameof(SuiteIsRunning));
+        OnPropertyChanged(nameof(SuiteStatusDisplay));
+    }
+
+    partial void OnFinalStatusChanged(RunStatus? value)
+    {
+        OnPropertyChanged(nameof(SuiteStatus));
+        OnPropertyChanged(nameof(SuiteStatusDisplay));
     }
 
     partial void OnRepeatCountChanged(int value)
@@ -137,6 +158,14 @@ public partial class RunViewModel : ViewModelBase
     partial void OnCurrentIterationIndexChanged(int value)
     {
         OnPropertyChanged(nameof(RepeatIterationBadgeText));
+    }
+
+    partial void OnTargetIdentityChanged(string value)
+    {
+        if (RunType == RunType.TestSuite)
+        {
+            _ = LoadSuiteDisplayAsync();
+        }
     }
 
     public async void Initialize(object? parameter)
@@ -153,6 +182,11 @@ public partial class RunViewModel : ViewModelBase
             ShowTargetSelector = false;
             
             OnPropertyChanged(nameof(HasBackButton));
+
+            if (RunType == RunType.TestSuite)
+            {
+                await LoadSuiteDisplayAsync();
+            }
             
             // Auto-start if requested
             if (navParam.AutoStart)
@@ -252,7 +286,7 @@ public partial class RunViewModel : ViewModelBase
 
     private void UpdateIterations(RunExecutionState state)
     {
-        if (!ShowIterationGroups)
+        if (!ShowSuitePipeline)
         {
             if (ShowPlanPipeline)
             {
@@ -672,9 +706,48 @@ public partial class RunViewModel : ViewModelBase
             _ = LoadAvailableTargetsAsync();
         }
 
-        OnPropertyChanged(nameof(ShowIterationGroups));
+        if (value == RunType.TestSuite)
+        {
+            _ = LoadSuiteDisplayAsync();
+        }
+        else
+        {
+            SuiteDisplayName = string.Empty;
+            SuiteDisplayIdentity = string.Empty;
+        }
+
+        OnPropertyChanged(nameof(ShowSuitePipeline));
         OnPropertyChanged(nameof(ShowPlanPipeline));
         OnPropertyChanged(nameof(ShowFlatPipeline));
+    }
+
+    private async Task LoadSuiteDisplayAsync()
+    {
+        if (RunType != RunType.TestSuite || string.IsNullOrEmpty(TargetIdentity))
+        {
+            SuiteDisplayName = string.Empty;
+            SuiteDisplayIdentity = string.Empty;
+            return;
+        }
+
+        SuiteDisplayIdentity = TargetIdentity;
+
+        try
+        {
+            var suite = await _suiteRepository.GetByIdentityAsync(TargetIdentity);
+            if (suite?.Manifest is not null)
+            {
+                SuiteDisplayName = suite.Manifest.Name ?? suite.Manifest.Id;
+                SuiteDisplayIdentity = $"{suite.Manifest.Id}@{suite.Manifest.Version}";
+                return;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        SuiteDisplayName = TargetIdentity;
     }
 
     [RelayCommand]
