@@ -130,7 +130,7 @@ Each parameter supports the following fields:
 ```json
 {
   "name": "ParamName",
-  "type": "string | enum | bool | int | double | json",
+  "type": "string | enum | boolean | int | double | path | json",
   "required": true,
   "default": "...",
   "description": "..."
