@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.hw.cpu.core.static_requirements",
+  "name": "CPU Static Requirements - Frequency and Name",
+  "description": "Validates that CPU frequency meets a minimum threshold and CPU name contains an expected substring. Includes optional static capability gates (cores, threads, cache, x64, virtualization).",
+  "version": "1.0.0",
+  "category": "Hardware",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "MinFrequencyGHz",
+      "type": "double",
+      "default": 1.0,
+      "required": true,
+      "help": "Minimum required CPU frequency in GHz (compared against FrequencySource)."
+    },
+    {
+      "name": "CpuNameContains",
+      "type": "string",
+      "default": "Intel",
+      "required": true,
+      "help": "Substring that must appear in CPU name (Win32_Processor.Name)."
+    },
+    {
+      "name": "FrequencySource",
+      "type": "enum",
+      "required": false,
+      "default": "MaxClockSpeed",
+      "enumValues": [
+        "MaxClockSpeed",
+        "CurrentClockSpeed"
+      ],
+      "help": "CPU frequency field used for comparison (MHz -> GHz)."
+    },
+    {
+      "name": "CpuMatchMode",
+      "type": "enum",
+      "required": false,
+      "default": "all",
+      "enumValues": [
+        "all",
+        "any"
+      ],
+      "help": "Multi-CPU rule: all = every CPU must satisfy; any = at least one satisfies."
+    },
+    {
+      "name": "NameCaseSensitive",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "If true, CpuNameContains match becomes case-sensitive."
+    },
+    {
+      "name": "MinCores",
+      "type": "int",
+      "required": false,
+      "default": 0,
+      "help": "Minimum required per-socket physical core count. 0 disables this check."
+    },
+    {
+      "name": "MinLogicalProcessors",
+      "type": "int",
+      "required": false,
+      "default": 0,
+      "help": "Minimum required per-socket logical processor count (threads). 0 disables this check."
+    },
+    {
+      "name": "RequireX64",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "Require 64-bit CPU (Win32_Processor.AddressWidth >= 64)."
+    },
+    {
+      "name": "MinL3CacheMB",
+      "type": "int",
+      "required": false,
+      "default": 0,
+      "help": "Minimum required per-socket L3 cache size in MB. 0 disables this check."
+    },
+    {
+      "name": "MinL2CacheMB",
+      "type": "int",
+      "required": false,
+      "default": 0,
+      "help": "Minimum required per-socket L2 cache size in MB. 0 disables this check."
+    },
+    {
+      "name": "RequireVMMonitorModeExtensions",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "Require CPU virtualization extensions support (Win32_Processor.VMMonitorModeExtensions)."
+    },
+    {
+      "name": "RequireSLAT",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "Require SLAT support (Win32_Processor.SecondLevelAddressTranslationExtensions)."
+    },
+    {
+      "name": "RequireHyperThreading",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "Require logical processors > cores (heuristic check)."
+    }
+  ],
+  "tags": [
+    "hardware",
+    "cpu",
+    "static",
+    "frequency",
+    "name"
+  ]
+}

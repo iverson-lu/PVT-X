@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.hw.power.core.verify_state",
+  "name": "Power State Verification",
+  "description": "Validates current system power source (AC vs battery) and active power scheme (performance/balanced/saver) against expected values.",
+  "version": "1.0.0",
+  "category": "Power",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 15,
+  "parameters": [
+    {
+      "name": "E_ExpectedPowerSource",
+      "type": "enum",
+      "required": false,
+      "default": "any",
+      "enumValues": [
+        "any",
+        "ac",
+        "battery"
+      ],
+      "help": "Expected power source: ac (plugged in), battery (unplugged/on battery), or any (no check)."
+    },
+    {
+      "name": "E_ExpectedPowerScheme",
+      "type": "enum",
+      "required": false,
+      "default": "any",
+      "enumValues": [
+        "any",
+        "performance",
+        "balanced",
+        "saver"
+      ],
+      "help": "Expected active power scheme category, or any (no check)."
+    },
+    {
+      "name": "B_RequireBattery",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "If true, fail when battery/power-source telemetry is unavailable (e.g., desktop or missing WMI)."
+    },
+    {
+      "name": "B_FailOnUnknownScheme",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "If true, fail when the active power scheme cannot be mapped to performance/balanced/saver."
+    }
+  ],
+  "tags": [
+    "power",
+    "ac",
+    "battery",
+    "scheme",
+    "profile"
+  ]
+}

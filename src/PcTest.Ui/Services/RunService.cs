@@ -21,13 +21,9 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
     private readonly Dispatcher _dispatcher;
     private RunExecutionContext? _currentContext;
     private RunExecutionState? _currentState;
-    private const string RootIterationKey = "__root__";
     private readonly Dictionary<string, NodeExecutionState> _nodeInstances = new();
     private readonly Dictionary<string, NodeExecutionState> _activeNodes = new();
     private readonly Dictionary<string, PlannedNode> _plannedNodeLookup = new();
-    private readonly Dictionary<string, List<PlannedNode>> _plannedNodesByParent = new();
-    private readonly Dictionary<string, int> _plannedCountsByParent = new();
-    private readonly Dictionary<string, int> _executionIndexByParent = new();
     private readonly List<PlannedNode> _plannedNodes = new();
     private int _plannedNodeCount;
     private int _executionIndex;
@@ -112,9 +108,6 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             _nodeInstances.Clear();
             _activeNodes.Clear();
             _plannedNodeLookup.Clear();
-            _plannedNodesByParent.Clear();
-            _plannedCountsByParent.Clear();
-            _executionIndexByParent.Clear();
             _plannedNodes.Clear();
             _plannedNodeCount = 0;
             _executionIndex = 0;
@@ -124,11 +117,6 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         }
 
         if (runType == RunType.TestSuite && plannedNodes.All(node => string.IsNullOrEmpty(node.ParentNodeId)))
-        {
-            _supportsIterations = true;
-        }
-
-        if (plannedNodes.Any(node => !string.IsNullOrEmpty(node.ParentNodeId)))
         {
             _supportsIterations = true;
         }
@@ -146,21 +134,6 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
 
         foreach (var planned in plannedNodes)
         {
-            var parentKey = GetIterationKey(planned.ParentNodeId);
-            if (!_plannedNodesByParent.TryGetValue(parentKey, out var parentList))
-            {
-                parentList = new List<PlannedNode>();
-                _plannedNodesByParent[parentKey] = parentList;
-            }
-
-            var parentSequenceIndex = parentList.FindIndex(node => node.NodeId == planned.NodeId);
-            if (parentSequenceIndex < 0)
-            {
-                parentList.Add(planned);
-                parentSequenceIndex = parentList.Count - 1;
-                _plannedCountsByParent[parentKey] = parentList.Count;
-            }
-
             var sequenceIndex = _plannedNodes.FindIndex(node => node.NodeId == planned.NodeId);
             if (sequenceIndex < 0)
             {
@@ -170,7 +143,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                 _plannedNodeCount = _plannedNodes.Count;
             }
 
-            var nodeKey = BuildNodeKey(planned.NodeId, 0, parentSequenceIndex);
+            var nodeKey = BuildNodeKey(planned.NodeId, 0, sequenceIndex);
 
             // Skip if node already exists (avoid duplicates)
             if (_nodeInstances.ContainsKey(nodeKey))
@@ -214,7 +187,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                 IsRunning = false,
                 ParentNodeId = planned.ParentNodeId,
                 IterationIndex = 0,
-                SequenceIndex = parentSequenceIndex
+                SequenceIndex = sequenceIndex
             };
             _nodeInstances[nodeKey] = node;
             
@@ -329,50 +302,19 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
 
     private (int iterationIndex, int sequenceIndex) ResolveIterationContext(string nodeId)
     {
-        if (!_supportsIterations)
+        if (!_supportsIterations || _plannedNodeCount <= 0)
         {
             return (0, ResolvePlannedSequenceIndex(nodeId));
         }
 
-        if (_plannedNodeLookup.TryGetValue(nodeId, out var planned))
-        {
-            var parentKey = GetIterationKey(planned.ParentNodeId);
-            if (_plannedCountsByParent.TryGetValue(parentKey, out var parentCount) && parentCount > 0)
-            {
-                var execIndex = _executionIndexByParent.TryGetValue(parentKey, out var value) ? value : 0;
-                var iterationIndex = execIndex / parentCount;
-                _executionIndexByParent[parentKey] = execIndex + 1;
-                return (iterationIndex, ResolvePlannedSequenceIndex(nodeId, parentKey));
-            }
-        }
-
-        if (_plannedNodeCount > 0)
-        {
-            var iterationIndex = _executionIndex / _plannedNodeCount;
-            var sequenceIndex = _executionIndex % _plannedNodeCount;
-            _executionIndex++;
-            return (iterationIndex, sequenceIndex);
-        }
-
-        return (0, ResolvePlannedSequenceIndex(nodeId));
+        var iterationIndex = _executionIndex / _plannedNodeCount;
+        var sequenceIndex = _executionIndex % _plannedNodeCount;
+        _executionIndex++;
+        return (iterationIndex, sequenceIndex);
     }
 
     private int ResolvePlannedSequenceIndex(string nodeId)
     {
-        return ResolvePlannedSequenceIndex(nodeId, RootIterationKey);
-    }
-
-    private int ResolvePlannedSequenceIndex(string nodeId, string parentKey)
-    {
-        if (_plannedNodesByParent.TryGetValue(parentKey, out var parentList))
-        {
-            var parentIndex = parentList.FindIndex(node => node.NodeId == nodeId);
-            if (parentIndex >= 0)
-            {
-                return parentIndex;
-            }
-        }
-
         if (_plannedNodeLookup.TryGetValue(nodeId, out var planned))
         {
             var plannedIndex = _plannedNodes.IndexOf(planned);
@@ -453,11 +395,6 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         var plan = _engine.Discovery.TestPlans.Values.FirstOrDefault(p =>
             p.Manifest.Id.Equals(planned.TestId, StringComparison.OrdinalIgnoreCase));
         return plan?.Manifest.Name;
-    }
-
-    private static string GetIterationKey(string? parentNodeId)
-    {
-        return string.IsNullOrEmpty(parentNodeId) ? RootIterationKey : parentNodeId;
     }
 
     private static string BuildNodeKey(string nodeId, int iterationIndex, int sequenceIndex)
