@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows.Threading;
@@ -20,7 +21,15 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
     private readonly Dispatcher _dispatcher;
     private RunExecutionContext? _currentContext;
     private RunExecutionState? _currentState;
-    private readonly Dictionary<string, NodeExecutionState> _nodesDict = new();
+    private readonly Dictionary<string, NodeExecutionState> _nodeInstances = new();
+    private readonly Dictionary<string, NodeExecutionState> _activeNodes = new();
+    private readonly Dictionary<string, PlannedNode> _plannedNodeLookup = new();
+    private readonly List<PlannedNode> _plannedNodes = new();
+    private int _plannedNodeCount;
+    private int _executionIndex;
+    private bool _supportsIterations;
+    private readonly Dictionary<string, int> _parentPlannedCounts = new();
+    private readonly Dictionary<string, int> _parentExecutionIndex = new();
     private readonly List<Task> _consoleLoadingTasks = new();
     
     // Real-time log tailing
@@ -98,15 +107,75 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         if (_currentState.RunId != runId)
         {
             _currentState.RunId = runId;
-            _nodesDict.Clear();
+            _nodeInstances.Clear();
+            _activeNodes.Clear();
+            _plannedNodeLookup.Clear();
+            _plannedNodes.Clear();
+            _plannedNodeCount = 0;
+            _executionIndex = 0;
+            _supportsIterations = false;
+            _parentPlannedCounts.Clear();
+            _parentExecutionIndex.Clear();
             _consoleLoadingTasks.Clear();
             _currentState.Nodes.Clear();
         }
 
+        if (runType == RunType.TestSuite && plannedNodes.All(node => string.IsNullOrEmpty(node.ParentNodeId)))
+        {
+            _supportsIterations = true;
+        }
+
+        if (plannedNodes.Any(node => !string.IsNullOrEmpty(node.ParentNodeId)))
+        {
+            _parentPlannedCounts.Clear();
+            _parentExecutionIndex.Clear();
+            foreach (var group in plannedNodes.Where(node => !string.IsNullOrEmpty(node.ParentNodeId))
+                         .GroupBy(node => node.ParentNodeId!))
+            {
+                _parentPlannedCounts[group.Key] = group.Count();
+                _parentExecutionIndex[group.Key] = 0;
+            }
+        }
+
+        if (_plannedNodes.Count == 0)
+        {
+            _plannedNodes.AddRange(plannedNodes);
+            _plannedNodeCount = _plannedNodes.Count;
+            _plannedNodeLookup.Clear();
+            foreach (var planned in _plannedNodes)
+            {
+                _plannedNodeLookup[planned.NodeId] = planned;
+            }
+        }
+
+        var parentSequenceIndex = new Dictionary<string, int>();
         foreach (var planned in plannedNodes)
         {
+            var sequenceIndex = 0;
+            if (string.IsNullOrEmpty(planned.ParentNodeId))
+            {
+                sequenceIndex = _plannedNodes.FindIndex(node => node.NodeId == planned.NodeId);
+                if (sequenceIndex < 0)
+                {
+                    sequenceIndex = _plannedNodes.Count;
+                    _plannedNodes.Add(planned);
+                    _plannedNodeLookup[planned.NodeId] = planned;
+                    _plannedNodeCount = _plannedNodes.Count;
+                }
+            }
+            else
+            {
+                var parentId = planned.ParentNodeId;
+                parentSequenceIndex.TryGetValue(parentId, out var parentIndex);
+                sequenceIndex = parentIndex;
+                parentSequenceIndex[parentId] = parentIndex + 1;
+                _plannedNodeLookup[planned.NodeId] = planned;
+            }
+
+            var nodeKey = BuildNodeKey(planned.NodeId, 0, sequenceIndex, planned.ParentNodeId);
+
             // Skip if node already exists (avoid duplicates)
-            if (_nodesDict.ContainsKey(planned.NodeId))
+            if (_nodeInstances.ContainsKey(nodeKey))
                 continue;
 
             // Find name based on node type and ID
@@ -145,9 +214,11 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                 PlanName = planName,
                 Status = null, // Pending
                 IsRunning = false,
-                ParentNodeId = planned.ParentNodeId
+                ParentNodeId = planned.ParentNodeId,
+                IterationIndex = 0,
+                SequenceIndex = sequenceIndex
             };
-            _nodesDict[planned.NodeId] = node;
+            _nodeInstances[nodeKey] = node;
             
             // If this node has a parent, insert it after the parent (or after the last child of that parent)
             if (!string.IsNullOrEmpty(planned.ParentNodeId))
@@ -196,10 +267,17 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
 
         _currentState.CurrentNodeId = nodeId;
 
-        if (_nodesDict.TryGetValue(nodeId, out var node))
+        var (iterationIndex, sequenceIndex, parentNodeId) = ResolveIterationContext(nodeId);
+        var nodeKey = BuildNodeKey(nodeId, iterationIndex, sequenceIndex, parentNodeId);
+        if (!_nodeInstances.TryGetValue(nodeKey, out var node))
         {
-            node.IsRunning = true;
+            node = CreateNodeInstance(nodeId, iterationIndex, sequenceIndex, parentNodeId);
+            _nodeInstances[nodeKey] = node;
+            _currentState.Nodes.Add(node);
         }
+
+        node.IsRunning = true;
+        _activeNodes[nodeId] = node;
 
         // Start tailing for this node's run folder (child run)
         StartNodeTailingAsync(runId, nodeId).ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnFaulted);
@@ -212,13 +290,21 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
     {
         if (_currentState is null) return;
 
-        if (_nodesDict.TryGetValue(nodeState.NodeId, out var node))
+        if (!_activeNodes.TryGetValue(nodeState.NodeId, out var node))
+        {
+            node = FindLatestNodeInstance(nodeState.NodeId);
+        }
+
+        if (node is not null)
         {
             node.IsRunning = false;
             node.Status = nodeState.Status;
             node.Duration = nodeState.Duration;
             node.RetryCount = nodeState.RetryCount;
+            node.ParentNodeId = nodeState.ParentNodeId;
         }
+
+        _activeNodes.Remove(nodeState.NodeId);
 
         // Stop tailing for this node and emit final header
         var stopTailTask = StopNodeTailingAndEmitHeaderAsync(nodeState.NodeId, nodeState.Status);
@@ -241,6 +327,121 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
 
         LogDebug($"[REPORTER] OnRunFinished: runId={runId}, finalStatus={finalStatus}");
         StateChanged?.Invoke(this, _currentState);
+    }
+
+    private (int iterationIndex, int sequenceIndex, string? parentNodeId) ResolveIterationContext(string nodeId)
+    {
+        if (_plannedNodeLookup.TryGetValue(nodeId, out var planned) && !string.IsNullOrEmpty(planned.ParentNodeId))
+        {
+            var parentId = planned.ParentNodeId!;
+            if (_parentPlannedCounts.TryGetValue(parentId, out var parentCount) && parentCount > 0)
+            {
+                _parentExecutionIndex.TryGetValue(parentId, out var parentIndex);
+                var iterationIndex = parentIndex / parentCount;
+                var sequenceIndex = parentIndex % parentCount;
+                _parentExecutionIndex[parentId] = parentIndex + 1;
+                return (iterationIndex, sequenceIndex, parentId);
+            }
+        }
+
+        if (!_supportsIterations || _plannedNodeCount <= 0)
+        {
+            return (0, ResolvePlannedSequenceIndex(nodeId), planned?.ParentNodeId);
+        }
+
+        var iterationIndex = _executionIndex / _plannedNodeCount;
+        var sequenceIndex = _executionIndex % _plannedNodeCount;
+        _executionIndex++;
+        return (iterationIndex, sequenceIndex, planned?.ParentNodeId);
+    }
+
+    private int ResolvePlannedSequenceIndex(string nodeId)
+    {
+        if (_plannedNodeLookup.TryGetValue(nodeId, out var planned))
+        {
+            var plannedIndex = _plannedNodes.IndexOf(planned);
+            if (plannedIndex >= 0)
+            {
+                return plannedIndex;
+            }
+        }
+        return 0;
+    }
+
+    private NodeExecutionState? FindLatestNodeInstance(string nodeId)
+    {
+        return _nodeInstances.Values
+            .Where(node => node.NodeId == nodeId)
+            .OrderByDescending(node => node.IterationIndex)
+            .ThenByDescending(node => node.SequenceIndex)
+            .FirstOrDefault();
+    }
+
+    private NodeExecutionState CreateNodeInstance(string nodeId, int iterationIndex, int sequenceIndex, string? parentNodeId)
+    {
+        _plannedNodeLookup.TryGetValue(nodeId, out var planned);
+
+        return new NodeExecutionState
+        {
+            NodeId = nodeId,
+            NodeType = planned?.NodeType ?? RunType.TestCase,
+            TestId = planned?.TestId ?? nodeId,
+            TestVersion = planned?.TestVersion ?? string.Empty,
+            TestName = FindDisplayName(planned),
+            SuiteName = FindSuiteName(planned),
+            PlanName = FindPlanName(planned),
+            Status = null,
+            IsRunning = false,
+            ParentNodeId = parentNodeId ?? planned?.ParentNodeId,
+            IterationIndex = iterationIndex,
+            SequenceIndex = sequenceIndex
+        };
+    }
+
+    private string? FindDisplayName(PlannedNode? planned)
+    {
+        if (planned is null || _engine.Discovery is null)
+        {
+            return null;
+        }
+
+        if (planned.NodeType == RunType.TestCase)
+        {
+            var testCase = _engine.Discovery.TestCases.Values.FirstOrDefault(tc =>
+                tc.Manifest.Id.Equals(planned.TestId, StringComparison.OrdinalIgnoreCase));
+            return testCase?.Manifest.Name;
+        }
+
+        return null;
+    }
+
+    private string? FindSuiteName(PlannedNode? planned)
+    {
+        if (planned is null || _engine.Discovery is null || planned.NodeType != RunType.TestSuite)
+        {
+            return null;
+        }
+
+        var suite = _engine.Discovery.TestSuites.Values.FirstOrDefault(s =>
+            s.Manifest.Id.Equals(planned.TestId, StringComparison.OrdinalIgnoreCase));
+        return suite?.Manifest.Name;
+    }
+
+    private string? FindPlanName(PlannedNode? planned)
+    {
+        if (planned is null || _engine.Discovery is null || planned.NodeType != RunType.TestPlan)
+        {
+            return null;
+        }
+
+        var plan = _engine.Discovery.TestPlans.Values.FirstOrDefault(p =>
+            p.Manifest.Id.Equals(planned.TestId, StringComparison.OrdinalIgnoreCase));
+        return plan?.Manifest.Name;
+    }
+
+    private static string BuildNodeKey(string nodeId, int iterationIndex, int sequenceIndex, string? parentNodeId)
+    {
+        return $"{iterationIndex}:{sequenceIndex}:{parentNodeId ?? string.Empty}:{nodeId}";
     }
 
     #endregion
@@ -274,7 +475,13 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         };
         
         // Initialize state
-        _nodesDict.Clear();
+        _nodeInstances.Clear();
+        _activeNodes.Clear();
+        _plannedNodeLookup.Clear();
+        _plannedNodes.Clear();
+        _plannedNodeCount = 0;
+        _executionIndex = 0;
+        _supportsIterations = false;
         _currentState = new RunExecutionState
         {
             RunId = string.Empty,
@@ -338,7 +545,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             await Task.Delay(150);
             
             // Mark remaining pending nodes as Aborted
-            foreach (var node in _nodesDict.Values)
+            foreach (var node in _nodeInstances.Values)
             {
                 if (node.Status is null && !node.IsRunning)
                 {
@@ -463,7 +670,9 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                     Status = root.TryGetProperty("status", out var status) 
                         ? Enum.TryParse<RunStatus>(status.GetString(), true, out var s) ? s : null
                         : null,
-                    IsRunning = false
+                    IsRunning = false,
+                    IterationIndex = 0,
+                    SequenceIndex = 0
                 };
                 
                 // Calculate duration
@@ -498,6 +707,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                     // Use dictionary to deduplicate nodes by NodeId (in case of multiple entries for retries)
                     var nodeDict = new Dictionary<string, NodeExecutionState>();
                     
+                    var sequenceIndex = 0;
                     foreach (var line in lines)
                     {
                         if (string.IsNullOrWhiteSpace(line)) continue;
@@ -526,7 +736,9 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                                 Status = root.TryGetProperty("status", out var status) 
                                     ? Enum.TryParse<RunStatus>(status.GetString(), true, out var s) ? s : null
                                     : null,
-                                IsRunning = false
+                                IsRunning = false,
+                                IterationIndex = 0,
+                                SequenceIndex = sequenceIndex++
                             };
                             
                             // Try to get duration from the child run's result.json
