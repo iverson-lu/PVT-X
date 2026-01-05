@@ -1107,21 +1107,30 @@ public partial class RunIndexEntryViewModel : ViewModelBase
         }
     }
 
-    public string NameWithIteration
+    public string SecondaryDisplay
     {
         get
         {
-            if (IterationIndex.HasValue && IterationTotal.HasValue)
+            var iterationText = IterationIndex.HasValue && IterationTotal.HasValue
+                ? $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value}"
+                : string.Empty;
+
+            if (string.IsNullOrEmpty(VersionDisplay))
             {
-                return $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value} · {NameWithoutVersion}";
+                return iterationText;
             }
 
-            return NameWithoutVersion;
+            if (string.IsNullOrEmpty(iterationText))
+            {
+                return VersionDisplay;
+            }
+
+            return $"{VersionDisplay} · {iterationText}";
         }
     }
 
-    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
-    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
+    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(SecondaryDisplay));
+    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(SecondaryDisplay));
 }
 
 /// <summary>
