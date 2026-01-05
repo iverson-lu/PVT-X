@@ -26,6 +26,8 @@ public partial class RunViewModel : ViewModelBase
     private readonly Dictionary<string, NodeExecutionStateViewModel> _nodeViewModelDict = new();
     private readonly List<PlannedNodeTemplate> _plannedNodeTemplates = new();
     private readonly Dictionary<string, PlanSuiteExecutionViewModel> _suiteViewModels = new();
+    private readonly Dictionary<string, int> _suiteRepeatLookup = new();
+    private readonly Dictionary<string, int> _suitePlannedCountLookup = new();
     private System.Windows.Threading.DispatcherTimer? _eventRefreshTimer;
 
     [ObservableProperty] private bool _isRunning;
@@ -273,6 +275,15 @@ public partial class RunViewModel : ViewModelBase
                 .Select(node => new PlannedNodeTemplate(node))
                 .ToList();
 
+            if (templates.Count == 0)
+            {
+                templates = state.Nodes
+                    .OrderBy(node => node.SequenceIndex)
+                    .GroupBy(node => node.SequenceIndex)
+                    .Select(group => new PlannedNodeTemplate(group.First()))
+                    .ToList();
+            }
+
             if (templates.Count > 0)
             {
                 _plannedNodeTemplates.AddRange(templates);
@@ -292,17 +303,57 @@ public partial class RunViewModel : ViewModelBase
 
         var flattenedNodes = new List<NodeExecutionStateViewModel>();
 
-        for (var iterationIndex = 0; iterationIndex < totalIterations; iterationIndex++)
+        var plannedCount = _plannedNodeTemplates.Count;
+        var fallbackToFlatIterations = RepeatCount > 1
+                                       && maxIterationIndex == 0
+                                       && plannedCount > 0
+                                       && state.Nodes.Count > plannedCount;
+
+        if (fallbackToFlatIterations)
         {
-            var iterationVm = Iterations[iterationIndex];
-            iterationVm.Index = iterationIndex + 1;
-            iterationVm.Total = totalIterations;
+            var orderedNodes = state.Nodes
+                .OrderBy(node => state.Nodes.IndexOf(node))
+                .ToList();
 
-            var cases = BuildIterationCases(iterationIndex, stateNodeLookup);
-            SyncCases(iterationVm.Cases, cases);
-            flattenedNodes.AddRange(iterationVm.Cases);
+            totalIterations = Math.Max(
+                RepeatCount,
+                (int)Math.Ceiling((double)orderedNodes.Count / plannedCount));
+            EnsureIterationViewModels(totalIterations);
 
-            UpdateIterationSummary(iterationVm);
+            for (var iterationIndex = 0; iterationIndex < totalIterations; iterationIndex++)
+            {
+                var iterationVm = Iterations[iterationIndex];
+                iterationVm.Index = iterationIndex + 1;
+                iterationVm.Total = totalIterations;
+
+                var iterationCases = orderedNodes
+                    .Skip(iterationIndex * plannedCount)
+                    .Take(plannedCount)
+                    .Select(nodeState => GetOrCreateNodeViewModel(
+                        nodeState,
+                        iterationIndex,
+                        nodeState.SequenceIndex))
+                    .ToList();
+
+                SyncCases(iterationVm.Cases, iterationCases);
+                flattenedNodes.AddRange(iterationVm.Cases);
+                UpdateIterationSummary(iterationVm);
+            }
+        }
+        else
+        {
+            for (var iterationIndex = 0; iterationIndex < totalIterations; iterationIndex++)
+            {
+                var iterationVm = Iterations[iterationIndex];
+                iterationVm.Index = iterationIndex + 1;
+                iterationVm.Total = totalIterations;
+
+                var cases = BuildIterationCases(iterationIndex, stateNodeLookup);
+                SyncCases(iterationVm.Cases, cases);
+                flattenedNodes.AddRange(iterationVm.Cases);
+
+                UpdateIterationSummary(iterationVm);
+            }
         }
 
         UpdateCurrentIteration();
@@ -335,11 +386,24 @@ public partial class RunViewModel : ViewModelBase
 
             var children = state.Nodes
                 .Where(node => node.ParentNodeId == suiteState.NodeId)
-                .OrderBy(node => node.SequenceIndex)
+                .OrderBy(node => state.Nodes.IndexOf(node))
                 .ToList();
 
             var maxIterationIndex = children.Count > 0 ? children.Max(node => node.IterationIndex) : 0;
             var totalIterations = maxIterationIndex + 1;
+            var (suiteRepeatCount, plannedCount) = GetSuiteIterationMetadata(suiteState.NodeId);
+
+            var fallbackToFlatIterations = suiteRepeatCount > 1
+                                           && maxIterationIndex == 0
+                                           && plannedCount > 0
+                                           && children.Count > plannedCount;
+
+            if (fallbackToFlatIterations)
+            {
+                totalIterations = Math.Max(
+                    suiteRepeatCount,
+                    (int)Math.Ceiling((double)children.Count / plannedCount));
+            }
 
             suiteVm.ShowIterations = totalIterations > 1;
             if (suiteVm.ShowIterations)
@@ -351,11 +415,27 @@ public partial class RunViewModel : ViewModelBase
                     var iterationVm = suiteVm.Iterations[iterationIndex];
                     iterationVm.Index = iterationIndex + 1;
                     iterationVm.Total = totalIterations;
-                    var iterationCases = children
-                        .Where(node => node.IterationIndex == iterationIndex)
-                        .OrderBy(node => node.SequenceIndex)
-                        .Select(GetOrCreateNodeViewModel)
-                        .ToList();
+
+                    List<NodeExecutionStateViewModel> iterationCases;
+                    if (fallbackToFlatIterations)
+                    {
+                        iterationCases = children
+                            .Skip(iterationIndex * plannedCount)
+                            .Take(plannedCount)
+                            .Select(nodeState => GetOrCreateNodeViewModel(
+                                nodeState,
+                                iterationIndex,
+                                nodeState.SequenceIndex))
+                            .ToList();
+                    }
+                    else
+                    {
+                        iterationCases = children
+                            .Where(node => node.IterationIndex == iterationIndex)
+                            .OrderBy(node => node.SequenceIndex)
+                            .Select(GetOrCreateNodeViewModel)
+                            .ToList();
+                    }
 
                     SyncCases(iterationVm.Cases, iterationCases);
                     UpdateIterationSummary(iterationVm);
@@ -467,7 +547,7 @@ public partial class RunViewModel : ViewModelBase
 
         foreach (var template in _plannedNodeTemplates)
         {
-            var key = BuildNodeKey(iterationIndex, template.SequenceIndex, template.NodeId);
+        var key = BuildNodeKey(iterationIndex, template.SequenceIndex, template.ParentNodeId, template.NodeId);
             if (!_nodeViewModelDict.TryGetValue(key, out var vm))
             {
                 vm = new NodeExecutionStateViewModel
@@ -535,7 +615,56 @@ public partial class RunViewModel : ViewModelBase
         return newVm;
     }
 
+    private NodeExecutionStateViewModel GetOrCreateNodeViewModel(
+        NodeExecutionState nodeState,
+        int iterationIndexOverride,
+        int sequenceIndexOverride)
+    {
+        var key = BuildNodeKey(
+            iterationIndexOverride,
+            sequenceIndexOverride,
+            nodeState.ParentNodeId,
+            nodeState.NodeId);
+        if (_nodeViewModelDict.TryGetValue(key, out var existingVm))
+        {
+            UpdateNodeViewModel(existingVm, nodeState, iterationIndexOverride, sequenceIndexOverride);
+            return existingVm;
+        }
+
+        var indentLevel = string.IsNullOrEmpty(nodeState.ParentNodeId) ? 0 : 1;
+        var newVm = new NodeExecutionStateViewModel
+        {
+            NodeId = nodeState.NodeId,
+            NodeType = nodeState.NodeType,
+            TestId = nodeState.TestId,
+            TestVersion = nodeState.TestVersion,
+            TestName = nodeState.TestName,
+            SuiteName = nodeState.SuiteName,
+            PlanName = nodeState.PlanName,
+            Status = nodeState.Status,
+            Duration = nodeState.Duration,
+            RetryCount = nodeState.RetryCount,
+            IsRunning = nodeState.IsRunning,
+            ParentNodeId = nodeState.ParentNodeId,
+            IndentLevel = indentLevel,
+            IterationIndex = iterationIndexOverride,
+            SequenceIndex = sequenceIndexOverride
+        };
+
+        _nodeViewModelDict[key] = newVm;
+        return newVm;
+    }
+
     private void UpdateNodeViewModel(NodeExecutionStateViewModel vm, NodeExecutionState nodeState)
+    {
+        UpdateNodeViewModel(vm, nodeState, nodeState.IterationIndex, nodeState.SequenceIndex);
+    }
+
+    private void UpdateNodeViewModel(
+        NodeExecutionStateViewModel vm,
+        NodeExecutionState nodeState,
+        int iterationIndexOverride,
+        int sequenceIndexOverride)
     {
         vm.Status = nodeState.Status;
         vm.Duration = nodeState.Duration;
@@ -543,8 +672,8 @@ public partial class RunViewModel : ViewModelBase
         vm.IsRunning = nodeState.IsRunning;
         vm.ParentNodeId = nodeState.ParentNodeId;
         vm.IndentLevel = string.IsNullOrEmpty(nodeState.ParentNodeId) ? 0 : 1;
-        vm.IterationIndex = nodeState.IterationIndex;
-        vm.SequenceIndex = nodeState.SequenceIndex;
+        vm.IterationIndex = iterationIndexOverride;
+        vm.SequenceIndex = sequenceIndexOverride;
     }
 
     private void SyncCases(ObservableCollection<NodeExecutionStateViewModel> target, List<NodeExecutionStateViewModel> source)
@@ -597,6 +726,35 @@ public partial class RunViewModel : ViewModelBase
         iterationVm.Status = RunStatus.Passed;
     }
 
+    private (int repeatCount, int plannedCount) GetSuiteIterationMetadata(string suiteIdentity)
+    {
+        if (_suiteRepeatLookup.TryGetValue(suiteIdentity, out var repeatCount) &&
+            _suitePlannedCountLookup.TryGetValue(suiteIdentity, out var plannedCount))
+        {
+            return (repeatCount, plannedCount);
+        }
+
+        repeatCount = 1;
+        plannedCount = 0;
+
+        var discovery = _discoveryService.CurrentDiscovery;
+        if (discovery?.TestSuites is not null)
+        {
+            var suite = discovery.TestSuites.Values.FirstOrDefault(s =>
+                string.Equals($"{s.Manifest.Id}@{s.Manifest.Version}", suiteIdentity,
+                    StringComparison.OrdinalIgnoreCase));
+            if (suite is not null)
+            {
+                repeatCount = Math.Max(1, suite.Manifest.Controls?.Repeat ?? 1);
+                plannedCount = suite.Manifest.TestCases?.Count ?? 0;
+            }
+        }
+
+        _suiteRepeatLookup[suiteIdentity] = repeatCount;
+        _suitePlannedCountLookup[suiteIdentity] = plannedCount;
+        return (repeatCount, plannedCount);
+    }
+
     private void UpdateCurrentIteration()
     {
         var currentIteration = Iterations.FirstOrDefault(iteration => iteration.Cases.Any(c => c.IsRunning))
@@ -613,12 +771,12 @@ public partial class RunViewModel : ViewModelBase
 
     private static string BuildNodeKey(NodeExecutionState nodeState)
     {
-        return BuildNodeKey(nodeState.IterationIndex, nodeState.SequenceIndex, nodeState.NodeId);
+        return BuildNodeKey(nodeState.IterationIndex, nodeState.SequenceIndex, nodeState.ParentNodeId, nodeState.NodeId);
     }
 
-    private static string BuildNodeKey(int iterationIndex, int sequenceIndex, string nodeId)
+    private static string BuildNodeKey(int iterationIndex, int sequenceIndex, string? parentNodeId, string nodeId)
     {
-        return $"{iterationIndex}:{sequenceIndex}:{nodeId}";
+        return $"{iterationIndex}:{sequenceIndex}:{parentNodeId}:{nodeId}";
     }
 
     private async Task LoadEventsAsync(string runId)
@@ -698,6 +856,8 @@ public partial class RunViewModel : ViewModelBase
         Iterations.Clear();
         SuiteGroups.Clear();
         _suiteViewModels.Clear();
+        _suiteRepeatLookup.Clear();
+        _suitePlannedCountLookup.Clear();
         RepeatCount = 1;
         CurrentIterationIndex = 1;
 
