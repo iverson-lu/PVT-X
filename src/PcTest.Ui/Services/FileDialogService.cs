@@ -129,4 +129,14 @@ public sealed class FileDialogService : IFileDialogService
 
         return Array.Empty<string>();
     }
+
+    public bool ShowPurgeHistoryDialog(ViewModels.PurgeHistoryViewModel viewModel)
+    {
+        var dialog = new Views.Dialogs.PurgeHistoryDialog(viewModel)
+        {
+            Owner = Application.Current.MainWindow
+        };
+
+        return dialog.ShowDialog() == true;
+    }
 }

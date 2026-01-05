@@ -1,3 +1,5 @@
+using PcTest.Ui.ViewModels;
+
 namespace PcTest.Ui.Services;
 
 /// <summary>
@@ -64,4 +66,9 @@ public interface IFileDialogService
     IReadOnlyList<string> ShowSuitePicker(
         IEnumerable<PcTest.Ui.ViewModels.SuiteListItemViewModel> suites,
         IEnumerable<string>? excludeIdentities = null);
+
+    /// <summary>
+    /// Shows the history purge dialog.
+    /// </summary>
+    bool ShowPurgeHistoryDialog(PurgeHistoryViewModel viewModel);
 }

@@ -136,9 +136,9 @@ public sealed class RunRepository : IRunRepository
         if (root.TryGetProperty("parentRunId", out var parentRunIdProp))
             entry.ParentRunId = parentRunIdProp.GetString();
         
-        if (root.TryGetProperty("startTime", out var startTimeProp) && DateTime.TryParse(startTimeProp.GetString(), out var startTime))
+        if (root.TryGetProperty("startTime", out var startTimeProp) && DateTime.TryParse(startTimeProp.GetString(), null, System.Globalization.DateTimeStyles.RoundtripKind, out var startTime))
             entry.StartTime = startTime;
-        if (root.TryGetProperty("endTime", out var endTimeProp) && DateTime.TryParse(endTimeProp.GetString(), out var endTime))
+        if (root.TryGetProperty("endTime", out var endTimeProp) && DateTime.TryParse(endTimeProp.GetString(), null, System.Globalization.DateTimeStyles.RoundtripKind, out var endTime))
             entry.EndTime = endTime;
         
         if (root.TryGetProperty("status", out var statusProp))
@@ -356,5 +356,156 @@ public sealed class RunRepository : IRunRepository
         var settings = _settingsService.CurrentSettings;
         return Path.Combine(settings.ResolvedRunsRoot, runId);
     }
-}
 
+    public async Task<HistoryPurgePreview> PreviewPurgeAsync(int days, CancellationToken cancellationToken = default)
+    {
+        if (days < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(days), "Days must be at least 1.");
+        }
+
+        var cutoff = DateTime.UtcNow.AddDays(-days);
+        var runs = await GetAllRunsAsync(cancellationToken);
+        var candidates = runs.Where(entry => entry.StartTime < cutoff).ToList();
+
+        long? totalSize = 0;
+        try
+        {
+            foreach (var entry in candidates)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var runFolder = GetRunFolderPath(entry.RunId);
+                if (!_fileSystemService.DirectoryExists(runFolder))
+                {
+                    continue;
+                }
+
+                foreach (var filePath in _fileSystemService.GetFiles(runFolder, "*", SearchOption.AllDirectories))
+                {
+                    var info = _fileSystemService.GetFileInfo(filePath);
+                    totalSize += info.Length;
+                }
+            }
+        }
+        catch
+        {
+            totalSize = null;
+        }
+
+        return new HistoryPurgePreview
+        {
+            RunCount = candidates.Count,
+            TotalArtifactSize = totalSize,
+            EarliestRunTime = candidates.Count > 0 ? candidates.Min(entry => entry.StartTime) : null,
+            LatestRunTime = candidates.Count > 0 ? candidates.Max(entry => entry.StartTime) : null
+        };
+    }
+
+    public async Task<HistoryPurgeResult> PurgeHistoryAsync(int days, CancellationToken cancellationToken = default)
+    {
+        if (days < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(days), "Days must be at least 1.");
+        }
+
+        var settings = _settingsService.CurrentSettings;
+        var indexPath = Path.Combine(settings.ResolvedRunsRoot, "index.jsonl");
+
+        if (!_fileSystemService.FileExists(indexPath))
+        {
+            return new HistoryPurgeResult { RunCount = 0, TotalArtifactSize = 0 };
+        }
+
+        var cutoff = DateTime.UtcNow.AddDays(-days);
+        var lines = await _fileSystemService.ReadAllLinesAsync(indexPath, cancellationToken);
+        var keptLines = new List<string>();
+        var runIdsToPurge = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            if (TryParseIndexEntrySummary(line, out var runId, out var startTime) && startTime < cutoff)
+            {
+                if (!string.IsNullOrWhiteSpace(runId))
+                {
+                    runIdsToPurge.Add(runId);
+                }
+            }
+            else
+            {
+                keptLines.Add(line);
+            }
+        }
+
+        long? totalSize = 0;
+        foreach (var runId in runIdsToPurge)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var runFolder = Path.Combine(settings.ResolvedRunsRoot, runId);
+            if (_fileSystemService.DirectoryExists(runFolder))
+            {
+                try
+                {
+                    foreach (var filePath in _fileSystemService.GetFiles(runFolder, "*", SearchOption.AllDirectories))
+                    {
+                        var info = _fileSystemService.GetFileInfo(filePath);
+                        totalSize += info.Length;
+                    }
+                }
+                catch
+                {
+                    totalSize = null;
+                }
+
+                _fileSystemService.DeleteDirectory(runFolder, recursive: true);
+            }
+        }
+
+        var updatedContent = keptLines.Count == 0
+            ? string.Empty
+            : string.Join(Environment.NewLine, keptLines) + Environment.NewLine;
+        await _fileSystemService.WriteAllTextAsync(indexPath, updatedContent, cancellationToken);
+
+        return new HistoryPurgeResult
+        {
+            RunCount = runIdsToPurge.Count,
+            TotalArtifactSize = totalSize
+        };
+    }
+
+    private static bool TryParseIndexEntrySummary(string json, out string runId, out DateTime startTime)
+    {
+        runId = string.Empty;
+        startTime = default;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.TryGetProperty("runId", out var runIdProp))
+            {
+                runId = runIdProp.GetString() ?? string.Empty;
+            }
+
+            if (root.TryGetProperty("startTime", out var startTimeProp) &&
+                DateTime.TryParse(startTimeProp.GetString(), null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedStart))
+            {
+                startTime = parsedStart;
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}
