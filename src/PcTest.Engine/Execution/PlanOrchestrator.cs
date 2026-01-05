@@ -99,13 +99,21 @@ public sealed class PlanOrchestrator
 
             // Report planned nodes - plan level shows suites as nodes
             var plannedNodes = new List<PlannedNode>();
-            foreach (var suiteIdentity in plan.Manifest.Suites)
+            var suiteNodes = plan.Manifest.Suites
+                .Select((suiteIdentity, index) => new
+                {
+                    SuiteIdentity = suiteIdentity,
+                    NodeId = $"{suiteIdentity}#{index + 1}"
+                })
+                .ToList();
+
+            foreach (var suiteNode in suiteNodes)
             {
-                var parseResult = IdentityParser.Parse(suiteIdentity);
+                var parseResult = IdentityParser.Parse(suiteNode.SuiteIdentity);
                 plannedNodes.Add(new PlannedNode
                 {
-                    NodeId = suiteIdentity,
-                    TestId = parseResult.Success ? parseResult.Id : suiteIdentity,
+                    NodeId = suiteNode.NodeId,
+                    TestId = parseResult.Success ? parseResult.Id : suiteNode.SuiteIdentity,
                     TestVersion = parseResult.Success ? parseResult.Version : "unknown",
                     NodeType = RunType.TestSuite
                 });
@@ -113,33 +121,33 @@ public sealed class PlanOrchestrator
             _reporter.OnRunPlanned(groupRunId, RunType.TestPlan, plannedNodes);
 
             // Execute each Suite in order per spec section 6.4
-            foreach (var suiteIdentity in plan.Manifest.Suites)
+            foreach (var suiteNode in suiteNodes)
             {
                 if (_cancellationToken.IsCancellationRequested)
                     break;
 
                 // Report node started
-                _reporter.OnNodeStarted(groupRunId, suiteIdentity);
+                _reporter.OnNodeStarted(groupRunId, suiteNode.NodeId);
 
                 var suiteStartTime = DateTime.UtcNow;
 
                 // Resolve Suite
-                if (!_discovery.TestSuites.TryGetValue(suiteIdentity, out var suite))
+                if (!_discovery.TestSuites.TryGetValue(suiteNode.SuiteIdentity, out var suite))
                 {
                     // Suite not found
                     var errorResult = CreateSuiteErrorResult(
-                        suiteIdentity, plan.Manifest, $"Suite '{suiteIdentity}' not found");
+                        suiteNode.SuiteIdentity, plan.Manifest, $"Suite '{suiteNode.SuiteIdentity}' not found");
                     childResults.Add(errorResult);
                     UpdateCounts(statusCounts, errorResult.Status);
 
                     // Report node finished with error
                     _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
                     {
-                        NodeId = suiteIdentity,
+                        NodeId = suiteNode.NodeId,
                         Status = RunStatus.Error,
                         StartTime = suiteStartTime,
                         EndTime = DateTime.UtcNow,
-                        Message = $"Suite '{suiteIdentity}' not found"
+                        Message = $"Suite '{suiteNode.SuiteIdentity}' not found"
                     });
                     continue;
                 }
@@ -151,7 +159,7 @@ public sealed class PlanOrchestrator
                 // Create Suite RunRequest (env-only override from Plan)
                 var suiteRunRequest = new RunRequest
                 {
-                    Suite = suiteIdentity,
+                    Suite = suiteNode.SuiteIdentity,
                     EnvironmentOverrides = runRequest.EnvironmentOverrides
                 };
 
@@ -163,7 +171,7 @@ public sealed class PlanOrchestrator
                     plan.Manifest.Id,
                     plan.Manifest.Version,
                     groupRunId,
-                    suiteIdentity,
+                    suiteNode.NodeId,
                     groupRunFolder,
                     plan.Manifest);  // Pass plan manifest for env resolution
 
@@ -183,7 +191,7 @@ public sealed class PlanOrchestrator
                 // Report node finished
                 _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
                 {
-                    NodeId = suiteIdentity,
+                    NodeId = suiteNode.NodeId,
                     Status = suiteResult.Status,
                     StartTime = suiteStartTime,
                     EndTime = DateTime.UtcNow,
