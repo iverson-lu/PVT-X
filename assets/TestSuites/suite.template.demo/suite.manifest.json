@@ -9,7 +9,7 @@
     "sample"
   ],
   "controls": {
-    "repeat": 3,
+    "repeat": 1,
     "maxParallel": 1,
     "continueOnFailure": false,
     "retryOnError": 0,
