@@ -467,7 +467,7 @@ public partial class RunViewModel : ViewModelBase
 
         foreach (var template in _plannedNodeTemplates)
         {
-            var key = BuildNodeKey(iterationIndex, template.SequenceIndex, template.NodeId);
+            var key = BuildNodeKey(iterationIndex, template.SequenceIndex, template.ParentNodeId, template.NodeId);
             if (!_nodeViewModelDict.TryGetValue(key, out var vm))
             {
                 vm = new NodeExecutionStateViewModel
@@ -613,12 +613,12 @@ public partial class RunViewModel : ViewModelBase
 
     private static string BuildNodeKey(NodeExecutionState nodeState)
     {
-        return BuildNodeKey(nodeState.IterationIndex, nodeState.SequenceIndex, nodeState.NodeId);
+        return BuildNodeKey(nodeState.IterationIndex, nodeState.SequenceIndex, nodeState.ParentNodeId, nodeState.NodeId);
     }
 
-    private static string BuildNodeKey(int iterationIndex, int sequenceIndex, string nodeId)
+    private static string BuildNodeKey(int iterationIndex, int sequenceIndex, string? parentNodeId, string nodeId)
     {
-        return $"{iterationIndex}:{sequenceIndex}:{nodeId}";
+        return $"{iterationIndex}:{sequenceIndex}:{parentNodeId ?? string.Empty}:{nodeId}";
     }
 
     private async Task LoadEventsAsync(string runId)
