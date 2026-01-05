@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -1107,21 +1108,40 @@ public partial class RunIndexEntryViewModel : ViewModelBase
         }
     }
 
-    public string NameWithIteration
+    public string IterationDisplay
     {
         get
         {
             if (IterationIndex.HasValue && IterationTotal.HasValue)
             {
-                return $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value} · {NameWithoutVersion}";
+                return $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value}";
             }
 
-            return NameWithoutVersion;
+            return string.Empty;
         }
     }
 
-    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
-    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
+    public string SecondaryDisplay
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(IterationDisplay))
+            {
+                parts.Add(IterationDisplay);
+            }
+
+            if (!string.IsNullOrEmpty(VersionDisplay))
+            {
+                parts.Add(VersionDisplay);
+            }
+
+            return string.Join(" · ", parts);
+        }
+    }
+
+    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(SecondaryDisplay));
+    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(SecondaryDisplay));
 }
 
 /// <summary>
