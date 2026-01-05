@@ -4,6 +4,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
+using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -381,6 +382,52 @@ public partial class HistoryViewModel : ViewModelBase
         }
     }
 
+    private void ApplySuiteIterations(DiscoveryResult discovery)
+    {
+        foreach (var node in _nodesByRunId.Values)
+        {
+            node.Run.IterationIndex = null;
+            node.Run.IterationTotal = null;
+        }
+
+        foreach (var root in _rootNodes)
+        {
+            ApplySuiteIterationsRecursive(root, discovery);
+        }
+    }
+
+    private void ApplySuiteIterationsRecursive(RunTreeNodeViewModel node, DiscoveryResult discovery)
+    {
+        if (node.Run.RunType == RunType.TestSuite && node.Run.SuiteId is not null)
+        {
+            var suite = discovery.TestSuites.Values.FirstOrDefault(s =>
+                s.Manifest.Id.Equals(node.Run.SuiteId, StringComparison.OrdinalIgnoreCase));
+            var repeat = Math.Max(1, suite?.Manifest.Controls?.Repeat ?? 1);
+            var caseCount = suite?.Manifest.TestCases?.Count ?? 0;
+
+            if (repeat > 1 && caseCount > 0)
+            {
+                var orderedChildren = node.Children
+                    .Where(child => child.Run.RunType == RunType.TestCase)
+                    .OrderBy(child => child.Run.StartTime)
+                    .ToList();
+
+                for (var i = 0; i < orderedChildren.Count; i++)
+                {
+                    var iteration = Math.Min(i / caseCount, repeat - 1);
+                    var childRun = orderedChildren[i].Run;
+                    childRun.IterationIndex = iteration;
+                    childRun.IterationTotal = repeat;
+                }
+            }
+        }
+
+        foreach (var child in node.Children)
+        {
+            ApplySuiteIterationsRecursive(child, discovery);
+        }
+    }
+
     private void UpdateDepths(RunTreeNodeViewModel node, int depth)
     {
         node.Depth = depth;
@@ -752,6 +799,11 @@ public partial class HistoryViewModel : ViewModelBase
 
             // Build tree structure
             BuildTree();
+
+            if (discovery is not null)
+            {
+                ApplySuiteIterations(discovery);
+            }
             
             // Apply current filter/search
             ApplyFilter();
@@ -975,6 +1027,8 @@ public partial class RunIndexEntryViewModel : ViewModelBase
     [ObservableProperty] private RunStatus _status;
     [ObservableProperty] private string _displayName = string.Empty;
     [ObservableProperty] private TimeSpan? _duration;
+    [ObservableProperty] private int? _iterationIndex;
+    [ObservableProperty] private int? _iterationTotal;
 
     public string StartTimeDisplay => StartTime.ToString("yyyy-MM-dd HH:mm:ss");
     public string DurationDisplay => Duration?.ToString(@"mm\:ss\.fff") ?? "-";
@@ -1052,6 +1106,22 @@ public partial class RunIndexEntryViewModel : ViewModelBase
             };
         }
     }
+
+    public string NameWithIteration
+    {
+        get
+        {
+            if (IterationIndex.HasValue && IterationTotal.HasValue)
+            {
+                return $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value} · {NameWithoutVersion}";
+            }
+
+            return NameWithoutVersion;
+        }
+    }
+
+    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
+    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
 }
 
 /// <summary>

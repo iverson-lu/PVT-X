@@ -224,7 +224,7 @@
                                         
                                         <!-- Target Name + Version -->
                                         <StackPanel Margin="4,0,0,0">
-                                            <TextBlock Text="{Binding Run.NameWithoutVersion}" 
+                                            <TextBlock Text="{Binding Run.NameWithIteration}" 
                                                       FontSize="13"
                                                       FontWeight="Medium"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
