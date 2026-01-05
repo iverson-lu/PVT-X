@@ -2,11 +2,13 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
 using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
+using PcTest.Ui.Views.Dialogs;
 
 namespace PcTest.Ui.ViewModels;
 
@@ -842,6 +844,23 @@ public partial class HistoryViewModel : ViewModelBase
     private async Task RefreshAsync()
     {
         await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task OpenPurgeHistoryAsync()
+    {
+        var viewModel = new PurgeHistoryViewModel(_runRepository, _fileDialogService);
+        var dialog = new PurgeHistoryDialog
+        {
+            Owner = Application.Current?.MainWindow,
+            ViewModel = viewModel
+        };
+
+        var result = dialog.ShowDialog();
+        if (result == true && viewModel.WasPurged)
+        {
+            await LoadAsync();
+        }
     }
 
     [RelayCommand]

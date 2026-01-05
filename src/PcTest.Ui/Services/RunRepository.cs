@@ -356,5 +356,149 @@ public sealed class RunRepository : IRunRepository
         var settings = _settingsService.CurrentSettings;
         return Path.Combine(settings.ResolvedRunsRoot, runId);
     }
-}
 
+    public async Task<HistoryPurgePreview> PreviewHistoryPurgeAsync(int days, CancellationToken cancellationToken = default)
+    {
+        if (days < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(days), "Days must be at least 1.");
+        }
+
+        var cutoff = DateTime.UtcNow.AddDays(-days);
+        var allRuns = await GetAllRunsAsync(cancellationToken);
+        var candidates = allRuns
+            .Where(entry => entry.StartTime != default && entry.StartTime < cutoff)
+            .ToList();
+
+        var preview = new HistoryPurgePreview
+        {
+            RunCount = candidates.Count
+        };
+
+        if (candidates.Count == 0)
+        {
+            return preview;
+        }
+
+        preview.EarliestRunTime = candidates.Min(entry => entry.StartTime);
+        preview.LatestRunTime = candidates.Max(entry => entry.StartTime);
+        preview.TotalArtifactSize = TryGetTotalArtifactSize(candidates);
+
+        return preview;
+    }
+
+    public async Task<HistoryPurgeResult> PurgeHistoryAsync(int days, CancellationToken cancellationToken = default)
+    {
+        if (days < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(days), "Days must be at least 1.");
+        }
+
+        var settings = _settingsService.CurrentSettings;
+        var indexPath = Path.Combine(settings.ResolvedRunsRoot, "index.jsonl");
+
+        if (!_fileSystemService.FileExists(indexPath))
+        {
+            return new HistoryPurgeResult();
+        }
+
+        var cutoff = DateTime.UtcNow.AddDays(-days);
+        var lines = await _fileSystemService.ReadAllLinesAsync(indexPath, cancellationToken);
+        var purgeEntries = new List<RunIndexEntry>();
+        var purgeRunIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var retainedLines = new List<string>();
+
+        foreach (var line in lines)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            try
+            {
+                var entry = ParseIndexEntry(line.Trim());
+                if (entry is not null && entry.StartTime != default && entry.StartTime < cutoff)
+                {
+                    purgeEntries.Add(entry);
+                    purgeRunIds.Add(entry.RunId);
+                }
+                else
+                {
+                    retainedLines.Add(line);
+                }
+            }
+            catch
+            {
+                retainedLines.Add(line);
+            }
+        }
+
+        if (purgeEntries.Count == 0)
+        {
+            return new HistoryPurgeResult();
+        }
+
+        var result = new HistoryPurgeResult
+        {
+            RunCount = purgeEntries.Count,
+            EarliestRunTime = purgeEntries.Min(entry => entry.StartTime),
+            LatestRunTime = purgeEntries.Max(entry => entry.StartTime),
+            TotalArtifactSize = TryGetTotalArtifactSize(purgeEntries)
+        };
+
+        foreach (var runId in purgeRunIds)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var runFolder = GetRunFolderPath(runId);
+            if (_fileSystemService.DirectoryExists(runFolder))
+            {
+                _fileSystemService.DeleteDirectory(runFolder, true);
+            }
+        }
+
+        var updatedContent = retainedLines.Count == 0
+            ? string.Empty
+            : string.Join(Environment.NewLine, retainedLines) + Environment.NewLine;
+
+        await _fileSystemService.WriteAllTextAsync(indexPath, updatedContent, cancellationToken);
+
+        return result;
+    }
+
+    private long? TryGetTotalArtifactSize(IEnumerable<RunIndexEntry> entries)
+    {
+        try
+        {
+            long total = 0;
+            foreach (var entry in entries)
+            {
+                var folderPath = GetRunFolderPath(entry.RunId);
+                if (_fileSystemService.DirectoryExists(folderPath))
+                {
+                    total += GetDirectorySize(folderPath);
+                }
+            }
+
+            return total;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private long GetDirectorySize(string folderPath)
+    {
+        long total = 0;
+        foreach (var filePath in _fileSystemService.GetFiles(folderPath, "*", SearchOption.AllDirectories))
+        {
+            total += _fileSystemService.GetFileInfo(filePath).Length;
+        }
+
+        return total;
+    }
+}
