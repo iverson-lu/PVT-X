@@ -4,6 +4,8 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
+using PcTest.Contracts.Manifests;
+using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -30,6 +32,7 @@ public partial class HistoryViewModel : ViewModelBase
     private readonly IFileSystemService _fileSystemService;
     private readonly IFileDialogService _fileDialogService;
     private readonly IDiscoveryService _discoveryService;
+    private DiscoveryResult? _discovery;
     private CancellationTokenSource? _loadCancellationTokenSource;
 
     /// <summary>
@@ -68,6 +71,12 @@ public partial class HistoryViewModel : ViewModelBase
         // Create new cancellation token for this load
         _loadCancellationTokenSource = new CancellationTokenSource();
         
+        if (value.IsIterationGroup)
+        {
+            ClearRunDetails();
+            return;
+        }
+
         // Load full run details when selection changes
         _ = LoadRunDetailsAsync(value.Run.RunId, _loadCancellationTokenSource.Token);
     }
@@ -75,7 +84,7 @@ public partial class HistoryViewModel : ViewModelBase
     /// <summary>
     /// Gets the selected run from the selected node.
     /// </summary>
-    public RunIndexEntryViewModel? SelectedRun => SelectedNode?.Run;
+    public RunIndexEntryViewModel? SelectedRun => SelectedNode is { IsIterationGroup: false } ? SelectedNode.Run : null;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -373,12 +382,136 @@ public partial class HistoryViewModel : ViewModelBase
                 }
             }
         }
+
+        InsertIterationGroups();
         
         // Update depths recursively
         foreach (var root in _rootNodes)
         {
             UpdateDepths(root, 0);
         }
+    }
+
+    private void InsertIterationGroups()
+    {
+        foreach (var suiteNode in _nodesByRunId.Values.Where(node => node.Run.RunType == RunType.TestSuite))
+        {
+            var caseNodes = suiteNode.Children
+                .Where(child => child.Run.RunType == RunType.TestCase)
+                .OrderBy(child => child.Run.StartTime)
+                .ToList();
+
+            if (caseNodes.Count == 0)
+            {
+                continue;
+            }
+
+            var suiteManifest = GetSuiteManifest(suiteNode.Run);
+            var repeatCount = Math.Max(1, suiteManifest?.Controls?.Repeat ?? 1);
+            var nodeOrder = suiteManifest?.TestCases
+                .Select(node => node.NodeId)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .ToList() ?? new List<string>();
+
+            if (nodeOrder.Count == 0)
+            {
+                nodeOrder = caseNodes
+                    .Select(node => node.Run.NodeId)
+                    .Where(id => !string.IsNullOrWhiteSpace(id))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+
+            if (nodeOrder.Count == 0)
+            {
+                continue;
+            }
+
+            var iterationGroups = BuildIterationGroups(caseNodes, nodeOrder);
+            if (iterationGroups.Count <= 1)
+            {
+                continue;
+            }
+
+            var totalForLabel = Math.Max(iterationGroups.Count, repeatCount);
+            var groupedChildren = new ObservableCollection<RunTreeNodeViewModel>();
+
+            for (var i = 0; i < iterationGroups.Count; i++)
+            {
+                var groupChildren = iterationGroups[i];
+                var iterationNode = RunTreeNodeViewModel.CreateIterationGroup(
+                    iterationIndex: i + 1,
+                    totalIterations: totalForLabel,
+                    children: groupChildren,
+                    fallbackStart: suiteNode.Run.StartTime,
+                    fallbackStatus: suiteNode.Run.Status,
+                    viewModel: this);
+
+                iterationNode.Parent = suiteNode;
+                iterationNode.Depth = suiteNode.Depth + 1;
+                iterationNode.Children = new ObservableCollection<RunTreeNodeViewModel>(groupChildren);
+
+                foreach (var child in groupChildren)
+                {
+                    child.Parent = iterationNode;
+                }
+
+                groupedChildren.Add(iterationNode);
+            }
+
+            suiteNode.Children.Clear();
+            foreach (var grouped in groupedChildren)
+            {
+                suiteNode.Children.Add(grouped);
+            }
+        }
+    }
+
+    private static List<List<RunTreeNodeViewModel>> BuildIterationGroups(
+        List<RunTreeNodeViewModel> caseNodes,
+        List<string> nodeOrder)
+    {
+        var iterationGroups = new List<List<RunTreeNodeViewModel>> { new() };
+        var currentIteration = 0;
+        var lastNodeIndex = -1;
+
+        foreach (var child in caseNodes)
+        {
+            var nodeId = child.Run.NodeId;
+            var nodeIndex = nodeId is null
+                ? -1
+                : nodeOrder.FindIndex(id => string.Equals(id, nodeId, StringComparison.OrdinalIgnoreCase));
+
+            if (nodeIndex >= 0 && lastNodeIndex >= 0 && nodeIndex < lastNodeIndex)
+            {
+                currentIteration++;
+                iterationGroups.Add(new List<RunTreeNodeViewModel>());
+            }
+
+            if (nodeIndex >= 0)
+            {
+                lastNodeIndex = nodeIndex;
+            }
+
+            iterationGroups[currentIteration].Add(child);
+        }
+
+        return iterationGroups;
+    }
+
+    private TestSuiteManifest? GetSuiteManifest(RunIndexEntryViewModel run)
+    {
+        if (_discovery is null || string.IsNullOrWhiteSpace(run.SuiteId))
+        {
+            return null;
+        }
+
+        return _discovery.TestSuites.Values
+            .FirstOrDefault(suite =>
+                suite.Manifest.Id.Equals(run.SuiteId, StringComparison.OrdinalIgnoreCase) &&
+                (string.IsNullOrWhiteSpace(run.SuiteVersion) ||
+                 suite.Manifest.Version.Equals(run.SuiteVersion, StringComparison.OrdinalIgnoreCase)))
+            ?.Manifest;
     }
 
     private void UpdateDepths(RunTreeNodeViewModel node, int depth)
@@ -702,6 +835,7 @@ public partial class HistoryViewModel : ViewModelBase
             {
                 discovery = await _discoveryService.DiscoverAsync();
             }
+            _discovery = discovery;
 
             foreach (var run in runs)
             {
@@ -1060,6 +1194,11 @@ public partial class RunIndexEntryViewModel : ViewModelBase
 public partial class RunTreeNodeViewModel : ViewModelBase
 {
     private readonly HistoryViewModel _viewModel;
+    private readonly bool _isIterationGroup;
+    private readonly string? _iterationLabel;
+    private readonly RunStatus _iterationStatus;
+    private readonly DateTime _iterationStartTime;
+    private readonly TimeSpan? _iterationDuration;
 
     public RunTreeNodeViewModel(RunIndexEntryViewModel run, HistoryViewModel viewModel)
     {
@@ -1072,6 +1211,30 @@ public partial class RunTreeNodeViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasChildren));
             OnPropertyChanged(nameof(CanExpand));
         };
+    }
+
+    private RunTreeNodeViewModel(
+        string iterationLabel,
+        RunStatus status,
+        DateTime startTime,
+        TimeSpan? duration,
+        HistoryViewModel viewModel)
+    {
+        Run = new RunIndexEntryViewModel
+        {
+            RunId = $"iteration-{Guid.NewGuid():N}",
+            RunType = RunType.TestSuite,
+            StartTime = startTime,
+            EndTime = duration.HasValue ? startTime + duration.Value : null,
+            Status = status
+        };
+
+        _viewModel = viewModel;
+        _isIterationGroup = true;
+        _iterationLabel = iterationLabel;
+        _iterationStatus = status;
+        _iterationStartTime = startTime;
+        _iterationDuration = duration;
     }
 
     /// <summary>
@@ -1123,6 +1286,18 @@ public partial class RunTreeNodeViewModel : ViewModelBase
     /// </summary>
     public bool CanExpand => HasChildren && !_viewModel.TopLevelOnly;
 
+    public bool IsIterationGroup => _isIterationGroup;
+
+    public string DisplayName => _isIterationGroup ? _iterationLabel ?? string.Empty : Run.NameWithoutVersion;
+    public string DisplayVersion => _isIterationGroup ? string.Empty : Run.VersionDisplay;
+    public RunType DisplayRunType => _isIterationGroup ? RunType.TestSuite : Run.RunType;
+    public string DisplayRunTypeTooltip => _isIterationGroup ? "Iteration" : Run.RunTypeTooltip;
+    public RunStatus DisplayStatus => _isIterationGroup ? _iterationStatus : Run.Status;
+    public DateTime DisplayStartTime => _isIterationGroup ? _iterationStartTime : Run.StartTime;
+    public TimeSpan? DisplayDuration => _isIterationGroup ? _iterationDuration : Run.Duration;
+    public string DisplayShortRunId => _isIterationGroup ? string.Empty : Run.ShortRunId;
+    public string DisplayRunId => _isIterationGroup ? string.Empty : Run.RunId;
+
     /// <summary>
     /// Notifies that CanExpand may have changed.
     /// </summary>
@@ -1138,6 +1313,60 @@ public partial class RunTreeNodeViewModel : ViewModelBase
     private void ToggleExpand()
     {
         _viewModel.ToggleNodeExpansion(this);
+    }
+
+    public static RunTreeNodeViewModel CreateIterationGroup(
+        int iterationIndex,
+        int totalIterations,
+        IEnumerable<RunTreeNodeViewModel> children,
+        DateTime fallbackStart,
+        RunStatus fallbackStatus,
+        HistoryViewModel viewModel)
+    {
+        var childList = children.ToList();
+        var startTime = childList.Count > 0
+            ? childList.Min(child => child.Run.StartTime)
+            : fallbackStart;
+
+        var endTimes = childList
+            .Select(child => child.Run.EndTime)
+            .Where(end => end.HasValue)
+            .Select(end => end!.Value)
+            .ToList();
+
+        TimeSpan? duration = null;
+        if (endTimes.Count > 0)
+        {
+            duration = endTimes.Max() - startTime;
+        }
+        else
+        {
+            var totalTicks = childList
+                .Where(child => child.Run.Duration.HasValue)
+                .Sum(child => child.Run.Duration!.Value.Ticks);
+            duration = totalTicks > 0 ? TimeSpan.FromTicks(totalTicks) : null;
+        }
+
+        var status = childList.Count > 0 ? AggregateStatus(childList) : fallbackStatus;
+        var label = $"Iteration {iterationIndex}/{totalIterations}";
+        return new RunTreeNodeViewModel(label, status, startTime, duration, viewModel);
+    }
+
+    private static RunStatus AggregateStatus(IEnumerable<RunTreeNodeViewModel> children)
+    {
+        var statuses = children.Select(child => child.Run.Status).ToList();
+
+        if (statuses.Any(status => status == RunStatus.Aborted))
+        {
+            return RunStatus.Aborted;
+        }
+
+        if (statuses.Any(status => status == RunStatus.Failed || status == RunStatus.Error || status == RunStatus.Timeout))
+        {
+            return RunStatus.Failed;
+        }
+
+        return RunStatus.Passed;
     }
 }
 

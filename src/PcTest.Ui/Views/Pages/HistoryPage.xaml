@@ -195,12 +195,12 @@
                                     
                                     <!-- Status Icon -->
                                     <ui:SymbolIcon Grid.Column="0"
-                                                  Symbol="{Binding Run.Status, Converter={StaticResource RunStatusToIconConverter}}" 
-                                                  Foreground="{Binding Run.Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                                  Symbol="{Binding DisplayStatus, Converter={StaticResource RunStatusToIconConverter}}" 
+                                                  Foreground="{Binding DisplayStatus, Converter={StaticResource RunStatusToBrushConverter}}"
                                                   FontSize="18" 
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"
-                                                  ToolTip="{Binding Run.Status}"/>
+                                                  ToolTip="{Binding DisplayStatus}"/>
                                     
                                     <!-- Target with Indent and Expand Arrow -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
@@ -224,54 +224,54 @@
                                         
                                         <!-- Target Name + Version -->
                                         <StackPanel Margin="4,0,0,0">
-                                            <TextBlock Text="{Binding Run.NameWithoutVersion}" 
+                                            <TextBlock Text="{Binding DisplayName}" 
                                                       FontSize="13"
                                                       FontWeight="Medium"
                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                       TextTrimming="CharacterEllipsis"
                                                       MaxWidth="200"/>
-                                            <TextBlock Text="{Binding Run.VersionDisplay}" 
+                                            <TextBlock Text="{Binding DisplayVersion}" 
                                                       FontSize="10"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Visibility="{Binding Run.VersionDisplay, Converter={StaticResource StringToVisibilityConverter}}"/>
+                                                      Visibility="{Binding DisplayVersion, Converter={StaticResource StringToVisibilityConverter}}"/>
                                         </StackPanel>
                                     </StackPanel>
                                     
                                     <!-- Type Icon -->
                                     <ui:SymbolIcon Grid.Column="2"
-                                                  Symbol="{Binding Run.RunType, Converter={StaticResource RunTypeToIconConverter}}" 
+                                                  Symbol="{Binding DisplayRunType, Converter={StaticResource RunTypeToIconConverter}}" 
                                                   FontSize="18"
                                                   Foreground="{DynamicResource TextSecondaryBrush}"
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"
-                                                  ToolTip="{Binding Run.RunTypeTooltip}"/>
+                                                  ToolTip="{Binding DisplayRunTypeTooltip}"/>
                                     
                                     <!-- Start Time -->
                                     <StackPanel Grid.Column="3" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Run.StartTime, StringFormat=MM-dd}" 
+                                        <TextBlock Text="{Binding DisplayStartTime, StringFormat=MM-dd}" 
                                                   FontSize="11"
                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding Run.StartTime, StringFormat=HH:mm}" 
+                                        <TextBlock Text="{Binding DisplayStartTime, StringFormat=HH:mm}" 
                                                   FontSize="10"
                                                   Foreground="{DynamicResource TextTertiaryBrush}"/>
                                     </StackPanel>
                                     
                                     <!-- Duration -->
                                     <TextBlock Grid.Column="4"
-                                              Text="{Binding Run.Duration, StringFormat=mm\\:ss}" 
+                                              Text="{Binding DisplayDuration, StringFormat=mm\\:ss}" 
                                               FontFamily="Consolas"
                                               FontSize="11"
                                               Foreground="{DynamicResource TextSecondaryBrush}"
                                               VerticalAlignment="Center"
-                                              ToolTip="{Binding Run.Duration, StringFormat=hh\\:mm\\:ss}"/>
+                                              ToolTip="{Binding DisplayDuration, StringFormat=hh\\:mm\\:ss}"/>
                                     
                                     <!-- Short Run ID -->
                                     <TextBlock Grid.Column="5"
-                                              Text="{Binding Run.ShortRunId}" 
+                                              Text="{Binding DisplayShortRunId}" 
                                               FontFamily="Consolas"
                                               FontSize="10"
                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                              ToolTip="{Binding Run.RunId}"
+                                              ToolTip="{Binding DisplayRunId}"
                                               VerticalAlignment="Center"/>
                                 </Grid>
                             </DataTemplate>
