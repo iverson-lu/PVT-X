@@ -25,10 +25,12 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
     private readonly Dictionary<string, NodeExecutionState> _nodeInstances = new();
     private readonly Dictionary<string, NodeExecutionState> _activeNodes = new();
     private readonly Dictionary<string, PlannedNode> _plannedNodeLookup = new();
+    private readonly Dictionary<string, List<PlannedNode>> _plannedNodesById = new();
     private readonly Dictionary<string, List<PlannedNode>> _plannedNodesByParent = new();
     private readonly Dictionary<string, int> _plannedCountsByParent = new();
     private readonly Dictionary<string, int> _executionIndexByParent = new();
     private readonly List<PlannedNode> _plannedNodes = new();
+    private string? _currentSuiteNodeId;
     private int _plannedNodeCount;
     private int _executionIndex;
     private bool _supportsIterations;
@@ -112,6 +114,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             _nodeInstances.Clear();
             _activeNodes.Clear();
             _plannedNodeLookup.Clear();
+            _plannedNodesById.Clear();
             _plannedNodesByParent.Clear();
             _plannedCountsByParent.Clear();
             _executionIndexByParent.Clear();
@@ -121,6 +124,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             _supportsIterations = false;
             _consoleLoadingTasks.Clear();
             _currentState.Nodes.Clear();
+            _currentSuiteNodeId = null;
         }
 
         if (runType == RunType.TestSuite && plannedNodes.All(node => string.IsNullOrEmpty(node.ParentNodeId)))
@@ -138,14 +142,17 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             _plannedNodes.AddRange(plannedNodes);
             _plannedNodeCount = _plannedNodes.Count;
             _plannedNodeLookup.Clear();
+            _plannedNodesById.Clear();
             foreach (var planned in _plannedNodes)
             {
-                _plannedNodeLookup[planned.NodeId] = planned;
+                _plannedNodeLookup[BuildPlannedKey(planned.NodeId, planned.ParentNodeId)] = planned;
+                AddPlannedNodeById(planned);
             }
         }
 
         foreach (var planned in plannedNodes)
         {
+            var plannedKey = BuildPlannedKey(planned.NodeId, planned.ParentNodeId);
             var parentKey = GetIterationKey(planned.ParentNodeId);
             if (!_plannedNodesByParent.TryGetValue(parentKey, out var parentList))
             {
@@ -161,16 +168,18 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                 _plannedCountsByParent[parentKey] = parentList.Count;
             }
 
-            var sequenceIndex = _plannedNodes.FindIndex(node => node.NodeId == planned.NodeId);
+            var sequenceIndex = _plannedNodes.FindIndex(node => node.NodeId == planned.NodeId &&
+                                                               node.ParentNodeId == planned.ParentNodeId);
             if (sequenceIndex < 0)
             {
                 sequenceIndex = _plannedNodes.Count;
                 _plannedNodes.Add(planned);
-                _plannedNodeLookup[planned.NodeId] = planned;
+                _plannedNodeLookup[plannedKey] = planned;
+                AddPlannedNodeById(planned);
                 _plannedNodeCount = _plannedNodes.Count;
             }
 
-            var nodeKey = BuildNodeKey(planned.NodeId, 0, parentSequenceIndex);
+            var nodeKey = BuildNodeKey(planned.NodeId, planned.ParentNodeId, 0, parentSequenceIndex);
 
             // Skip if node already exists (avoid duplicates)
             if (_nodeInstances.ContainsKey(nodeKey))
@@ -265,17 +274,22 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
 
         _currentState.CurrentNodeId = nodeId;
 
-        var (iterationIndex, sequenceIndex) = ResolveIterationContext(nodeId);
-        var nodeKey = BuildNodeKey(nodeId, iterationIndex, sequenceIndex);
+        var (iterationIndex, sequenceIndex, parentNodeId, planned) = ResolveIterationContext(nodeId);
+        var nodeKey = BuildNodeKey(nodeId, parentNodeId, iterationIndex, sequenceIndex);
         if (!_nodeInstances.TryGetValue(nodeKey, out var node))
         {
-            node = CreateNodeInstance(nodeId, iterationIndex, sequenceIndex);
+            node = CreateNodeInstance(nodeId, iterationIndex, sequenceIndex, planned);
             _nodeInstances[nodeKey] = node;
             _currentState.Nodes.Add(node);
         }
 
         node.IsRunning = true;
         _activeNodes[nodeId] = node;
+
+        if (planned?.NodeType == RunType.TestSuite && string.IsNullOrEmpty(planned.ParentNodeId))
+        {
+            _currentSuiteNodeId = planned.NodeId;
+        }
 
         // Start tailing for this node's run folder (child run)
         StartNodeTailingAsync(runId, nodeId).ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnFaulted);
@@ -290,7 +304,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
 
         if (!_activeNodes.TryGetValue(nodeState.NodeId, out var node))
         {
-            node = FindLatestNodeInstance(nodeState.NodeId);
+            node = FindLatestNodeInstance(nodeState.NodeId, nodeState.ParentNodeId);
         }
 
         if (node is not null)
@@ -303,6 +317,12 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         }
 
         _activeNodes.Remove(nodeState.NodeId);
+        if (!string.IsNullOrEmpty(_currentSuiteNodeId) &&
+            nodeState.NodeId == _currentSuiteNodeId &&
+            string.IsNullOrEmpty(nodeState.ParentNodeId))
+        {
+            _currentSuiteNodeId = null;
+        }
 
         // Stop tailing for this node and emit final header
         var stopTailTask = StopNodeTailingAndEmitHeaderAsync(nodeState.NodeId, nodeState.Status);
@@ -327,14 +347,16 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         StateChanged?.Invoke(this, _currentState);
     }
 
-    private (int iterationIndex, int sequenceIndex) ResolveIterationContext(string nodeId)
+    private (int iterationIndex, int sequenceIndex, string? parentNodeId, PlannedNode? planned)
+        ResolveIterationContext(string nodeId)
     {
+        var planned = FindPlannedNode(nodeId);
         if (!_supportsIterations)
         {
-            return (0, ResolvePlannedSequenceIndex(nodeId));
+            return (0, ResolvePlannedSequenceIndex(nodeId), planned?.ParentNodeId, planned);
         }
 
-        if (_plannedNodeLookup.TryGetValue(nodeId, out var planned))
+        if (planned is not null)
         {
             var parentKey = GetIterationKey(planned.ParentNodeId);
             if (_plannedCountsByParent.TryGetValue(parentKey, out var parentCount) && parentCount > 0)
@@ -342,7 +364,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                 var execIndex = _executionIndexByParent.TryGetValue(parentKey, out var value) ? value : 0;
                 var iterationIndex = execIndex / parentCount;
                 _executionIndexByParent[parentKey] = execIndex + 1;
-                return (iterationIndex, ResolvePlannedSequenceIndex(nodeId, parentKey));
+                return (iterationIndex, ResolvePlannedSequenceIndex(nodeId, parentKey), planned.ParentNodeId, planned);
             }
         }
 
@@ -351,10 +373,10 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             var iterationIndex = _executionIndex / _plannedNodeCount;
             var sequenceIndex = _executionIndex % _plannedNodeCount;
             _executionIndex++;
-            return (iterationIndex, sequenceIndex);
+            return (iterationIndex, sequenceIndex, planned?.ParentNodeId, planned);
         }
 
-        return (0, ResolvePlannedSequenceIndex(nodeId));
+        return (0, ResolvePlannedSequenceIndex(nodeId), planned?.ParentNodeId, planned);
     }
 
     private int ResolvePlannedSequenceIndex(string nodeId)
@@ -373,7 +395,8 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             }
         }
 
-        if (_plannedNodeLookup.TryGetValue(nodeId, out var planned))
+        var planned = FindPlannedNode(nodeId);
+        if (planned is not null)
         {
             var plannedIndex = _plannedNodes.IndexOf(planned);
             if (plannedIndex >= 0)
@@ -384,19 +407,21 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         return 0;
     }
 
-    private NodeExecutionState? FindLatestNodeInstance(string nodeId)
+    private NodeExecutionState? FindLatestNodeInstance(string nodeId, string? parentNodeId)
     {
         return _nodeInstances.Values
-            .Where(node => node.NodeId == nodeId)
+            .Where(node => node.NodeId == nodeId && node.ParentNodeId == parentNodeId)
             .OrderByDescending(node => node.IterationIndex)
             .ThenByDescending(node => node.SequenceIndex)
             .FirstOrDefault();
     }
 
-    private NodeExecutionState CreateNodeInstance(string nodeId, int iterationIndex, int sequenceIndex)
+    private NodeExecutionState CreateNodeInstance(
+        string nodeId,
+        int iterationIndex,
+        int sequenceIndex,
+        PlannedNode? planned)
     {
-        _plannedNodeLookup.TryGetValue(nodeId, out var planned);
-
         return new NodeExecutionState
         {
             NodeId = nodeId,
@@ -412,6 +437,45 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             IterationIndex = iterationIndex,
             SequenceIndex = sequenceIndex
         };
+    }
+
+    private void AddPlannedNodeById(PlannedNode planned)
+    {
+        if (!_plannedNodesById.TryGetValue(planned.NodeId, out var list))
+        {
+            list = new List<PlannedNode>();
+            _plannedNodesById[planned.NodeId] = list;
+        }
+
+        if (!list.Contains(planned))
+        {
+            list.Add(planned);
+        }
+    }
+
+    private PlannedNode? FindPlannedNode(string nodeId, string? parentNodeId = null)
+    {
+        if (!string.IsNullOrEmpty(parentNodeId) &&
+            _plannedNodeLookup.TryGetValue(BuildPlannedKey(nodeId, parentNodeId), out var planned))
+        {
+            return planned;
+        }
+
+        if (!_plannedNodesById.TryGetValue(nodeId, out var candidates) || candidates.Count == 0)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrEmpty(_currentSuiteNodeId))
+        {
+            var match = candidates.FirstOrDefault(p => p.ParentNodeId == _currentSuiteNodeId);
+            if (match is not null)
+            {
+                return match;
+            }
+        }
+
+        return candidates[0];
     }
 
     private string? FindDisplayName(PlannedNode? planned)
@@ -460,9 +524,14 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         return string.IsNullOrEmpty(parentNodeId) ? RootIterationKey : parentNodeId;
     }
 
-    private static string BuildNodeKey(string nodeId, int iterationIndex, int sequenceIndex)
+    private static string BuildPlannedKey(string nodeId, string? parentNodeId)
     {
-        return $"{iterationIndex}:{sequenceIndex}:{nodeId}";
+        return $"{GetIterationKey(parentNodeId)}::{nodeId}";
+    }
+
+    private static string BuildNodeKey(string nodeId, string? parentNodeId, int iterationIndex, int sequenceIndex)
+    {
+        return $"{iterationIndex}:{sequenceIndex}:{GetIterationKey(parentNodeId)}:{nodeId}";
     }
 
     #endregion
@@ -499,10 +568,15 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
         _nodeInstances.Clear();
         _activeNodes.Clear();
         _plannedNodeLookup.Clear();
+        _plannedNodesById.Clear();
+        _plannedNodesByParent.Clear();
+        _plannedCountsByParent.Clear();
+        _executionIndexByParent.Clear();
         _plannedNodes.Clear();
         _plannedNodeCount = 0;
         _executionIndex = 0;
         _supportsIterations = false;
+        _currentSuiteNodeId = null;
         _currentState = new RunExecutionState
         {
             RunId = string.Empty,

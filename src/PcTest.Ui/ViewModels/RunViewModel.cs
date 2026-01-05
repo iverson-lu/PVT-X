@@ -26,6 +26,7 @@ public partial class RunViewModel : ViewModelBase
     private readonly Dictionary<string, NodeExecutionStateViewModel> _nodeViewModelDict = new();
     private readonly List<PlannedNodeTemplate> _plannedNodeTemplates = new();
     private readonly Dictionary<string, PlanSuiteExecutionViewModel> _suiteViewModels = new();
+    private readonly Dictionary<string, SuiteIterationMetadata> _suiteIterationMetadata = new();
     private System.Windows.Threading.DispatcherTimer? _eventRefreshTimer;
 
     [ObservableProperty] private bool _isRunning;
@@ -153,6 +154,8 @@ public partial class RunViewModel : ViewModelBase
             ShowTargetSelector = false;
             
             OnPropertyChanged(nameof(HasBackButton));
+
+            await LoadPlanSuiteMetadataAsync();
             
             // Auto-start if requested
             if (navParam.AutoStart)
@@ -167,6 +170,7 @@ public partial class RunViewModel : ViewModelBase
             _sourceTargetIdentity = null;
             ShowTargetSelector = true;
             OnPropertyChanged(nameof(HasBackButton));
+            await LoadPlanSuiteMetadataAsync();
             await LoadAvailableTargetsAsync();
         }
     }
@@ -225,6 +229,42 @@ public partial class RunViewModel : ViewModelBase
         catch
         {
             RepeatCount = 1;
+        }
+    }
+
+    private async Task LoadPlanSuiteMetadataAsync()
+    {
+        _suiteIterationMetadata.Clear();
+
+        if (RunType != RunType.TestPlan || string.IsNullOrEmpty(TargetIdentity))
+        {
+            return;
+        }
+
+        try
+        {
+            var planInfo = await _planRepository.GetByIdentityAsync(TargetIdentity);
+            if (planInfo?.Manifest?.Suites is null)
+            {
+                return;
+            }
+
+            foreach (var suiteIdentity in planInfo.Manifest.Suites)
+            {
+                var suiteInfo = await _suiteRepository.GetByIdentityAsync(suiteIdentity);
+                if (suiteInfo?.Manifest is null)
+                {
+                    continue;
+                }
+
+                _suiteIterationMetadata[suiteIdentity] = new SuiteIterationMetadata(
+                    Math.Max(1, suiteInfo.Manifest.Controls?.Repeat ?? 1),
+                    suiteInfo.Manifest.TestCases?.Count ?? 0);
+            }
+        }
+        catch
+        {
+            _suiteIterationMetadata.Clear();
         }
     }
 
@@ -311,6 +351,9 @@ public partial class RunViewModel : ViewModelBase
 
     private void UpdatePlanSuites(RunExecutionState state)
     {
+        var nodeOrder = state.Nodes
+            .Select((node, index) => new { node, index })
+            .ToDictionary(entry => entry.node, entry => entry.index);
         var suites = state.Nodes
             .Where(node => node.ParentNodeId is null)
             .OrderBy(node => state.Nodes.IndexOf(node))
@@ -335,25 +378,55 @@ public partial class RunViewModel : ViewModelBase
 
             var children = state.Nodes
                 .Where(node => node.ParentNodeId == suiteState.NodeId)
-                .OrderBy(node => node.SequenceIndex)
+                .OrderBy(node => nodeOrder[node])
                 .ToList();
 
             var maxIterationIndex = children.Count > 0 ? children.Max(node => node.IterationIndex) : 0;
-            var totalIterations = maxIterationIndex + 1;
+            var suiteMeta = _suiteIterationMetadata.TryGetValue(suiteState.NodeId, out var meta)
+                ? meta
+                : SuiteIterationMetadata.Empty;
+            var inferredIterations = suiteMeta.CaseCount > 0
+                ? (int)Math.Ceiling(children.Count / (double)suiteMeta.CaseCount)
+                : 1;
+            var totalIterations = Math.Max(maxIterationIndex + 1, Math.Max(suiteMeta.RepeatCount, inferredIterations));
 
             suiteVm.ShowIterations = totalIterations > 1;
             if (suiteVm.ShowIterations)
             {
                 EnsureIterationViewModels(suiteVm.Iterations, totalIterations);
+                var hasIterationData = children.Any(node => node.IterationIndex > 0);
 
                 for (var iterationIndex = 0; iterationIndex < totalIterations; iterationIndex++)
                 {
                     var iterationVm = suiteVm.Iterations[iterationIndex];
                     iterationVm.Index = iterationIndex + 1;
                     iterationVm.Total = totalIterations;
-                    var iterationCases = children
-                        .Where(node => node.IterationIndex == iterationIndex)
-                        .OrderBy(node => node.SequenceIndex)
+                    IEnumerable<NodeExecutionState> iterationSource;
+                    if (hasIterationData)
+                    {
+                        iterationSource = children
+                            .Where(node => node.IterationIndex == iterationIndex)
+                            .OrderBy(node => node.SequenceIndex);
+                    }
+                    else if (suiteMeta.CaseCount > 0)
+                    {
+                        var startIndex = iterationIndex * suiteMeta.CaseCount;
+                        iterationSource = children
+                            .Skip(startIndex)
+                            .Take(suiteMeta.CaseCount)
+                            .OrderBy(node => node.SequenceIndex);
+                    }
+                    else
+                    {
+                        var perIteration = (int)Math.Ceiling(children.Count / (double)totalIterations);
+                        var startIndex = iterationIndex * perIteration;
+                        iterationSource = children
+                            .Skip(startIndex)
+                            .Take(perIteration)
+                            .OrderBy(node => node.SequenceIndex);
+                    }
+
+                    var iterationCases = iterationSource
                         .Select(GetOrCreateNodeViewModel)
                         .ToList();
 
@@ -467,7 +540,7 @@ public partial class RunViewModel : ViewModelBase
 
         foreach (var template in _plannedNodeTemplates)
         {
-            var key = BuildNodeKey(iterationIndex, template.SequenceIndex, template.NodeId);
+        var key = BuildNodeKey(iterationIndex, template.SequenceIndex, template.ParentNodeId, template.NodeId);
             if (!_nodeViewModelDict.TryGetValue(key, out var vm))
             {
                 vm = new NodeExecutionStateViewModel
@@ -613,12 +686,12 @@ public partial class RunViewModel : ViewModelBase
 
     private static string BuildNodeKey(NodeExecutionState nodeState)
     {
-        return BuildNodeKey(nodeState.IterationIndex, nodeState.SequenceIndex, nodeState.NodeId);
+        return BuildNodeKey(nodeState.IterationIndex, nodeState.SequenceIndex, nodeState.ParentNodeId, nodeState.NodeId);
     }
 
-    private static string BuildNodeKey(int iterationIndex, int sequenceIndex, string nodeId)
+    private static string BuildNodeKey(int iterationIndex, int sequenceIndex, string? parentNodeId, string nodeId)
     {
-        return $"{iterationIndex}:{sequenceIndex}:{nodeId}";
+        return $"{iterationIndex}:{sequenceIndex}:{parentNodeId}:{nodeId}";
     }
 
     private async Task LoadEventsAsync(string runId)
@@ -675,6 +748,12 @@ public partial class RunViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowIterationGroups));
         OnPropertyChanged(nameof(ShowPlanPipeline));
         OnPropertyChanged(nameof(ShowFlatPipeline));
+        _ = LoadPlanSuiteMetadataAsync();
+    }
+
+    partial void OnTargetIdentityChanged(string value)
+    {
+        _ = LoadPlanSuiteMetadataAsync();
     }
 
     [RelayCommand]
@@ -731,6 +810,7 @@ public partial class RunViewModel : ViewModelBase
         {
             ShowTargetSelector = false;
             await LoadRepeatCountAsync();
+            await LoadPlanSuiteMetadataAsync();
             await _runService.ExecuteAsync(request, _runCts.Token);
         }
         catch (Exception ex)
@@ -784,6 +864,11 @@ public partial class RunViewModel : ViewModelBase
 
     public bool CanStart => !IsRunning && !string.IsNullOrEmpty(TargetIdentity);
     public bool CanStop => IsRunning;
+}
+
+public readonly record struct SuiteIterationMetadata(int RepeatCount, int CaseCount)
+{
+    public static readonly SuiteIterationMetadata Empty = new(1, 0);
 }
 
 public sealed class PlannedNodeTemplate
