@@ -81,4 +81,6 @@ public sealed class NodeExecutionState
     public int RetryCount { get; set; }
     public bool IsRunning { get; set; }
     public string? ParentNodeId { get; set; } // For test cases under a suite in plan execution
+    public int IterationIndex { get; set; }
+    public int SequenceIndex { get; set; }
 }
