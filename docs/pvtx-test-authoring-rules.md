@@ -28,11 +28,8 @@ CaseName/
 - `README.md` is **strongly recommended** to describe test purpose and logic
 - A Case may include additional data files (configs, samples, reference data, etc.)
 - All bundled files must be accessed via `PVTX_TESTCASE_PATH` + relative paths
-
 - ❌ Do NOT pre-commit:
   - `artifacts/`
-- Runner / Engine may generate additional directories or files during execution
-- These artifacts are **not part of the Test Case design**
 
 ### Case Execution Outputs
 
@@ -107,6 +104,8 @@ plan.sw.smoke_test
 {
   "name": "Display Name",
   "description": "...",
+  "id": "case.domain.subsystem.feature.action",
+  "version": "1.0.0",
   "category": "...",
   "tags": ["..."]
 }
@@ -116,6 +115,8 @@ plan.sw.smoke_test
 
 - `name` **does not need to match** the directory name
 - `description`: short description for UI display
+- `id`: must follow the ID schema defined above
+- `version`: follows semantic versioning (major.minor.patch)
 - `category`: logical grouping for Suite / Plan / UI
   - Recommended values: `Hardware` / `Software` / `Firmware`
 - `tags`:
@@ -136,6 +137,8 @@ Each parameter supports the following fields:
   "description": "..."
 }
 ```
+
+For details parameter usage, see template test case test.manifest.json files.
 
 ---
 
