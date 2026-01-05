@@ -42,6 +42,36 @@ public interface IRunRepository
     /// Gets the run folder path.
     /// </summary>
     string GetRunFolderPath(string runId);
+
+    /// <summary>
+    /// Previews a purge of runs older than the specified number of days.
+    /// </summary>
+    Task<HistoryPurgePreview> PreviewPurgeAsync(int days, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Permanently purges runs older than the specified number of days.
+    /// </summary>
+    Task<HistoryPurgeResult> PurgeHistoryAsync(int days, CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Preview information for a history purge.
+/// </summary>
+public sealed class HistoryPurgePreview
+{
+    public int RunCount { get; set; }
+    public long? TotalArtifactSize { get; set; }
+    public DateTime? EarliestRunTime { get; set; }
+    public DateTime? LatestRunTime { get; set; }
+}
+
+/// <summary>
+/// Result of a history purge.
+/// </summary>
+public sealed class HistoryPurgeResult
+{
+    public int RunCount { get; set; }
+    public long? TotalArtifactSize { get; set; }
 }
 
 /// <summary>
@@ -141,4 +171,3 @@ public sealed class StructuredEvent
     public string? FilePath { get; set; }
     public string RawJson { get; set; } = string.Empty;
 }
-

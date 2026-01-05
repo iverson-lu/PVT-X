@@ -1,0 +1,119 @@
+<ui:FluentWindow x:Class="PcTest.Ui.Views.Dialogs.PurgeHistoryDialog"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:converters="clr-namespace:PcTest.Ui.Resources"
+                 mc:Ignorable="d"
+                 Title="Purge History"
+                 Height="520"
+                 Width="560"
+                 WindowStartupLocation="CenterOwner"
+                 ResizeMode="NoResize">
+    <ui:FluentWindow.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    </ui:FluentWindow.Resources>
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Purge History" FontSize="18" FontWeight="SemiBold"/>
+            <TextBlock Text="Permanently remove execution records older than a specified age."
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       Margin="0,6,0,0"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="Purge runs older than" VerticalAlignment="Center"/>
+            <ui:NumberBox Value="{Binding Days, UpdateSourceTrigger=PropertyChanged}"
+                          Minimum="1"
+                          Width="90"
+                          Margin="8,0"/>
+            <TextBlock Text="days" VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="2"
+                   Text="This will permanently remove execution records and all related artifacts."
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   Margin="0,8,0,0"/>
+
+        <Border Grid.Row="3"
+                Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                BorderBrush="{DynamicResource BorderSubtleBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16"
+                Margin="0,16,0,0">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <TextBlock Text="Preview" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <ui:Button Content="Preview"
+                               Command="{Binding PreviewCommand}"
+                               IsEnabled="{Binding IsPreviewInProgress, Converter={StaticResource InverseBoolConverter}}"
+                               Margin="12,0,0,0"/>
+                </StackPanel>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Runs to delete:" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding PreviewRunCount}"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Estimated artifact size:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,0"/>
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PreviewArtifactSize}" Margin="0,6,0,0"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Time range affected:" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,0"/>
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding PreviewTimeRange}" Margin="0,6,0,0"/>
+                </Grid>
+
+                <TextBlock Text="No runs match the purge criteria"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Margin="0,10,0,0"
+                           Visibility="{Binding HasNoMatches, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Grid.Row="4"
+                   Text="{Binding ErrorMessage}"
+                   Foreground="{DynamicResource StatusErrorBrush}"
+                   Margin="0,12,0,0"
+                   TextWrapping="Wrap"
+                   Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+        <TextBlock Grid.Row="5"
+                   Text="This action cannot be undone."
+                   Foreground="{DynamicResource TextSecondaryBrush}"
+                   Margin="0,16,0,0"/>
+
+        <StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <ui:Button Content="Cancel"
+                       Command="{Binding CancelCommand}"
+                       Margin="0,0,12,0"/>
+            <ui:Button Content="Purge Permanently"
+                       Appearance="Danger"
+                       Command="{Binding PurgeCommand}"
+                       IsEnabled="{Binding CanPurge}"/>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

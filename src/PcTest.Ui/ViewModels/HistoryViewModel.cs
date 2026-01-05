@@ -845,6 +845,17 @@ public partial class HistoryViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task PurgeHistoryAsync()
+    {
+        var purgeViewModel = new PurgeHistoryViewModel(_runRepository);
+        var didPurge = _fileDialogService.ShowPurgeHistoryDialog(purgeViewModel);
+        if (didPurge)
+        {
+            await LoadAsync();
+        }
+    }
+
+    [RelayCommand]
     private void ClearFilters()
     {
         SearchText = string.Empty;

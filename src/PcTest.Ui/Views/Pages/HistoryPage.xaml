@@ -86,6 +86,11 @@
                               Icon="{ui:SymbolIcon ArrowSync24}" 
                               Command="{Binding RefreshCommand}"
                               Appearance="Primary"/>
+                    <ui:Button Content="Purge History"
+                              Icon="{ui:SymbolIcon Delete24}"
+                              Command="{Binding PurgeHistoryCommand}"
+                              Appearance="Danger"
+                              Margin="8,0,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
