@@ -200,6 +200,11 @@ Injected automatically by Runner:
 | 1 | Fail |
 | ≥2 | Script / Environment Error |
 
+### 4.2 Language Preferences
+
+- PowerShell Core 7.x (`pwsh`) is the **preferred language** for all Test Cases
+- Target platform is **Windows 11 and later**
+
 ---
 
 ## 5. Template Positioning
