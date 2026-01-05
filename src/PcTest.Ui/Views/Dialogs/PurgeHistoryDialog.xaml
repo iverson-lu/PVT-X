@@ -38,7 +38,7 @@
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock Text="Purge runs older than" VerticalAlignment="Center"/>
-            <ui:NumberBox Value="{Binding Days, UpdateSourceTrigger=PropertyChanged}"
+            <ui:NumberBox Value="{Binding Days}"
                           Minimum="1"
                           Width="90"
                           Margin="8,0"/>
