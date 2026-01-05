@@ -136,9 +136,9 @@ public sealed class RunRepository : IRunRepository
         if (root.TryGetProperty("parentRunId", out var parentRunIdProp))
             entry.ParentRunId = parentRunIdProp.GetString();
         
-        if (root.TryGetProperty("startTime", out var startTimeProp) && DateTime.TryParse(startTimeProp.GetString(), out var startTime))
+        if (root.TryGetProperty("startTime", out var startTimeProp) && DateTime.TryParse(startTimeProp.GetString(), null, System.Globalization.DateTimeStyles.RoundtripKind, out var startTime))
             entry.StartTime = startTime;
-        if (root.TryGetProperty("endTime", out var endTimeProp) && DateTime.TryParse(endTimeProp.GetString(), out var endTime))
+        if (root.TryGetProperty("endTime", out var endTimeProp) && DateTime.TryParse(endTimeProp.GetString(), null, System.Globalization.DateTimeStyles.RoundtripKind, out var endTime))
             entry.EndTime = endTime;
         
         if (root.TryGetProperty("status", out var statusProp))
@@ -492,7 +492,7 @@ public sealed class RunRepository : IRunRepository
             }
 
             if (root.TryGetProperty("startTime", out var startTimeProp) &&
-                DateTime.TryParse(startTimeProp.GetString(), out var parsedStart))
+                DateTime.TryParse(startTimeProp.GetString(), null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedStart))
             {
                 startTime = parsedStart;
             }

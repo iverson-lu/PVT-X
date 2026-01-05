@@ -90,6 +90,7 @@
                               Icon="{ui:SymbolIcon Delete24}"
                               Command="{Binding PurgeHistoryCommand}"
                               Appearance="Danger"
+                              Foreground="White"
                               Margin="8,0,0,0"/>
                 </StackPanel>
             </Grid>
