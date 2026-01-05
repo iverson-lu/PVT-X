@@ -12,21 +12,6 @@
       Background="{DynamicResource SurfaceBackgroundBrush}">
 
     <Page.Resources>
-        <Style x:Key="IterationStatusBadgeStyle" TargetType="{x:Type ui:Badge}" BasedOn="{StaticResource {x:Type ui:Badge}}">
-            <Setter Property="Padding" Value="8,2"/>
-            <Setter Property="FontSize" Value="{StaticResource FontSizeXS}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"/>
-            <Setter Property="BorderBrush" Value="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"/>
-            <Setter Property="Foreground" Value="{DynamicResource TagBadgeTextBrush}"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource StatusRunningBrush}"/>
-                    <Setter Property="BorderBrush" Value="{DynamicResource StatusRunningBrush}"/>
-                    <Setter Property="Foreground" Value="White"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
     </Page.Resources>
     
     <Grid Margin="16">
@@ -195,10 +180,26 @@
                                                         Padding="12">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="Auto"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                        <!-- Status Icon -->
+                                                        <Grid Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                            <!-- Running state icon -->
+                                                            <ui:SymbolIcon Symbol="Play20" 
+                                                                          Foreground="{DynamicResource StatusRunningBrush}"
+                                                                          FontSize="20" 
+                                                                          ToolTip="Running"
+                                                                          Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                            <!-- Other status icons -->
+                                                            <ui:SymbolIcon Symbol="{Binding Status, Converter={StaticResource RunStatusToIconConverter}}" 
+                                                                          Foreground="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                                                          FontSize="20" 
+                                                                          ToolTip="{Binding Status}"
+                                                                          Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                        </Grid>
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding Label}"
                                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
@@ -214,10 +215,13 @@
                                                                       FontSize="{StaticResource FontSizeS}"
                                                                       Margin="12,0,0,0"/>
                                                         </StackPanel>
-                                                        <ui:Badge Grid.Column="1"
-                                                                  Content="{Binding StatusLabel}"
-                                                                  Style="{StaticResource IterationStatusBadgeStyle}"
-                                                                  VerticalAlignment="Center"/>
+                                                        <!-- Status text -->
+                                                        <TextBlock Grid.Column="2"
+                                                                  Text="{Binding StatusLabel}"
+                                                                  FontSize="{StaticResource FontSizeS}"
+                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                  VerticalAlignment="Center"
+                                                                  Margin="8,0,0,0"/>
                                                     </Grid>
                                                 </Border>
                                             </Expander.Header>
@@ -358,11 +362,21 @@
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <ui:SymbolIcon Grid.Column="0"
-                                                                  Symbol="{Binding SuiteNode.NodeType, Converter={StaticResource RunTypeToIconConverter}}"
-                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                  FontSize="18"
-                                                                  Margin="0,0,8,0"/>
+                                                    <!-- Status Icon -->
+                                                    <Grid Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <!-- Running state icon -->
+                                                        <ui:SymbolIcon Symbol="Play20" 
+                                                                      Foreground="{DynamicResource StatusRunningBrush}"
+                                                                      FontSize="20" 
+                                                                      ToolTip="Running"
+                                                                      Visibility="{Binding SuiteNode.IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                        <!-- Other status icons -->
+                                                        <ui:SymbolIcon Symbol="{Binding SuiteNode.Status, Converter={StaticResource RunStatusToIconConverter}}" 
+                                                                      Foreground="{Binding SuiteNode.Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                                                      FontSize="20" 
+                                                                      ToolTip="{Binding SuiteNode.Status}"
+                                                                      Visibility="{Binding SuiteNode.IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                    </Grid>
                                                     <StackPanel Grid.Column="1">
                                                         <TextBlock Text="{Binding SuiteNode.DisplayName}"
                                                                   FontWeight="{StaticResource FontWeightSemiBold}"
@@ -400,10 +414,26 @@
                                                                             Padding="12">
                                                                         <Grid>
                                                                             <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="Auto"/>
                                                                                 <ColumnDefinition Width="*"/>
                                                                                 <ColumnDefinition Width="Auto"/>
                                                                             </Grid.ColumnDefinitions>
-                                                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                            <!-- Status Icon -->
+                                                                            <Grid Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                                                <!-- Running state icon -->
+                                                                                <ui:SymbolIcon Symbol="Play20" 
+                                                                                              Foreground="{DynamicResource StatusRunningBrush}"
+                                                                                              FontSize="20" 
+                                                                                              ToolTip="Running"
+                                                                                              Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                                <!-- Other status icons -->
+                                                                                <ui:SymbolIcon Symbol="{Binding Status, Converter={StaticResource RunStatusToIconConverter}}" 
+                                                                                              Foreground="{Binding Status, Converter={StaticResource RunStatusToBrushConverter}}"
+                                                                                              FontSize="20" 
+                                                                                              ToolTip="{Binding Status}"
+                                                                                              Visibility="{Binding IsRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                                                                            </Grid>
+                                                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                                                 <TextBlock Text="{Binding Label}"
                                                                                           FontWeight="{StaticResource FontWeightSemiBold}"
                                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
@@ -419,10 +449,13 @@
                                                                                           FontSize="{StaticResource FontSizeS}"
                                                                                           Margin="12,0,0,0"/>
                                                                             </StackPanel>
-                                                                            <ui:Badge Grid.Column="1"
-                                                                                      Content="{Binding StatusLabel}"
-                                                                                      Style="{StaticResource IterationStatusBadgeStyle}"
-                                                                                      VerticalAlignment="Center"/>
+                                                                            <!-- Status text -->
+                                                                            <TextBlock Grid.Column="2"
+                                                                                      Text="{Binding StatusLabel}"
+                                                                                      FontSize="{StaticResource FontSizeS}"
+                                                                                      Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                      VerticalAlignment="Center"
+                                                                                      Margin="8,0,0,0"/>
                                                                         </Grid>
                                                                     </Border>
                                                                 </Expander.Header>

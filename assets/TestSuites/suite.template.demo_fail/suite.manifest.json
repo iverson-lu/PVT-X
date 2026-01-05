@@ -1,8 +1,8 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "suite.template.demo",
-  "name": "Template Suite",
-  "description": "Template suite for demo",
+  "id": "suite.template.demo_fail",
+  "name": "Template Suite - Fail",
+  "description": "Template suite for demo to fail",
   "version": "1.0.0",
   "tags": [
     "template",
@@ -11,7 +11,7 @@
   "controls": {
     "repeat": 3,
     "maxParallel": 1,
-    "continueOnFailure": false,
+    "continueOnFailure": true,
     "retryOnError": 0,
     "timeoutPolicy": "AbortOnTimeout"
   },
@@ -25,7 +25,7 @@
       "nodeId": "case.template.demo.core.all_types@1.0.0",
       "ref": "Template Case",
       "inputs": {
-        "E_Mode": "pass",
+        "E_Mode": "fail",
         "S_Text": "hello",
         "N_Int": "42",
         "B_Flag": true,
