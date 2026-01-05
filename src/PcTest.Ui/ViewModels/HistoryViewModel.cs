@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -1086,7 +1087,18 @@ public partial class RunIndexEntryViewModel : ViewModelBase
                 RunType.TestPlan => PlanVersion,
                 _ => null
             };
-            return !string.IsNullOrEmpty(version) ? $"v{version}" : string.Empty;
+            var segments = new List<string>();
+            if (IterationIndex.HasValue && IterationTotal.HasValue)
+            {
+                segments.Add($"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value}");
+            }
+
+            if (!string.IsNullOrEmpty(version))
+            {
+                segments.Add($"v{version}");
+            }
+
+            return segments.Count > 0 ? string.Join(" · ", segments) : string.Empty;
         }
     }
     
@@ -1107,21 +1119,8 @@ public partial class RunIndexEntryViewModel : ViewModelBase
         }
     }
 
-    public string NameWithIteration
-    {
-        get
-        {
-            if (IterationIndex.HasValue && IterationTotal.HasValue)
-            {
-                return $"Iteration {IterationIndex.Value + 1}/{IterationTotal.Value} · {NameWithoutVersion}";
-            }
-
-            return NameWithoutVersion;
-        }
-    }
-
-    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
-    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(NameWithIteration));
+    partial void OnIterationIndexChanged(int? value) => OnPropertyChanged(nameof(VersionDisplay));
+    partial void OnIterationTotalChanged(int? value) => OnPropertyChanged(nameof(VersionDisplay));
 }
 
 /// <summary>
