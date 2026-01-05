@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "suite.template.demo_fail",
+  "name": "Template Suite - Fail",
+  "description": "Template suite for demo to fail",
+  "version": "1.0.0",
+  "tags": [
+    "template",
+    "sample"
+  ],
+  "controls": {
+    "repeat": 3,
+    "maxParallel": 1,
+    "continueOnFailure": true,
+    "retryOnError": 0,
+    "timeoutPolicy": "AbortOnTimeout"
+  },
+  "environment": {
+    "env": {
+      "pvt_suite_var": "from_suite"
+    }
+  },
+  "testCases": [
+    {
+      "nodeId": "case.template.demo.core.all_types@1.0.0",
+      "ref": "Template Case",
+      "inputs": {
+        "E_Mode": "fail",
+        "S_Text": "hello",
+        "N_Int": "42",
+        "B_Flag": true,
+        "N_Double": "3.14",
+        "P_Path": "data/test-data.txt",
+        "ItemsJson": "[1, 2, 3]",
+        "ConfigJson": "{\u0022timeout\u0022: 30, \u0022retry\u0022: true}"
+      }
+    },
+    {
+      "nodeId": "case.template.demo.core.minimal@1.0.0",
+      "ref": "Template Case Minimal",
+      "inputs": {
+        "Message": "Hello from PVT-X"
+      }
+    }
+  ]
+}

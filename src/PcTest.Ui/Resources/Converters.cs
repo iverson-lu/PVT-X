@@ -305,15 +305,15 @@ public class RunStatusToIconConverter : IValueConverter
         {
             return status switch
             {
-                PcTest.Contracts.RunStatus.Passed => "CheckmarkCircle20",
-                PcTest.Contracts.RunStatus.Failed => "DismissCircle20",
-                PcTest.Contracts.RunStatus.Error => "ErrorCircle20",
-                PcTest.Contracts.RunStatus.Timeout => "Clock20",
-                PcTest.Contracts.RunStatus.Aborted => "RecordStop20",
-                _ => "Hourglass20"
+                PcTest.Contracts.RunStatus.Passed => "CheckmarkCircle24",
+                PcTest.Contracts.RunStatus.Failed => "DismissCircle24",
+                PcTest.Contracts.RunStatus.Error => "ErrorCircle24",
+                PcTest.Contracts.RunStatus.Timeout => "Clock24",
+                PcTest.Contracts.RunStatus.Aborted => "RecordStop24",
+                _ => "Hourglass24"
             };
         }
-        return "Hourglass20";
+        return "Hourglass24";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

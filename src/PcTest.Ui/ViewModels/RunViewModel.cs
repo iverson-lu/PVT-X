@@ -25,6 +25,7 @@ public partial class RunViewModel : ViewModelBase
     private Dictionary<string, object?>? _parameterOverrides;
     private readonly Dictionary<string, NodeExecutionStateViewModel> _nodeViewModelDict = new();
     private readonly List<PlannedNodeTemplate> _plannedNodeTemplates = new();
+    private readonly Dictionary<string, PlanSuiteExecutionViewModel> _suiteViewModels = new();
     private System.Windows.Threading.DispatcherTimer? _eventRefreshTimer;
 
     [ObservableProperty] private bool _isRunning;
@@ -61,6 +62,9 @@ public partial class RunViewModel : ViewModelBase
     private int _currentIterationIndex = 1;
 
     [ObservableProperty]
+    private ObservableCollection<PlanSuiteExecutionViewModel> _suiteGroups = new();
+
+    [ObservableProperty]
     private string _consoleOutput = string.Empty;
 
     [ObservableProperty]
@@ -76,6 +80,9 @@ public partial class RunViewModel : ViewModelBase
     public string RepeatIterationBadgeText => RepeatCount > 1
         ? $"Repeat {RepeatCount}x · Iteration {CurrentIterationIndex}/{RepeatCount}"
         : string.Empty;
+    public bool ShowIterationGroups => RunType == RunType.TestSuite;
+    public bool ShowPlanPipeline => RunType == RunType.TestPlan;
+    public bool ShowFlatPipeline => RunType == RunType.TestCase;
 
     public RunViewModel(
         IRunService runService, 
@@ -245,6 +252,19 @@ public partial class RunViewModel : ViewModelBase
 
     private void UpdateIterations(RunExecutionState state)
     {
+        if (!ShowIterationGroups)
+        {
+            if (ShowPlanPipeline)
+            {
+                UpdatePlanSuites(state);
+            }
+            else
+            {
+                UpdateFlatNodes(state);
+            }
+            return;
+        }
+
         if (RepeatCount > 1 && _plannedNodeTemplates.Count == 0)
         {
             var templates = state.Nodes
@@ -289,6 +309,108 @@ public partial class RunViewModel : ViewModelBase
         Nodes = new ObservableCollection<NodeExecutionStateViewModel>(flattenedNodes);
     }
 
+    private void UpdatePlanSuites(RunExecutionState state)
+    {
+        var suites = state.Nodes
+            .Where(node => node.ParentNodeId is null)
+            .OrderBy(node => state.Nodes.IndexOf(node))
+            .ToList();
+
+        var orderedSuiteGroups = new List<PlanSuiteExecutionViewModel>();
+
+        foreach (var suiteState in suites)
+        {
+            if (!_suiteViewModels.TryGetValue(suiteState.NodeId, out var suiteVm))
+            {
+                suiteVm = new PlanSuiteExecutionViewModel
+                {
+                    SuiteNode = GetOrCreateNodeViewModel(suiteState)
+                };
+                _suiteViewModels[suiteState.NodeId] = suiteVm;
+            }
+            else
+            {
+                UpdateNodeViewModel(suiteVm.SuiteNode, suiteState);
+            }
+
+            var children = state.Nodes
+                .Where(node => node.ParentNodeId == suiteState.NodeId)
+                .OrderBy(node => node.SequenceIndex)
+                .ToList();
+
+            var maxIterationIndex = children.Count > 0 ? children.Max(node => node.IterationIndex) : 0;
+            var totalIterations = maxIterationIndex + 1;
+
+            suiteVm.ShowIterations = totalIterations > 1;
+            if (suiteVm.ShowIterations)
+            {
+                EnsureIterationViewModels(suiteVm.Iterations, totalIterations);
+
+                for (var iterationIndex = 0; iterationIndex < totalIterations; iterationIndex++)
+                {
+                    var iterationVm = suiteVm.Iterations[iterationIndex];
+                    iterationVm.Index = iterationIndex + 1;
+                    iterationVm.Total = totalIterations;
+                    var iterationCases = children
+                        .Where(node => node.IterationIndex == iterationIndex)
+                        .OrderBy(node => node.SequenceIndex)
+                        .Select(GetOrCreateNodeViewModel)
+                        .ToList();
+
+                    SyncCases(iterationVm.Cases, iterationCases);
+                    UpdateIterationSummary(iterationVm);
+                }
+            }
+            else
+            {
+                var suiteCases = children
+                    .Where(node => node.IterationIndex == 0)
+                    .OrderBy(node => node.SequenceIndex)
+                    .Select(GetOrCreateNodeViewModel)
+                    .ToList();
+                SyncCases(suiteVm.Cases, suiteCases);
+            }
+
+            orderedSuiteGroups.Add(suiteVm);
+        }
+
+        SuiteGroups = new ObservableCollection<PlanSuiteExecutionViewModel>(orderedSuiteGroups);
+    }
+
+    private void UpdateFlatNodes(RunExecutionState state)
+    {
+        for (int i = 0; i < state.Nodes.Count; i++)
+        {
+            var nodeState = state.Nodes[i];
+            var key = BuildNodeKey(nodeState);
+
+            if (_nodeViewModelDict.TryGetValue(key, out var existingVm))
+            {
+                UpdateNodeViewModel(existingVm, nodeState);
+
+                int currentIndex = Nodes.IndexOf(existingVm);
+                if (currentIndex != i && currentIndex >= 0)
+                {
+                    Nodes.Move(currentIndex, i);
+                }
+            }
+            else
+            {
+                var newVm = GetOrCreateNodeViewModel(nodeState);
+                _nodeViewModelDict[key] = newVm;
+
+                if (i < Nodes.Count)
+                {
+                    Nodes.Insert(i, newVm);
+                }
+                else
+                {
+                    Nodes.Add(newVm);
+                }
+            }
+        }
+    }
+
     private void EnsureIterationViewModels(int totalIterations)
     {
         while (Iterations.Count < totalIterations)
@@ -303,6 +425,23 @@ public partial class RunViewModel : ViewModelBase
         while (Iterations.Count > totalIterations)
         {
             Iterations.RemoveAt(Iterations.Count - 1);
+        }
+    }
+
+    private static void EnsureIterationViewModels(ObservableCollection<IterationExecutionViewModel> target, int totalIterations)
+    {
+        while (target.Count < totalIterations)
+        {
+            target.Add(new IterationExecutionViewModel
+            {
+                Index = target.Count + 1,
+                Total = totalIterations
+            });
+        }
+
+        while (target.Count > totalIterations)
+        {
+            target.RemoveAt(target.Count - 1);
         }
     }
 
@@ -532,6 +671,10 @@ public partial class RunViewModel : ViewModelBase
         {
             _ = LoadAvailableTargetsAsync();
         }
+
+        OnPropertyChanged(nameof(ShowIterationGroups));
+        OnPropertyChanged(nameof(ShowPlanPipeline));
+        OnPropertyChanged(nameof(ShowFlatPipeline));
     }
 
     [RelayCommand]
@@ -553,6 +696,8 @@ public partial class RunViewModel : ViewModelBase
         _plannedNodeTemplates.Clear();
         Nodes.Clear();
         Iterations.Clear();
+        SuiteGroups.Clear();
+        _suiteViewModels.Clear();
         RepeatCount = 1;
         CurrentIterationIndex = 1;
 
@@ -691,6 +836,14 @@ public partial class IterationExecutionViewModel : ViewModelBase
     partial void OnDurationChanged(TimeSpan? value) => OnPropertyChanged(nameof(DurationDisplay));
     partial void OnIsRunningChanged(bool value) => OnPropertyChanged(nameof(StatusLabel));
     partial void OnStatusChanged(RunStatus? value) => OnPropertyChanged(nameof(StatusLabel));
+}
+
+public partial class PlanSuiteExecutionViewModel : ViewModelBase
+{
+    [ObservableProperty] private NodeExecutionStateViewModel _suiteNode = new();
+    [ObservableProperty] private ObservableCollection<IterationExecutionViewModel> _iterations = new();
+    [ObservableProperty] private ObservableCollection<NodeExecutionStateViewModel> _cases = new();
+    [ObservableProperty] private bool _showIterations;
 }
 
 /// <summary>
