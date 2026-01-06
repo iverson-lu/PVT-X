@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.5.0",
   "id": "case.hw.power.core.switch_power_source",
-  "name": "Power Source Switch (AC/DC) via private_wmi",
+  "name": "Power Source Switch (AC/DC)",
   "description": "Executes private_wmi.ps1 commands to switch power to AC/DC or query current power status (AC or DC).",
   "version": "1.0.0",
   "category": "Power",

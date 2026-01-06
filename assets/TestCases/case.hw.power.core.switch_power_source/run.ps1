@@ -123,6 +123,14 @@ $step = @{
 }
 
 
+# Check for administrator privileges
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+$isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Write-Error "This test case requires administrator privileges. Please run as administrator."
+    exit 2
+}
+
 # timers
 $swTotal = [System.Diagnostics.Stopwatch]::StartNew()
 $swStep = $null
