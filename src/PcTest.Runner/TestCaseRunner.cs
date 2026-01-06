@@ -60,29 +60,21 @@ public sealed class TestCaseRunner
         };
 
         // Add PVT-X PowerShell modules to PSModulePath (enables module autoload for common case helpers)
-        string assetsRoot;
-
-        if (enhancedEnvironment.TryGetValue("PVTX_ASSETS_ROOT", out var explicitRoot) &&
-            !string.IsNullOrWhiteSpace(explicitRoot))
-        { assetsRoot = explicitRoot; }
-        else
-        {
-            // context.TestCasePath is always ...\assets\TestCases\case.xxx
-            assetsRoot = Directory.GetParent(
-                            Directory.GetParent(context.TestCasePath)!.FullName
-                        )!.FullName;
-        }
+        var assetsRoot = context.AssetsRoot;
+        if (string.IsNullOrWhiteSpace(assetsRoot))
+            throw new InvalidOperationException("AssetsRoot must be provided in RunContext");
 
         var modulesRoot = Path.Combine(assetsRoot, "PowerShell", "Modules");
-        if (!Directory.Exists(modulesRoot))
-            throw new DirectoryNotFoundException($"Pvtx module dir not found: {modulesRoot}");
-
         enhancedEnvironment["PVTX_ASSETS_ROOT"] = assetsRoot;
         enhancedEnvironment["PVTX_MODULES_ROOT"] = modulesRoot;
 
-        var psModulePath = Environment.GetEnvironmentVariable("PSModulePath");
-        enhancedEnvironment["PSModulePath"] =
-            string.IsNullOrEmpty(psModulePath) ? modulesRoot : modulesRoot + ";" + psModulePath;
+        // Only add to PSModulePath if the directory exists (may not exist in test scenarios)
+        if (Directory.Exists(modulesRoot))
+        {
+            var psModulePath = Environment.GetEnvironmentVariable("PSModulePath");
+            enhancedEnvironment["PSModulePath"] =
+                string.IsNullOrEmpty(psModulePath) ? modulesRoot : modulesRoot + ";" + psModulePath;
+        }
 
         try
         {

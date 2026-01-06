@@ -89,11 +89,17 @@ public static class Program
         try
         {
             var engine = new TestEngine();
+            var resolvedCasesRoot = ResolvePath(casesRoot);
+            var resolvedSuitesRoot = ResolvePath(suitesRoot);
+            var resolvedPlansRoot = ResolvePath(plansRoot);
+            var assetsRoot = Directory.GetParent(resolvedCasesRoot)?.FullName ?? "assets";
+            
             engine.Configure(
-                ResolvePath(casesRoot),
-                ResolvePath(suitesRoot),
-                ResolvePath(plansRoot),
-                "Runs");
+                resolvedCasesRoot,
+                resolvedSuitesRoot,
+                resolvedPlansRoot,
+                "Runs",
+                assetsRoot);
 
             var discovery = engine.Discover();
 
@@ -158,11 +164,18 @@ public static class Program
         try
         {
             var engine = new TestEngine();
+            var resolvedCasesRoot = ResolvePath(casesRoot);
+            var resolvedSuitesRoot = ResolvePath(suitesRoot);
+            var resolvedPlansRoot = ResolvePath(plansRoot);
+            var resolvedRunsRoot = ResolvePath(runsRoot);
+            var assetsRoot = Directory.GetParent(resolvedCasesRoot)?.FullName ?? "assets";
+            
             engine.Configure(
-                ResolvePath(casesRoot),
-                ResolvePath(suitesRoot),
-                ResolvePath(plansRoot),
-                ResolvePath(runsRoot));
+                resolvedCasesRoot,
+                resolvedSuitesRoot,
+                resolvedPlansRoot,
+                resolvedRunsRoot,
+                assetsRoot);
 
             // Parse identity
             var parseResult = IdentityParser.Parse(id);

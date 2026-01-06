@@ -16,17 +16,20 @@ public sealed class PlanOrchestrator
 {
     private readonly DiscoveryResult _discovery;
     private readonly string _runsRoot;
+    private readonly string _assetsRoot;
     private readonly IExecutionReporter _reporter;
     private readonly CancellationToken _cancellationToken;
 
     public PlanOrchestrator(
         DiscoveryResult discovery,
         string runsRoot,
+        string assetsRoot,
         IExecutionReporter reporter,
         CancellationToken cancellationToken = default)
     {
         _discovery = discovery;
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _assetsRoot = PathUtils.NormalizePath(assetsRoot);
         _reporter = reporter ?? NullExecutionReporter.Instance;
         _cancellationToken = cancellationToken;
     }
@@ -156,7 +159,7 @@ public sealed class PlanOrchestrator
                 };
 
                 // Execute Suite
-                var suiteOrchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _reporter, _cancellationToken);
+                var suiteOrchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _assetsRoot, _reporter, _cancellationToken);
                 var suiteResult = await suiteOrchestrator.ExecuteAsync(
                     suite,
                     suiteRunRequest,

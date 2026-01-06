@@ -17,17 +17,20 @@ public sealed class SuiteOrchestrator
 {
     private readonly DiscoveryResult _discovery;
     private readonly string _runsRoot;
+    private readonly string _assetsRoot;
     private readonly IExecutionReporter _reporter;
     private readonly CancellationToken _cancellationToken;
 
     public SuiteOrchestrator(
         DiscoveryResult discovery,
         string runsRoot,
+        string assetsRoot,
         IExecutionReporter reporter,
         CancellationToken cancellationToken = default)
     {
         _discovery = discovery;
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _assetsRoot = PathUtils.NormalizePath(assetsRoot);
         _reporter = reporter ?? NullExecutionReporter.Instance;
         _cancellationToken = cancellationToken;
     }
@@ -313,6 +316,7 @@ public sealed class SuiteOrchestrator
                             WorkingDir = suite.Manifest.Environment?.WorkingDir,
                             TimeoutSec = testCaseManifest.TimeoutSec,
                             RunsRoot = _runsRoot,
+                            AssetsRoot = _assetsRoot,
                             NodeId = node.NodeId,
                             SuiteId = suite.Manifest.Id,
                             SuiteVersion = suite.Manifest.Version,

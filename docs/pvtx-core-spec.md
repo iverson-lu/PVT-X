@@ -131,6 +131,7 @@ Rules:
 - Load and validate manifests
 - Resolve Suite pipelines (ordered, non-DAG)
 - Bind parameters and compute effective inputs
+- Compute AssetsRoot from Discovery (parent of ResolvedTestCaseRoot) and pass to Runner
 - Orchestrate execution lifecycle
 - Generate Test Suite / Test Plan summary results
 
@@ -510,8 +511,8 @@ Rules:
 - These variables are NOT secret and MUST NOT be redacted in artifacts.
 - These variables MUST appear in the manifest.json effectiveEnvironment snapshot for full reproducibility and traceability.
 - The PVTX_TESTCASE_PATH value MUST be the absolute, normalized path to the Test Case source folder (containing test.manifest.json and run.ps1), NOT the Case Run Folder.
-- The PVTX_ASSETS_ROOT value MUST be the absolute path to the assets root directory, typically the parent of the TestCases directory. This path MAY be overridden via environment if needed for non-standard deployments.
-- The PVTX_MODULES_ROOT value MUST be the absolute path to the PowerShell\Modules directory under assets root.
+- The PVTX_ASSETS_ROOT value MUST be computed by Engine as the parent directory of ResolvedTestCaseRoot and passed to Runner via RunContext. Engine MUST compute this value from Discovery (specifically, Directory.GetParent(discovery.ResolvedTestCaseRoot)).
+- The PVTX_MODULES_ROOT value MUST be computed by Runner as `Path.Combine(AssetsRoot, "PowerShell", "Modules")` where AssetsRoot is provided by Engine in RunContext.
 
 Rationale:
 - Enables Test Cases to reference companion files (test data, reference outputs, configuration files) relative to their source folder.

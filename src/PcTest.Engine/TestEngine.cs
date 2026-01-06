@@ -17,6 +17,7 @@ public sealed class TestEngine
     private string _testSuiteRoot = string.Empty;
     private string _testPlanRoot = string.Empty;
     private string _runsRoot = string.Empty;
+    private string _assetsRoot = string.Empty;
     private IExecutionReporter _reporter = NullExecutionReporter.Instance;
 
     /// <summary>
@@ -34,12 +35,14 @@ public sealed class TestEngine
         string testCaseRoot,
         string testSuiteRoot,
         string testPlanRoot,
-        string runsRoot)
+        string runsRoot,
+        string assetsRoot)
     {
         _testCaseRoot = PathUtils.NormalizePath(testCaseRoot);
         _testSuiteRoot = PathUtils.NormalizePath(testSuiteRoot);
         _testPlanRoot = PathUtils.NormalizePath(testPlanRoot);
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _assetsRoot = PathUtils.NormalizePath(assetsRoot);
     }
 
     /// <summary>
@@ -127,7 +130,7 @@ public sealed class TestEngine
             });
         }
 
-        var executor = new StandaloneCaseExecutor(_discovery, _runsRoot, _reporter, cancellationToken);
+        var executor = new StandaloneCaseExecutor(_discovery, _runsRoot, _assetsRoot, _reporter, cancellationToken);
         return await executor.ExecuteAsync(testCase, runRequest);
     }
 
@@ -157,7 +160,7 @@ public sealed class TestEngine
             });
         }
 
-        var orchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _reporter, cancellationToken);
+        var orchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _assetsRoot, _reporter, cancellationToken);
         return await orchestrator.ExecuteAsync(suite, runRequest);
     }
 
@@ -187,7 +190,7 @@ public sealed class TestEngine
             });
         }
 
-        var orchestrator = new PlanOrchestrator(_discovery, _runsRoot, _reporter, cancellationToken);
+        var orchestrator = new PlanOrchestrator(_discovery, _runsRoot, _assetsRoot, _reporter, cancellationToken);
         return await orchestrator.ExecuteAsync(plan, runRequest);
     }
 }

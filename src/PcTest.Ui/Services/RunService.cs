@@ -545,7 +545,8 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             settings.ResolvedTestCasesRoot,
             settings.ResolvedTestSuitesRoot,
             settings.ResolvedTestPlansRoot,
-            settings.ResolvedRunsRoot);
+            settings.ResolvedRunsRoot,
+            settings.ResolvedAssetsRoot);
         
         // Set reporter for progress events
         _engine.SetReporter(this);

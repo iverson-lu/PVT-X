@@ -63,6 +63,12 @@ public sealed class RunContext
     public string RunsRoot { get; init; } = string.Empty;
 
     /// <summary>
+    /// Root folder for assets (typically the parent of TestCases folder).
+    /// Used to locate shared PowerShell modules under assets/PowerShell/Modules.
+    /// </summary>
+    public string AssetsRoot { get; init; } = string.Empty;
+
+    /// <summary>
     /// Node ID (for suite-triggered runs).
     /// </summary>
     public string? NodeId { get; init; }

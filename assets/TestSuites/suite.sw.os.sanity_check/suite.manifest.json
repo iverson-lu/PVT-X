@@ -20,17 +20,22 @@
       }
     },
     {
-      "nodeId": "case.hw.memory.core.size_check@1.0.0",
-      "ref": "Memory Check Test",
-      "inputs": {
-        "MinMemoryMB": "100"
-      }
-    },
-    {
       "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
       "ref": "Timezone Verification",
       "inputs": {
         "ExpectedUtcOffset": "\u002B08:00"
+      }
+    },
+    {
+      "nodeId": "case.hw.memory.core.inventory_check@1.0.0",
+      "ref": "Memory Static Verification",
+      "inputs": {
+        "N_MinTotalGB": "32",
+        "N_MinModuleCount": "2",
+        "E_ExpectedDdrType": "any",
+        "N_MinConfiguredClockMHz": "4800",
+        "B_AllowMixedDdrTypes": false,
+        "B_ExportModulesJson": true
       }
     }
   ]

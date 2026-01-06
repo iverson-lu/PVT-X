@@ -17,17 +17,20 @@ public sealed class StandaloneCaseExecutor
 {
     private readonly DiscoveryResult _discovery;
     private readonly string _runsRoot;
+    private readonly string _assetsRoot;
     private readonly IExecutionReporter _reporter;
     private readonly CancellationToken _cancellationToken;
 
     public StandaloneCaseExecutor(
         DiscoveryResult discovery,
         string runsRoot,
+        string assetsRoot,
         IExecutionReporter reporter,
         CancellationToken cancellationToken = default)
     {
         _discovery = discovery;
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _assetsRoot = PathUtils.NormalizePath(assetsRoot);
         _reporter = reporter ?? NullExecutionReporter.Instance;
         _cancellationToken = cancellationToken;
     }
@@ -99,6 +102,7 @@ public sealed class StandaloneCaseExecutor
             SecretInputs = inputResult.SecretInputs,
             TimeoutSec = testCase.Manifest.TimeoutSec,
             RunsRoot = _runsRoot,
+            AssetsRoot = _assetsRoot,
             InputTemplates = inputResult.InputTemplates
             // NodeId, SuiteId, PlanId, ParentRunId all null for standalone
         };

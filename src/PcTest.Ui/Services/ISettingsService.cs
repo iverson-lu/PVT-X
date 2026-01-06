@@ -44,9 +44,10 @@ public sealed class AppSettings
 {
     // Workspace paths
     public string WorkspaceRoot { get; set; } = string.Empty;
-    public string TestCasesRoot { get; set; } = "assets/TestCases";
-    public string TestSuitesRoot { get; set; } = "assets/TestSuites";
-    public string TestPlansRoot { get; set; } = "assets/TestPlans";
+    public string AssetsRoot { get; set; } = "assets";
+    public string TestCasesRoot { get; set; } = "TestCases";
+    public string TestSuitesRoot { get; set; } = "TestSuites";
+    public string TestPlansRoot { get; set; } = "TestPlans";
     public string RunsRoot { get; set; } = "Runs";
     
     // Discovery
@@ -63,17 +64,21 @@ public sealed class AppSettings
     public bool ShowDebugOutput { get; set; } = false;
     
     // Resolved paths
+    public string ResolvedAssetsRoot => Path.IsPathRooted(AssetsRoot)
+        ? AssetsRoot
+        : Path.Combine(WorkspaceRoot, AssetsRoot);
+    
     public string ResolvedTestCasesRoot => Path.IsPathRooted(TestCasesRoot) 
         ? TestCasesRoot 
-        : Path.Combine(WorkspaceRoot, TestCasesRoot);
+        : Path.Combine(ResolvedAssetsRoot, TestCasesRoot);
     
     public string ResolvedTestSuitesRoot => Path.IsPathRooted(TestSuitesRoot) 
         ? TestSuitesRoot 
-        : Path.Combine(WorkspaceRoot, TestSuitesRoot);
+        : Path.Combine(ResolvedAssetsRoot, TestSuitesRoot);
     
     public string ResolvedTestPlansRoot => Path.IsPathRooted(TestPlansRoot) 
         ? TestPlansRoot 
-        : Path.Combine(WorkspaceRoot, TestPlansRoot);
+        : Path.Combine(ResolvedAssetsRoot, TestPlansRoot);
     
     public string ResolvedRunsRoot => Path.IsPathRooted(RunsRoot) 
         ? RunsRoot 

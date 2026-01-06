@@ -151,7 +151,7 @@ exit 1");
         
         var suite = discovery.TestSuites["Suite1@1.0"];
         var reporter = new TestReporter();
-        var orchestrator = new SuiteOrchestrator(discovery, _runsRoot, reporter);
+        var orchestrator = new SuiteOrchestrator(discovery, _runsRoot, _tempRoot, reporter);
 
         // Act
         var result = await orchestrator.ExecuteAsync(suite, new RunRequest());
@@ -205,7 +205,7 @@ exit 1");
         var discovery = new DiscoveryService().Discover(_testCasesRoot, _testSuitesRoot, _testPlansRoot);
         var suite = discovery.TestSuites["Suite1@1.0"];
         var reporter = new TestReporter();
-        var orchestrator = new SuiteOrchestrator(discovery, _runsRoot, reporter);
+        var orchestrator = new SuiteOrchestrator(discovery, _runsRoot, _tempRoot, reporter);
 
         // Act
         var result = await orchestrator.ExecuteAsync(suite, new RunRequest());
@@ -270,7 +270,7 @@ exit 1");
         var discovery = new DiscoveryService().Discover(_testCasesRoot, _testSuitesRoot, _testPlansRoot);
         var suite = discovery.TestSuites["Suite1@1.0"];
         var reporter = new TestReporter();
-        var orchestrator = new SuiteOrchestrator(discovery, _runsRoot, reporter);
+        var orchestrator = new SuiteOrchestrator(discovery, _runsRoot, _tempRoot, reporter);
 
         // Act
         var result = await orchestrator.ExecuteAsync(suite, new RunRequest());

@@ -32,7 +32,8 @@ public sealed class DiscoveryServiceAdapter : IDiscoveryService
                 settings.ResolvedTestCasesRoot,
                 settings.ResolvedTestSuitesRoot,
                 settings.ResolvedTestPlansRoot,
-                settings.ResolvedRunsRoot);
+                settings.ResolvedRunsRoot,
+                settings.ResolvedAssetsRoot);
             
             _currentDiscovery = _engine.Discover();
             
