@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.5.0",
   "id": "case.hw.storage.core.min_capacity_check",
-  "name": "Storage Count & Capacity Check",
+  "name": "Storage Static Verification",
   "description": "Validates that the system has at least a minimum number of eligible storage disks and that each eligible disk meets a minimum capacity requirement.",
   "version": "1.0.0",
   "category": "Storage",

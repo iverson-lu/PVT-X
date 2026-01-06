@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.5.0",
   "id": "case.hw.memory.core.inventory_check",
-  "name": "Memory Inventory and Requirement Check",
+  "name": "Memory Static Verification",
   "description": "Enumerates physical memory modules via Win32_PhysicalMemory and validates optional requirements (total capacity, module count, DDR type, configured clock speed). Produces structured artifacts/report.json and optionally artifacts/memory_modules.json.",
   "version": "1.0.0",
   "category": "Hardware",

@@ -123,12 +123,14 @@ $step = @{
 }
 
 
-# Check for administrator privileges
-$currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-$isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Error "This test case requires administrator privileges. Please run as administrator."
-    exit 2
+# Check for administrator privileges (only for switch operations, not for query)
+if ($E_Action -in @("switchtodc", "switchtoac")) {
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    $isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    if (-not $isAdmin) {
+        [Console]::Error.WriteLine("ERROR: Switching power source requires administrator privileges. Please run as administrator.")
+        exit 2
+    }
 }
 
 # timers
@@ -228,8 +230,8 @@ try {
 
     $child = Invoke-ChildPwsh -Command $payload -TimeoutSec $N_CommandTimeoutSec
     $step.metrics.child_exit_code = $child.ExitCode
-    $step.metrics.child_stdout = ($child.Stdout ?? "").TrimEnd()
-    $step.metrics.child_stderr = ($child.Stderr ?? "").TrimEnd()
+    $step.metrics.child_stdout = if ($child.Stdout) { $child.Stdout.TrimEnd() } else { "" }
+    $step.metrics.child_stderr = if ($child.Stderr) { $child.Stderr.TrimEnd() } else { "" }
 
     if ($E_Action -eq "getstatus") {
         $firstNonEmpty = ($child.Stdout -split "`r?`n") | ForEach-Object { $_.Trim() } | Where-Object { $_ } | Select-Object -First 1
