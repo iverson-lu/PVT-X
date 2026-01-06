@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.hw.memory.core.inventory_check",
+  "name": "Memory Inventory and Requirement Check",
+  "description": "Enumerates physical memory modules via Win32_PhysicalMemory and validates optional requirements (total capacity, module count, DDR type, configured clock speed). Produces structured artifacts/report.json and optionally artifacts/memory_modules.json.",
+  "version": "1.0.0",
+  "category": "Hardware",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 30,
+  "parameters": [
+    {
+      "name": "N_MinTotalGB",
+      "type": "int",
+      "required": false,
+      "default": 32,
+      "min": 0,
+      "help": "Minimum required total physical memory in GB. Set to 0 to disable."
+    },
+    {
+      "name": "N_MinModuleCount",
+      "type": "int",
+      "required": false,
+      "default": 2,
+      "min": 0,
+      "help": "Minimum required number of physical memory modules (DIMMs). Set to 0 to disable."
+    },
+    {
+      "name": "E_ExpectedDdrType",
+      "type": "enum",
+      "required": false,
+      "default": "any",
+      "enumValues": [
+        "any",
+        "ddr4",
+        "ddr5"
+      ],
+      "help": "Expected DDR type for all modules: any|ddr4|ddr5."
+    },
+    {
+      "name": "N_MinConfiguredClockMHz",
+      "type": "int",
+      "required": false,
+      "default": 4800,
+      "min": 0,
+      "help": "Minimum required ConfiguredClockSpeed (MHz) for each module. Set to 0 to disable."
+    },
+    {
+      "name": "B_AllowMixedDdrTypes",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "If false, all modules must report the same DDR type."
+    },
+    {
+      "name": "B_ExportModulesJson",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "If true, exports full module inventory to artifacts/memory_modules.json."
+    }
+  ],
+  "tags": [
+    "hardware",
+    "memory",
+    "inventory",
+    "cim",
+    "wmi"
+  ]
+}
