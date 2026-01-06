@@ -184,12 +184,41 @@ Injected automatically by Runner:
 | `PVTX_TESTCASE_NAME` | Test Case display name |
 | `PVTX_TESTCASE_ID` | Unique execution ID |
 | `PVTX_TESTCASE_VER` | Test Case version identifier |
+| `PVTX_ASSETS_ROOT` | Absolute path to the assets root directory |
+| `PVTX_MODULES_ROOT` | Absolute path to PowerShell\Modules directory |
 
 > Plan- and Suite-level environment variable injection is also supported.
 
+### 4.1 Shared PowerShell Modules
+
+Runner automatically configures PowerShell module discovery to enable Test Cases to use shared helper modules:
+
+- Shared PowerShell modules SHOULD be placed under `assets/PowerShell/Modules/`
+- Runner prepends `PVTX_MODULES_ROOT` to the `PSModulePath` environment variable
+- Test Cases MAY import shared modules using standard PowerShell syntax: `Import-Module <ModuleName>`
+- Modules are auto-discovered; no explicit path specification is required
+- Shared modules MAY provide utilities for:
+  - Hardware information collection
+  - System state validation
+  - Logging and output formatting
+  - Common test operations
+  - Data processing and reporting helpers
+
+Example usage in run.ps1:
+```powershell
+# Import a shared helper module
+Import-Module PvtxCommon
+
+# Use module functions
+$hwInfo = Get-HardwareInfo
+Write-TestLog "Hardware detected: $($hwInfo.Model)"
+```
+
+> Note: The specific modules and functions available will evolve over time. Refer to the modules under `assets/PowerShell/Modules/` for current offerings.
+
 ---
 
-### 4.1 Exit Codes
+### 4.2 Exit Codes
 
 | Code | Meaning |
 |-----|--------|

@@ -500,19 +500,27 @@ Runner MUST inject the following predefined environment variables into every Tes
 | PVTX_TESTCASE_NAME  | string | Display name from Test Case manifest (name field)  | `Read File Case`                                   |
 | PVTX_TESTCASE_ID    | string | Unique identifier from Test Case manifest (id)     | `ReadFileCase`                                     |
 | PVTX_TESTCASE_VER   | string | Version string from Test Case manifest (version)   | `1.0.0`                                            |
+| PVTX_ASSETS_ROOT    | string | Absolute path to the assets root directory         | `D:\Dev\PVT-X-1\assets`                            |
+| PVTX_MODULES_ROOT   | string | Absolute path to PowerShell modules directory      | `D:\Dev\PVT-X-1\assets\PowerShell\Modules`        |
 
 Rules:
 - These variables MUST be injected by Runner immediately before script execution.
 - If any of these variable names already exist in the effectiveEnvironment computed per section 7.3, Runner MUST overwrite them with the correct predefined values (predefined variables take precedence).
-- Scripts MAY access these variables via standard PowerShell syntax: `$env:PVTX_TESTCASE_PATH`, `$env:PVTX_TESTCASE_NAME`, `$env:PVTX_TESTCASE_ID`, `$env:PVTX_TESTCASE_VER`.
+- Scripts MAY access these variables via standard PowerShell syntax: `$env:PVTX_TESTCASE_PATH`, `$env:PVTX_TESTCASE_NAME`, `$env:PVTX_TESTCASE_ID`, `$env:PVTX_TESTCASE_VER`, `$env:PVTX_ASSETS_ROOT`, `$env:PVTX_MODULES_ROOT`.
 - These variables are NOT secret and MUST NOT be redacted in artifacts.
 - These variables MUST appear in the manifest.json effectiveEnvironment snapshot for full reproducibility and traceability.
 - The PVTX_TESTCASE_PATH value MUST be the absolute, normalized path to the Test Case source folder (containing test.manifest.json and run.ps1), NOT the Case Run Folder.
+- The PVTX_ASSETS_ROOT value MUST be the absolute path to the assets root directory, typically the parent of the TestCases directory. This path MAY be overridden via environment if needed for non-standard deployments.
+- The PVTX_MODULES_ROOT value MUST be the absolute path to the PowerShell\Modules directory under assets root.
 
 Rationale:
 - Enables Test Cases to reference companion files (test data, reference outputs, configuration files) relative to their source folder.
 - Provides Test Cases with self-awareness for logging, reporting, and dynamic behavior.
 - Ensures full traceability by recording these values in manifest.json.
+- PVTX_ASSETS_ROOT and PVTX_MODULES_ROOT enable Test Cases to access shared PowerShell helper modules.
+- Runner MUST prepend PVTX_MODULES_ROOT to the PSModulePath environment variable to enable PowerShell module auto-discovery and import.
+- This allows Test Cases to use `Import-Module <ModuleName>` to load common utilities, without specifying full paths.
+- Shared modules under assets/PowerShell/Modules/ MAY provide reusable functionality such as hardware info collection, system state validation, logging helpers, or data formatting utilities.
 
 ---
 

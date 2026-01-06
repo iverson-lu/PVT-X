@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "id": "case.network.core.connectivity.ping_psmodulized",
+  "name": "Network Ping Connectivity - PSModulized",
+  "description": "Checks basic network reachability by pinging a target address (ICMP). Optionally enforces a maximum reply time in milliseconds.",
+  "version": "1.0.0",
+  "category": "Network",
+  "owner": "PVT-X",
+  "entry": {
+    "type": "powershell",
+    "script": "run.ps1"
+  },
+  "timeoutSec": 15,
+  "parameters": [
+    {
+      "name": "TargetAddress",
+      "type": "string",
+      "required": true,
+      "default": "www.microsoft.com",
+      "help": "Target address to ping (hostname or IP)."
+    },
+    {
+      "name": "MaxReplyTimeMs",
+      "type": "int",
+      "required": false,
+      "default": 0,
+      "help": "Optional maximum allowed reply time (ms). Use 0 to disable this threshold."
+    }
+  ],
+  "tags": [
+    "network",
+    "ping",
+    "connectivity",
+    "latency"
+  ]
+}

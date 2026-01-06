@@ -59,6 +59,31 @@ public sealed class TestCaseRunner
             ["PVTX_TESTCASE_VER"] = context.Manifest.Version
         };
 
+        // Add PVT-X PowerShell modules to PSModulePath (enables module autoload for common case helpers)
+        string assetsRoot;
+
+        if (enhancedEnvironment.TryGetValue("PVTX_ASSETS_ROOT", out var explicitRoot) &&
+            !string.IsNullOrWhiteSpace(explicitRoot))
+        { assetsRoot = explicitRoot; }
+        else
+        {
+            // context.TestCasePath is always ...\assets\TestCases\case.xxx
+            assetsRoot = Directory.GetParent(
+                            Directory.GetParent(context.TestCasePath)!.FullName
+                        )!.FullName;
+        }
+
+        var modulesRoot = Path.Combine(assetsRoot, "PowerShell", "Modules");
+        if (!Directory.Exists(modulesRoot))
+            throw new DirectoryNotFoundException($"Pvtx module dir not found: {modulesRoot}");
+
+        enhancedEnvironment["PVTX_ASSETS_ROOT"] = assetsRoot;
+        enhancedEnvironment["PVTX_MODULES_ROOT"] = modulesRoot;
+
+        var psModulePath = Environment.GetEnvironmentVariable("PSModulePath");
+        enhancedEnvironment["PSModulePath"] =
+            string.IsNullOrEmpty(psModulePath) ? modulesRoot : modulesRoot + ";" + psModulePath;
+
         try
         {
             // Pre-node validation: workingDir containment
@@ -130,7 +155,7 @@ public sealed class TestCaseRunner
 
             // Execute PowerShell script with streaming output
             var executor = new PowerShellExecutor(_cancellationToken);
-            
+
             // Create output handler for real-time streaming to log files
             async Task OnOutputLine(string? line, bool isStderr)
             {
@@ -144,7 +169,7 @@ public sealed class TestCaseRunner
                     await folderManager.AppendStdoutLineAsync(caseRunFolder, line, secretValues);
                 }
             }
-            
+
             var execResult = await executor.ExecuteAsync(
                 scriptPath,
                 context.EffectiveInputs,
