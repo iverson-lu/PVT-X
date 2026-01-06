@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.hw.power.core.switch_power_source",
+  "name": "Power Source Switch (AC/DC) via private_wmi",
+  "description": "Executes private_wmi.ps1 commands to switch power to AC/DC or query current power status (AC or DC).",
+  "version": "1.0.0",
+  "category": "Power",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 120,
+  "parameters": [
+    {
+      "name": "E_Action",
+      "type": "enum",
+      "required": false,
+      "default": "GetStatus",
+      "enumValues": [
+        "SwitchToDC",
+        "SwitchToAC",
+        "GetStatus"
+      ],
+      "help": "Action to run via private_wmi.ps1: switch power source (AC/DC) or query current status."
+    },
+    {
+      "name": "P_PrivateWmiScript",
+      "type": "path",
+      "required": false,
+      "default": "private_wmi.ps1",
+      "help": "Path to private_wmi.ps1. If relative, resolved from PVTX_TESTCASE_PATH (preferred) or the script directory."
+    },
+    {
+      "name": "E_ExpectedStatus",
+      "type": "enum",
+      "required": false,
+      "default": "any",
+      "enumValues": [
+        "any",
+        "AC",
+        "DC"
+      ],
+      "help": "Only for GetStatus: expected status. Use 'any' to accept either AC or DC."
+    },
+    {
+      "name": "N_CommandTimeoutSec",
+      "type": "int",
+      "required": false,
+      "default": 30,
+      "help": "Timeout (seconds) for the child pwsh command execution."
+    }
+  ],
+  "tags": [
+    "power",
+    "acdc",
+    "wmi",
+    "switch",
+    "private_wmi"
+  ]
+}
