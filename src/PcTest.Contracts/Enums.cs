@@ -15,11 +15,14 @@ public enum Privilege
 /// </summary>
 public enum RunStatus
 {
+    Planned,
+    Running,
     Passed,
     Failed,
     Error,
     Timeout,
-    Aborted
+    Aborted,
+    RebootRequired
 }
 
 /// <summary>

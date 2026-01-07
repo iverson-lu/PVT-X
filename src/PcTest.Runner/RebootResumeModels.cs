@@ -145,16 +145,47 @@ public sealed class RebootResumeSession
 {
     public string RunId { get; init; } = string.Empty;
     public string EntityType { get; init; } = string.Empty;
-    public string EntityId { get; init; } = string.Empty;
-    public string? CurrentCaseId { get; init; }
+    public int CurrentNodeIndex { get; init; }
+    public int CurrentIteration { get; init; }
     public int NextPhase { get; init; }
     public string ResumeToken { get; init; } = string.Empty;
     public int ResumeCount { get; init; }
     public string State { get; init; } = "PendingResume";
     public string RunFolder { get; init; } = string.Empty;
-    public ResumeRunContext Context { get; init; } = new();
+    public string? ChildRunId { get; init; }
+    public int? ChildNodeIndex { get; init; }
+    public int? ChildIteration { get; init; }
+    public string CasesRoot { get; init; } = string.Empty;
+    public string SuitesRoot { get; init; } = string.Empty;
+    public string PlansRoot { get; init; } = string.Empty;
+    public string AssetsRoot { get; init; } = string.Empty;
+    public ResumeRunContext? Context { get; init; }
 
     public static string GetSessionPath(string runFolder) => Path.Combine(runFolder, "session.json");
+
+    public RebootResumeSession WithState(string state, int resumeCount)
+    {
+        return new RebootResumeSession
+        {
+            RunId = RunId,
+            EntityType = EntityType,
+            CurrentNodeIndex = CurrentNodeIndex,
+            CurrentIteration = CurrentIteration,
+            NextPhase = NextPhase,
+            ResumeToken = ResumeToken,
+            ResumeCount = resumeCount,
+            State = state,
+            RunFolder = RunFolder,
+            ChildRunId = ChildRunId,
+            ChildNodeIndex = ChildNodeIndex,
+            ChildIteration = ChildIteration,
+            CasesRoot = CasesRoot,
+            SuitesRoot = SuitesRoot,
+            PlansRoot = PlansRoot,
+            AssetsRoot = AssetsRoot,
+            Context = Context
+        };
+    }
 
     public async Task SaveAsync()
     {
@@ -183,6 +214,7 @@ public sealed class RebootResumeSession
 
 public sealed class ResumeRunContext
 {
+    public string RunId { get; init; } = string.Empty;
     public TestCaseManifest Manifest { get; init; } = new();
     public string TestCasePath { get; init; } = string.Empty;
     public Dictionary<string, object?> EffectiveInputs { get; init; } = new();
@@ -210,6 +242,7 @@ public static class ResumeContextConverter
     {
         return new ResumeRunContext
         {
+            RunId = context.RunId,
             Manifest = context.Manifest,
             TestCasePath = context.TestCasePath,
             EffectiveInputs = context.EffectiveInputs,

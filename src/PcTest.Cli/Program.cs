@@ -340,9 +340,7 @@ public static class Program
                 throw new InvalidOperationException("Resume token validation failed.");
             }
 
-            var resumableState = string.Equals(session.State, "PendingResume", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(session.State, "Resuming", StringComparison.OrdinalIgnoreCase);
-            if (!resumableState)
+            if (!string.Equals(session.State, "PendingResume", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException($"Session state '{session.State}' is not resumable.");
             }
@@ -351,72 +349,25 @@ public static class Program
             if (resumeCount > 1)
             {
                 ResumeTaskScheduler.DeleteResumeTask(runId);
-                var finalizedSession = new RebootResumeSession
-                {
-                    RunId = session.RunId,
-                    EntityType = session.EntityType,
-                    EntityId = session.EntityId,
-                    CurrentCaseId = session.CurrentCaseId,
-                    NextPhase = session.NextPhase,
-                    ResumeToken = session.ResumeToken,
-                    ResumeCount = resumeCount,
-                    State = "Finalized",
-                    RunFolder = session.RunFolder,
-                    Context = session.Context
-                };
-                await finalizedSession.SaveAsync();
+                await session.WithState("Finalized", resumeCount).SaveAsync();
                 throw new InvalidOperationException("Resume loop detected.");
             }
 
-            var resumingSession = new RebootResumeSession
-            {
-                RunId = session.RunId,
-                EntityType = session.EntityType,
-                EntityId = session.EntityId,
-                CurrentCaseId = session.CurrentCaseId,
-                NextPhase = session.NextPhase,
-                ResumeToken = session.ResumeToken,
-                ResumeCount = resumeCount,
-                State = "Resuming",
-                RunFolder = session.RunFolder,
-                Context = session.Context
-            };
-            await resumingSession.SaveAsync();
+            await session.WithState("Resuming", resumeCount).SaveAsync();
 
-            var context = ResumeContextConverter.ToRunContext(session.Context, session.RunId, session.NextPhase, true);
-            using var cts = new CancellationTokenSource();
-            var runner = new TestCaseRunner(cts.Token);
-            PcTest.Contracts.Results.TestCaseResult? result = null;
-
-            try
+            switch (session.EntityType)
             {
-                result = await runner.ExecuteAsync(context);
-            }
-            finally
-            {
-                ResumeTaskScheduler.DeleteResumeTask(runId);
-                var finalized = new RebootResumeSession
-                {
-                    RunId = session.RunId,
-                    EntityType = session.EntityType,
-                    EntityId = session.EntityId,
-                    CurrentCaseId = session.CurrentCaseId,
-                    NextPhase = session.NextPhase,
-                    ResumeToken = session.ResumeToken,
-                    ResumeCount = resumeCount,
-                    State = "Finalized",
-                    RunFolder = session.RunFolder,
-                    Context = session.Context
-                };
-                await finalized.SaveAsync();
-            }
-
-            if (result is not null)
-            {
-                AppendIndexEntryIfMissing(resolvedRunsRoot, session.RunId, result, session.Context);
-                Console.WriteLine("=== Resume Result ===");
-                Console.WriteLine(JsonDefaults.Serialize(result));
-                Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+                case "TestCase":
+                    await ResumeTestCaseAsync(session, resolvedRunsRoot, resumeCount);
+                    break;
+                case "TestSuite":
+                    await ResumeSuiteAsync(session, resolvedRunsRoot, resumeCount);
+                    break;
+                case "TestPlan":
+                    await ResumePlanAsync(session, resolvedRunsRoot, resumeCount);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown resume entity type '{session.EntityType}'.");
             }
         }
         catch (Exception ex)
@@ -482,5 +433,172 @@ public static class Program
             EndTime = result.EndTime,
             Status = result.Status
         });
+    }
+
+    private static async Task ResumeTestCaseAsync(
+        RebootResumeSession session,
+        string resolvedRunsRoot,
+        int resumeCount)
+    {
+        if (session.Context is null)
+        {
+            throw new InvalidOperationException("Resume context missing for test case.");
+        }
+
+        var context = ResumeContextConverter.ToRunContext(session.Context, session.Context.RunId, session.NextPhase, true);
+        using var cts = new CancellationTokenSource();
+        var runner = new TestCaseRunner(cts.Token);
+        PcTest.Contracts.Results.TestCaseResult? result = null;
+
+        try
+        {
+            result = await runner.ExecuteAsync(context);
+        }
+        finally
+        {
+            ResumeTaskScheduler.DeleteResumeTask(session.RunId);
+            await session.WithState("Finalized", resumeCount).SaveAsync();
+        }
+
+        if (result is not null)
+        {
+            AppendIndexEntryIfMissing(resolvedRunsRoot, session.RunId, result, session.Context);
+            Console.WriteLine("=== Resume Result ===");
+            Console.WriteLine(JsonDefaults.Serialize(result));
+            Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+        }
+    }
+
+    private static async Task ResumeSuiteAsync(
+        RebootResumeSession session,
+        string resolvedRunsRoot,
+        int resumeCount)
+    {
+        if (session.Context is null)
+        {
+            throw new InvalidOperationException("Resume context missing for suite.");
+        }
+
+        var discovery = BuildDiscovery(session);
+        var runFolder = session.RunFolder;
+        var manifestPath = Path.Combine(runFolder, "manifest.json");
+        var runRequestPath = Path.Combine(runFolder, "runRequest.json");
+        var manifestSnapshot = LoadJson<GroupManifestSnapshot>(manifestPath);
+        var runRequest = LoadJson<RunRequest>(runRequestPath);
+
+        if (manifestSnapshot.SuiteId is null || manifestSnapshot.SuiteVersion is null)
+        {
+            throw new InvalidOperationException("Suite manifest snapshot missing identity.");
+        }
+
+        var suiteIdentity = $"{manifestSnapshot.SuiteId}@{manifestSnapshot.SuiteVersion}";
+        if (!discovery.TestSuites.TryGetValue(suiteIdentity, out var suite))
+        {
+            throw new InvalidOperationException($"Suite '{suiteIdentity}' not found for resume.");
+        }
+
+        using var cts = new CancellationTokenSource();
+        var orchestrator = new SuiteOrchestrator(discovery, resolvedRunsRoot, session.AssetsRoot, NullExecutionReporter.Instance, cts.Token);
+        GroupResult? result = null;
+
+        try
+        {
+            result = await orchestrator.ResumeAsync(
+                suite,
+                runRequest,
+                session);
+        }
+        finally
+        {
+            ResumeTaskScheduler.DeleteResumeTask(session.RunId);
+            await session.WithState("Finalized", resumeCount).SaveAsync();
+        }
+
+        if (result is not null)
+        {
+            Console.WriteLine("=== Resume Result ===");
+            Console.WriteLine(JsonDefaults.Serialize(result));
+            Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+        }
+    }
+
+    private static async Task ResumePlanAsync(
+        RebootResumeSession session,
+        string resolvedRunsRoot,
+        int resumeCount)
+    {
+        if (session.Context is null)
+        {
+            throw new InvalidOperationException("Resume context missing for plan.");
+        }
+
+        var discovery = BuildDiscovery(session);
+        var runFolder = session.RunFolder;
+        var manifestPath = Path.Combine(runFolder, "manifest.json");
+        var runRequestPath = Path.Combine(runFolder, "runRequest.json");
+        var manifestSnapshot = LoadJson<GroupManifestSnapshot>(manifestPath);
+        var runRequest = LoadJson<RunRequest>(runRequestPath);
+
+        if (manifestSnapshot.PlanId is null || manifestSnapshot.PlanVersion is null)
+        {
+            throw new InvalidOperationException("Plan manifest snapshot missing identity.");
+        }
+
+        var planIdentity = $"{manifestSnapshot.PlanId}@{manifestSnapshot.PlanVersion}";
+        if (!discovery.TestPlans.TryGetValue(planIdentity, out var plan))
+        {
+            throw new InvalidOperationException($"Plan '{planIdentity}' not found for resume.");
+        }
+
+        using var cts = new CancellationTokenSource();
+        var orchestrator = new PlanOrchestrator(discovery, resolvedRunsRoot, session.AssetsRoot, NullExecutionReporter.Instance, cts.Token);
+        GroupResult? result = null;
+
+        try
+        {
+            result = await orchestrator.ResumeAsync(plan, runRequest, session);
+        }
+        finally
+        {
+            ResumeTaskScheduler.DeleteResumeTask(session.RunId);
+            await session.WithState("Finalized", resumeCount).SaveAsync();
+        }
+
+        if (result is not null)
+        {
+            Console.WriteLine("=== Resume Result ===");
+            Console.WriteLine(JsonDefaults.Serialize(result));
+            Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+        }
+    }
+
+    private static DiscoveryResult BuildDiscovery(RebootResumeSession session)
+    {
+        if (string.IsNullOrWhiteSpace(session.CasesRoot)
+            || string.IsNullOrWhiteSpace(session.SuitesRoot)
+            || string.IsNullOrWhiteSpace(session.PlansRoot))
+        {
+            throw new InvalidOperationException("Resume session missing discovery roots.");
+        }
+
+        var service = new DiscoveryService();
+        return service.Discover(session.CasesRoot, session.SuitesRoot, session.PlansRoot);
+    }
+
+    private static T LoadJson<T>(string path)
+    {
+        if (!File.Exists(path))
+        {
+            throw new FileNotFoundException($"Missing required file: {path}");
+        }
+
+        var json = File.ReadAllText(path);
+        var data = JsonDefaults.Deserialize<T>(json);
+        if (data is null)
+        {
+            throw new InvalidOperationException($"Failed to parse {path}.");
+        }
+
+        return data;
     }
 }
