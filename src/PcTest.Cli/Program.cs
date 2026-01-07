@@ -338,7 +338,9 @@ public static class Program
                 throw new InvalidOperationException("Resume token validation failed.");
             }
 
-            if (!string.Equals(session.State, "PendingResume", StringComparison.OrdinalIgnoreCase))
+            var resumableState = string.Equals(session.State, "PendingResume", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(session.State, "Resuming", StringComparison.OrdinalIgnoreCase);
+            if (!resumableState)
             {
                 throw new InvalidOperationException($"Session state '{session.State}' is not resumable.");
             }

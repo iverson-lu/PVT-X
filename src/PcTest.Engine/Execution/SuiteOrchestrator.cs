@@ -142,7 +142,7 @@ public sealed class SuiteOrchestrator
             var refResolver = new SuiteRefResolver(_discovery.ResolvedTestCaseRoot);
             var inputResolver = new InputResolver();
             var runner = new TestCaseRunner(_cancellationToken);
-            var runnerExecutablePath = Environment.ProcessPath ?? string.Empty;
+            var runnerExecutablePath = ResolveRunnerExecutablePath();
 
             var repeat = Math.Max(1, controls.Repeat);
             var continueOnFailure = controls.ContinueOnFailure;
@@ -748,5 +748,12 @@ public sealed class SuiteOrchestrator
             return RunStatus.Aborted;
 
         return RunStatus.Passed;
+    }
+
+    private static string ResolveRunnerExecutablePath()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var cliPath = Path.Combine(baseDir, "PcTest.Cli.exe");
+        return File.Exists(cliPath) ? cliPath : (Environment.ProcessPath ?? string.Empty);
     }
 }

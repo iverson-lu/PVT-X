@@ -91,7 +91,7 @@ public sealed class StandaloneCaseExecutor
 
         // Execute
         var runner = new TestCaseRunner(_cancellationToken);
-        var runnerExecutablePath = Environment.ProcessPath ?? string.Empty;
+        var runnerExecutablePath = ResolveRunnerExecutablePath();
 
         var context = new RunContext
         {
@@ -144,5 +144,12 @@ public sealed class StandaloneCaseExecutor
         _reporter.OnRunFinished(runId, result.Status);
 
         return result;
+    }
+
+    private static string ResolveRunnerExecutablePath()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var cliPath = Path.Combine(baseDir, "PcTest.Cli.exe");
+        return File.Exists(cliPath) ? cliPath : (Environment.ProcessPath ?? string.Empty);
     }
 }
