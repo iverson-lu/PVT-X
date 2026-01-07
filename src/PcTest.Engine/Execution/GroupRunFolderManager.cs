@@ -44,6 +44,23 @@ public sealed class GroupRunFolderManager
     }
 
     /// <summary>
+    /// Returns an existing Group Run Folder for a given runId or absolute path.
+    /// </summary>
+    public string GetExistingGroupRunFolder(string runIdOrPath)
+    {
+        var resolvedPath = Path.IsPathRooted(runIdOrPath)
+            ? PathUtils.NormalizePath(runIdOrPath)
+            : PathUtils.NormalizePath(Path.Combine(_runsRoot, runIdOrPath));
+
+        if (!Directory.Exists(resolvedPath))
+        {
+            throw new DirectoryNotFoundException($"Run folder not found: {resolvedPath}");
+        }
+
+        return resolvedPath;
+    }
+
+    /// <summary>
     /// Writes manifest.json for Suite/Plan run.
     /// </summary>
     public async Task WriteManifestAsync(string groupRunFolder, GroupManifestSnapshot snapshot)

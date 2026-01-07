@@ -34,6 +34,24 @@ public sealed class RunnerInfo
 }
 
 /// <summary>
+/// Reboot resume metadata for reboot-required runs.
+/// </summary>
+public sealed class RebootInfo
+{
+    [JsonPropertyName("nextPhase")]
+    public int NextPhase { get; set; }
+
+    [JsonPropertyName("reason")]
+    public string Reason { get; set; } = string.Empty;
+
+    [JsonPropertyName("originTestId")]
+    public string? OriginTestId { get; set; }
+
+    [JsonPropertyName("delaySec")]
+    public int? DelaySec { get; set; }
+}
+
+/// <summary>
 /// Test Case result per spec section 13.2.
 /// </summary>
 public sealed class TestCaseResult
@@ -91,6 +109,9 @@ public sealed class TestCaseResult
 
     [JsonPropertyName("runner")]
     public RunnerInfo? Runner { get; set; }
+
+    [JsonPropertyName("reboot")]
+    public RebootInfo? Reboot { get; set; }
 }
 
 /// <summary>
@@ -157,6 +178,9 @@ public sealed class GroupResult
 
     [JsonPropertyName("message")]
     public string? Message { get; set; }
+
+    [JsonPropertyName("reboot")]
+    public RebootInfo? Reboot { get; set; }
 }
 
 /// <summary>

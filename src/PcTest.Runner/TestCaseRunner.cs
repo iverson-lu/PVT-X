@@ -247,9 +247,17 @@ public sealed class TestCaseRunner
                     }
                 });
 
-                await HandleRebootRequestAsync(context, caseRunFolder, rebootRequest);
-                return CreateErrorResult(context, startTime,
-                    ErrorType.RunnerError, "Reboot initiated, awaiting resume.");
+                if (context.IsTopLevel)
+                {
+                    await HandleRebootRequestAsync(context, caseRunFolder, rebootRequest);
+                    return CreateErrorResult(context, startTime,
+                        ErrorType.RunnerError, "Reboot initiated, awaiting resume.");
+                }
+
+                ArchiveRebootRequest(caseRunFolder);
+                var rebootResult = CreateRebootRequiredResult(context, startTime, rebootRequest);
+                await folderManager.WriteResultAsync(caseRunFolder, rebootResult, context.SecretInputs);
+                return rebootResult;
             }
 
             // Build result
@@ -410,6 +418,44 @@ public sealed class TestCaseRunner
         return result;
     }
 
+    private static TestCaseResult CreateRebootRequiredResult(
+        RunContext context,
+        DateTime startTime,
+        RebootRequest rebootRequest)
+    {
+        var endTime = DateTime.UtcNow;
+        var result = new TestCaseResult
+        {
+            SchemaVersion = "1.5.0",
+            RunType = RunType.TestCase,
+            TestId = context.Manifest.Id,
+            TestVersion = context.Manifest.Version,
+            Status = RunStatus.RebootRequired,
+            StartTime = startTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            EffectiveInputs = context.EffectiveInputs,
+            Runner = new RunnerInfo { Version = RunnerVersion },
+            Reboot = new RebootInfo
+            {
+                NextPhase = rebootRequest.NextPhase,
+                Reason = rebootRequest.Reason,
+                OriginTestId = context.Manifest.Id,
+                DelaySec = rebootRequest.Reboot?.DelaySec
+            }
+        };
+
+        if (!context.IsStandalone)
+        {
+            result.NodeId = context.NodeId;
+            result.SuiteId = context.SuiteId;
+            result.SuiteVersion = context.SuiteVersion;
+            result.PlanId = context.PlanId;
+            result.PlanVersion = context.PlanVersion;
+        }
+
+        return result;
+    }
+
     private static async Task WriteArtifactsAsync(
         CaseRunFolderManager folderManager,
         string caseRunFolder,
@@ -480,14 +526,14 @@ public sealed class TestCaseRunner
         {
             RunId = context.RunId,
             EntityType = "TestCase",
-            EntityId = context.Manifest.Id,
-            CurrentCaseId = context.Manifest.Id,
-            NextPhase = rebootRequest.NextPhase,
-            ResumeToken = resumeToken,
-            ResumeCount = 0,
             State = "PendingResume",
+            CurrentNodeIndex = 0,
+            NextPhase = rebootRequest.NextPhase,
+            ResumeCount = 0,
+            ResumeToken = resumeToken,
+            OriginTestId = context.Manifest.Id,
             RunFolder = caseRunFolder,
-            Context = ResumeContextConverter.FromRunContext(context, caseRunFolder)
+            CaseContext = ResumeContextConverter.FromRunContext(context, caseRunFolder)
         };
 
         await session.SaveAsync();

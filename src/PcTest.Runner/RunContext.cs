@@ -26,6 +26,11 @@ public sealed class RunContext
     public bool IsResume { get; init; }
 
     /// <summary>
+    /// True when this runner is the top-level orchestrator (standalone case).
+    /// </summary>
+    public bool IsTopLevel { get; init; } = true;
+
+    /// <summary>
     /// The test case manifest.
     /// </summary>
     public TestCaseManifest Manifest { get; init; } = new();

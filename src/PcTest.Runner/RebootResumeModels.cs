@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
+using PcTest.Contracts.Requests;
 
 namespace PcTest.Runner;
 
@@ -145,14 +146,19 @@ public sealed class RebootResumeSession
 {
     public string RunId { get; init; } = string.Empty;
     public string EntityType { get; init; } = string.Empty;
-    public string EntityId { get; init; } = string.Empty;
-    public string? CurrentCaseId { get; init; }
-    public int NextPhase { get; init; }
-    public string ResumeToken { get; init; } = string.Empty;
-    public int ResumeCount { get; init; }
     public string State { get; init; } = "PendingResume";
+    public int CurrentNodeIndex { get; init; }
+    public int NextPhase { get; init; }
+    public int ResumeCount { get; init; }
+    public string ResumeToken { get; init; } = string.Empty;
+    public string? CurrentNodeId { get; init; }
+    public string? CurrentChildRunId { get; init; }
+    public string? OriginTestId { get; init; }
     public string RunFolder { get; init; } = string.Empty;
-    public ResumeRunContext Context { get; init; } = new();
+    public ResumeRunContext? CaseContext { get; init; }
+    public SuiteResumeContext? SuiteContext { get; init; }
+    public PlanResumeContext? PlanContext { get; init; }
+    public ResumePaths? Paths { get; init; }
 
     public static string GetSessionPath(string runFolder) => Path.Combine(runFolder, "session.json");
 
@@ -181,6 +187,34 @@ public sealed class RebootResumeSession
     }
 }
 
+public sealed class ResumePaths
+{
+    public string TestCasesRoot { get; init; } = string.Empty;
+    public string TestSuitesRoot { get; init; } = string.Empty;
+    public string TestPlansRoot { get; init; } = string.Empty;
+    public string AssetsRoot { get; init; } = string.Empty;
+    public string RunsRoot { get; init; } = string.Empty;
+}
+
+public sealed class SuiteResumeContext
+{
+    public string SuiteIdentity { get; init; } = string.Empty;
+    public RunRequest RunRequest { get; init; } = new();
+    public string? PlanId { get; init; }
+    public string? PlanVersion { get; init; }
+    public string? ParentPlanRunId { get; init; }
+    public string? ParentNodeId { get; init; }
+    public string? ParentPlanRunFolder { get; init; }
+    public TestPlanManifest? PlanManifest { get; init; }
+    public int CurrentIteration { get; init; }
+}
+
+public sealed class PlanResumeContext
+{
+    public string PlanIdentity { get; init; } = string.Empty;
+    public RunRequest RunRequest { get; init; } = new();
+}
+
 public sealed class ResumeRunContext
 {
     public TestCaseManifest Manifest { get; init; } = new();
@@ -202,6 +236,7 @@ public sealed class ResumeRunContext
     public Dictionary<string, JsonElement>? InputTemplates { get; init; }
     public string? RunnerExecutablePath { get; init; }
     public string? RunFolderPath { get; init; }
+    public bool IsTopLevel { get; init; }
 }
 
 public static class ResumeContextConverter
@@ -228,7 +263,8 @@ public static class ResumeContextConverter
             ParentRunId = context.ParentRunId,
             InputTemplates = context.InputTemplates,
             RunnerExecutablePath = context.RunnerExecutablePath,
-            RunFolderPath = runFolder
+            RunFolderPath = runFolder,
+            IsTopLevel = context.IsTopLevel
         };
     }
 
@@ -256,6 +292,7 @@ public static class ResumeContextConverter
             InputTemplates = resumeContext.InputTemplates,
             Phase = phase,
             IsResume = isResume,
+            IsTopLevel = resumeContext.IsTopLevel,
             RunnerExecutablePath = resumeContext.RunnerExecutablePath ?? string.Empty,
             RunFolderPath = resumeContext.RunFolderPath
         };
