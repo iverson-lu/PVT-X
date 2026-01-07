@@ -323,7 +323,8 @@ public sealed class SuiteOrchestrator
                             PlanId = planId,
                             PlanVersion = planVersion,
                             ParentRunId = groupRunId,
-                            InputTemplates = inputResult.InputTemplates
+                            InputTemplates = inputResult.InputTemplates,
+                            Phase = 0
                         };
 
                         // Write children.jsonl entry BEFORE execution so UI can start tailing immediately

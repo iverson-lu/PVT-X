@@ -72,6 +72,33 @@ public sealed class CaseRunFolderManager : IDisposable
     }
 
     /// <summary>
+    /// Validates and returns an existing Case Run Folder for resume scenarios.
+    /// </summary>
+    public string UseExistingRunFolder(string runFolder, string runId)
+    {
+        var normalizedPath = PathUtils.NormalizePath(runFolder);
+        if (!Directory.Exists(normalizedPath))
+        {
+            throw new DirectoryNotFoundException($"Case run folder not found: {normalizedPath}");
+        }
+
+        var artifactsDir = Path.Combine(normalizedPath, "artifacts");
+        if (!Directory.Exists(artifactsDir))
+        {
+            Directory.CreateDirectory(artifactsDir);
+        }
+
+        var folderName = Path.GetFileName(normalizedPath);
+        if (!string.Equals(folderName, runId, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"Existing run folder '{normalizedPath}' does not match runId '{runId}'.");
+        }
+
+        return normalizedPath;
+    }
+
+    /// <summary>
     /// Validates and creates working directory.
     /// Per spec section 6.5: workingDir must resolve inside Case Run Folder.
     /// </summary>

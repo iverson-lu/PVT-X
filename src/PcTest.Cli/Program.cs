@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Text.Json;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
+using PcTest.Contracts.Results;
 using PcTest.Contracts.Validation;
 using PcTest.Engine;
 using PcTest.Engine.Discovery;
@@ -34,6 +35,23 @@ public static class Program
             "--runsRoot",
             () => "Runs",
             "Path to Runs output root");
+
+        var resumeRunsRootOption = new Option<string>(
+            "--runsRoot",
+            () => "Runs",
+            "Path to Runs output root");
+
+        var resumeOption = new Option<bool>(
+            "--resume",
+            "Resume a run after reboot");
+
+        var resumeRunIdOption = new Option<string?>(
+            "--runId",
+            "Run ID to resume");
+
+        var resumeTokenOption = new Option<string?>(
+            "--token",
+            "Resume token for the run");
 
         // Discover command
         var discoverCommand = new Command("discover", "Discover test cases, suites, and plans");
@@ -77,6 +95,13 @@ public static class Program
             casesRootOption, suitesRootOption, plansRootOption, runsRootOption);
 
         rootCommand.AddCommand(runCommand);
+
+        rootCommand.AddOption(resumeOption);
+        rootCommand.AddOption(resumeRunIdOption);
+        rootCommand.AddOption(resumeTokenOption);
+        rootCommand.AddOption(resumeRunsRootOption);
+
+        rootCommand.SetHandler(HandleResume, resumeOption, resumeRunIdOption, resumeTokenOption, resumeRunsRootOption);
 
         return await rootCommand.InvokeAsync(args);
     }
@@ -280,6 +305,64 @@ public static class Program
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error: {ex.Message}");
+            Environment.ExitCode = 1;
+        }
+    }
+
+    private static async Task HandleResume(
+        bool resume,
+        string? runId,
+        string? token,
+        string runsRoot)
+    {
+        if (!resume)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(runId) || string.IsNullOrWhiteSpace(token))
+        {
+            Console.Error.WriteLine("Resume requires --runId and --token.");
+            Environment.ExitCode = 1;
+            return;
+        }
+
+        try
+        {
+            var resolvedRunsRoot = ResolvePath(runsRoot);
+            var resumeManager = new PcTest.Engine.Execution.RebootResumeManager();
+            var session = await resumeManager.LoadAndValidateAsync(resolvedRunsRoot, runId, token);
+
+            var resumer = new PcTest.Engine.Execution.StandaloneCaseResumer(
+                PcTest.Engine.Execution.NullExecutionReporter.Instance);
+            TestCaseResult result;
+            try
+            {
+                result = await resumer.ResumeAsync(session);
+            }
+            finally
+            {
+                await resumeManager.FinalizeAsync(session);
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("=== Resume Result ===");
+            Console.WriteLine(JsonDefaults.Serialize(result));
+
+            Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+        }
+        catch (ValidationException ex)
+        {
+            Console.Error.WriteLine($"Resume failed: {ex.Message}");
+            foreach (var error in ex.Result.Errors)
+            {
+                Console.Error.WriteLine($"  - {error}");
+            }
+            Environment.ExitCode = 1;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Resume error: {ex.Message}");
             Environment.ExitCode = 1;
         }
     }

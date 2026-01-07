@@ -11,6 +11,16 @@ namespace PcTest.Runner;
 public sealed class RunContext
 {
     /// <summary>
+    /// Current phase for reboot-resume capable cases.
+    /// </summary>
+    public int Phase { get; init; } = 0;
+
+    /// <summary>
+    /// Existing run folder to reuse (resume scenario).
+    /// </summary>
+    public string? ExistingRunFolder { get; init; }
+
+    /// <summary>
     /// Unique run identifier.
     /// </summary>
     public string RunId { get; init; } = string.Empty;

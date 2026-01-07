@@ -103,11 +103,34 @@ public sealed class StandaloneCaseExecutor
             TimeoutSec = testCase.Manifest.TimeoutSec,
             RunsRoot = _runsRoot,
             AssetsRoot = _assetsRoot,
-            InputTemplates = inputResult.InputTemplates
+            InputTemplates = inputResult.InputTemplates,
+            Phase = 0
             // NodeId, SuiteId, PlanId, ParentRunId all null for standalone
         };
 
-        var result = await runner.ExecuteAsync(context);
+        TestCaseResult result;
+        try
+        {
+            result = await runner.ExecuteAsync(context);
+        }
+        catch (RebootRequiredException rebootException)
+        {
+            var resumeManager = new RebootResumeManager();
+            await resumeManager.HandleRebootAsync(rebootException);
+
+            return new TestCaseResult
+            {
+                SchemaVersion = "1.5.0",
+                RunType = RunType.TestCase,
+                TestId = testCase.Manifest.Id,
+                TestVersion = testCase.Manifest.Version,
+                Status = RunStatus.Aborted,
+                StartTime = startTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                EndTime = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                EffectiveInputs = inputResult.EffectiveInputs,
+                Message = "Pending reboot resume"
+            };
+        }
 
         var endTime = DateTime.UtcNow;
 

@@ -29,8 +29,10 @@ public sealed class TestCaseRunner
         var startTime = DateTime.UtcNow;
         using var folderManager = new CaseRunFolderManager(context.RunsRoot);
 
-        // Create Case Run Folder
-        var caseRunFolder = folderManager.CreateRunFolder(context.RunId);
+        // Create or reuse Case Run Folder
+        var caseRunFolder = context.ExistingRunFolder is not null
+            ? folderManager.UseExistingRunFolder(context.ExistingRunFolder, context.RunId)
+            : folderManager.CreateRunFolder(context.RunId);
         var extractedRunId = Path.GetFileName(caseRunFolder);
 
         // Collect secret values for redaction
@@ -51,12 +53,18 @@ public sealed class TestCaseRunner
         }
 
         // Inject PVT-X standard environment variables (before try block so it's available in catch)
+        var controlDir = Path.Combine(caseRunFolder, "control");
+        Directory.CreateDirectory(controlDir);
+
         var enhancedEnvironment = new Dictionary<string, string>(context.EffectiveEnvironment)
         {
             ["PVTX_TESTCASE_PATH"] = context.TestCasePath,
             ["PVTX_TESTCASE_NAME"] = context.Manifest.Name,
             ["PVTX_TESTCASE_ID"] = context.Manifest.Id,
-            ["PVTX_TESTCASE_VER"] = context.Manifest.Version
+            ["PVTX_TESTCASE_VER"] = context.Manifest.Version,
+            ["PVTX_RUN_ID"] = context.RunId,
+            ["PVTX_PHASE"] = context.Phase.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["PVTX_CONTROL_DIR"] = controlDir
         };
 
         // Add PVT-X PowerShell modules to PSModulePath (enables module autoload for common case helpers)
@@ -174,6 +182,45 @@ public sealed class TestCaseRunner
             // Flush and close the streaming writers
             folderManager.FlushAndCloseWriters(caseRunFolder);
 
+            // Detect reboot request (only supported for standalone MVP)
+            var rebootPath = Path.Combine(controlDir, "reboot.json");
+            if (RebootRequest.TryLoad(rebootPath, out var rebootRequest, out var rebootError))
+            {
+                if (!context.IsStandalone)
+                {
+                    var errorResult = CreateErrorResult(context, startTime,
+                        ErrorType.RunnerError, "Reboot resume is only supported for standalone runs in the MVP");
+                    await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
+                    return errorResult;
+                }
+
+                if (!string.IsNullOrEmpty(rebootError))
+                {
+                    var errorResult = CreateErrorResult(context, startTime,
+                        ErrorType.RunnerError, rebootError);
+                    await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
+                    return errorResult;
+                }
+
+                await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestCase.RebootRequested",
+                    Level = "info",
+                    Message = $"Reboot requested by test case '{context.Manifest.Id}' to resume at phase {rebootRequest?.NextPhase}",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["testId"] = context.Manifest.Id,
+                        ["testVersion"] = context.Manifest.Version,
+                        ["runId"] = extractedRunId,
+                        ["nextPhase"] = rebootRequest?.NextPhase,
+                        ["reason"] = rebootRequest?.Reason
+                    }
+                });
+
+                throw new RebootRequiredException(rebootRequest!, context, caseRunFolder);
+            }
+
             // Build result
             var endTime = DateTime.UtcNow;
             var result = new TestCaseResult
@@ -227,6 +274,10 @@ public sealed class TestCaseRunner
             });
 
             return result;
+        }
+        catch (RebootRequiredException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
