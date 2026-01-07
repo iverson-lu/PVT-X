@@ -6,6 +6,7 @@ using PcTest.Contracts.Results;
 using PcTest.Contracts.Validation;
 using PcTest.Engine.Discovery;
 using PcTest.Engine.Resolution;
+using PcTest.Runner;
 
 namespace PcTest.Engine.Execution;
 
@@ -40,7 +41,8 @@ public sealed class PlanOrchestrator
     /// </summary>
     public async Task<GroupResult> ExecuteAsync(
         DiscoveredTestPlan plan,
-        RunRequest runRequest)
+        RunRequest runRequest,
+        RebootResumeSession? resumeSession = null)
     {
         // Validate Plan RunRequest constraints per spec section 8.3
         if (runRequest.NodeOverrides is not null && runRequest.NodeOverrides.Count > 0)
@@ -56,13 +58,17 @@ public sealed class PlanOrchestrator
         }
 
         var startTime = DateTime.UtcNow;
-        var groupRunId = GroupRunFolderManager.GenerateGroupRunId("P");
+        var isResume = resumeSession is not null;
+        var groupRunId = isResume ? resumeSession!.RunId : GroupRunFolderManager.GenerateGroupRunId("P");
         var folderManager = new GroupRunFolderManager(_runsRoot);
-        var groupRunFolder = folderManager.CreateGroupRunFolder(groupRunId);
+        var groupRunFolder = isResume
+            ? resumeSession!.RunFolder
+            : folderManager.CreateGroupRunFolder(groupRunId);
 
         var childRunIds = new List<string>();
         var childResults = new List<GroupResult>();
         var statusCounts = new StatusCounts();
+        var resumeNodeIndex = isResume ? resumeSession!.CurrentNodeIndex : 0;
 
         try
         {
@@ -77,12 +83,18 @@ public sealed class PlanOrchestrator
                 ResolvedAt = DateTime.UtcNow.ToString("o"),
                 EngineVersion = "1.0.0"
             };
-            await folderManager.WriteManifestAsync(groupRunFolder, manifestSnapshot);
+            if (!isResume || !File.Exists(Path.Combine(groupRunFolder, "manifest.json")))
+            {
+                await folderManager.WriteManifestAsync(groupRunFolder, manifestSnapshot);
+            }
 
             // Compute effective environment
             var envResolver = new EnvironmentResolver();
 
-            await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
+            if (!isResume || !File.Exists(Path.Combine(groupRunFolder, "runRequest.json")))
+            {
+                await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
+            }
 
             // Record plan started event
             await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
@@ -115,11 +127,22 @@ public sealed class PlanOrchestrator
             }
             _reporter.OnRunPlanned(groupRunId, RunType.TestPlan, plannedNodes);
 
-            // Execute each Suite in order per spec section 6.4
-            foreach (var suiteIdentity in plan.Manifest.Suites)
+            if (isResume)
             {
+                LoadExistingPlanProgress(groupRunFolder, childResults, statusCounts);
+            }
+
+            // Execute each Suite in order per spec section 6.4
+            for (var suiteIndex = 0; suiteIndex < plan.Manifest.Suites.Count; suiteIndex++)
+            {
+                var suiteIdentity = plan.Manifest.Suites[suiteIndex];
                 if (_cancellationToken.IsCancellationRequested)
                     break;
+
+                if (isResume && suiteIndex < resumeNodeIndex)
+                {
+                    continue;
+                }
 
                 // Report node started
                 _reporter.OnNodeStarted(groupRunId, suiteIdentity);
@@ -160,6 +183,10 @@ public sealed class PlanOrchestrator
 
                 // Execute Suite
                 var suiteOrchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _assetsRoot, _reporter, _cancellationToken);
+                var suiteResumeSession = isResume && suiteIndex == resumeNodeIndex
+                    ? BuildSuiteResumeSession(resumeSession, suiteIdentity)
+                    : null;
+
                 var suiteResult = await suiteOrchestrator.ExecuteAsync(
                     suite,
                     suiteRunRequest,
@@ -168,7 +195,49 @@ public sealed class PlanOrchestrator
                     groupRunId,
                     suiteIdentity,
                     groupRunFolder,
-                    plan.Manifest);  // Pass plan manifest for env resolution
+                    plan.Manifest,
+                    suiteResumeSession);  // Pass plan manifest for env resolution
+
+                if (suiteResult.Status == RunStatus.RebootRequired)
+                {
+                    var resumeToken = Guid.NewGuid().ToString("N");
+                    var rebootInfo = suiteResult.Reboot ?? new RebootInfo
+                    {
+                        NextPhase = resumeSession?.NextPhase ?? 1,
+                        Reason = suiteResult.Message ?? "Reboot requested"
+                    };
+
+                    var session = new RebootResumeSession
+                    {
+                        RunId = groupRunId,
+                        EntityType = "TestPlan",
+                        State = "PendingResume",
+                        CurrentNodeIndex = suiteIndex,
+                        NextPhase = rebootInfo.NextPhase,
+                        ResumeToken = resumeToken,
+                        ResumeCount = 0,
+                        RunFolder = groupRunFolder,
+                        PlanContext = new PlanResumeContext
+                        {
+                            PlanIdentity = plan.Identity,
+                            RunRequest = runRequest,
+                            RunsRoot = _runsRoot,
+                            AssetsRoot = _assetsRoot,
+                            CasesRoot = _discovery.ResolvedTestCaseRoot,
+                            SuitesRoot = _discovery.ResolvedTestSuiteRoot,
+                            PlansRoot = _discovery.ResolvedTestPlanRoot,
+                            CurrentSuiteIdentity = suiteIdentity,
+                            CurrentSuiteRunId = suiteResult.RunId,
+                            CurrentSuiteCaseIndex = suiteResult.Reboot?.OriginNodeIndex,
+                            CurrentSuiteNodeId = suiteResult.Reboot?.OriginNodeId
+                        }
+                    };
+                    await session.SaveAsync();
+
+                    ResumeTaskScheduler.CreateResumeTask(groupRunId, resumeToken, ResolveRunnerExecutablePath(), _runsRoot);
+                    RebootExecutor.RestartMachine(rebootInfo.DelaySec);
+                    Environment.Exit(0);
+                }
 
                 childResults.Add(suiteResult);
                 childRunIds.AddRange(suiteResult.ChildRunIds);
@@ -177,7 +246,7 @@ public sealed class PlanOrchestrator
                 // Append to children.jsonl
                 await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
                 {
-                    RunId = suiteResult.ChildRunIds.FirstOrDefault() ?? "",
+                    RunId = suiteResult.RunId ?? "",
                     SuiteId = suite.Manifest.Id,
                     SuiteVersion = suite.Manifest.Version,
                     Status = suiteResult.Status
@@ -203,6 +272,7 @@ public sealed class PlanOrchestrator
             var result = new GroupResult
             {
                 SchemaVersion = "1.5.0",
+                RunId = groupRunId,
                 RunType = RunType.TestPlan,
                 PlanId = plan.Manifest.Id,
                 PlanVersion = plan.Manifest.Version,
@@ -258,6 +328,7 @@ public sealed class PlanOrchestrator
             var result = new GroupResult
             {
                 SchemaVersion = "1.5.0",
+                RunId = groupRunId,
                 RunType = RunType.TestPlan,
                 PlanId = plan.Manifest.Id,
                 PlanVersion = plan.Manifest.Version,
@@ -329,6 +400,9 @@ public sealed class PlanOrchestrator
         if (wasAborted)
             return RunStatus.Aborted;
 
+        if (results.Any(r => r.Status == RunStatus.RebootRequired))
+            return RunStatus.RebootRequired;
+
         if (results.Any(r => r.Status == RunStatus.Error))
             return RunStatus.Error;
         if (results.Any(r => r.Status == RunStatus.Timeout))
@@ -339,5 +413,85 @@ public sealed class PlanOrchestrator
             return RunStatus.Aborted;
 
         return RunStatus.Passed;
+    }
+
+    private static void LoadExistingPlanProgress(
+        string groupRunFolder,
+        List<GroupResult> childResults,
+        StatusCounts statusCounts)
+    {
+        var path = Path.Combine(groupRunFolder, "children.jsonl");
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        var latestByRunId = new Dictionary<string, ChildEntry>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in File.ReadLines(path))
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            try
+            {
+                var entry = JsonDefaults.Deserialize<ChildEntry>(line);
+                if (entry is null || string.IsNullOrWhiteSpace(entry.RunId))
+                {
+                    continue;
+                }
+
+                latestByRunId[entry.RunId] = entry;
+            }
+            catch
+            {
+                // Ignore malformed lines.
+            }
+        }
+
+        foreach (var entry in latestByRunId.Values)
+        {
+            if (entry.Status is RunStatus.Passed or RunStatus.Failed or RunStatus.Error or RunStatus.Timeout or RunStatus.Aborted)
+            {
+                childResults.Add(new GroupResult { Status = entry.Status });
+                UpdateCounts(statusCounts, entry.Status);
+            }
+        }
+    }
+
+    private static RebootResumeSession? BuildSuiteResumeSession(
+        RebootResumeSession? resumeSession,
+        string suiteIdentity)
+    {
+        if (resumeSession?.PlanContext is null ||
+            !string.Equals(resumeSession.PlanContext.CurrentSuiteIdentity, suiteIdentity, StringComparison.OrdinalIgnoreCase) ||
+            string.IsNullOrWhiteSpace(resumeSession.PlanContext.CurrentSuiteRunId) ||
+            resumeSession.PlanContext.CurrentSuiteCaseIndex is null)
+        {
+            throw new InvalidOperationException("Plan resume session is missing suite reboot context.");
+        }
+
+        var suiteRunId = resumeSession.PlanContext.CurrentSuiteRunId;
+        var suiteRunFolder = Path.Combine(resumeSession.PlanContext.RunsRoot, suiteRunId);
+
+        return new RebootResumeSession
+        {
+            RunId = suiteRunId,
+            EntityType = "TestSuite",
+            State = "PendingResume",
+            CurrentNodeIndex = resumeSession.PlanContext.CurrentSuiteCaseIndex.Value,
+            NextPhase = resumeSession.NextPhase,
+            ResumeToken = resumeSession.ResumeToken,
+            ResumeCount = resumeSession.ResumeCount,
+            RunFolder = suiteRunFolder
+        };
+    }
+
+    private static string ResolveRunnerExecutablePath()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var cliPath = Path.Combine(baseDir, "PcTest.Cli.exe");
+        return File.Exists(cliPath) ? cliPath : (Environment.ProcessPath ?? string.Empty);
     }
 }

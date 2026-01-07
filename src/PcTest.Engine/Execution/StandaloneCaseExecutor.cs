@@ -106,7 +106,8 @@ public sealed class StandaloneCaseExecutor
             RunsRoot = _runsRoot,
             AssetsRoot = _assetsRoot,
             InputTemplates = inputResult.InputTemplates,
-            RunnerExecutablePath = runnerExecutablePath
+            RunnerExecutablePath = runnerExecutablePath,
+            IsTopLevel = true
             // NodeId, SuiteId, PlanId, ParentRunId all null for standalone
         };
 

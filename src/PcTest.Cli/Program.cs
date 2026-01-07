@@ -340,8 +340,7 @@ public static class Program
                 throw new InvalidOperationException("Resume token validation failed.");
             }
 
-            var resumableState = string.Equals(session.State, "PendingResume", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(session.State, "Resuming", StringComparison.OrdinalIgnoreCase);
+            var resumableState = string.Equals(session.State, "PendingResume", StringComparison.OrdinalIgnoreCase);
             if (!resumableState)
             {
                 throw new InvalidOperationException($"Session state '{session.State}' is not resumable.");
@@ -351,72 +350,49 @@ public static class Program
             if (resumeCount > 1)
             {
                 ResumeTaskScheduler.DeleteResumeTask(runId);
-                var finalizedSession = new RebootResumeSession
-                {
-                    RunId = session.RunId,
-                    EntityType = session.EntityType,
-                    EntityId = session.EntityId,
-                    CurrentCaseId = session.CurrentCaseId,
-                    NextPhase = session.NextPhase,
-                    ResumeToken = session.ResumeToken,
-                    ResumeCount = resumeCount,
-                    State = "Finalized",
-                    RunFolder = session.RunFolder,
-                    Context = session.Context
-                };
-                await finalizedSession.SaveAsync();
+                await UpdateSessionStateAsync(session, "Finalized", resumeCount);
                 throw new InvalidOperationException("Resume loop detected.");
             }
 
-            var resumingSession = new RebootResumeSession
-            {
-                RunId = session.RunId,
-                EntityType = session.EntityType,
-                EntityId = session.EntityId,
-                CurrentCaseId = session.CurrentCaseId,
-                NextPhase = session.NextPhase,
-                ResumeToken = session.ResumeToken,
-                ResumeCount = resumeCount,
-                State = "Resuming",
-                RunFolder = session.RunFolder,
-                Context = session.Context
-            };
-            await resumingSession.SaveAsync();
+            await UpdateSessionStateAsync(session, "Resuming", resumeCount);
 
-            var context = ResumeContextConverter.ToRunContext(session.Context, session.RunId, session.NextPhase, true);
-            using var cts = new CancellationTokenSource();
-            var runner = new TestCaseRunner(cts.Token);
-            PcTest.Contracts.Results.TestCaseResult? result = null;
-
+            object? result = null;
             try
             {
-                result = await runner.ExecuteAsync(context);
+                result = session.EntityType switch
+                {
+                    "TestCase" => await ResumeCaseAsync(session),
+                    "TestSuite" => await ResumeSuiteAsync(session),
+                    "TestPlan" => await ResumePlanAsync(session),
+                    _ => throw new InvalidOperationException($"Unknown session entityType '{session.EntityType}'.")
+                };
+
+                if (result is TestCaseResult caseResult && caseResult.Status == PcTest.Contracts.RunStatus.RebootRequired)
+                {
+                    throw new InvalidOperationException("Multiple reboots in one run are not supported.");
+                }
+
+                if (result is GroupResult groupResult && groupResult.Status == PcTest.Contracts.RunStatus.RebootRequired)
+                {
+                    throw new InvalidOperationException("Multiple reboots in one run are not supported.");
+                }
             }
             finally
             {
                 ResumeTaskScheduler.DeleteResumeTask(runId);
-                var finalized = new RebootResumeSession
-                {
-                    RunId = session.RunId,
-                    EntityType = session.EntityType,
-                    EntityId = session.EntityId,
-                    CurrentCaseId = session.CurrentCaseId,
-                    NextPhase = session.NextPhase,
-                    ResumeToken = session.ResumeToken,
-                    ResumeCount = resumeCount,
-                    State = "Finalized",
-                    RunFolder = session.RunFolder,
-                    Context = session.Context
-                };
-                await finalized.SaveAsync();
+                await UpdateSessionStateAsync(session, "Finalized", resumeCount);
             }
 
             if (result is not null)
             {
-                AppendIndexEntryIfMissing(resolvedRunsRoot, session.RunId, result, session.Context);
                 Console.WriteLine("=== Resume Result ===");
                 Console.WriteLine(JsonDefaults.Serialize(result));
-                Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+                Environment.ExitCode = result switch
+                {
+                    TestCaseResult caseResult => caseResult.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1,
+                    GroupResult groupResult => groupResult.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1,
+                    _ => 1
+                };
             }
         }
         catch (Exception ex)
@@ -438,7 +414,7 @@ public static class Program
         string runsRoot,
         string runId,
         TestCaseResult result,
-        ResumeRunContext resumeContext)
+        CaseResumeContext resumeContext)
     {
         var indexPath = Path.Combine(runsRoot, "index.jsonl");
         if (File.Exists(indexPath))
@@ -482,5 +458,99 @@ public static class Program
             EndTime = result.EndTime,
             Status = result.Status
         });
+    }
+
+    private static async Task<TestCaseResult> ResumeCaseAsync(RebootResumeSession session)
+    {
+        if (session.CaseContext is null)
+        {
+            throw new InvalidOperationException("Case resume context missing from session.");
+        }
+
+        var context = ResumeContextConverter.ToRunContext(session.CaseContext, session.RunId, session.NextPhase, true);
+        using var cts = new CancellationTokenSource();
+        var runner = new TestCaseRunner(cts.Token);
+        var result = await runner.ExecuteAsync(context);
+        AppendIndexEntryIfMissing(session.CaseContext.RunsRoot, session.RunId, result, session.CaseContext);
+        return result;
+    }
+
+    private static async Task<GroupResult> ResumeSuiteAsync(RebootResumeSession session)
+    {
+        if (session.SuiteContext is null)
+        {
+            throw new InvalidOperationException("Suite resume context missing from session.");
+        }
+
+        var engine = new TestEngine();
+        engine.Configure(
+            session.SuiteContext.CasesRoot,
+            session.SuiteContext.SuitesRoot,
+            session.SuiteContext.PlansRoot,
+            session.SuiteContext.RunsRoot,
+            session.SuiteContext.AssetsRoot);
+
+        var discovery = engine.Discover();
+        if (!discovery.TestSuites.TryGetValue(session.SuiteContext.SuiteIdentity, out var suite))
+        {
+            throw new InvalidOperationException($"Suite '{session.SuiteContext.SuiteIdentity}' not found for resume.");
+        }
+
+        var orchestrator = new SuiteOrchestrator(discovery, session.SuiteContext.RunsRoot, session.SuiteContext.AssetsRoot, NullExecutionReporter.Instance);
+        return await orchestrator.ExecuteAsync(
+            suite,
+            session.SuiteContext.RunRequest,
+            session.SuiteContext.PlanId,
+            session.SuiteContext.PlanVersion,
+            session.SuiteContext.ParentPlanRunId,
+            session.SuiteContext.ParentNodeId,
+            session.SuiteContext.ParentPlanRunFolder,
+            null,
+            session);
+    }
+
+    private static async Task<GroupResult> ResumePlanAsync(RebootResumeSession session)
+    {
+        if (session.PlanContext is null)
+        {
+            throw new InvalidOperationException("Plan resume context missing from session.");
+        }
+
+        var engine = new TestEngine();
+        engine.Configure(
+            session.PlanContext.CasesRoot,
+            session.PlanContext.SuitesRoot,
+            session.PlanContext.PlansRoot,
+            session.PlanContext.RunsRoot,
+            session.PlanContext.AssetsRoot);
+
+        var discovery = engine.Discover();
+        if (!discovery.TestPlans.TryGetValue(session.PlanContext.PlanIdentity, out var plan))
+        {
+            throw new InvalidOperationException($"Plan '{session.PlanContext.PlanIdentity}' not found for resume.");
+        }
+
+        var orchestrator = new PlanOrchestrator(discovery, session.PlanContext.RunsRoot, session.PlanContext.AssetsRoot, NullExecutionReporter.Instance);
+        return await orchestrator.ExecuteAsync(plan, session.PlanContext.RunRequest, session);
+    }
+
+    private static async Task UpdateSessionStateAsync(RebootResumeSession session, string state, int resumeCount)
+    {
+        var updated = new RebootResumeSession
+        {
+            RunId = session.RunId,
+            EntityType = session.EntityType,
+            State = state,
+            CurrentNodeIndex = session.CurrentNodeIndex,
+            NextPhase = session.NextPhase,
+            ResumeToken = session.ResumeToken,
+            ResumeCount = resumeCount,
+            RunFolder = session.RunFolder,
+            CaseContext = session.CaseContext,
+            SuiteContext = session.SuiteContext,
+            PlanContext = session.PlanContext
+        };
+
+        await updated.SaveAsync();
     }
 }

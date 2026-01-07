@@ -145,14 +145,15 @@ public sealed class RebootResumeSession
 {
     public string RunId { get; init; } = string.Empty;
     public string EntityType { get; init; } = string.Empty;
-    public string EntityId { get; init; } = string.Empty;
-    public string? CurrentCaseId { get; init; }
+    public string State { get; init; } = "PendingResume";
+    public int CurrentNodeIndex { get; init; }
     public int NextPhase { get; init; }
     public string ResumeToken { get; init; } = string.Empty;
     public int ResumeCount { get; init; }
-    public string State { get; init; } = "PendingResume";
     public string RunFolder { get; init; } = string.Empty;
-    public ResumeRunContext Context { get; init; } = new();
+    public CaseResumeContext? CaseContext { get; init; }
+    public SuiteResumeContext? SuiteContext { get; init; }
+    public PlanResumeContext? PlanContext { get; init; }
 
     public static string GetSessionPath(string runFolder) => Path.Combine(runFolder, "session.json");
 
@@ -181,7 +182,7 @@ public sealed class RebootResumeSession
     }
 }
 
-public sealed class ResumeRunContext
+public sealed class CaseResumeContext
 {
     public TestCaseManifest Manifest { get; init; } = new();
     public string TestCasePath { get; init; } = string.Empty;
@@ -202,13 +203,14 @@ public sealed class ResumeRunContext
     public Dictionary<string, JsonElement>? InputTemplates { get; init; }
     public string? RunnerExecutablePath { get; init; }
     public string? RunFolderPath { get; init; }
+    public bool IsTopLevel { get; init; }
 }
 
 public static class ResumeContextConverter
 {
-    public static ResumeRunContext FromRunContext(RunContext context, string runFolder)
+    public static CaseResumeContext FromRunContext(RunContext context, string runFolder)
     {
-        return new ResumeRunContext
+        return new CaseResumeContext
         {
             Manifest = context.Manifest,
             TestCasePath = context.TestCasePath,
@@ -228,11 +230,12 @@ public static class ResumeContextConverter
             ParentRunId = context.ParentRunId,
             InputTemplates = context.InputTemplates,
             RunnerExecutablePath = context.RunnerExecutablePath,
-            RunFolderPath = runFolder
+            RunFolderPath = runFolder,
+            IsTopLevel = context.IsTopLevel
         };
     }
 
-    public static RunContext ToRunContext(ResumeRunContext resumeContext, string runId, int phase, bool isResume)
+    public static RunContext ToRunContext(CaseResumeContext resumeContext, string runId, int phase, bool isResume)
     {
         return new RunContext
         {
@@ -257,9 +260,41 @@ public static class ResumeContextConverter
             Phase = phase,
             IsResume = isResume,
             RunnerExecutablePath = resumeContext.RunnerExecutablePath ?? string.Empty,
-            RunFolderPath = resumeContext.RunFolderPath
+            RunFolderPath = resumeContext.RunFolderPath,
+            IsTopLevel = resumeContext.IsTopLevel
         };
     }
+}
+
+public sealed class SuiteResumeContext
+{
+    public string SuiteIdentity { get; init; } = string.Empty;
+    public PcTest.Contracts.Requests.RunRequest RunRequest { get; init; } = new();
+    public string RunsRoot { get; init; } = string.Empty;
+    public string AssetsRoot { get; init; } = string.Empty;
+    public string CasesRoot { get; init; } = string.Empty;
+    public string SuitesRoot { get; init; } = string.Empty;
+    public string PlansRoot { get; init; } = string.Empty;
+    public string? PlanId { get; init; }
+    public string? PlanVersion { get; init; }
+    public string? ParentPlanRunId { get; init; }
+    public string? ParentNodeId { get; init; }
+    public string? ParentPlanRunFolder { get; init; }
+}
+
+public sealed class PlanResumeContext
+{
+    public string PlanIdentity { get; init; } = string.Empty;
+    public PcTest.Contracts.Requests.RunRequest RunRequest { get; init; } = new();
+    public string RunsRoot { get; init; } = string.Empty;
+    public string AssetsRoot { get; init; } = string.Empty;
+    public string CasesRoot { get; init; } = string.Empty;
+    public string SuitesRoot { get; init; } = string.Empty;
+    public string PlansRoot { get; init; } = string.Empty;
+    public string? CurrentSuiteIdentity { get; init; }
+    public string? CurrentSuiteRunId { get; init; }
+    public int? CurrentSuiteCaseIndex { get; init; }
+    public string? CurrentSuiteNodeId { get; init; }
 }
 
 public static class ResumeTaskScheduler

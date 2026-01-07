@@ -582,6 +582,12 @@ public partial class RunViewModel : ViewModelBase
             return;
         }
 
+        if (cases.Any(c => c.Status == RunStatus.RebootRequired))
+        {
+            iterationVm.Status = RunStatus.RebootRequired;
+            return;
+        }
+
         if (cases.Any(c => c.Status == RunStatus.Aborted))
         {
             iterationVm.Status = RunStatus.Aborted;
