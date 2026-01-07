@@ -46,45 +46,99 @@ public sealed class SuiteOrchestrator
         string? parentPlanRunId = null,
         string? parentNodeId = null,
         string? parentPlanRunFolder = null,
-        TestPlanManifest? planManifest = null)
+        TestPlanManifest? planManifest = null,
+        RebootResumeSession? resumeSession = null)
     {
         var startTime = DateTime.UtcNow;
-        var groupRunId = GroupRunFolderManager.GenerateGroupRunId("S");
         var folderManager = new GroupRunFolderManager(_runsRoot);
-        var groupRunFolder = folderManager.CreateGroupRunFolder(groupRunId);
+        var isResume = resumeSession is not null;
+        var groupRunId = isResume ? resumeSession!.RunId : GroupRunFolderManager.GenerateGroupRunId("S");
+        var groupRunFolder = isResume
+            ? folderManager.GetExistingGroupRunFolder(resumeSession!.RunFolder)
+            : folderManager.CreateGroupRunFolder(groupRunId);
+        var resumeNodeIndex = isResume ? resumeSession!.CurrentNodeIndex : 0;
+        var resumeRunId = isResume ? resumeSession!.CurrentChildRunId : null;
+        var resumeNextPhase = isResume ? resumeSession!.NextPhase : 0;
 
         var childRunIds = new List<string>();
         var childResults = new List<TestCaseResult>();
         var statusCounts = new StatusCounts();
 
+        if (isResume && string.IsNullOrEmpty(resumeRunId))
+        {
+            throw new InvalidOperationException("Resume session is missing the current case run ID.");
+        }
+
         try
         {
             // Write initial artifacts
-            var manifestSnapshot = new GroupManifestSnapshot
-            {
-                SchemaVersion = "1.5.0",
-                RunType = RunType.TestSuite,
-                SuiteId = suite.Manifest.Id,
-                SuiteVersion = suite.Manifest.Version,
-                PlanId = planId,
-                PlanVersion = planVersion,
-                OriginalManifest = JsonSerializer.SerializeToElement(suite.Manifest, JsonDefaults.WriteOptions),
-                ResolvedAt = DateTime.UtcNow.ToString("o"),
-                EngineVersion = "1.0.0"
-            };
-            await folderManager.WriteManifestAsync(groupRunFolder, manifestSnapshot);
-
             var controls = suite.Manifest.Controls ?? new SuiteControls();
-            await folderManager.WriteControlsAsync(groupRunFolder, controls);
-
-            // Compute effective environment
             var envResolver = new EnvironmentResolver();
             var effectiveEnv = planManifest != null
                 ? envResolver.ComputeSuiteEnvironment(planManifest, suite.Manifest, runRequest.EnvironmentOverrides)
                 : envResolver.ComputeSuiteEnvironment(suite.Manifest, runRequest.EnvironmentOverrides);
-            await folderManager.WriteEnvironmentAsync(groupRunFolder, effectiveEnv);
 
-            await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
+            if (!isResume)
+            {
+                var manifestSnapshot = new GroupManifestSnapshot
+                {
+                    SchemaVersion = "1.5.0",
+                    RunType = RunType.TestSuite,
+                    SuiteId = suite.Manifest.Id,
+                    SuiteVersion = suite.Manifest.Version,
+                    PlanId = planId,
+                    PlanVersion = planVersion,
+                    OriginalManifest = JsonSerializer.SerializeToElement(suite.Manifest, JsonDefaults.WriteOptions),
+                    ResolvedAt = DateTime.UtcNow.ToString("o"),
+                    EngineVersion = "1.0.0"
+                };
+                await folderManager.WriteManifestAsync(groupRunFolder, manifestSnapshot);
+                await folderManager.WriteControlsAsync(groupRunFolder, controls);
+                await folderManager.WriteEnvironmentAsync(groupRunFolder, effectiveEnv);
+                await folderManager.WriteRunRequestAsync(groupRunFolder, runRequest);
+            }
+
+            if (isResume)
+            {
+                await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestSuite.Resumed",
+                    Level = "info",
+                    Message = $"Test suite '{suite.Manifest.Id}' (version {suite.Manifest.Version}) execution resumed after reboot",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["suiteId"] = suite.Manifest.Id,
+                        ["suiteVersion"] = suite.Manifest.Version,
+                        ["runId"] = groupRunId,
+                        ["planId"] = planId,
+                        ["planVersion"] = planVersion,
+                        ["parentRunId"] = parentPlanRunId,
+                        ["resumeFromNodeIndex"] = resumeNodeIndex
+                    }
+                });
+
+                if (!string.IsNullOrEmpty(parentPlanRunFolder))
+                {
+                    await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
+                    {
+                        Timestamp = DateTime.UtcNow.ToString("o"),
+                        Code = "TestSuite.Resumed",
+                        Level = "info",
+                        Message = $"Test suite '{suite.Manifest.Id}' (version {suite.Manifest.Version}) execution resumed after reboot",
+                        Data = new Dictionary<string, object?>
+                        {
+                            ["suiteId"] = suite.Manifest.Id,
+                            ["suiteVersion"] = suite.Manifest.Version,
+                            ["runId"] = groupRunId,
+                            ["planId"] = planId,
+                            ["planVersion"] = planVersion,
+                            ["parentRunId"] = parentPlanRunId,
+                            ["resumeFromNodeIndex"] = resumeNodeIndex
+                        }
+                    });
+                }
+            }
 
             // Record suite started event
             await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
@@ -152,25 +206,33 @@ public sealed class SuiteOrchestrator
             // when continueOnFailure=false and a non-Passed status occurs
             var shouldStopPipeline = false;
 
-            // Report planned nodes (only report once for first iteration)
-            // When under a plan, report with parent suite information for nested display
-            var plannedNodes = new List<PlannedNode>();
-            foreach (var node in suite.Manifest.TestCases)
+            if (isResume)
             {
-                var (testCaseManifest, _, _) = ResolveTestCase(node, suite.ManifestPath, refResolver);
-                plannedNodes.Add(new PlannedNode
-                {
-                    NodeId = node.NodeId,
-                    TestId = testCaseManifest?.Id ?? "unknown",
-                    TestVersion = testCaseManifest?.Version ?? "unknown",
-                    NodeType = RunType.TestCase,
-                    ParentNodeId = parentNodeId
-                });
+                LoadExistingSuiteState(groupRunFolder, childRunIds, childResults, statusCounts, resumeRunId);
             }
-            _reporter.OnRunPlanned(
-                string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId, 
-                RunType.TestSuite, 
-                plannedNodes);
+
+            if (!isResume)
+            {
+                // Report planned nodes (only report once for first iteration)
+                // When under a plan, report with parent suite information for nested display
+                var plannedNodes = new List<PlannedNode>();
+                foreach (var node in suite.Manifest.TestCases)
+                {
+                    var (testCaseManifest, _, _) = ResolveTestCase(node, suite.ManifestPath, refResolver);
+                    plannedNodes.Add(new PlannedNode
+                    {
+                        NodeId = node.NodeId,
+                        TestId = testCaseManifest?.Id ?? "unknown",
+                        TestVersion = testCaseManifest?.Version ?? "unknown",
+                        NodeType = RunType.TestCase,
+                        ParentNodeId = parentNodeId
+                    });
+                }
+                _reporter.OnRunPlanned(
+                    string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
+                    RunType.TestSuite,
+                    plannedNodes);
+            }
 
             for (var iteration = 0; iteration < repeat; iteration++)
             {
@@ -178,8 +240,10 @@ public sealed class SuiteOrchestrator
                 if (shouldStopPipeline)
                     break;
 
-                foreach (var node in suite.Manifest.TestCases)
+                var startNodeIndex = isResume && iteration == 0 ? resumeNodeIndex : 0;
+                for (var nodeIndex = startNodeIndex; nodeIndex < suite.Manifest.TestCases.Count; nodeIndex++)
                 {
+                    var node = suite.Manifest.TestCases[nodeIndex];
                     if (_cancellationToken.IsCancellationRequested)
                     {
                         break;
@@ -265,12 +329,53 @@ public sealed class SuiteOrchestrator
                         node.NodeId);
 
                     var nodeStartTime = DateTime.UtcNow;
+                    var isResumeNode = isResume && iteration == 0 && nodeIndex == resumeNodeIndex;
 
                     try
                     {
                         for (var attempt = 0; attempt < attempts; attempt++)
                         {
-                            var runId = TestCaseRunner.GenerateRunId();
+                            var runId = isResumeNode && attempt == 0 && !string.IsNullOrEmpty(resumeRunId)
+                                ? resumeRunId
+                                : TestCaseRunner.GenerateRunId();
+
+                        if (isResumeNode)
+                        {
+                            await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+                            {
+                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Code = "TestCase.Resumed",
+                                Level = "info",
+                                Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') execution resumed after reboot",
+                                Data = new Dictionary<string, object?>
+                                {
+                                    ["nodeId"] = node.NodeId,
+                                    ["testId"] = testCaseManifest.Id,
+                                    ["testVersion"] = testCaseManifest.Version,
+                                    ["runId"] = runId,
+                                    ["phase"] = resumeNextPhase
+                                }
+                            });
+
+                            if (!string.IsNullOrEmpty(parentPlanRunFolder))
+                            {
+                                await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
+                                {
+                                    Timestamp = DateTime.UtcNow.ToString("o"),
+                                    Code = "TestCase.Resumed",
+                                    Level = "info",
+                                    Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') execution resumed after reboot",
+                                    Data = new Dictionary<string, object?>
+                                    {
+                                        ["nodeId"] = node.NodeId,
+                                        ["testId"] = testCaseManifest.Id,
+                                        ["testVersion"] = testCaseManifest.Version,
+                                        ["runId"] = runId,
+                                        ["phase"] = resumeNextPhase
+                                    }
+                                });
+                            }
+                        }
 
                         // Forward test case started event to suite events.jsonl
                         await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
@@ -306,10 +411,12 @@ public sealed class SuiteOrchestrator
                                 }
                             });
                         }
+
                         var context = new RunContext
                         {
                             RunId = runId,
-                            Phase = 0,
+                            Phase = isResumeNode ? resumeNextPhase : 0,
+                            IsResume = isResumeNode,
                             Manifest = testCaseManifest,
                             TestCasePath = testCasePath,
                             EffectiveInputs = inputResult.EffectiveInputs,
@@ -326,22 +433,112 @@ public sealed class SuiteOrchestrator
                             PlanVersion = planVersion,
                             ParentRunId = groupRunId,
                             InputTemplates = inputResult.InputTemplates,
-                            RunnerExecutablePath = runnerExecutablePath
+                            RunnerExecutablePath = runnerExecutablePath,
+                            RunFolderPath = isResumeNode ? Path.Combine(_runsRoot, runId) : null,
+                            IsTopLevel = false
                         };
 
                         // Write children.jsonl entry BEFORE execution so UI can start tailing immediately
-                        // Using Passed as placeholder; will be overwritten after execution
+                        // Use Running placeholder; will be overwritten after execution
                         await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
                         {
                             RunId = runId,
                             NodeId = node.NodeId,
                             TestId = testCaseManifest.Id,
                             TestVersion = testCaseManifest.Version,
-                            Status = RunStatus.Passed
+                            Status = RunStatus.Running
                         });
 
                         nodeResult = await runner.ExecuteAsync(context);
-                        childRunIds.Add(runId);
+                        TrackChildRunId(childRunIds, runId);
+
+                        if (nodeResult.Status == RunStatus.RebootRequired)
+                        {
+                            _reporter.OnNodeFinished(
+                                string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
+                                new NodeFinishedState
+                                {
+                                    NodeId = node.NodeId,
+                                    Status = RunStatus.RebootRequired,
+                                    StartTime = nodeStartTime,
+                                    EndTime = DateTime.UtcNow,
+                                    Message = nodeResult.Reboot?.Reason,
+                                    ParentNodeId = parentNodeId
+                                });
+
+                            await folderManager.AppendChildAsync(groupRunFolder, new ChildEntry
+                            {
+                                RunId = runId,
+                                NodeId = node.NodeId,
+                                TestId = testCaseManifest.Id,
+                                TestVersion = testCaseManifest.Version,
+                                Status = RunStatus.RebootRequired
+                            });
+
+                            await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
+                            {
+                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Code = "TestCase.RebootRequested",
+                                Level = "warning",
+                                Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') requested a reboot.",
+                                Data = new Dictionary<string, object?>
+                                {
+                                    ["nodeId"] = node.NodeId,
+                                    ["testId"] = testCaseManifest.Id,
+                                    ["testVersion"] = testCaseManifest.Version,
+                                    ["runId"] = runId,
+                                    ["nextPhase"] = nodeResult.Reboot?.NextPhase,
+                                    ["reason"] = nodeResult.Reboot?.Reason
+                                }
+                            });
+
+                            if (!string.IsNullOrEmpty(parentPlanRunFolder))
+                            {
+                                await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
+                                {
+                                    Timestamp = DateTime.UtcNow.ToString("o"),
+                                    Code = "TestCase.RebootRequested",
+                                    Level = "warning",
+                                    Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') requested a reboot.",
+                                    Data = new Dictionary<string, object?>
+                                    {
+                                        ["nodeId"] = node.NodeId,
+                                        ["testId"] = testCaseManifest.Id,
+                                        ["testVersion"] = testCaseManifest.Version,
+                                        ["runId"] = runId,
+                                        ["nextPhase"] = nodeResult.Reboot?.NextPhase,
+                                        ["reason"] = nodeResult.Reboot?.Reason
+                                    }
+                                });
+                            }
+
+                            await HandleSuiteRebootAsync(
+                                suite,
+                                planId,
+                                planVersion,
+                                parentPlanRunId,
+                                parentPlanRunFolder,
+                                groupRunId,
+                                groupRunFolder,
+                                nodeIndex,
+                                node.NodeId,
+                                runId,
+                                nodeResult.Reboot,
+                                runnerExecutablePath);
+
+                            var rebootResult = BuildRebootResult(
+                                suite,
+                                planId,
+                                planVersion,
+                                groupRunId,
+                                startTime,
+                                childRunIds,
+                                childResults,
+                                statusCounts,
+                                nodeResult.Reboot);
+                            await folderManager.WriteResultAsync(groupRunFolder, rebootResult);
+                            return rebootResult;
+                        }
 
                         // Forward test case events to suite events.jsonl
                         await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
@@ -529,6 +726,7 @@ public sealed class SuiteOrchestrator
             {
                 SchemaVersion = "1.5.0",
                 RunType = RunType.TestSuite,
+                RunId = groupRunId,
                 SuiteId = suite.Manifest.Id,
                 SuiteVersion = suite.Manifest.Version,
                 PlanId = planId,
@@ -615,6 +813,7 @@ public sealed class SuiteOrchestrator
             {
                 SchemaVersion = "1.5.0",
                 RunType = RunType.TestSuite,
+                RunId = groupRunId,
                 SuiteId = suite.Manifest.Id,
                 SuiteVersion = suite.Manifest.Version,
                 PlanId = planId,
@@ -693,7 +892,224 @@ public sealed class SuiteOrchestrator
             case RunStatus.Error: counts.Error++; break;
             case RunStatus.Timeout: counts.Timeout++; break;
             case RunStatus.Aborted: counts.Aborted++; break;
+            case RunStatus.Planned:
+            case RunStatus.Running:
+            case RunStatus.RebootRequired:
+                break;
         }
+    }
+
+    private static void TrackChildRunId(List<string> childRunIds, string runId)
+    {
+        if (!childRunIds.Contains(runId))
+        {
+            childRunIds.Add(runId);
+        }
+    }
+
+    private static bool IsFinalStatus(RunStatus status)
+    {
+        return status == RunStatus.Passed
+               || status == RunStatus.Failed
+               || status == RunStatus.Error
+               || status == RunStatus.Timeout
+               || status == RunStatus.Aborted;
+    }
+
+    private static void LoadExistingSuiteState(
+        string groupRunFolder,
+        List<string> childRunIds,
+        List<TestCaseResult> childResults,
+        StatusCounts statusCounts,
+        string? resumeRunId)
+    {
+        var childrenPath = Path.Combine(groupRunFolder, "children.jsonl");
+        if (!File.Exists(childrenPath))
+        {
+            return;
+        }
+
+        var latestStatuses = new Dictionary<string, RunStatus>();
+        foreach (var line in File.ReadLines(childrenPath))
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            try
+            {
+                var entry = JsonDefaults.Deserialize<ChildEntry>(line);
+                if (entry is null || string.IsNullOrWhiteSpace(entry.RunId))
+                {
+                    continue;
+                }
+
+                TrackChildRunId(childRunIds, entry.RunId);
+                latestStatuses[entry.RunId] = entry.Status;
+            }
+            catch
+            {
+                // Ignore malformed lines.
+            }
+        }
+
+        foreach (var (runId, status) in latestStatuses)
+        {
+            if (string.Equals(runId, resumeRunId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (!IsFinalStatus(status))
+            {
+                continue;
+            }
+
+            childResults.Add(new TestCaseResult
+            {
+                RunType = RunType.TestCase,
+                Status = status
+            });
+            UpdateCounts(statusCounts, status);
+        }
+    }
+
+    private async Task HandleSuiteRebootAsync(
+        DiscoveredTestSuite suite,
+        string? planId,
+        string? planVersion,
+        string? parentPlanRunId,
+        string? parentPlanRunFolder,
+        string groupRunId,
+        string groupRunFolder,
+        int nodeIndex,
+        string nodeId,
+        string childRunId,
+        RebootInfo? rebootInfo,
+        string runnerExecutablePath)
+    {
+        if (rebootInfo is null)
+        {
+            throw new InvalidOperationException("Reboot details are required to resume the suite.");
+        }
+
+        var resumeToken = Guid.NewGuid().ToString("N");
+        var session = new RebootResumeSession
+        {
+            RunId = groupRunId,
+            EntityType = "TestSuite",
+            EntityId = suite.Manifest.Id,
+            CurrentNodeIndex = nodeIndex,
+            CurrentNodeId = nodeId,
+            CurrentChildRunId = childRunId,
+            NextPhase = rebootInfo.NextPhase,
+            Reason = rebootInfo.Reason,
+            OriginTestId = rebootInfo.OriginTestId,
+            DelaySec = rebootInfo.DelaySec,
+            ResumeToken = resumeToken,
+            ResumeCount = 0,
+            State = "PendingResume",
+            RunFolder = groupRunFolder,
+            GroupContext = new ResumeGroupContext
+            {
+                RunsRoot = _runsRoot,
+                AssetsRoot = _assetsRoot,
+                CasesRoot = _discovery.ResolvedTestCaseRoot,
+                SuitesRoot = _discovery.ResolvedTestSuiteRoot,
+                PlansRoot = _discovery.ResolvedTestPlanRoot
+            }
+        };
+
+        await session.SaveAsync();
+
+        await AppendSuiteRebootEventAsync(
+            suite,
+            planId,
+            planVersion,
+            parentPlanRunId,
+            parentPlanRunFolder,
+            groupRunId,
+            groupRunFolder,
+            rebootInfo);
+
+        if (string.IsNullOrEmpty(parentPlanRunId))
+        {
+            ResumeTaskScheduler.CreateResumeTask(groupRunId, resumeToken, runnerExecutablePath, _runsRoot);
+            RebootExecutor.RestartMachine(rebootInfo.DelaySec);
+            Environment.Exit(0);
+        }
+    }
+
+    private async Task AppendSuiteRebootEventAsync(
+        DiscoveredTestSuite suite,
+        string? planId,
+        string? planVersion,
+        string? parentPlanRunId,
+        string? parentPlanRunFolder,
+        string groupRunId,
+        string groupRunFolder,
+        RebootInfo rebootInfo)
+    {
+        var entry = new EventEntry
+        {
+            Timestamp = DateTime.UtcNow.ToString("o"),
+            Code = "TestSuite.RebootRequested",
+            Level = "warning",
+            Message = $"Test suite '{suite.Manifest.Id}' requested a reboot.",
+            Data = new Dictionary<string, object?>
+            {
+                ["suiteId"] = suite.Manifest.Id,
+                ["suiteVersion"] = suite.Manifest.Version,
+                ["runId"] = groupRunId,
+                ["planId"] = planId,
+                ["planVersion"] = planVersion,
+                ["parentRunId"] = parentPlanRunId,
+                ["nextPhase"] = rebootInfo.NextPhase,
+                ["reason"] = rebootInfo.Reason,
+                ["originTestId"] = rebootInfo.OriginTestId
+            }
+        };
+
+        var folderManager = new GroupRunFolderManager(_runsRoot);
+        await folderManager.AppendEventAsync(groupRunFolder, entry);
+
+        if (!string.IsNullOrEmpty(parentPlanRunFolder))
+        {
+            await folderManager.AppendEventAsync(parentPlanRunFolder, entry);
+        }
+    }
+
+    private static GroupResult BuildRebootResult(
+        DiscoveredTestSuite suite,
+        string? planId,
+        string? planVersion,
+        string groupRunId,
+        DateTime startTime,
+        List<string> childRunIds,
+        List<TestCaseResult> childResults,
+        StatusCounts statusCounts,
+        RebootInfo? rebootInfo)
+    {
+        var endTime = DateTime.UtcNow;
+        statusCounts.Total = childResults.Count;
+
+        return new GroupResult
+        {
+            SchemaVersion = "1.5.0",
+            RunType = RunType.TestSuite,
+            RunId = groupRunId,
+            SuiteId = suite.Manifest.Id,
+            SuiteVersion = suite.Manifest.Version,
+            PlanId = planId,
+            PlanVersion = planVersion,
+            Status = RunStatus.RebootRequired,
+            StartTime = startTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            Counts = statusCounts,
+            ChildRunIds = new List<string>(childRunIds),
+            Reboot = rebootInfo
+        };
     }
 
     /// <summary>
@@ -736,6 +1152,9 @@ public sealed class SuiteOrchestrator
     {
         if (wasAborted)
             return RunStatus.Aborted;
+
+        if (results.Any(r => r.Status == RunStatus.RebootRequired))
+            return RunStatus.RebootRequired;
 
         // Per spec section 13.4: Error > Timeout > Failed > Passed
         if (results.Any(r => r.Status == RunStatus.Error))

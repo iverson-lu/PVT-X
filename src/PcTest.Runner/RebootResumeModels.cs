@@ -145,14 +145,20 @@ public sealed class RebootResumeSession
 {
     public string RunId { get; init; } = string.Empty;
     public string EntityType { get; init; } = string.Empty;
-    public string EntityId { get; init; } = string.Empty;
-    public string? CurrentCaseId { get; init; }
+    public string? EntityId { get; init; }
+    public string? CurrentNodeId { get; init; }
+    public string? CurrentChildRunId { get; init; }
+    public int CurrentNodeIndex { get; init; }
     public int NextPhase { get; init; }
+    public string Reason { get; init; } = string.Empty;
+    public string? OriginTestId { get; init; }
+    public int? DelaySec { get; init; }
     public string ResumeToken { get; init; } = string.Empty;
     public int ResumeCount { get; init; }
     public string State { get; init; } = "PendingResume";
     public string RunFolder { get; init; } = string.Empty;
-    public ResumeRunContext Context { get; init; } = new();
+    public ResumeRunContext? Context { get; init; }
+    public ResumeGroupContext? GroupContext { get; init; }
 
     public static string GetSessionPath(string runFolder) => Path.Combine(runFolder, "session.json");
 
@@ -202,6 +208,16 @@ public sealed class ResumeRunContext
     public Dictionary<string, JsonElement>? InputTemplates { get; init; }
     public string? RunnerExecutablePath { get; init; }
     public string? RunFolderPath { get; init; }
+    public bool IsTopLevel { get; init; }
+}
+
+public sealed class ResumeGroupContext
+{
+    public string RunsRoot { get; init; } = string.Empty;
+    public string AssetsRoot { get; init; } = string.Empty;
+    public string CasesRoot { get; init; } = string.Empty;
+    public string SuitesRoot { get; init; } = string.Empty;
+    public string PlansRoot { get; init; } = string.Empty;
 }
 
 public static class ResumeContextConverter
@@ -228,7 +244,8 @@ public static class ResumeContextConverter
             ParentRunId = context.ParentRunId,
             InputTemplates = context.InputTemplates,
             RunnerExecutablePath = context.RunnerExecutablePath,
-            RunFolderPath = runFolder
+            RunFolderPath = runFolder,
+            IsTopLevel = context.IsTopLevel
         };
     }
 
@@ -257,7 +274,8 @@ public static class ResumeContextConverter
             Phase = phase,
             IsResume = isResume,
             RunnerExecutablePath = resumeContext.RunnerExecutablePath ?? string.Empty,
-            RunFolderPath = resumeContext.RunFolderPath
+            RunFolderPath = resumeContext.RunFolderPath,
+            IsTopLevel = resumeContext.IsTopLevel
         };
     }
 }

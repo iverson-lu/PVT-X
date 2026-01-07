@@ -119,4 +119,9 @@ public sealed class RunContext
     /// Whether this is a standalone run (not part of suite/plan).
     /// </summary>
     public bool IsStandalone => string.IsNullOrEmpty(NodeId) && string.IsNullOrEmpty(SuiteId);
+
+    /// <summary>
+    /// Whether this runner is the top-level orchestrator responsible for rebooting.
+    /// </summary>
+    public bool IsTopLevel { get; init; } = true;
 }

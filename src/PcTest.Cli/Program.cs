@@ -351,72 +351,40 @@ public static class Program
             if (resumeCount > 1)
             {
                 ResumeTaskScheduler.DeleteResumeTask(runId);
-                var finalizedSession = new RebootResumeSession
-                {
-                    RunId = session.RunId,
-                    EntityType = session.EntityType,
-                    EntityId = session.EntityId,
-                    CurrentCaseId = session.CurrentCaseId,
-                    NextPhase = session.NextPhase,
-                    ResumeToken = session.ResumeToken,
-                    ResumeCount = resumeCount,
-                    State = "Finalized",
-                    RunFolder = session.RunFolder,
-                    Context = session.Context
-                };
-                await finalizedSession.SaveAsync();
+                await WriteSessionStateAsync(session, resumeCount, "Finalized");
                 throw new InvalidOperationException("Resume loop detected.");
             }
 
-            var resumingSession = new RebootResumeSession
-            {
-                RunId = session.RunId,
-                EntityType = session.EntityType,
-                EntityId = session.EntityId,
-                CurrentCaseId = session.CurrentCaseId,
-                NextPhase = session.NextPhase,
-                ResumeToken = session.ResumeToken,
-                ResumeCount = resumeCount,
-                State = "Resuming",
-                RunFolder = session.RunFolder,
-                Context = session.Context
-            };
-            await resumingSession.SaveAsync();
-
-            var context = ResumeContextConverter.ToRunContext(session.Context, session.RunId, session.NextPhase, true);
-            using var cts = new CancellationTokenSource();
-            var runner = new TestCaseRunner(cts.Token);
-            PcTest.Contracts.Results.TestCaseResult? result = null;
-
+            await WriteSessionStateAsync(session, resumeCount, "Resuming");
+            object? result = null;
             try
             {
-                result = await runner.ExecuteAsync(context);
+                result = session.EntityType switch
+                {
+                    "TestCase" => await ResumeTestCaseAsync(session, resolvedRunsRoot),
+                    "TestSuite" => await ResumeSuiteAsync(session),
+                    "TestPlan" => await ResumePlanAsync(session),
+                    _ => throw new InvalidOperationException($"Unknown session entity type '{session.EntityType}'.")
+                };
             }
             finally
             {
                 ResumeTaskScheduler.DeleteResumeTask(runId);
-                var finalized = new RebootResumeSession
-                {
-                    RunId = session.RunId,
-                    EntityType = session.EntityType,
-                    EntityId = session.EntityId,
-                    CurrentCaseId = session.CurrentCaseId,
-                    NextPhase = session.NextPhase,
-                    ResumeToken = session.ResumeToken,
-                    ResumeCount = resumeCount,
-                    State = "Finalized",
-                    RunFolder = session.RunFolder,
-                    Context = session.Context
-                };
-                await finalized.SaveAsync();
+                await WriteSessionStateAsync(session, resumeCount, "Finalized");
             }
 
-            if (result is not null)
+            if (result is TestCaseResult testCaseResult)
             {
-                AppendIndexEntryIfMissing(resolvedRunsRoot, session.RunId, result, session.Context);
+                AppendIndexEntryIfMissing(resolvedRunsRoot, session.RunId, testCaseResult, session.Context!);
                 Console.WriteLine("=== Resume Result ===");
-                Console.WriteLine(JsonDefaults.Serialize(result));
-                Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+                Console.WriteLine(JsonDefaults.Serialize(testCaseResult));
+                Environment.ExitCode = testCaseResult.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+            }
+            else if (result is GroupResult groupResult)
+            {
+                Console.WriteLine("=== Resume Result ===");
+                Console.WriteLine(JsonDefaults.Serialize(groupResult));
+                Environment.ExitCode = groupResult.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
             }
         }
         catch (Exception ex)
@@ -424,6 +392,143 @@ public static class Program
             Console.Error.WriteLine($"Resume failed: {ex.Message}");
             Environment.ExitCode = 1;
         }
+    }
+
+    private static async Task WriteSessionStateAsync(
+        RebootResumeSession session,
+        int resumeCount,
+        string state)
+    {
+        var updated = new RebootResumeSession
+        {
+            RunId = session.RunId,
+            EntityType = session.EntityType,
+            EntityId = session.EntityId,
+            CurrentNodeId = session.CurrentNodeId,
+            CurrentChildRunId = session.CurrentChildRunId,
+            CurrentNodeIndex = session.CurrentNodeIndex,
+            NextPhase = session.NextPhase,
+            Reason = session.Reason,
+            OriginTestId = session.OriginTestId,
+            DelaySec = session.DelaySec,
+            ResumeToken = session.ResumeToken,
+            ResumeCount = resumeCount,
+            State = state,
+            RunFolder = session.RunFolder,
+            Context = session.Context,
+            GroupContext = session.GroupContext
+        };
+        await updated.SaveAsync();
+    }
+
+    private static async Task<TestCaseResult> ResumeTestCaseAsync(
+        RebootResumeSession session,
+        string resolvedRunsRoot)
+    {
+        if (session.Context is null)
+        {
+            throw new InvalidOperationException("Resume context is missing for TestCase session.");
+        }
+
+        var context = ResumeContextConverter.ToRunContext(session.Context, session.RunId, session.NextPhase, true);
+        using var cts = new CancellationTokenSource();
+        var runner = new TestCaseRunner(cts.Token);
+        var result = await runner.ExecuteAsync(context);
+        AppendIndexEntryIfMissing(resolvedRunsRoot, session.RunId, result, session.Context);
+        return result;
+    }
+
+    private static async Task<GroupResult> ResumeSuiteAsync(RebootResumeSession session)
+    {
+        if (session.GroupContext is null)
+        {
+            throw new InvalidOperationException("Group context is missing for TestSuite session.");
+        }
+
+        var runRequest = await LoadRunRequestAsync(session.RunFolder);
+        var suiteIdentity = session.EntityId ?? runRequest.Suite ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(suiteIdentity))
+        {
+            throw new InvalidOperationException("Suite identity is missing in session.");
+        }
+
+        var engine = new TestEngine();
+        engine.Configure(
+            session.GroupContext.CasesRoot,
+            session.GroupContext.SuitesRoot,
+            session.GroupContext.PlansRoot,
+            session.GroupContext.RunsRoot,
+            session.GroupContext.AssetsRoot);
+        var discovery = engine.Discover();
+
+        if (!discovery.TestSuites.TryGetValue(suiteIdentity, out var suite))
+        {
+            throw new InvalidOperationException($"TestSuite '{suiteIdentity}' not found during resume.");
+        }
+
+        var orchestrator = new SuiteOrchestrator(
+            discovery,
+            session.GroupContext.RunsRoot,
+            session.GroupContext.AssetsRoot,
+            NullExecutionReporter.Instance);
+        return await orchestrator.ExecuteAsync(
+            suite,
+            runRequest,
+            planId: null,
+            planVersion: null,
+            parentPlanRunId: null,
+            parentNodeId: null,
+            parentPlanRunFolder: null,
+            planManifest: null,
+            resumeSession: session);
+    }
+
+    private static async Task<GroupResult> ResumePlanAsync(RebootResumeSession session)
+    {
+        if (session.GroupContext is null)
+        {
+            throw new InvalidOperationException("Group context is missing for TestPlan session.");
+        }
+
+        var runRequest = await LoadRunRequestAsync(session.RunFolder);
+        var planIdentity = session.EntityId ?? runRequest.Plan ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(planIdentity))
+        {
+            throw new InvalidOperationException("Plan identity is missing in session.");
+        }
+
+        var engine = new TestEngine();
+        engine.Configure(
+            session.GroupContext.CasesRoot,
+            session.GroupContext.SuitesRoot,
+            session.GroupContext.PlansRoot,
+            session.GroupContext.RunsRoot,
+            session.GroupContext.AssetsRoot);
+        var discovery = engine.Discover();
+
+        if (!discovery.TestPlans.TryGetValue(planIdentity, out var plan))
+        {
+            throw new InvalidOperationException($"TestPlan '{planIdentity}' not found during resume.");
+        }
+
+        var orchestrator = new PlanOrchestrator(
+            discovery,
+            session.GroupContext.RunsRoot,
+            session.GroupContext.AssetsRoot,
+            NullExecutionReporter.Instance);
+        return await orchestrator.ExecuteAsync(plan, runRequest, session);
+    }
+
+    private static async Task<RunRequest> LoadRunRequestAsync(string runFolder)
+    {
+        var runRequestPath = Path.Combine(runFolder, "runRequest.json");
+        if (!File.Exists(runRequestPath))
+        {
+            return new RunRequest();
+        }
+
+        var json = await File.ReadAllTextAsync(runRequestPath);
+        return JsonDefaults.Deserialize<RunRequest>(json) ?? new RunRequest();
     }
 
     private static string ResolvePath(string path)

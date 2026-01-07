@@ -249,11 +249,14 @@ public class RunStatusToBrushConverter : IValueConverter
         {
             return status switch
             {
+                PcTest.Contracts.RunStatus.Planned => "#9CA3AF", // Light gray
+                PcTest.Contracts.RunStatus.Running => "#3B82F6", // Blue
                 PcTest.Contracts.RunStatus.Passed => "#10B981",  // Green
                 PcTest.Contracts.RunStatus.Failed => "#EF4444",  // Red
                 PcTest.Contracts.RunStatus.Error => "#F59E0B",   // Orange
                 PcTest.Contracts.RunStatus.Timeout => "#F97316", // Orange-red
                 PcTest.Contracts.RunStatus.Aborted => "#6B7280", // Gray
+                PcTest.Contracts.RunStatus.RebootRequired => "#8B5CF6", // Purple
                 _ => "#9CA3AF"  // Light gray
             };
         }
@@ -277,11 +280,14 @@ public class RunStatusToShortTextConverter : IValueConverter
         {
             return status switch
             {
+                PcTest.Contracts.RunStatus.Planned => "Plan",
+                PcTest.Contracts.RunStatus.Running => "Run",
                 PcTest.Contracts.RunStatus.Passed => "Pass",
                 PcTest.Contracts.RunStatus.Failed => "Fail",
                 PcTest.Contracts.RunStatus.Error => "Error",
                 PcTest.Contracts.RunStatus.Timeout => "Time",
                 PcTest.Contracts.RunStatus.Aborted => "Stop",
+                PcTest.Contracts.RunStatus.RebootRequired => "Reboot",
                 _ => "?"
             };
         }
@@ -305,11 +311,14 @@ public class RunStatusToIconConverter : IValueConverter
         {
             return status switch
             {
+                PcTest.Contracts.RunStatus.Planned => "Clock24",
+                PcTest.Contracts.RunStatus.Running => "ArrowClockwise24",
                 PcTest.Contracts.RunStatus.Passed => "CheckmarkCircle24",
                 PcTest.Contracts.RunStatus.Failed => "DismissCircle24",
                 PcTest.Contracts.RunStatus.Error => "ErrorCircle24",
                 PcTest.Contracts.RunStatus.Timeout => "Clock24",
                 PcTest.Contracts.RunStatus.Aborted => "RecordStop24",
+                PcTest.Contracts.RunStatus.RebootRequired => "ArrowClockwise24",
                 _ => "Hourglass24"
             };
         }
@@ -602,4 +611,3 @@ public class EventLevelToIconConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-
