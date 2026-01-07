@@ -58,6 +58,21 @@ public sealed class RunContext
     public int? TimeoutSec { get; init; }
 
     /// <summary>
+    /// Phase for reboot-resume scenarios. Default is 0 for initial execution.
+    /// </summary>
+    public int Phase { get; init; }
+
+    /// <summary>
+    /// Existing run folder path for resume scenarios.
+    /// </summary>
+    public string? ExistingRunFolder { get; init; }
+
+    /// <summary>
+    /// Indicates this execution is resuming after a reboot.
+    /// </summary>
+    public bool IsResume { get; init; }
+
+    /// <summary>
     /// Root folder for runs output.
     /// </summary>
     public string RunsRoot { get; init; } = string.Empty;

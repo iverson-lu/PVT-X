@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.Text.Json;
+using System.Linq;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
 using PcTest.Contracts.Validation;
@@ -12,6 +13,11 @@ public static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        if (args.Any(arg => string.Equals(arg, "--resume", StringComparison.OrdinalIgnoreCase)))
+        {
+            return await HandleResume(args);
+        }
+
         var rootCommand = new RootCommand("PC Test System CLI");
 
         // Common options
@@ -79,6 +85,77 @@ public static class Program
         rootCommand.AddCommand(runCommand);
 
         return await rootCommand.InvokeAsync(args);
+    }
+
+    private static async Task<int> HandleResume(string[] args)
+    {
+        var runId = GetOptionValue(args, "--runId");
+        var token = GetOptionValue(args, "--token");
+        var runsRoot = GetOptionValue(args, "--runsRoot") ?? "Runs";
+
+        if (string.IsNullOrWhiteSpace(runId) || string.IsNullOrWhiteSpace(token))
+        {
+            Console.Error.WriteLine("Resume requires --runId and --token.");
+            return 1;
+        }
+
+        try
+        {
+            var resolvedRunsRoot = ResolvePath(runsRoot);
+            var resolvedCasesRoot = ResolvePath("assets/TestCases");
+            var resolvedSuitesRoot = ResolvePath("assets/TestSuites");
+            var resolvedPlansRoot = ResolvePath("assets/TestPlans");
+            var assetsRoot = Directory.GetParent(resolvedCasesRoot)?.FullName ?? "assets";
+
+            var engine = new TestEngine();
+            engine.Configure(
+                resolvedCasesRoot,
+                resolvedSuitesRoot,
+                resolvedPlansRoot,
+                resolvedRunsRoot,
+                assetsRoot);
+
+            using var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (s, e) =>
+            {
+                e.Cancel = true;
+                Console.WriteLine("Aborting resume...");
+                cts.Cancel();
+            };
+
+            var result = await engine.ResumeAsync(runId, token, cts.Token);
+
+            Console.WriteLine();
+            Console.WriteLine("=== Resume Result ===");
+            Console.WriteLine(JsonDefaults.Serialize(result));
+
+            return result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Resume error: {ex.Message}");
+            return 1;
+        }
+    }
+
+    private static string? GetOptionValue(string[] args, string optionName)
+    {
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (!string.Equals(args[i], optionName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (i + 1 < args.Length)
+            {
+                return args[i + 1];
+            }
+
+            return null;
+        }
+
+        return null;
     }
 
     private static void HandleDiscover(

@@ -105,6 +105,15 @@ public sealed class TestEngine
     }
 
     /// <summary>
+    /// Resumes a Test Case run after reboot using a session.json.
+    /// </summary>
+    public async Task<TestCaseResult> ResumeAsync(string runId, string resumeToken, CancellationToken cancellationToken = default)
+    {
+        var executor = new ResumeCaseExecutor(_runsRoot, _reporter, cancellationToken);
+        return await executor.ExecuteAsync(runId, resumeToken);
+    }
+
+    /// <summary>
     /// Executes a standalone Test Case by identity.
     /// </summary>
     public async Task<TestCaseResult> ExecuteStandaloneTestCaseAsync(

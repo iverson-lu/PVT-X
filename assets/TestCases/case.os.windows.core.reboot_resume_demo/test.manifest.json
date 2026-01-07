@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.os.windows.core.reboot_resume_demo",
+  "name": "Reboot Resume Demo",
+  "category": "System",
+  "description": "Demonstrates the reboot-resume control inbox flow using PVTX_PHASE.",
+  "version": "1.0.0",
+  "privilege": "Admin",
+  "timeoutSec": 120,
+  "tags": ["reboot", "resume", "mvp"]
+}
