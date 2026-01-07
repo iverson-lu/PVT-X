@@ -2,8 +2,10 @@ using System.CommandLine;
 using System.Text.Json;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
+using PcTest.Contracts.Results;
 using PcTest.Contracts.Validation;
 using PcTest.Engine;
+using PcTest.Engine.Execution;
 using PcTest.Engine.Discovery;
 using PcTest.Runner;
 
@@ -411,6 +413,7 @@ public static class Program
 
             if (result is not null)
             {
+                AppendIndexEntryIfMissing(resolvedRunsRoot, session.RunId, result, session.Context);
                 Console.WriteLine("=== Resume Result ===");
                 Console.WriteLine(JsonDefaults.Serialize(result));
                 Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
@@ -429,5 +432,55 @@ public static class Program
             return path;
 
         return Path.Combine(Directory.GetCurrentDirectory(), path);
+    }
+
+    private static void AppendIndexEntryIfMissing(
+        string runsRoot,
+        string runId,
+        TestCaseResult result,
+        ResumeRunContext resumeContext)
+    {
+        var indexPath = Path.Combine(runsRoot, "index.jsonl");
+        if (File.Exists(indexPath))
+        {
+            foreach (var line in File.ReadLines(indexPath))
+            {
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var entry = JsonDefaults.Deserialize<IndexEntry>(line);
+                    if (entry is not null && string.Equals(entry.RunId, runId, StringComparison.Ordinal))
+                    {
+                        return;
+                    }
+                }
+                catch
+                {
+                    // Ignore malformed lines.
+                }
+            }
+        }
+
+        var folderManager = new GroupRunFolderManager(runsRoot);
+        folderManager.AppendIndexEntry(new IndexEntry
+        {
+            RunId = runId,
+            RunType = RunType.TestCase,
+            NodeId = resumeContext.NodeId,
+            TestId = result.TestId,
+            TestVersion = result.TestVersion,
+            SuiteId = resumeContext.SuiteId,
+            SuiteVersion = resumeContext.SuiteVersion,
+            PlanId = resumeContext.PlanId,
+            PlanVersion = resumeContext.PlanVersion,
+            ParentRunId = resumeContext.ParentRunId,
+            StartTime = result.StartTime,
+            EndTime = result.EndTime,
+            Status = result.Status
+        });
     }
 }
