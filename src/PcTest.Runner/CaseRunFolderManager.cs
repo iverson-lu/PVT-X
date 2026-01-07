@@ -72,6 +72,23 @@ public sealed class CaseRunFolderManager : IDisposable
     }
 
     /// <summary>
+    /// Gets an existing Case Run Folder for resume scenarios.
+    /// </summary>
+    public string GetExistingRunFolder(string runId)
+    {
+        var folderPath = Path.Combine(_runsRoot, runId);
+        var normalizedPath = PathUtils.NormalizePath(folderPath);
+
+        if (!Directory.Exists(normalizedPath))
+        {
+            throw new InvalidOperationException($"Run folder not found for runId '{runId}' at '{normalizedPath}'.");
+        }
+
+        Directory.CreateDirectory(Path.Combine(normalizedPath, "artifacts"));
+        return normalizedPath;
+    }
+
+    /// <summary>
     /// Validates and creates working directory.
     /// Per spec section 6.5: workingDir must resolve inside Case Run Folder.
     /// </summary>
@@ -171,12 +188,13 @@ public sealed class CaseRunFolderManager : IDisposable
     /// <summary>
     /// Gets or creates a StreamWriter for stdout.log with FileShare.ReadWrite for real-time tailing.
     /// </summary>
-    private StreamWriter GetOrCreateStdoutWriter(string caseRunFolder)
+    private StreamWriter GetOrCreateStdoutWriter(string caseRunFolder, bool append)
     {
         return _stdoutWriters.GetOrAdd(caseRunFolder, folder =>
         {
             var path = Path.Combine(folder, "stdout.log");
-            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            var mode = append ? FileMode.Append : FileMode.Create;
+            var stream = new FileStream(path, mode, FileAccess.Write, FileShare.ReadWrite);
             return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
         });
     }
@@ -184,12 +202,13 @@ public sealed class CaseRunFolderManager : IDisposable
     /// <summary>
     /// Gets or creates a StreamWriter for stderr.log with FileShare.ReadWrite for real-time tailing.
     /// </summary>
-    private StreamWriter GetOrCreateStderrWriter(string caseRunFolder)
+    private StreamWriter GetOrCreateStderrWriter(string caseRunFolder, bool append)
     {
         return _stderrWriters.GetOrAdd(caseRunFolder, folder =>
         {
             var path = Path.Combine(folder, "stderr.log");
-            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            var mode = append ? FileMode.Append : FileMode.Create;
+            var stream = new FileStream(path, mode, FileAccess.Write, FileShare.ReadWrite);
             return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
         });
     }
@@ -201,11 +220,12 @@ public sealed class CaseRunFolderManager : IDisposable
     public async Task AppendStdoutLineAsync(
         string caseRunFolder,
         string? line,
-        IEnumerable<string>? secretValues)
+        IEnumerable<string>? secretValues,
+        bool append = false)
     {
         if (line is null) return;
         var redacted = RedactContent(line, secretValues);
-        var writer = GetOrCreateStdoutWriter(caseRunFolder);
+        var writer = GetOrCreateStdoutWriter(caseRunFolder, append);
         await writer.WriteLineAsync(redacted);
     }
 
@@ -216,11 +236,12 @@ public sealed class CaseRunFolderManager : IDisposable
     public async Task AppendStderrLineAsync(
         string caseRunFolder,
         string? line,
-        IEnumerable<string>? secretValues)
+        IEnumerable<string>? secretValues,
+        bool append = false)
     {
         if (line is null) return;
         var redacted = RedactContent(line, secretValues);
-        var writer = GetOrCreateStderrWriter(caseRunFolder);
+        var writer = GetOrCreateStderrWriter(caseRunFolder, append);
         await writer.WriteLineAsync(redacted);
     }
 

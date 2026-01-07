@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using PcTest.Contracts;
@@ -30,8 +31,12 @@ public sealed class TestCaseRunner
         using var folderManager = new CaseRunFolderManager(context.RunsRoot);
 
         // Create Case Run Folder
-        var caseRunFolder = folderManager.CreateRunFolder(context.RunId);
+        var caseRunFolder = context.IsResume
+            ? folderManager.GetExistingRunFolder(context.RunId)
+            : folderManager.CreateRunFolder(context.RunId);
         var extractedRunId = Path.GetFileName(caseRunFolder);
+        RebootResumeManager.EnsureControlDirectory(caseRunFolder);
+        var controlDir = RebootResumeManager.GetControlDirectory(caseRunFolder);
 
         // Collect secret values for redaction
         var secretValues = context.EffectiveInputs
@@ -56,7 +61,10 @@ public sealed class TestCaseRunner
             ["PVTX_TESTCASE_PATH"] = context.TestCasePath,
             ["PVTX_TESTCASE_NAME"] = context.Manifest.Name,
             ["PVTX_TESTCASE_ID"] = context.Manifest.Id,
-            ["PVTX_TESTCASE_VER"] = context.Manifest.Version
+            ["PVTX_TESTCASE_VER"] = context.Manifest.Version,
+            ["PVTX_RUN_ID"] = context.RunId,
+            ["PVTX_PHASE"] = context.Phase.ToString(CultureInfo.InvariantCulture),
+            ["PVTX_CONTROL_DIR"] = controlDir
         };
 
         // Add PVT-X PowerShell modules to PSModulePath (enables module autoload for common case helpers)
@@ -154,11 +162,11 @@ public sealed class TestCaseRunner
                 if (line is null) return;
                 if (isStderr)
                 {
-                    await folderManager.AppendStderrLineAsync(caseRunFolder, line, secretValues);
+                    await folderManager.AppendStderrLineAsync(caseRunFolder, line, secretValues, context.IsResume);
                 }
                 else
                 {
-                    await folderManager.AppendStdoutLineAsync(caseRunFolder, line, secretValues);
+                    await folderManager.AppendStdoutLineAsync(caseRunFolder, line, secretValues, context.IsResume);
                 }
             }
 
@@ -173,6 +181,32 @@ public sealed class TestCaseRunner
 
             // Flush and close the streaming writers
             folderManager.FlushAndCloseWriters(caseRunFolder);
+
+            var (rebootRequest, rebootError) =
+                await RebootResumeManager.TryLoadRebootRequestAsync(controlDir);
+
+            if (!string.IsNullOrWhiteSpace(rebootError))
+            {
+                var errorResult = CreateErrorResult(context, startTime,
+                    ErrorType.RunnerError, rebootError);
+                await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
+                return errorResult;
+            }
+
+            if (rebootRequest is not null)
+            {
+                try
+                {
+                    await HandleRebootRequestAsync(folderManager, caseRunFolder, context, rebootRequest);
+                }
+                catch (Exception ex)
+                {
+                    var errorResult = CreateErrorResult(context, startTime,
+                        ErrorType.RunnerError, ex.Message);
+                    await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
+                    return errorResult;
+                }
+            }
 
             // Build result
             var endTime = DateTime.UtcNow;
@@ -226,6 +260,11 @@ public sealed class TestCaseRunner
                 }
             });
 
+            if (context.IsResume)
+            {
+                await RebootResumeManager.FinalizeSessionAsync(caseRunFolder, context.RunId);
+            }
+
             return result;
         }
         catch (Exception ex)
@@ -251,8 +290,62 @@ public sealed class TestCaseRunner
                 }
             });
 
+            if (context.IsResume)
+            {
+                await RebootResumeManager.FinalizeSessionAsync(caseRunFolder, context.RunId);
+            }
+
             return errorResult;
         }
+    }
+
+    private static async Task HandleRebootRequestAsync(
+        CaseRunFolderManager folderManager,
+        string caseRunFolder,
+        RunContext context,
+        RebootRequest rebootRequest)
+    {
+        var session = new ResumeSession
+        {
+            RunId = context.RunId,
+            EntityType = "TestCase",
+            EntityId = $"{context.Manifest.Id}@{context.Manifest.Version}",
+            CurrentCaseId = context.Manifest.Id,
+            NextPhase = rebootRequest.NextPhase,
+            ResumeToken = RebootResumeManager.CreateResumeToken(),
+            ResumeCount = 0,
+            State = "PendingResume",
+            EffectiveInputs = context.EffectiveInputs,
+            EffectiveEnvironment = context.EffectiveEnvironment,
+            SecretInputs = context.SecretInputs,
+            SecretEnvVars = context.SecretEnvVars.ToList(),
+            InputTemplates = context.InputTemplates
+        };
+
+        var sessionPath = RebootResumeManager.GetSessionPath(caseRunFolder);
+        await RebootResumeManager.WriteSessionAsync(sessionPath, session);
+        RebootResumeManager.CreateResumeTask(
+            context.RunId,
+            session.ResumeToken,
+            Environment.ProcessPath ?? "PcTest.Cli.exe",
+            context.RunsRoot);
+
+        await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+        {
+            Timestamp = DateTime.UtcNow.ToString("o"),
+            Code = "Runner.RebootRequested",
+            Level = "info",
+            Message = "Reboot requested by test case control inbox.",
+            Data = new Dictionary<string, object?>
+            {
+                ["nextPhase"] = rebootRequest.NextPhase,
+                ["reason"] = rebootRequest.Reason,
+                ["delaySec"] = rebootRequest.Reboot?.DelaySec
+            }
+        });
+
+        RebootResumeManager.RequestReboot(rebootRequest.Reboot?.DelaySec);
+        Environment.Exit(0);
     }
 
     private static CaseManifestSnapshot CreateManifestSnapshot(RunContext context, Dictionary<string, string> enhancedEnvironment)

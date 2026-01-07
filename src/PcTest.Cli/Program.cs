@@ -5,6 +5,7 @@ using PcTest.Contracts.Requests;
 using PcTest.Contracts.Validation;
 using PcTest.Engine;
 using PcTest.Engine.Discovery;
+using PcTest.Runner;
 
 namespace PcTest.Cli;
 
@@ -35,11 +36,28 @@ public static class Program
             () => "Runs",
             "Path to Runs output root");
 
+        var resumeOption = new Option<bool>(
+            "--resume",
+            "Resume a rebooted run");
+
+        var resumeRunIdOption = new Option<string>(
+            "--runId",
+            "Run ID to resume");
+
+        var resumeTokenOption = new Option<string>(
+            "--token",
+            "Resume token");
+
+        rootCommand.AddGlobalOption(casesRootOption);
+        rootCommand.AddGlobalOption(suitesRootOption);
+        rootCommand.AddGlobalOption(plansRootOption);
+        rootCommand.AddGlobalOption(runsRootOption);
+        rootCommand.AddOption(resumeOption);
+        rootCommand.AddOption(resumeRunIdOption);
+        rootCommand.AddOption(resumeTokenOption);
+
         // Discover command
         var discoverCommand = new Command("discover", "Discover test cases, suites, and plans");
-        discoverCommand.AddOption(casesRootOption);
-        discoverCommand.AddOption(suitesRootOption);
-        discoverCommand.AddOption(plansRootOption);
         discoverCommand.SetHandler(HandleDiscover, casesRootOption, suitesRootOption, plansRootOption);
         rootCommand.AddCommand(discoverCommand);
 
@@ -67,16 +85,15 @@ public static class Program
         runCommand.AddOption(idOption);
         runCommand.AddOption(inputsOption);
         runCommand.AddOption(envOption);
-        runCommand.AddOption(casesRootOption);
-        runCommand.AddOption(suitesRootOption);
-        runCommand.AddOption(plansRootOption);
-        runCommand.AddOption(runsRootOption);
-
         runCommand.SetHandler(HandleRun,
             targetOption, idOption, inputsOption, envOption,
             casesRootOption, suitesRootOption, plansRootOption, runsRootOption);
 
         rootCommand.AddCommand(runCommand);
+
+        rootCommand.SetHandler(HandleResume,
+            resumeOption, resumeRunIdOption, resumeTokenOption,
+            casesRootOption, suitesRootOption, plansRootOption, runsRootOption);
 
         return await rootCommand.InvokeAsync(args);
     }
@@ -271,6 +288,105 @@ public static class Program
         catch (ValidationException ex)
         {
             Console.Error.WriteLine($"Execution failed: {ex.Message}");
+            foreach (var error in ex.Result.Errors)
+            {
+                Console.Error.WriteLine($"  - {error}");
+            }
+            Environment.ExitCode = 1;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            Environment.ExitCode = 1;
+        }
+    }
+
+    private static async Task HandleResume(
+        bool resume,
+        string? runId,
+        string? token,
+        string casesRoot,
+        string suitesRoot,
+        string plansRoot,
+        string runsRoot)
+    {
+        if (!resume)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(runId) || string.IsNullOrWhiteSpace(token))
+        {
+            Console.Error.WriteLine("Resume requires --runId and --token.");
+            Environment.ExitCode = 1;
+            return;
+        }
+
+        try
+        {
+            var resolvedRunsRoot = ResolvePath(runsRoot);
+            var sessionPath = Path.Combine(resolvedRunsRoot, runId, "artifacts", "session.json");
+            if (!File.Exists(sessionPath))
+            {
+                Console.Error.WriteLine($"Session file not found: {sessionPath}");
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            var sessionJson = await File.ReadAllTextAsync(sessionPath);
+            var session = JsonDefaults.Deserialize<ResumeSession>(sessionJson);
+            if (session is null)
+            {
+                Console.Error.WriteLine("Failed to parse session.json.");
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            if (!string.Equals(session.ResumeToken, token, StringComparison.Ordinal))
+            {
+                Console.Error.WriteLine("Resume token mismatch.");
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            session.ResumeCount += 1;
+            if (session.ResumeCount > 1)
+            {
+                session.State = "ResumeLoopDetected";
+                await File.WriteAllTextAsync(sessionPath, JsonDefaults.Serialize(session));
+                RebootResumeManager.DeleteResumeTask(session.RunId);
+                Console.Error.WriteLine("Resume loop detected. Aborting.");
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            session.State = "Resuming";
+            await File.WriteAllTextAsync(sessionPath, JsonDefaults.Serialize(session));
+
+            var engine = new TestEngine();
+            var resolvedCasesRoot = ResolvePath(casesRoot);
+            var resolvedSuitesRoot = ResolvePath(suitesRoot);
+            var resolvedPlansRoot = ResolvePath(plansRoot);
+            var assetsRoot = Directory.GetParent(resolvedCasesRoot)?.FullName ?? "assets";
+
+            engine.Configure(
+                resolvedCasesRoot,
+                resolvedSuitesRoot,
+                resolvedPlansRoot,
+                resolvedRunsRoot,
+                assetsRoot);
+
+            var result = await engine.ResumeAsync(session);
+
+            Console.WriteLine();
+            Console.WriteLine("=== Resume Result ===");
+            Console.WriteLine(JsonDefaults.Serialize(result));
+
+            Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+        }
+        catch (ValidationException ex)
+        {
+            Console.Error.WriteLine($"Resume failed: {ex.Message}");
             foreach (var error in ex.Result.Errors)
             {
                 Console.Error.WriteLine($"  - {error}");

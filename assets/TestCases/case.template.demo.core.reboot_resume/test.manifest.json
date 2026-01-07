@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.template.demo.core.reboot_resume",
+  "name": "Template Case Reboot Resume",
+  "description": "Minimal reboot-resume demo. Phase 0 requests reboot, phase 1 completes.",
+  "version": "1.0.0",
+  "category": "Template",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 300,
+  "parameters": [],
+  "tags": ["template", "reboot", "resume"]
+}

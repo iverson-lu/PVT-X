@@ -100,10 +100,13 @@ public sealed class StandaloneCaseExecutor
             EffectiveInputs = inputResult.EffectiveInputs,
             EffectiveEnvironment = effectiveEnv,
             SecretInputs = inputResult.SecretInputs,
+            SecretEnvVars = new HashSet<string>(),
             TimeoutSec = testCase.Manifest.TimeoutSec,
             RunsRoot = _runsRoot,
             AssetsRoot = _assetsRoot,
-            InputTemplates = inputResult.InputTemplates
+            InputTemplates = inputResult.InputTemplates,
+            Phase = 0,
+            IsResume = false
             // NodeId, SuiteId, PlanId, ParentRunId all null for standalone
         };
 
@@ -138,6 +141,85 @@ public sealed class StandaloneCaseExecutor
         });
 
         // Report run finished
+        _reporter.OnRunFinished(runId, result.Status);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Executes a standalone Test Case resume run using a persisted session.
+    /// </summary>
+    public async Task<TestCaseResult> ExecuteResumeAsync(
+        DiscoveredTestCase testCase,
+        ResumeSession session)
+    {
+        var runId = session.RunId;
+        var nodeId = "standalone";
+
+        var plannedNodes = new List<PlannedNode>
+        {
+            new PlannedNode
+            {
+                NodeId = nodeId,
+                TestId = testCase.Manifest.Id,
+                TestVersion = testCase.Manifest.Version,
+                NodeType = RunType.TestCase
+            }
+        };
+        _reporter.OnRunPlanned(runId, RunType.TestCase, plannedNodes);
+
+        var effectiveEnv = session.EffectiveEnvironment ?? new Dictionary<string, string>();
+        var effectiveInputs = session.EffectiveInputs ?? new Dictionary<string, object?>();
+        var secretInputs = session.SecretInputs ?? new Dictionary<string, bool>();
+        var secretEnvVars = session.SecretEnvVars is null
+            ? new HashSet<string>()
+            : new HashSet<string>(session.SecretEnvVars);
+
+        _reporter.OnNodeStarted(runId, nodeId);
+        var startTime = DateTime.UtcNow;
+
+        var runner = new TestCaseRunner(_cancellationToken);
+        var context = new RunContext
+        {
+            RunId = runId,
+            Manifest = testCase.Manifest,
+            TestCasePath = testCase.FolderPath,
+            EffectiveInputs = effectiveInputs,
+            EffectiveEnvironment = effectiveEnv,
+            SecretInputs = secretInputs,
+            SecretEnvVars = secretEnvVars,
+            TimeoutSec = testCase.Manifest.TimeoutSec,
+            RunsRoot = _runsRoot,
+            AssetsRoot = _assetsRoot,
+            InputTemplates = session.InputTemplates,
+            Phase = session.NextPhase,
+            IsResume = true
+        };
+
+        var result = await runner.ExecuteAsync(context);
+        var endTime = DateTime.UtcNow;
+
+        _reporter.OnNodeFinished(runId, new NodeFinishedState
+        {
+            NodeId = nodeId,
+            Status = result.Status,
+            StartTime = startTime,
+            EndTime = endTime,
+            Message = result.Error?.Message
+        });
+
+        var folderManager = new GroupRunFolderManager(_runsRoot);
+        folderManager.AppendIndexEntry(new IndexEntry
+        {
+            RunId = runId,
+            RunType = RunType.TestCase,
+            TestId = testCase.Manifest.Id,
+            TestVersion = testCase.Manifest.Version,
+            StartTime = result.StartTime,
+            EndTime = result.EndTime,
+            Status = result.Status
+        });
+
         _reporter.OnRunFinished(runId, result.Status);
 
         return result;

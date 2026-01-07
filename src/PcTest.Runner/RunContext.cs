@@ -96,6 +96,16 @@ public sealed class RunContext
     public Dictionary<string, JsonElement>? InputTemplates { get; init; }
 
     /// <summary>
+    /// Current execution phase for reboot-resume scenarios.
+    /// </summary>
+    public int Phase { get; init; }
+
+    /// <summary>
+    /// Indicates this run is resuming after a reboot.
+    /// </summary>
+    public bool IsResume { get; init; }
+
+    /// <summary>
     /// Whether this is a standalone run (not part of suite/plan).
     /// </summary>
     public bool IsStandalone => string.IsNullOrEmpty(NodeId) && string.IsNullOrEmpty(SuiteId);

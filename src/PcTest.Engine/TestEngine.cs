@@ -105,6 +105,39 @@ public sealed class TestEngine
     }
 
     /// <summary>
+    /// Resumes a rebooted Test Case run using a persisted session.
+    /// </summary>
+    public async Task<TestCaseResult> ResumeAsync(ResumeSession session, CancellationToken cancellationToken = default)
+    {
+        if (_discovery is null)
+        {
+            _discovery = Discover();
+        }
+
+        if (!string.Equals(session.EntityType, "TestCase", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException(ErrorCodes.RunRequestInvalidFormat,
+                $"Resume is only supported for TestCase runs. Found: {session.EntityType}");
+        }
+
+        if (!_discovery.TestCases.TryGetValue(session.EntityId, out var testCase))
+        {
+            throw new ValidationException(new ValidationError
+            {
+                Code = ErrorCodes.RunRequestIdentityNotFound,
+                Message = $"TestCase '{session.EntityId}' not found",
+                EntityType = "TestCase",
+                Id = IdentityParser.Parse(session.EntityId).Id,
+                Version = IdentityParser.Parse(session.EntityId).Version,
+                Reason = "NotFound"
+            });
+        }
+
+        var executor = new StandaloneCaseExecutor(_discovery, _runsRoot, _assetsRoot, _reporter, cancellationToken);
+        return await executor.ExecuteResumeAsync(testCase, session);
+    }
+
+    /// <summary>
     /// Executes a standalone Test Case by identity.
     /// </summary>
     public async Task<TestCaseResult> ExecuteStandaloneTestCaseAsync(
