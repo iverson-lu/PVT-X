@@ -470,7 +470,7 @@ public sealed class TestCaseRunner
         };
 
         await session.SaveAsync();
-        ResumeTaskScheduler.CreateResumeTask(context.RunId, resumeToken, runnerExecutable);
+        ResumeTaskScheduler.CreateResumeTask(context.RunId, resumeToken, runnerExecutable, context.RunsRoot);
         ArchiveRebootRequest(caseRunFolder);
         RebootExecutor.RestartMachine(rebootRequest.Reboot?.DelaySec);
         Environment.Exit(0);

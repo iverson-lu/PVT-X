@@ -264,7 +264,7 @@ public static class ResumeContextConverter
 
 public static class ResumeTaskScheduler
 {
-    public static void CreateResumeTask(string runId, string resumeToken, string runnerExecutablePath)
+    public static void CreateResumeTask(string runId, string resumeToken, string runnerExecutablePath, string runsRoot)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -272,7 +272,7 @@ public static class ResumeTaskScheduler
         }
 
         var taskName = GetTaskName(runId);
-        var action = $"\"{runnerExecutablePath}\" --resume --runId \"{runId}\" --token \"{resumeToken}\"";
+        var action = $"\"{runnerExecutablePath}\" --resume --runId \"{runId}\" --token \"{resumeToken}\" --runsRoot \"{runsRoot}\"";
 
         var psi = new ProcessStartInfo("schtasks.exe")
         {
