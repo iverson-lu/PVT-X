@@ -4,6 +4,7 @@ using PcTest.Contracts.Results;
 using PcTest.Contracts.Validation;
 using PcTest.Engine.Discovery;
 using PcTest.Engine.Execution;
+using PcTest.Runner;
 
 namespace PcTest.Engine;
 
@@ -102,6 +103,54 @@ public sealed class TestEngine
                 throw new ValidationException(ErrorCodes.RunRequestInvalidFormat,
                     $"Unknown target type: {targetType}");
         }
+    }
+
+    /// <summary>
+    /// Resumes a rebooted run based on a persisted session.
+    /// </summary>
+    public async Task<TestCaseResult> ResumeAsync(RebootResumeSession session, CancellationToken cancellationToken = default)
+    {
+        if (_discovery is null)
+        {
+            _discovery = Discover();
+        }
+
+        if (!string.Equals(session.EntityType, "TestCase", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException(ErrorCodes.RunRequestInvalidFormat,
+                $"Unsupported resume entity type: {session.EntityType}");
+        }
+
+        if (!_discovery.TestCases.TryGetValue(session.EntityId, out var testCase))
+        {
+            throw new ValidationException(new ValidationError
+            {
+                Code = ErrorCodes.RunRequestIdentityNotFound,
+                Message = $"TestCase '{session.EntityId}' not found",
+                EntityType = "TestCase",
+                Id = IdentityParser.Parse(session.EntityId).Id,
+                Version = IdentityParser.Parse(session.EntityId).Version,
+                Reason = "NotFound"
+            });
+        }
+
+        var runRequest = new RunRequest
+        {
+            TestCase = session.EntityId,
+            CaseInputs = session.CaseInputs,
+            EnvironmentOverrides = session.EnvironmentOverrides
+        };
+
+        var resumeInfo = new ResumeInfo
+        {
+            RunId = session.RunId,
+            Phase = session.NextPhase,
+            RunFolderPath = session.RunFolder,
+            AppendOutput = true
+        };
+
+        var executor = new StandaloneCaseExecutor(_discovery, _runsRoot, _assetsRoot, _reporter, cancellationToken);
+        return await executor.ExecuteAsync(testCase, runRequest, resumeInfo);
     }
 
     /// <summary>

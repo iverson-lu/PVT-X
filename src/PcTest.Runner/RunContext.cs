@@ -16,6 +16,21 @@ public sealed class RunContext
     public string RunId { get; init; } = string.Empty;
 
     /// <summary>
+    /// Optional existing run folder path for resume runs.
+    /// </summary>
+    public string? RunFolderPath { get; init; }
+
+    /// <summary>
+    /// Execution phase for reboot-resume flows.
+    /// </summary>
+    public int Phase { get; init; } = 0;
+
+    /// <summary>
+    /// Whether output logs should append to existing files (resume).
+    /// </summary>
+    public bool AppendOutput { get; init; }
+
+    /// <summary>
     /// The test case manifest.
     /// </summary>
     public TestCaseManifest Manifest { get; init; } = new();
@@ -35,6 +50,31 @@ public sealed class RunContext
     /// Effective environment variables for the process.
     /// </summary>
     public Dictionary<string, string> EffectiveEnvironment { get; init; } = new();
+
+    /// <summary>
+    /// Original case input overrides (used for resume checkpointing).
+    /// </summary>
+    public Dictionary<string, JsonElement>? CaseInputs { get; init; }
+
+    /// <summary>
+    /// Original environment overrides (used for resume checkpointing).
+    /// </summary>
+    public PcTest.Contracts.Requests.EnvironmentOverrides? EnvironmentOverrides { get; init; }
+
+    /// <summary>
+    /// Root for test case discovery (used for resume task).
+    /// </summary>
+    public string? CasesRoot { get; init; }
+
+    /// <summary>
+    /// Root for suite discovery (used for resume task).
+    /// </summary>
+    public string? SuitesRoot { get; init; }
+
+    /// <summary>
+    /// Root for plan discovery (used for resume task).
+    /// </summary>
+    public string? PlansRoot { get; init; }
 
     /// <summary>
     /// Metadata about which inputs are secret (for redaction).
@@ -67,6 +107,16 @@ public sealed class RunContext
     /// Used to locate shared PowerShell modules under assets/PowerShell/Modules.
     /// </summary>
     public string AssetsRoot { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Entity type for resume checkpointing.
+    /// </summary>
+    public string? RunEntityType { get; init; }
+
+    /// <summary>
+    /// Entity identity for resume checkpointing.
+    /// </summary>
+    public string? RunEntityId { get; init; }
 
     /// <summary>
     /// Node ID (for suite-triggered runs).

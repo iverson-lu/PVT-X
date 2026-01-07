@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.os.windows.core.reboot_resume_mvp",
+  "name": "Reboot Resume MVP",
+  "description": "Demonstrates a single reboot request and resume via PVTX_PHASE.",
+  "version": "1.0.0",
+  "category": "OS",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 120,
+  "tags": ["reboot", "resume", "mvp"]
+}

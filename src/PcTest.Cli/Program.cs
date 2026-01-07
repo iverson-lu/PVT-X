@@ -1,4 +1,5 @@
 using System.CommandLine;
+using System.Linq;
 using System.Text.Json;
 using PcTest.Contracts;
 using PcTest.Contracts.Requests;
@@ -12,6 +13,11 @@ public static class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        if (args.Any(arg => string.Equals(arg, "--resume", StringComparison.OrdinalIgnoreCase)))
+        {
+            return await HandleResume(args);
+        }
+
         var rootCommand = new RootCommand("PC Test System CLI");
 
         // Common options
@@ -277,11 +283,99 @@ public static class Program
             }
             Environment.ExitCode = 1;
         }
+        catch (PcTest.Runner.RebootRequestedException ex)
+        {
+            Console.WriteLine($"Reboot requested: {ex.Message}");
+            Environment.ExitCode = 0;
+        }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error: {ex.Message}");
             Environment.ExitCode = 1;
         }
+    }
+
+    private static async Task<int> HandleResume(string[] args)
+    {
+        var runId = GetOptionValue(args, "--runId");
+        var token = GetOptionValue(args, "--token");
+        if (string.IsNullOrWhiteSpace(runId) || string.IsNullOrWhiteSpace(token))
+        {
+            Console.Error.WriteLine("Resume requires --runId and --token");
+            return 1;
+        }
+
+        var casesRoot = GetOptionValue(args, "--casesRoot") ?? "assets/TestCases";
+        var suitesRoot = GetOptionValue(args, "--suitesRoot") ?? "assets/TestSuites";
+        var plansRoot = GetOptionValue(args, "--plansRoot") ?? "assets/TestPlans";
+        var runsRoot = GetOptionValue(args, "--runsRoot") ?? "Runs";
+
+        var resolvedRunsRoot = ResolvePath(runsRoot);
+        var session = PcTest.Runner.RebootResumeManager.LoadSession(resolvedRunsRoot, runId);
+        if (!string.Equals(session.ResumeToken, token, StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine("Invalid resume token");
+            return 1;
+        }
+
+        session.ResumeCount++;
+        if (session.ResumeCount > 1)
+        {
+            Console.Error.WriteLine("Resume loop detected. Aborting.");
+            PcTest.Runner.RebootResumeManager.DeleteResumeTask(session.RunId);
+            session.State = "Finalized";
+            PcTest.Runner.RebootResumeManager.SaveSession(session);
+            return 1;
+        }
+
+        session.State = "Resuming";
+        PcTest.Runner.RebootResumeManager.SaveSession(session);
+
+        var engine = new TestEngine();
+        var resolvedCasesRoot = ResolvePath(session.CasesRoot ?? casesRoot);
+        var resolvedSuitesRoot = ResolvePath(session.SuitesRoot ?? suitesRoot);
+        var resolvedPlansRoot = ResolvePath(session.PlansRoot ?? plansRoot);
+        var assetsRoot = Directory.GetParent(resolvedCasesRoot)?.FullName ?? "assets";
+
+        engine.Configure(
+            resolvedCasesRoot,
+            resolvedSuitesRoot,
+            resolvedPlansRoot,
+            resolvedRunsRoot,
+            assetsRoot);
+
+        using var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (s, e) =>
+        {
+            e.Cancel = true;
+            Console.WriteLine("Aborting...");
+            cts.Cancel();
+        };
+
+        var result = await engine.ResumeAsync(session, cts.Token);
+        Console.WriteLine("=== Resume Result ===");
+        Console.WriteLine(JsonDefaults.Serialize(result));
+
+        Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+        return Environment.ExitCode;
+    }
+
+    private static string? GetOptionValue(string[] args, string optionName)
+    {
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (!string.Equals(args[i], optionName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (i + 1 < args.Length)
+            {
+                return args[i + 1];
+            }
+        }
+
+        return null;
     }
 
     private static string ResolvePath(string path)

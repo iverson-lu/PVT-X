@@ -29,9 +29,20 @@ public sealed class TestCaseRunner
         var startTime = DateTime.UtcNow;
         using var folderManager = new CaseRunFolderManager(context.RunsRoot);
 
-        // Create Case Run Folder
-        var caseRunFolder = folderManager.CreateRunFolder(context.RunId);
+        // Create or reuse Case Run Folder
+        var caseRunFolder = string.IsNullOrWhiteSpace(context.RunFolderPath)
+            ? folderManager.CreateRunFolder(context.RunId)
+            : PathUtils.NormalizePath(context.RunFolderPath);
         var extractedRunId = Path.GetFileName(caseRunFolder);
+        Directory.CreateDirectory(caseRunFolder);
+        Directory.CreateDirectory(Path.Combine(caseRunFolder, "artifacts"));
+        var controlDir = RebootResumeManager.GetControlDir(caseRunFolder);
+        Directory.CreateDirectory(controlDir);
+        var controlFile = Path.Combine(controlDir, RebootResumeManager.ControlFileName);
+        if (File.Exists(controlFile))
+        {
+            File.Delete(controlFile);
+        }
 
         // Collect secret values for redaction
         var secretValues = context.EffectiveInputs
@@ -56,7 +67,10 @@ public sealed class TestCaseRunner
             ["PVTX_TESTCASE_PATH"] = context.TestCasePath,
             ["PVTX_TESTCASE_NAME"] = context.Manifest.Name,
             ["PVTX_TESTCASE_ID"] = context.Manifest.Id,
-            ["PVTX_TESTCASE_VER"] = context.Manifest.Version
+            ["PVTX_TESTCASE_VER"] = context.Manifest.Version,
+            ["PVTX_RUN_ID"] = context.RunId,
+            ["PVTX_PHASE"] = context.Phase.ToString(),
+            ["PVTX_CONTROL_DIR"] = controlDir
         };
 
         // Add PVT-X PowerShell modules to PSModulePath (enables module autoload for common case helpers)
@@ -154,11 +168,11 @@ public sealed class TestCaseRunner
                 if (line is null) return;
                 if (isStderr)
                 {
-                    await folderManager.AppendStderrLineAsync(caseRunFolder, line, secretValues);
+                    await folderManager.AppendStderrLineAsync(caseRunFolder, line, secretValues, context.AppendOutput);
                 }
                 else
                 {
-                    await folderManager.AppendStdoutLineAsync(caseRunFolder, line, secretValues);
+                    await folderManager.AppendStdoutLineAsync(caseRunFolder, line, secretValues, context.AppendOutput);
                 }
             }
 
@@ -173,6 +187,58 @@ public sealed class TestCaseRunner
 
             // Flush and close the streaming writers
             folderManager.FlushAndCloseWriters(caseRunFolder);
+
+            if (RebootResumeManager.TryReadRebootRequest(controlDir, out var rebootRequest, out var rebootError))
+            {
+                if (!string.IsNullOrEmpty(rebootError))
+                {
+                    var errorResult = CreateErrorResult(context, startTime,
+                        ErrorType.RunnerError, rebootError);
+                    await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
+                    return errorResult;
+                }
+
+                await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestCase.RebootRequested",
+                    Level = "info",
+                    Message = $"Reboot requested by test case for next phase {rebootRequest!.NextPhase}",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["runId"] = extractedRunId,
+                        ["nextPhase"] = rebootRequest.NextPhase,
+                        ["reason"] = rebootRequest.Reason
+                    }
+                });
+
+                var resumeToken = Guid.NewGuid().ToString("N");
+                var session = new RebootResumeSession
+                {
+                    RunId = context.RunId,
+                    EntityType = context.RunEntityType ?? "TestCase",
+                    EntityId = context.RunEntityId ?? context.Manifest.Identity,
+                    CurrentCaseId = context.Manifest.Id,
+                    NextPhase = rebootRequest.NextPhase,
+                    ResumeToken = resumeToken,
+                    ResumeCount = 0,
+                    State = "PendingResume",
+                    RunFolder = caseRunFolder,
+                    RunsRoot = context.RunsRoot,
+                    CasesRoot = context.CasesRoot,
+                    SuitesRoot = context.SuitesRoot,
+                    PlansRoot = context.PlansRoot,
+                    CaseInputs = context.CaseInputs,
+                    EnvironmentOverrides = context.EnvironmentOverrides
+                };
+
+                RebootResumeManager.SaveSession(session);
+
+                var runnerPath = Environment.ProcessPath ?? throw new InvalidOperationException("Runner path not available");
+                RebootResumeManager.CreateResumeTask(session, runnerPath);
+                RebootResumeManager.RequestReboot(rebootRequest.Reboot?.DelaySec);
+                throw new RebootRequestedException(rebootRequest);
+            }
 
             // Build result
             var endTime = DateTime.UtcNow;
@@ -208,6 +274,13 @@ public sealed class TestCaseRunner
             // Write result.json (redacted)
             await folderManager.WriteResultAsync(caseRunFolder, result, context.SecretInputs);
 
+            var sessionPath = RebootResumeManager.GetSessionPath(caseRunFolder);
+            if (File.Exists(sessionPath))
+            {
+                var session = RebootResumeManager.LoadSessionForRunFolder(caseRunFolder);
+                RebootResumeManager.FinalizeSession(session);
+            }
+
             // Record test completed event
             await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
             {
@@ -227,6 +300,10 @@ public sealed class TestCaseRunner
             });
 
             return result;
+        }
+        catch (RebootRequestedException)
+        {
+            throw;
         }
         catch (Exception ex)
         {

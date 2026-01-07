@@ -41,7 +41,8 @@ public sealed class StandaloneCaseExecutor
     /// </summary>
     public async Task<TestCaseResult> ExecuteAsync(
         DiscoveredTestCase testCase,
-        RunRequest runRequest)
+        RunRequest runRequest,
+        ResumeInfo? resumeInfo = null)
     {
         // Validate standalone RunRequest constraints
         if (runRequest.NodeOverrides is not null && runRequest.NodeOverrides.Count > 0)
@@ -51,7 +52,7 @@ public sealed class StandaloneCaseExecutor
         }
 
         // Generate runId early so we can report it
-        var runId = TestCaseRunner.GenerateRunId();
+        var runId = resumeInfo?.RunId ?? TestCaseRunner.GenerateRunId();
         var nodeId = "standalone";
 
         // Report planned nodes (single node for standalone case)
@@ -103,11 +104,29 @@ public sealed class StandaloneCaseExecutor
             TimeoutSec = testCase.Manifest.TimeoutSec,
             RunsRoot = _runsRoot,
             AssetsRoot = _assetsRoot,
-            InputTemplates = inputResult.InputTemplates
+            InputTemplates = inputResult.InputTemplates,
+            Phase = resumeInfo?.Phase ?? 0,
+            RunFolderPath = resumeInfo?.RunFolderPath,
+            AppendOutput = resumeInfo?.AppendOutput ?? false,
+            CaseInputs = runRequest.CaseInputs,
+            EnvironmentOverrides = runRequest.EnvironmentOverrides,
+            CasesRoot = _discovery.ResolvedTestCaseRoot,
+            SuitesRoot = _discovery.ResolvedTestSuiteRoot,
+            PlansRoot = _discovery.ResolvedTestPlanRoot,
+            RunEntityType = "TestCase",
+            RunEntityId = testCase.Identity
             // NodeId, SuiteId, PlanId, ParentRunId all null for standalone
         };
 
-        var result = await runner.ExecuteAsync(context);
+        TestCaseResult result;
+        try
+        {
+            result = await runner.ExecuteAsync(context);
+        }
+        catch (RebootRequestedException)
+        {
+            throw;
+        }
 
         var endTime = DateTime.UtcNow;
 

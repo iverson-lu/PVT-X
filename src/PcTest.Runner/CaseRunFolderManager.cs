@@ -171,12 +171,13 @@ public sealed class CaseRunFolderManager : IDisposable
     /// <summary>
     /// Gets or creates a StreamWriter for stdout.log with FileShare.ReadWrite for real-time tailing.
     /// </summary>
-    private StreamWriter GetOrCreateStdoutWriter(string caseRunFolder)
+    private StreamWriter GetOrCreateStdoutWriter(string caseRunFolder, bool append)
     {
         return _stdoutWriters.GetOrAdd(caseRunFolder, folder =>
         {
             var path = Path.Combine(folder, "stdout.log");
-            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            var mode = append ? FileMode.Append : FileMode.Create;
+            var stream = new FileStream(path, mode, FileAccess.Write, FileShare.ReadWrite);
             return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
         });
     }
@@ -184,12 +185,13 @@ public sealed class CaseRunFolderManager : IDisposable
     /// <summary>
     /// Gets or creates a StreamWriter for stderr.log with FileShare.ReadWrite for real-time tailing.
     /// </summary>
-    private StreamWriter GetOrCreateStderrWriter(string caseRunFolder)
+    private StreamWriter GetOrCreateStderrWriter(string caseRunFolder, bool append)
     {
         return _stderrWriters.GetOrAdd(caseRunFolder, folder =>
         {
             var path = Path.Combine(folder, "stderr.log");
-            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            var mode = append ? FileMode.Append : FileMode.Create;
+            var stream = new FileStream(path, mode, FileAccess.Write, FileShare.ReadWrite);
             return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
         });
     }
@@ -201,11 +203,12 @@ public sealed class CaseRunFolderManager : IDisposable
     public async Task AppendStdoutLineAsync(
         string caseRunFolder,
         string? line,
-        IEnumerable<string>? secretValues)
+        IEnumerable<string>? secretValues,
+        bool appendOutput)
     {
         if (line is null) return;
         var redacted = RedactContent(line, secretValues);
-        var writer = GetOrCreateStdoutWriter(caseRunFolder);
+        var writer = GetOrCreateStdoutWriter(caseRunFolder, appendOutput);
         await writer.WriteLineAsync(redacted);
     }
 
@@ -216,11 +219,12 @@ public sealed class CaseRunFolderManager : IDisposable
     public async Task AppendStderrLineAsync(
         string caseRunFolder,
         string? line,
-        IEnumerable<string>? secretValues)
+        IEnumerable<string>? secretValues,
+        bool appendOutput)
     {
         if (line is null) return;
         var redacted = RedactContent(line, secretValues);
-        var writer = GetOrCreateStderrWriter(caseRunFolder);
+        var writer = GetOrCreateStderrWriter(caseRunFolder, appendOutput);
         await writer.WriteLineAsync(redacted);
     }
 
