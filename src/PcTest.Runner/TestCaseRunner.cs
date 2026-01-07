@@ -112,6 +112,27 @@ public sealed class TestCaseRunner
                 await folderManager.WriteParamsAsync(caseRunFolder, context.EffectiveInputs, context.SecretInputs);
             }
 
+            // Record resume event if resuming
+            if (context.IsResume)
+            {
+                await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestCase.Resumed",
+                    Level = "info",
+                    Message = $"Test case '{context.Manifest.Id}' (version {context.Manifest.Version}) execution resumed after reboot",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["testId"] = context.Manifest.Id,
+                        ["testVersion"] = context.Manifest.Version,
+                        ["runId"] = extractedRunId,
+                        ["phase"] = context.Phase,
+                        ["isStandalone"] = context.IsStandalone,
+                        ["nodeId"] = context.IsStandalone ? null : context.NodeId
+                    }
+                });
+            }
+
             // Record test started event
             await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
             {

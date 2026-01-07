@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "category": "System",
   "owner": "PVT-X",
-  "privilege": "Admin",
+  "privilege": "User",
   "timeoutSec": 300,
   "tags": ["reboot", "resume", "mvp"]
 }
