@@ -5,6 +5,7 @@ using PcTest.Contracts.Requests;
 using PcTest.Contracts.Validation;
 using PcTest.Engine;
 using PcTest.Engine.Discovery;
+using PcTest.Runner;
 
 namespace PcTest.Cli;
 
@@ -34,6 +35,23 @@ public static class Program
             "--runsRoot",
             () => "Runs",
             "Path to Runs output root");
+
+        var resumeOption = new Option<bool>(
+            "--resume",
+            "Resume a pending run after reboot");
+
+        var resumeRunIdOption = new Option<string?>(
+            "--runId",
+            "Run ID to resume");
+
+        var resumeTokenOption = new Option<string?>(
+            "--token",
+            "Resume token for validation");
+
+        rootCommand.AddOption(resumeOption);
+        rootCommand.AddOption(resumeRunIdOption);
+        rootCommand.AddOption(resumeTokenOption);
+        rootCommand.AddOption(runsRootOption);
 
         // Discover command
         var discoverCommand = new Command("discover", "Discover test cases, suites, and plans");
@@ -70,13 +88,15 @@ public static class Program
         runCommand.AddOption(casesRootOption);
         runCommand.AddOption(suitesRootOption);
         runCommand.AddOption(plansRootOption);
-        runCommand.AddOption(runsRootOption);
 
         runCommand.SetHandler(HandleRun,
             targetOption, idOption, inputsOption, envOption,
             casesRootOption, suitesRootOption, plansRootOption, runsRootOption);
 
         rootCommand.AddCommand(runCommand);
+
+        rootCommand.SetHandler(HandleResume,
+            resumeOption, resumeRunIdOption, resumeTokenOption, runsRootOption);
 
         return await rootCommand.InvokeAsync(args);
     }
@@ -280,6 +300,123 @@ public static class Program
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error: {ex.Message}");
+            Environment.ExitCode = 1;
+        }
+    }
+
+    private static async Task HandleResume(
+        bool resume,
+        string? runId,
+        string? token,
+        string runsRoot)
+    {
+        if (!resume)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(runId) || string.IsNullOrWhiteSpace(token))
+        {
+            Console.Error.WriteLine("Resume requires --runId and --token.");
+            Environment.ExitCode = 1;
+            return;
+        }
+
+        try
+        {
+            var resolvedRunsRoot = ResolvePath(runsRoot);
+            var runFolder = Path.Combine(resolvedRunsRoot, runId);
+            var session = await RebootResumeSession.LoadAsync(runFolder);
+
+            if (!string.Equals(session.RunId, runId, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Run ID mismatch in session.json.");
+            }
+
+            if (!string.Equals(session.ResumeToken, token, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Resume token validation failed.");
+            }
+
+            if (!string.Equals(session.State, "PendingResume", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Session state '{session.State}' is not resumable.");
+            }
+
+            var resumeCount = session.ResumeCount + 1;
+            if (resumeCount > 1)
+            {
+                ResumeTaskScheduler.DeleteResumeTask(runId);
+                var finalizedSession = new RebootResumeSession
+                {
+                    RunId = session.RunId,
+                    EntityType = session.EntityType,
+                    EntityId = session.EntityId,
+                    CurrentCaseId = session.CurrentCaseId,
+                    NextPhase = session.NextPhase,
+                    ResumeToken = session.ResumeToken,
+                    ResumeCount = resumeCount,
+                    State = "Finalized",
+                    RunFolder = session.RunFolder,
+                    Context = session.Context
+                };
+                await finalizedSession.SaveAsync();
+                throw new InvalidOperationException("Resume loop detected.");
+            }
+
+            var resumingSession = new RebootResumeSession
+            {
+                RunId = session.RunId,
+                EntityType = session.EntityType,
+                EntityId = session.EntityId,
+                CurrentCaseId = session.CurrentCaseId,
+                NextPhase = session.NextPhase,
+                ResumeToken = session.ResumeToken,
+                ResumeCount = resumeCount,
+                State = "Resuming",
+                RunFolder = session.RunFolder,
+                Context = session.Context
+            };
+            await resumingSession.SaveAsync();
+
+            var context = ResumeContextConverter.ToRunContext(session.Context, session.RunId, session.NextPhase, true);
+            using var cts = new CancellationTokenSource();
+            var runner = new TestCaseRunner(cts.Token);
+            PcTest.Contracts.Results.TestCaseResult? result = null;
+
+            try
+            {
+                result = await runner.ExecuteAsync(context);
+            }
+            finally
+            {
+                ResumeTaskScheduler.DeleteResumeTask(runId);
+                var finalized = new RebootResumeSession
+                {
+                    RunId = session.RunId,
+                    EntityType = session.EntityType,
+                    EntityId = session.EntityId,
+                    CurrentCaseId = session.CurrentCaseId,
+                    NextPhase = session.NextPhase,
+                    ResumeToken = session.ResumeToken,
+                    ResumeCount = resumeCount,
+                    State = "Finalized",
+                    RunFolder = session.RunFolder,
+                    Context = session.Context
+                };
+                await finalized.SaveAsync();
+            }
+
+            if (result is not null)
+            {
+                Console.WriteLine("=== Resume Result ===");
+                Console.WriteLine(JsonDefaults.Serialize(result));
+                Environment.ExitCode = result.Status == PcTest.Contracts.RunStatus.Passed ? 0 : 1;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Resume failed: {ex.Message}");
             Environment.ExitCode = 1;
         }
     }

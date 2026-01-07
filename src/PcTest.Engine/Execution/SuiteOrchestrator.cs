@@ -142,6 +142,7 @@ public sealed class SuiteOrchestrator
             var refResolver = new SuiteRefResolver(_discovery.ResolvedTestCaseRoot);
             var inputResolver = new InputResolver();
             var runner = new TestCaseRunner(_cancellationToken);
+            var runnerExecutablePath = Environment.ProcessPath ?? string.Empty;
 
             var repeat = Math.Max(1, controls.Repeat);
             var continueOnFailure = controls.ContinueOnFailure;
@@ -308,6 +309,7 @@ public sealed class SuiteOrchestrator
                         var context = new RunContext
                         {
                             RunId = runId,
+                            Phase = 0,
                             Manifest = testCaseManifest,
                             TestCasePath = testCasePath,
                             EffectiveInputs = inputResult.EffectiveInputs,
@@ -323,7 +325,8 @@ public sealed class SuiteOrchestrator
                             PlanId = planId,
                             PlanVersion = planVersion,
                             ParentRunId = groupRunId,
-                            InputTemplates = inputResult.InputTemplates
+                            InputTemplates = inputResult.InputTemplates,
+                            RunnerExecutablePath = runnerExecutablePath
                         };
 
                         // Write children.jsonl entry BEFORE execution so UI can start tailing immediately
