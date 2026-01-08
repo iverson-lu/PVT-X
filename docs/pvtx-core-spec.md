@@ -697,14 +697,16 @@ Each execution node MUST be in exactly one of the following states at any time:
 | Error | Node completed with execution error (status = Error). |
 | Timeout | Node exceeded time limit (status = Timeout). |
 | Aborted | Node was terminated by user action or cascading abort (status = Aborted). |
+| RebootRequired | Node requested reboot; execution paused awaiting resume. |
 | Skipped | Node was not executed due to pipeline termination (continueOnFailure=false). |
 
 State transitions MUST follow these rules:
 - Initial state MUST be Pending.
 - Pending MAY transition to Running when execution begins.
-- Running MUST transition to one of: Passed, Failed, Error, Timeout, or Aborted.
+- Running MUST transition to one of: Passed, Failed, Error, Timeout, Aborted, or RebootRequired.
 - Pending MAY transition directly to Skipped or Aborted without entering Running state.
 - Terminal states (Passed, Failed, Error, Timeout, Aborted, Skipped) MUST NOT transition to any other state.
+- RebootRequired is terminal for the current execution segment; on resume, the node re-enters Running.
 
 ### 10A.4 Progress Reporting
 
@@ -772,18 +774,21 @@ Rules:
 - Scripts SHOULD write atomically (write to reboot.tmp then move/rename to reboot.json).
 - type MUST be `control.reboot_required`.
 - nextPhase MUST be an integer >= 1. (Phase 0 is reserved for initial execution.)
-- reason is optional; reboot.delaySec is optional (default 0).
-- Unknown fields MUST be ignored.
+- reason MUST be a non-empty string.
+- reboot.delaySec is optional and MUST be a non-negative integer when present (default 0).
+- Unknown fields MUST cause validation failure (root only allows: type, nextPhase, reason, reboot).
+- reboot object, when present, MUST only include delaySec; unknown fields MUST cause validation failure.
 
 ### 10B.2 Execution Semantics
 
 - When a reboot request is detected, the current node MUST be suspended and no further nodes may start.
-- Engine MUST persist resume metadata (runId, groupRunId if any, nodeId, iteration, nextPhase) before initiating reboot.
+- Engine/Runner MUST persist resume metadata (session.json) including runId, groupRunId if any, nodeId, iteration, nextPhase, and resume token before initiating reboot.
 - The OS reboot MUST be initiated by the host/engine; scripts MUST NOT reboot the system directly.
 - After reboot, the engine MUST resume the same run and re-run the same node with PVTX_PHASE set to nextPhase. The same RunId and Case Run Folder MUST be reused.
-- A node MAY request reboot multiple times; the node is complete only when it finishes without requesting reboot.
+- A node MUST NOT request more than one reboot within a single run; additional reboot requests during resume MUST be treated as a validation error.
 - For Suite/Plan runs, the pipeline MUST resume from the suspended node and continue to subsequent nodes only after the rebooting node completes.
-- TestCase result.json MUST represent the final outcome after all phases; intermediate phases MUST NOT finalize a terminal result entry.
+- When reboot is requested under Suite/Plan runs, the TestCase result.json MUST be written with status=RebootRequired and include reboot metadata; this entry MAY be overwritten by the final result after resume.
+- For standalone TestCase runs, result.json MAY be deferred until resume completes; session.json remains the authority for resume context.
 - If a reboot request cannot be honored or resume fails, the engine MUST terminate the run with status Error or Aborted and record a diagnostic message.
 
 ---
@@ -832,6 +837,7 @@ ResolvedRunsRoot/
     events.jsonl
     env.json
     result.json
+    session.json              # Reboot resume metadata (only when reboot requested)
   {GroupRunId}/               # Test Suite / Test Plan run
     manifest.json
     controls.json
@@ -840,6 +846,7 @@ ResolvedRunsRoot/
     children.jsonl
     events.jsonl
     result.json
+    session.json              # Reboot resume metadata (only when reboot requested)
 ```
 
 Rules:
@@ -852,8 +859,8 @@ Rules:
 ### 12.1 Ownership Rules
 - Test Case Run Folders are exclusively owned by Runner.
 - Test Suite / Test Plan Run Folders are exclusively owned by Engine.
-- For Test Case runs, Runner MUST be the sole writer of manifest.json, params.json, result.json, events.jsonl (when present), stdout/stderr logs, and env.json inside the Case Run Folder; Engine MUST NOT write inside a Case Run Folder.
-- For Test Suite / Test Plan runs, Engine MUST be the sole writer of manifest.json, controls.json, environment.json, runRequest.json, children.jsonl, events.jsonl (when present), and result.json inside the Group Run Folder; Runner MUST NOT write inside a Group Run Folder.
+- For Test Case runs, Runner MUST be the sole writer of manifest.json, params.json, result.json, events.jsonl (when present), stdout/stderr logs, env.json, and session.json (when present) inside the Case Run Folder; Engine MUST NOT write inside a Case Run Folder.
+- For Test Suite / Test Plan runs, Engine MUST be the sole writer of manifest.json, controls.json, environment.json, runRequest.json, children.jsonl, events.jsonl (when present), result.json, and session.json (when present) inside the Group Run Folder; Runner MUST NOT write inside a Group Run Folder.
 - Scripts MUST NOT create, delete, or rename top-level files in the Run Folder.
 - Enforcement of the top-level file restriction is best-effort unless a sandbox is present.
 - Runner MAY perform pre/post directory scans of the Case Run Folder to detect top-level file violations and MAY mark the run as Failed or Error with a Runner-side policy violation classification when violations are detected.
@@ -890,7 +897,7 @@ Rules:
   - planVersion (required for TestPlan; MUST be set for TestSuite/TestCase when parentRunId refers to a TestPlan run)
   - parentRunId (optional; points to the Suite/Plan run)
   - startTime, endTime (ISO8601 UTC with trailing Z)
-  - status (Passed / Failed / Error / Timeout / Aborted)
+  - status (Passed / Failed / Error / Timeout / Aborted / RebootRequired)
 
 Rule:
 - For standalone TestCase run, parentRunId MUST be omitted and suiteId/suiteVersion/planId/planVersion MUST NOT be present.
@@ -968,6 +975,14 @@ Event entry schema:
 
 ---
 
+### 12.7 session.json (Reboot Resume)
+- Present only when a reboot request is accepted.
+- Written by Runner for standalone TestCase runs; written by Engine for Suite/Plan runs.
+- Contains resume metadata such as runId, entityType, state, nextPhase, resumeToken, currentNodeIndex, currentChildRunId, originTestId, and resume paths.
+- Consumers SHOULD treat session.json as internal state; scripts MUST NOT modify it.
+
+---
+
 ## 13. Result Specification (result.json)
 
 ### 13.1 Authority Rule
@@ -987,7 +1002,7 @@ Event entry schema:
 | suiteVersion | string | No | Suite version (if known) |
 | planId | string | No | Plan ID (if known) |
 | planVersion | string | No | Plan version (if known) |
-| status | enum | Yes | Passed / Failed / Error / Timeout / Aborted |
+| status | enum | Yes | Passed / Failed / Error / Timeout / Aborted / RebootRequired |
 | startTime | string | Yes | ISO8601 UTC with trailing Z |
 | endTime | string | Yes | ISO8601 UTC with trailing Z |
 | metrics | object | No | Metrics |
@@ -996,6 +1011,7 @@ Event entry schema:
 | effectiveInputs | object | Yes | Effective case inputs passed to the script |
 | error | object | No | Error details |
 | runner | object | No | Runner metadata |
+| reboot | object | No | Reboot resume metadata |
 
 Rules:
 - nodeId MUST be present for suite-triggered TestCase run.
@@ -1004,6 +1020,17 @@ Rules:
 - For standalone TestCase run, suiteId/suiteVersion/planId/planVersion MUST NOT be present.
 - If any input value was derived from an EnvRef with secret=true, effectiveInputs and any echoed values in result.json MUST be redacted (e.g., `"***"`).
 - Runner MUST apply the redaction metadata provided by Engine when writing result.json and any other persisted artifacts for the Case Run Folder.
+- If status = RebootRequired, reboot MUST be present.
+- If status != RebootRequired, reboot MUST be omitted.
+
+#### Reboot Info (Test Case)
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| nextPhase | int | Yes | Phase to resume after reboot (>= 1) |
+| reason | string | Yes | Non-empty reboot reason |
+| originTestId | string | No | Origin test ID (if available) |
+| delaySec | int | No | Reboot delay seconds (>= 0) |
 
 Example: suite-triggered TestCase run
 ```json
@@ -1065,19 +1092,28 @@ Error-to-status mapping:
 | suiteVersion | string | Yes | Suite version (if runType = TestSuite) |
 | planId | string | Conditional | Required if runType = TestPlan; also required when runType = TestSuite and the suite executed under a plan |
 | planVersion | string | Conditional | Required if runType = TestPlan; also required when runType = TestSuite and the suite executed under a plan |
-| status | enum | Yes | Passed / Failed / Error / Timeout / Aborted |
+| status | enum | Yes | Passed / Failed / Error / Timeout / Aborted / RebootRequired |
 | startTime | string | Yes | ISO8601 UTC with trailing Z |
 | endTime | string | Yes | ISO8601 UTC with trailing Z |
 | counts | object | No | Count of child statuses |
 | childRunIds | array | Yes | Child runIds (Test Case or Suite, depending on runType) |
 | message | string | No | Summary |
+| reboot | object | No | Reboot resume metadata |
 
 Status aggregation rule:
+- If any child requests reboot, status MUST be RebootRequired and execution MUST pause.
 - If the Suite/Plan run terminates due to user Stop or Engine abort, status MUST be Aborted.
 - Otherwise: Error > Timeout > Failed > Passed.
 
 Rules:
 - When a Test Suite executes under a Test Plan, planId and planVersion MUST be populated in the Suite summary result.json (conditional required) and MUST match the values recorded in index.jsonl.
+- counts SHOULD exclude RebootRequired entries (they represent in-progress, not terminal results).
+- If status = RebootRequired, reboot MUST be present.
+- If status != RebootRequired, reboot MUST be omitted.
+
+#### Reboot Info (Suite/Plan)
+
+Same schema as Test Case reboot info (section 13.2).
 
 ---
 

@@ -239,6 +239,8 @@ Some cases require a reboot to validate resume behavior. Use the control channel
 Rules:
 - Treat PVTX_PHASE=0 as the initial phase.
 - When a reboot is required, write reboot.json into PVTX_CONTROL_DIR and exit 0.
+- reboot.json MUST include type, nextPhase, and a non-empty reason; unknown fields are rejected.
+- Do not request more than one reboot in a single run (PVTX_PHASE > 0 must complete).
 - Store any state needed across reboot under the Case Run Folder (prefer `artifacts/`); do not write to the Test Case source folder.
 - After resume, PVTX_PHASE is set to nextPhase; complete the remaining phases and exit with the final pass/fail code.
 
