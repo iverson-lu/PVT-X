@@ -503,21 +503,29 @@ Runner MUST inject the following predefined environment variables into every Tes
 | PVTX_TESTCASE_VER   | string | Version string from Test Case manifest (version)   | `1.0.0`                                            |
 | PVTX_ASSETS_ROOT    | string | Absolute path to the assets root directory         | `D:\Dev\PVT-X-1\assets`                            |
 | PVTX_MODULES_ROOT   | string | Absolute path to PowerShell modules directory      | `D:\Dev\PVT-X-1\assets\PowerShell\Modules`        |
+| PVTX_RUN_ID         | string | RunId for this Test Case execution                 | `R-2025-01-15-0001`                                |
+| PVTX_PHASE          | int    | Reboot resume phase (0 = initial execution)        | `0`                                                |
+| PVTX_CONTROL_DIR    | string | Control directory for reboot requests              | `D:\Dev\PVT-X-1\Runs\R-2025-01-15-0001\control`     |
 
 Rules:
 - These variables MUST be injected by Runner immediately before script execution.
 - If any of these variable names already exist in the effectiveEnvironment computed per section 7.3, Runner MUST overwrite them with the correct predefined values (predefined variables take precedence).
-- Scripts MAY access these variables via standard PowerShell syntax: `$env:PVTX_TESTCASE_PATH`, `$env:PVTX_TESTCASE_NAME`, `$env:PVTX_TESTCASE_ID`, `$env:PVTX_TESTCASE_VER`, `$env:PVTX_ASSETS_ROOT`, `$env:PVTX_MODULES_ROOT`.
+- Scripts MAY access these variables via standard PowerShell syntax: `$env:PVTX_TESTCASE_PATH`, `$env:PVTX_TESTCASE_NAME`, `$env:PVTX_TESTCASE_ID`, `$env:PVTX_TESTCASE_VER`, `$env:PVTX_ASSETS_ROOT`, `$env:PVTX_MODULES_ROOT`, `$env:PVTX_RUN_ID`, `$env:PVTX_PHASE`, `$env:PVTX_CONTROL_DIR`.
 - These variables are NOT secret and MUST NOT be redacted in artifacts.
 - These variables MUST appear in the manifest.json effectiveEnvironment snapshot for full reproducibility and traceability.
 - The PVTX_TESTCASE_PATH value MUST be the absolute, normalized path to the Test Case source folder (containing test.manifest.json and run.ps1), NOT the Case Run Folder.
 - The PVTX_ASSETS_ROOT value MUST be computed by Engine as the parent directory of ResolvedTestCaseRoot and passed to Runner via RunContext. Engine MUST compute this value from Discovery (specifically, Directory.GetParent(discovery.ResolvedTestCaseRoot)).
 - The PVTX_MODULES_ROOT value MUST be computed by Runner as `Path.Combine(AssetsRoot, "PowerShell", "Modules")` where AssetsRoot is provided by Engine in RunContext.
+- PVTX_RUN_ID MUST be the Case RunId; for reboot-resume flows, the same RunId and Case Run Folder MUST be reused across phases.
+- PVTX_PHASE MUST default to 0 for the initial execution; when resuming after a reboot request, Runner MUST set PVTX_PHASE to the requested nextPhase value.
+- PVTX_CONTROL_DIR MUST be created by Runner before execution and MUST be a subfolder of the Case Run Folder; Runner MAY clear it before each phase to avoid stale control files.
 
 Rationale:
 - Enables Test Cases to reference companion files (test data, reference outputs, configuration files) relative to their source folder.
 - Provides Test Cases with self-awareness for logging, reporting, and dynamic behavior.
 - Ensures full traceability by recording these values in manifest.json.
+- PVTX_RUN_ID and PVTX_PHASE enable multi-phase reboot/resume flows without losing run identity.
+- PVTX_CONTROL_DIR provides a dedicated control channel for test-requested actions such as reboot.
 - PVTX_ASSETS_ROOT and PVTX_MODULES_ROOT enable Test Cases to access shared PowerShell helper modules.
 - Runner MUST prepend PVTX_MODULES_ROOT to the PSModulePath environment variable to enable PowerShell module auto-discovery and import.
 - This allows Test Cases to use `Import-Module <ModuleName>` to load common utilities, without specifying full paths.
@@ -739,6 +747,47 @@ Abort MUST be a synchronous operation from the user's perspective: after abort i
 
 ---
 
+## 10B. Reboot and Resume Semantics (Normative)
+
+The system MUST support reboot-aware execution initiated by a Test Case. A reboot request pauses execution and resumes the same run after OS restart. This applies to standalone TestCase runs and to Suite/Plan runs.
+
+### 10B.1 Reboot Request Protocol
+
+Reboot requests are delivered by the Test Case via a control file written to PVTX_CONTROL_DIR.
+
+File: `reboot.json`
+
+Payload example:
+```json
+{
+  "type": "control.reboot_required",
+  "nextPhase": 1,
+  "reason": "Phase 0 completed; requesting reboot for resume validation.",
+  "reboot": { "delaySec": 10 }
+}
+```
+
+Rules:
+- The file MUST be named `reboot.json` and written to PVTX_CONTROL_DIR.
+- Scripts SHOULD write atomically (write to reboot.tmp then move/rename to reboot.json).
+- type MUST be `control.reboot_required`.
+- nextPhase MUST be an integer >= 1. (Phase 0 is reserved for initial execution.)
+- reason is optional; reboot.delaySec is optional (default 0).
+- Unknown fields MUST be ignored.
+
+### 10B.2 Execution Semantics
+
+- When a reboot request is detected, the current node MUST be suspended and no further nodes may start.
+- Engine MUST persist resume metadata (runId, groupRunId if any, nodeId, iteration, nextPhase) before initiating reboot.
+- The OS reboot MUST be initiated by the host/engine; scripts MUST NOT reboot the system directly.
+- After reboot, the engine MUST resume the same run and re-run the same node with PVTX_PHASE set to nextPhase. The same RunId and Case Run Folder MUST be reused.
+- A node MAY request reboot multiple times; the node is complete only when it finishes without requesting reboot.
+- For Suite/Plan runs, the pipeline MUST resume from the suspended node and continue to subsequent nodes only after the rebooting node completes.
+- TestCase result.json MUST represent the final outcome after all phases; intermediate phases MUST NOT finalize a terminal result entry.
+- If a reboot request cannot be honored or resume fails, the engine MUST terminate the run with status Error or Aborted and record a diagnostic message.
+
+---
+
 ## 11. PowerShell Execution Rules
 
 - Runner invokes pwsh.exe
@@ -774,6 +823,8 @@ A standalone TestCase run produces a single Test Case Run Folder and does not ge
 ResolvedRunsRoot/
   index.jsonl
   {RunId}/                    # Test Case run
+    control/                 # Control channel (reboot requests)
+    artifacts/               # Script-owned artifacts
     manifest.json
     params.json
     stdout.log                # Real-time line-by-line append during execution
@@ -808,6 +859,7 @@ Rules:
 - Runner MAY perform pre/post directory scans of the Case Run Folder to detect top-level file violations and MAY mark the run as Failed or Error with a Runner-side policy violation classification when violations are detected.
 - Scripts MAY write additional files only under:
   {RunId}/artifacts/
+  {RunId}/control/ (control channel; see section 10B)
 - Runner MUST ignore unknown files and folders.
 - stdout.log and stderr.log MUST be written line-by-line in real-time during test execution with FileShare.ReadWrite to allow concurrent reading by UI for live monitoring.
 - Runner MUST apply secret redaction to each line before writing to stdout.log/stderr.log.

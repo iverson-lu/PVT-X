@@ -186,6 +186,12 @@ Injected automatically by Runner:
 | `PVTX_TESTCASE_VER` | Test Case version identifier |
 | `PVTX_ASSETS_ROOT` | Absolute path to the assets root directory |
 | `PVTX_MODULES_ROOT` | Absolute path to PowerShell\Modules directory |
+| `PVTX_RUN_ID` | RunId for this Test Case execution |
+| `PVTX_PHASE` | Reboot resume phase (0 = initial execution) |
+| `PVTX_CONTROL_DIR` | Control directory for reboot requests |
+
+- `PVTX_PHASE` is `0` on the first execution; if a reboot is requested and resumed, it is set to `nextPhase`.
+- `PVTX_CONTROL_DIR` is created by the Runner; only control files should be written there.
 
 > Plan- and Suite-level environment variable injection is also supported.
 
@@ -225,6 +231,49 @@ Write-TestLog "Hardware detected: $($hwInfo.Model)"
 | 0 | Pass |
 | 1 | Fail |
 | ≥2 | Script / Environment Error |
+
+### 4.3 Reboot / Resume Protocol
+
+Some cases require a reboot to validate resume behavior. Use the control channel rather than calling Restart-Computer directly.
+
+Rules:
+- Treat PVTX_PHASE=0 as the initial phase.
+- When a reboot is required, write reboot.json into PVTX_CONTROL_DIR and exit 0.
+- Store any state needed across reboot under the Case Run Folder (prefer `artifacts/`); do not write to the Test Case source folder.
+- After resume, PVTX_PHASE is set to nextPhase; complete the remaining phases and exit with the final pass/fail code.
+
+Example:
+```powershell
+$phase = 0
+if ($env:PVTX_PHASE) {
+    $phase = [int]$env:PVTX_PHASE
+}
+
+if ($phase -eq 0) {
+    if ([string]::IsNullOrWhiteSpace($env:PVTX_CONTROL_DIR)) {
+        throw "PVTX_CONTROL_DIR is required for reboot control."
+    }
+
+    $payload = @{
+        type = "control.reboot_required"
+        nextPhase = 1
+        reason = "Phase 0 complete; request reboot."
+        reboot = @{ delaySec = 10 }
+    } | ConvertTo-Json -Depth 5
+
+    $tmpPath = Join-Path $env:PVTX_CONTROL_DIR "reboot.tmp"
+    $finalPath = Join-Path $env:PVTX_CONTROL_DIR "reboot.json"
+
+    $payload | Set-Content -Path $tmpPath -Encoding UTF8
+    Move-Item -Path $tmpPath -Destination $finalPath -Force
+
+    exit 0
+}
+
+# Phase 1 work...
+exit 0
+```
+
 
 ---
 
