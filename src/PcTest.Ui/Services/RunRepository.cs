@@ -33,7 +33,7 @@ public sealed class RunRepository : IRunRepository
             return Array.Empty<RunIndexEntry>();
         }
         
-        var entries = new List<RunIndexEntry>();
+        var entryByRunId = new Dictionary<string, RunIndexEntry>(StringComparer.Ordinal);
         var content = await _fileSystemService.ReadAllTextAsync(indexPath, cancellationToken);
         
         foreach (var line in content.Split('\n', StringSplitOptions.RemoveEmptyEntries))
@@ -41,9 +41,9 @@ public sealed class RunRepository : IRunRepository
             try
             {
                 var entry = ParseIndexEntry(line.Trim());
-                if (entry is not null && MatchesFilter(entry, filter))
+                if (entry is not null)
                 {
-                    entries.Add(entry);
+                    entryByRunId[entry.RunId] = entry;
                 }
             }
             catch
@@ -51,9 +51,10 @@ public sealed class RunRepository : IRunRepository
                 // Skip malformed lines
             }
         }
-        
+
         // Sort by start time descending and limit results
-        return entries
+        return entryByRunId.Values
+            .Where(entry => MatchesFilter(entry, filter))
             .OrderByDescending(e => e.StartTime)
             .Take(filter.MaxResults)
             .ToList();

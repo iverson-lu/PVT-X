@@ -19,7 +19,8 @@ public enum RunStatus
     Failed,
     Error,
     Timeout,
-    Aborted
+    Aborted,
+    RebootRequired
 }
 
 /// <summary>

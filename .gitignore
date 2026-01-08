@@ -8,3 +8,4 @@ out/
 Runs/
 .VSCodeCounter/
 assets/TestCases/case.hw.power.core.switch_power_source/private_wmi.ps1
+publish/

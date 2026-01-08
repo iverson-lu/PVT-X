@@ -16,6 +16,21 @@ public sealed class RunContext
     public string RunId { get; init; } = string.Empty;
 
     /// <summary>
+    /// Execution phase for reboot-resume workflows (default 0).
+    /// </summary>
+    public int Phase { get; init; }
+
+    /// <summary>
+    /// True when resuming after a reboot.
+    /// </summary>
+    public bool IsResume { get; init; }
+
+    /// <summary>
+    /// True when this runner is the top-level orchestrator (standalone case).
+    /// </summary>
+    public bool IsTopLevel { get; init; } = true;
+
+    /// <summary>
     /// The test case manifest.
     /// </summary>
     public TestCaseManifest Manifest { get; init; } = new();
@@ -63,10 +78,20 @@ public sealed class RunContext
     public string RunsRoot { get; init; } = string.Empty;
 
     /// <summary>
+    /// Optional absolute path to the run folder when resuming.
+    /// </summary>
+    public string? RunFolderPath { get; init; }
+
+    /// <summary>
     /// Root folder for assets (typically the parent of TestCases folder).
     /// Used to locate shared PowerShell modules under assets/PowerShell/Modules.
     /// </summary>
     public string AssetsRoot { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Runner executable path for reboot-resume task scheduling.
+    /// </summary>
+    public string RunnerExecutablePath { get; init; } = string.Empty;
 
     /// <summary>
     /// Node ID (for suite-triggered runs).

@@ -588,7 +588,10 @@ public partial class RunViewModel : ViewModelBase
             return;
         }
 
-        if (cases.Any(c => c.Status == RunStatus.Failed || c.Status == RunStatus.Error || c.Status == RunStatus.Timeout))
+        if (cases.Any(c => c.Status == RunStatus.Failed
+            || c.Status == RunStatus.Error
+            || c.Status == RunStatus.Timeout
+            || c.Status == RunStatus.RebootRequired))
         {
             iterationVm.Status = RunStatus.Failed;
             return;

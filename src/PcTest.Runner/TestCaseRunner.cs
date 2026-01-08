@@ -27,11 +27,16 @@ public sealed class TestCaseRunner
     public async Task<TestCaseResult> ExecuteAsync(RunContext context)
     {
         var startTime = DateTime.UtcNow;
-        using var folderManager = new CaseRunFolderManager(context.RunsRoot);
+        using var folderManager = new CaseRunFolderManager(context.RunsRoot, context.IsResume);
 
         // Create Case Run Folder
-        var caseRunFolder = folderManager.CreateRunFolder(context.RunId);
+        var caseRunFolder = context.IsResume
+            ? folderManager.GetExistingRunFolder(context.RunFolderPath ?? context.RunId)
+            : folderManager.CreateRunFolder(context.RunId);
         var extractedRunId = Path.GetFileName(caseRunFolder);
+        var controlDir = Path.Combine(caseRunFolder, "control");
+        Directory.CreateDirectory(controlDir);
+        CleanControlInbox(controlDir);
 
         // Collect secret values for redaction
         var secretValues = context.EffectiveInputs
@@ -56,7 +61,10 @@ public sealed class TestCaseRunner
             ["PVTX_TESTCASE_PATH"] = context.TestCasePath,
             ["PVTX_TESTCASE_NAME"] = context.Manifest.Name,
             ["PVTX_TESTCASE_ID"] = context.Manifest.Id,
-            ["PVTX_TESTCASE_VER"] = context.Manifest.Version
+            ["PVTX_TESTCASE_VER"] = context.Manifest.Version,
+            ["PVTX_RUN_ID"] = context.RunId,
+            ["PVTX_PHASE"] = context.Phase.ToString(),
+            ["PVTX_CONTROL_DIR"] = Path.GetFullPath(controlDir)
         };
 
         // Add PVT-X PowerShell modules to PSModulePath (enables module autoload for common case helpers)
@@ -93,10 +101,37 @@ public sealed class TestCaseRunner
 
             // Write manifest snapshot
             var manifestSnapshot = CreateManifestSnapshot(context, enhancedEnvironment);
-            await folderManager.WriteManifestSnapshotAsync(caseRunFolder, manifestSnapshot, context.SecretInputs);
+            if (!context.IsResume || !File.Exists(Path.Combine(caseRunFolder, "manifest.json")))
+            {
+                await folderManager.WriteManifestSnapshotAsync(caseRunFolder, manifestSnapshot, context.SecretInputs);
+            }
 
             // Write params.json
-            await folderManager.WriteParamsAsync(caseRunFolder, context.EffectiveInputs, context.SecretInputs);
+            if (!context.IsResume || !File.Exists(Path.Combine(caseRunFolder, "params.json")))
+            {
+                await folderManager.WriteParamsAsync(caseRunFolder, context.EffectiveInputs, context.SecretInputs);
+            }
+
+            // Record resume event if resuming
+            if (context.IsResume)
+            {
+                await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestCase.Resumed",
+                    Level = "info",
+                    Message = $"Test case '{context.Manifest.Id}' (version {context.Manifest.Version}) execution resumed after reboot",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["testId"] = context.Manifest.Id,
+                        ["testVersion"] = context.Manifest.Version,
+                        ["runId"] = extractedRunId,
+                        ["phase"] = context.Phase,
+                        ["isStandalone"] = context.IsStandalone,
+                        ["nodeId"] = context.IsStandalone ? null : context.NodeId
+                    }
+                });
+            }
 
             // Record test started event
             await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
@@ -117,7 +152,10 @@ public sealed class TestCaseRunner
 
             // Write env.json
             var envSnapshot = CreateEnvSnapshot();
-            await folderManager.WriteEnvSnapshotAsync(caseRunFolder, envSnapshot);
+            if (!context.IsResume || !File.Exists(Path.Combine(caseRunFolder, "env.json")))
+            {
+                await folderManager.WriteEnvSnapshotAsync(caseRunFolder, envSnapshot);
+            }
 
             // Log secret on command line warning per spec section 7.4
             if (context.SecretInputs.Any(kv => kv.Value))
@@ -173,6 +211,54 @@ public sealed class TestCaseRunner
 
             // Flush and close the streaming writers
             folderManager.FlushAndCloseWriters(caseRunFolder);
+
+            var rebootStatus = RebootRequestReader.TryRead(controlDir, out var rebootRequest, out var rebootError);
+            if (rebootStatus == RebootRequestParseStatus.Invalid)
+            {
+                var errorResult = CreateErrorResult(context, startTime,
+                    ErrorType.RunnerError, rebootError ?? "Invalid reboot request.");
+                await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
+                return errorResult;
+            }
+
+            if (rebootStatus == RebootRequestParseStatus.Valid && rebootRequest is not null)
+            {
+                if (context.IsResume)
+                {
+                    var errorResult = CreateErrorResult(context, startTime,
+                        ErrorType.RunnerError, "Multiple reboots in one run are not supported.");
+                    await WriteArtifactsAsync(folderManager, caseRunFolder, context, errorResult, secretValues, enhancedEnvironment);
+                    return errorResult;
+                }
+
+                await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
+                {
+                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Code = "TestCase.RebootRequested",
+                    Level = "warning",
+                    Message = $"Test case '{context.Manifest.Id}' requested a reboot.",
+                    Data = new Dictionary<string, object?>
+                    {
+                        ["testId"] = context.Manifest.Id,
+                        ["testVersion"] = context.Manifest.Version,
+                        ["runId"] = extractedRunId,
+                        ["nextPhase"] = rebootRequest.NextPhase,
+                        ["reason"] = rebootRequest.Reason
+                    }
+                });
+
+                if (context.IsTopLevel)
+                {
+                    await HandleRebootRequestAsync(context, caseRunFolder, rebootRequest);
+                    return CreateErrorResult(context, startTime,
+                        ErrorType.RunnerError, "Reboot initiated, awaiting resume.");
+                }
+
+                ArchiveRebootRequest(caseRunFolder);
+                var rebootResult = CreateRebootRequiredResult(context, startTime, rebootRequest);
+                await folderManager.WriteResultAsync(caseRunFolder, rebootResult, context.SecretInputs);
+                return rebootResult;
+            }
 
             // Build result
             var endTime = DateTime.UtcNow;
@@ -332,6 +418,44 @@ public sealed class TestCaseRunner
         return result;
     }
 
+    private static TestCaseResult CreateRebootRequiredResult(
+        RunContext context,
+        DateTime startTime,
+        RebootRequest rebootRequest)
+    {
+        var endTime = DateTime.UtcNow;
+        var result = new TestCaseResult
+        {
+            SchemaVersion = "1.5.0",
+            RunType = RunType.TestCase,
+            TestId = context.Manifest.Id,
+            TestVersion = context.Manifest.Version,
+            Status = RunStatus.RebootRequired,
+            StartTime = startTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            EndTime = endTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            EffectiveInputs = context.EffectiveInputs,
+            Runner = new RunnerInfo { Version = RunnerVersion },
+            Reboot = new RebootInfo
+            {
+                NextPhase = rebootRequest.NextPhase,
+                Reason = rebootRequest.Reason,
+                OriginTestId = context.Manifest.Id,
+                DelaySec = rebootRequest.Reboot?.DelaySec
+            }
+        };
+
+        if (!context.IsStandalone)
+        {
+            result.NodeId = context.NodeId;
+            result.SuiteId = context.SuiteId;
+            result.SuiteVersion = context.SuiteVersion;
+            result.PlanId = context.PlanId;
+            result.PlanVersion = context.PlanVersion;
+        }
+
+        return result;
+    }
+
     private static async Task WriteArtifactsAsync(
         CaseRunFolderManager folderManager,
         string caseRunFolder,
@@ -365,5 +489,70 @@ public sealed class TestCaseRunner
         var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
         var shortGuid = Guid.NewGuid().ToString("N")[..8];
         return $"R-{timestamp}-{shortGuid}";
+    }
+
+    private static void CleanControlInbox(string controlDir)
+    {
+        var rebootPath = Path.Combine(controlDir, "reboot.json");
+        var rebootTempPath = Path.Combine(controlDir, "reboot.tmp");
+
+        if (File.Exists(rebootPath))
+        {
+            File.Delete(rebootPath);
+        }
+
+        if (File.Exists(rebootTempPath))
+        {
+            File.Delete(rebootTempPath);
+        }
+    }
+
+    private static async Task HandleRebootRequestAsync(
+        RunContext context,
+        string caseRunFolder,
+        RebootRequest rebootRequest)
+    {
+        var resumeToken = Guid.NewGuid().ToString("N");
+        var runnerExecutable = string.IsNullOrWhiteSpace(context.RunnerExecutablePath)
+            ? Environment.ProcessPath ?? string.Empty
+            : context.RunnerExecutablePath;
+
+        if (string.IsNullOrWhiteSpace(runnerExecutable))
+        {
+            throw new InvalidOperationException("Runner executable path could not be determined.");
+        }
+
+        var session = new RebootResumeSession
+        {
+            RunId = context.RunId,
+            EntityType = "TestCase",
+            State = "PendingResume",
+            CurrentNodeIndex = 0,
+            NextPhase = rebootRequest.NextPhase,
+            ResumeCount = 0,
+            ResumeToken = resumeToken,
+            OriginTestId = context.Manifest.Id,
+            RunFolder = caseRunFolder,
+            CaseContext = ResumeContextConverter.FromRunContext(context, caseRunFolder)
+        };
+
+        await session.SaveAsync();
+        ResumeTaskScheduler.CreateResumeTask(context.RunId, resumeToken, runnerExecutable, context.RunsRoot);
+        ArchiveRebootRequest(caseRunFolder);
+        RebootExecutor.RestartMachine(rebootRequest.Reboot?.DelaySec);
+        Environment.Exit(0);
+    }
+
+    private static void ArchiveRebootRequest(string caseRunFolder)
+    {
+        var controlDir = Path.Combine(caseRunFolder, "control");
+        var rebootPath = Path.Combine(controlDir, "reboot.json");
+        if (!File.Exists(rebootPath))
+        {
+            return;
+        }
+
+        var archivePath = Path.Combine(controlDir, $"reboot.json.{DateTime.UtcNow:yyyyMMddHHmmss}.archive");
+        File.Move(rebootPath, archivePath, true);
     }
 }
