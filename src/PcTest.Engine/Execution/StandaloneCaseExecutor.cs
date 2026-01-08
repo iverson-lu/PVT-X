@@ -91,10 +91,12 @@ public sealed class StandaloneCaseExecutor
 
         // Execute
         var runner = new TestCaseRunner(_cancellationToken);
+        var runnerExecutablePath = ResolveRunnerExecutablePath();
 
         var context = new RunContext
         {
             RunId = runId,
+            Phase = 0,
             Manifest = testCase.Manifest,
             TestCasePath = testCase.FolderPath,
             EffectiveInputs = inputResult.EffectiveInputs,
@@ -103,7 +105,8 @@ public sealed class StandaloneCaseExecutor
             TimeoutSec = testCase.Manifest.TimeoutSec,
             RunsRoot = _runsRoot,
             AssetsRoot = _assetsRoot,
-            InputTemplates = inputResult.InputTemplates
+            InputTemplates = inputResult.InputTemplates,
+            RunnerExecutablePath = runnerExecutablePath
             // NodeId, SuiteId, PlanId, ParentRunId all null for standalone
         };
 
@@ -141,5 +144,12 @@ public sealed class StandaloneCaseExecutor
         _reporter.OnRunFinished(runId, result.Status);
 
         return result;
+    }
+
+    private static string ResolveRunnerExecutablePath()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var cliPath = Path.Combine(baseDir, "PcTest.Cli.exe");
+        return File.Exists(cliPath) ? cliPath : (Environment.ProcessPath ?? string.Empty);
     }
 }

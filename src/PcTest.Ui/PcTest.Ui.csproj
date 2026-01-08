@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PcTest.Engine\PcTest.Engine.csproj" />
+    <ProjectReference Include="..\PcTest.Cli\PcTest.Cli.csproj" />
   </ItemGroup>
 
   <ItemGroup>

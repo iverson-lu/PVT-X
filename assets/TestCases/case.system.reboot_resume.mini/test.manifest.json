@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.system.reboot_resume.mini",
+  "name": "Reboot Resume MVP",
+  "description": "Minimal case that requests a reboot on phase 0 and completes on phase 1.",
+  "version": "1.0.0",
+  "category": "System",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 300,
+  "tags": ["reboot", "resume", "mvp"]
+}

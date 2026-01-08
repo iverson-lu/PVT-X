@@ -254,6 +254,7 @@ public class RunStatusToBrushConverter : IValueConverter
                 PcTest.Contracts.RunStatus.Error => "#F59E0B",   // Orange
                 PcTest.Contracts.RunStatus.Timeout => "#F97316", // Orange-red
                 PcTest.Contracts.RunStatus.Aborted => "#6B7280", // Gray
+                PcTest.Contracts.RunStatus.RebootRequired => "#8B5CF6", // Purple
                 _ => "#9CA3AF"  // Light gray
             };
         }
@@ -282,6 +283,7 @@ public class RunStatusToShortTextConverter : IValueConverter
                 PcTest.Contracts.RunStatus.Error => "Error",
                 PcTest.Contracts.RunStatus.Timeout => "Time",
                 PcTest.Contracts.RunStatus.Aborted => "Stop",
+                PcTest.Contracts.RunStatus.RebootRequired => "Reboot",
                 _ => "?"
             };
         }
@@ -310,6 +312,7 @@ public class RunStatusToIconConverter : IValueConverter
                 PcTest.Contracts.RunStatus.Error => "ErrorCircle24",
                 PcTest.Contracts.RunStatus.Timeout => "Clock24",
                 PcTest.Contracts.RunStatus.Aborted => "RecordStop24",
+                PcTest.Contracts.RunStatus.RebootRequired => "ArrowClockwise24",
                 _ => "Hourglass24"
             };
         }
@@ -602,4 +605,3 @@ public class EventLevelToIconConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-

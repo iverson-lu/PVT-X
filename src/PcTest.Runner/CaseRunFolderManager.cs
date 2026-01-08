@@ -17,11 +17,13 @@ public sealed class CaseRunFolderManager : IDisposable
     private readonly string _runsRoot;
     private readonly ConcurrentDictionary<string, StreamWriter> _stdoutWriters = new();
     private readonly ConcurrentDictionary<string, StreamWriter> _stderrWriters = new();
+    private readonly bool _appendLogs;
     private bool _disposed;
 
-    public CaseRunFolderManager(string runsRoot)
+    public CaseRunFolderManager(string runsRoot, bool appendLogs = false)
     {
         _runsRoot = PathUtils.NormalizePath(runsRoot);
+        _appendLogs = appendLogs;
     }
 
     /// <summary>
@@ -69,6 +71,24 @@ public sealed class CaseRunFolderManager : IDisposable
         Directory.CreateDirectory(Path.Combine(finalPath, "artifacts"));
 
         return finalPath;
+    }
+
+    /// <summary>
+    /// Returns an existing Case Run Folder for a given runId or absolute path.
+    /// </summary>
+    public string GetExistingRunFolder(string runIdOrPath)
+    {
+        var resolvedPath = Path.IsPathRooted(runIdOrPath)
+            ? PathUtils.NormalizePath(runIdOrPath)
+            : PathUtils.NormalizePath(Path.Combine(_runsRoot, runIdOrPath));
+
+        if (!Directory.Exists(resolvedPath))
+        {
+            throw new DirectoryNotFoundException($"Run folder not found: {resolvedPath}");
+        }
+
+        Directory.CreateDirectory(Path.Combine(resolvedPath, "artifacts"));
+        return resolvedPath;
     }
 
     /// <summary>
@@ -176,7 +196,8 @@ public sealed class CaseRunFolderManager : IDisposable
         return _stdoutWriters.GetOrAdd(caseRunFolder, folder =>
         {
             var path = Path.Combine(folder, "stdout.log");
-            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            var mode = _appendLogs && File.Exists(path) ? FileMode.Append : FileMode.Create;
+            var stream = new FileStream(path, mode, FileAccess.Write, FileShare.ReadWrite);
             return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
         });
     }
@@ -189,7 +210,8 @@ public sealed class CaseRunFolderManager : IDisposable
         return _stderrWriters.GetOrAdd(caseRunFolder, folder =>
         {
             var path = Path.Combine(folder, "stderr.log");
-            var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+            var mode = _appendLogs && File.Exists(path) ? FileMode.Append : FileMode.Create;
+            var stream = new FileStream(path, mode, FileAccess.Write, FileShare.ReadWrite);
             return new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
         });
     }
