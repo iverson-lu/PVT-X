@@ -1,308 +1,184 @@
 param(
-    [Parameter(Mandatory=$true)]  [string]  $E_Mode,
-    [Parameter(Mandatory=$false)] [string]  $S_Text = "hello",
-    [Parameter(Mandatory=$false)] [int]     $N_Int = 42,
-    [Parameter(Mandatory=$false)] [bool]    $B_Flag = $true,
-    [Parameter(Mandatory=$false)] [double]  $N_Double = 3.14,
-    [Parameter(Mandatory=$false)] [string]  $P_Path = "data/test-data.txt",
-    [Parameter(Mandatory=$false)] [string]  $ItemsJson = "[1, 2, 3]",
-    [Parameter(Mandatory=$false)] [string]  $ConfigJson = "{`"timeout`": 30, `"retry`": true}"
+  [Parameter(Mandatory)]
+  [ValidateSet('pass','fail','timeout','error')]
+  [string]$E_Mode,
+  [string]$S_Text = 'hello',
+  [int]$N_Int = 42,
+  [bool]$B_Flag = $true,
+  [double]$N_Double = 3.14,
+  [string]$P_Path = 'data/test-data.txt',
+  [string]$ItemsJson  = '[1, 2, 3]',
+  [string]$ConfigJson = '{"timeout":30,"retry":true}'
 )
 
-$ErrorActionPreference = "Stop"
-
-# ----------------------------
-# Helpers
-# ----------------------------
-function Ensure-Dir([string] $Path) {
-    if (-not (Test-Path -LiteralPath $Path)) {
-        New-Item -ItemType Directory -Path $Path -Force | Out-Null
-    }
-}
-
-function Write-JsonFile([string] $Path, $Obj) {
-    $Obj | ConvertTo-Json -Depth 50 | Set-Content -LiteralPath $Path -Encoding UTF8
-}
-
-function Normalize-Text([string] $s) {
-    if ($null -eq $s) { return "" }
-    $t = $s.Trim()
-    while (($t.StartsWith('"') -and $t.EndsWith('"')) -or ($t.StartsWith("'") -and $t.EndsWith("'"))) {
-        if ($t.Length -lt 2) { break }
-        $t = $t.Substring(1, $t.Length - 2).Trim()
-    }
-    return $t
-}
-
-function Write-Stdout-Compact {
-    param(
-        [string]   $TestName,
-        [string]   $Overall,
-        [int]      $ExitCode,
-        [string]   $TsUtc,
-        [string]   $StepLine,
-        [string[]] $StepDetails,
-        [int]      $Total,
-        [int]      $Passed,
-        [int]      $Failed,
-        [int]      $Skipped
-    )
-
-    Write-Output "=================================================="
-    Write-Output ("TEST: {0}  RESULT: {1}  EXIT: {2}" -f $TestName, $Overall, $ExitCode)
-    Write-Output ("UTC:  {0}" -f $TsUtc)
-    Write-Output "--------------------------------------------------"
-    Write-Output $StepLine
-    foreach ($d in $StepDetails) { Write-Output ("      " + $d) }
-    Write-Output "--------------------------------------------------"
-    Write-Output ("SUMMARY: total={0} passed={1} failed={2} skipped={3}" -f $Total, $Passed, $Failed, $Skipped)
-    Write-Output "=================================================="
-    Write-Output ("MACHINE: overall={0} exit_code={1}" -f $Overall, $ExitCode)
-}
+$ErrorActionPreference = 'Stop'
 
 # ----------------------------
 # Metadata
 # ----------------------------
-$TestId = $env:PVTX_TESTCASE_ID
-$TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$TestId = $env:PVTX_TESTCASE_ID ?? 'unknown_test'
+$TsUtc  = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+$E_Mode = (Normalize-Text $E_Mode).ToLowerInvariant()
 
-# Normalize E_Mode
-$E_Mode = Normalize-Text $E_Mode
-$E_Mode = $E_Mode.ToLowerInvariant()
-
-# Validate E_Mode
-$allowedModes = @("pass", "fail", "timeout", "error")
-if ($allowedModes -notcontains $E_Mode) {
-    throw "Invalid E_Mode '$E_Mode'. Allowed: pass|fail|timeout|error"
-}
-
-# Artifacts
-$ArtifactsRoot = Join-Path (Get-Location) "artifacts"
+$ArtifactsRoot = Join-Path (Get-Location) 'artifacts'
 Ensure-Dir $ArtifactsRoot
-$ReportPath = Join-Path $ArtifactsRoot "report.json"
+$ReportPath = Join-Path $ArtifactsRoot 'report.json'
 
-# Defaults
-$overallStatus = "FAIL"
-$exitCode = 2  # 2 = script/runtime error unless overridden
+$overall  = 'FAIL'
+$exitCode = 2
+$details  = [System.Collections.Generic.List[string]]::new()
 
-# Step definition
-$step = @{
-    id      = "validate_params"
-    index   = 1
-    name    = "Validate all parameters"
-    status  = "FAIL"
-    expected = @{
-        all_params_valid = $true
-        mode_allowed = $true
-    }
-    actual = @{
-        mode = $E_Mode
-        text = $S_Text
-        int_value = $N_Int
-        flag = $B_Flag
-        double_value = $N_Double
-        path = $P_Path
-    }
-    metrics = @{}
-    message = $null
-    timing = @{ duration_ms = $null }
-    error = $null
-}
+$steps = @()
+$swTotal = [Diagnostics.Stopwatch]::StartNew()
 
-# timers
-$swTotal = [System.Diagnostics.Stopwatch]::StartNew()
-$swStep = $null
-
+# ----------------------------
+# Step 1: basic params
+# ----------------------------
+$step1 = New-Step 'verify_basic_params' 1 'Verify basic params'
+$sw1 = [Diagnostics.Stopwatch]::StartNew()
 try {
-    $swStep = [System.Diagnostics.Stopwatch]::StartNew()
+  # 这里不做“类型校验”（param 已经保证类型），只做一些“基本合理性”示例
+  if ([string]::IsNullOrWhiteSpace($S_Text)) { throw 'S_Text cannot be empty.' }
+  if ($N_Int -lt 0) { throw 'N_Int must be >= 0.' }
+  if ([double]::IsNaN($N_Double) -or [double]::IsInfinity($N_Double)) { throw 'N_Double must be a finite number.' }
 
-    # Parse JSON parameters
-    $parsedItems = $null
-    $parsedConfig = $null
-    try {
-        $parsedItems = $ItemsJson | ConvertFrom-Json
-        $parsedConfig = $ConfigJson | ConvertFrom-Json
+  $step1.metrics = @{
+    mode        = $E_Mode
+    text_length = $S_Text.Length
+    int_value   = $N_Int
+    flag        = $B_Flag
+    double_value= $N_Double
+  }
 
-        # Validate JSON shapes (mirror manifest intent)
-        if ($null -eq $parsedItems -or $parsedItems -isnot [System.Array]) {
-            throw "ItemsJson must be a JSON array (e.g., [1,2,3])."
-        }
-        if ($null -eq $parsedConfig -or $parsedConfig -is [System.Array]) {
-            throw "ConfigJson must be a JSON object (e.g., {""timeout"":30})."
-        }
-
-        $step.actual.items_parsed = $parsedItems
-        $step.actual.config_parsed = $parsedConfig
-        $step.metrics.items_count = $parsedItems.Count
-    }
-    catch {
-        throw "Failed to parse JSON parameters: $($_.Exception.Message)"
-    }
-
-    # Resolve relative path using PVTX_TESTCASE_PATH if available
-    $resolvedPath = $P_Path
-    if (-not [System.IO.Path]::IsPathRooted($P_Path)) {
-        $baseDir = if ($env:PVTX_TESTCASE_PATH) { $env:PVTX_TESTCASE_PATH } else { $PSScriptRoot }
-        $resolvedPath = Join-Path $baseDir $P_Path
-    }
-    
-    # Validate parameter types
-    $validationErrors = @()
-    if ($E_Mode -isnot [string]) { $validationErrors += "E_Mode: Expected string" }
-    if ($S_Text -isnot [string]) { $validationErrors += "S_Text: Expected string" }
-    if ($N_Int -isnot [int] -and $N_Int -isnot [int32]) { $validationErrors += "N_Int: Expected int" }
-    if ($B_Flag -isnot [bool]) { $validationErrors += "B_Flag: Expected boolean" }
-    if ($N_Double -isnot [double]) { $validationErrors += "N_Double: Expected double" }
-    if ($P_Path -isnot [string]) { $validationErrors += "P_Path: Expected string" }
-    
-    if ($validationErrors.Count -gt 0) {
-        throw "Parameter validation failed: " + ($validationErrors -join "; ")
-    }
-
-    # metrics
-    $step.metrics.mode = $E_Mode
-    $step.metrics.text_length = $S_Text.Length
-    $step.metrics.int_value = $N_Int
-    $step.metrics.flag = $B_Flag
-    $step.metrics.double_value = $N_Double
-    $step.metrics.path_exists = (Test-Path -LiteralPath $resolvedPath -ErrorAction SilentlyContinue)
-    $step.metrics.path_resolved = $resolvedPath
-    
-    # Try to read file content if path exists
-    if ($step.metrics.path_exists) {
-        try {
-            $fileContent = Get-Content -LiteralPath $resolvedPath -Raw -ErrorAction Stop
-            $step.metrics.file_size = $fileContent.Length
-            $step.metrics.file_lines = ($fileContent -split '\r?\n').Count
-            $step.actual.file_content_preview = if ($fileContent.Length -gt 100) { $fileContent.Substring(0, 100) + "..." } else { $fileContent }
-        }
-        catch {
-            $step.metrics.file_read_error = $_.Exception.Message
-        }
-    }
-
-    # Execute test based on mode
-    switch ($E_Mode) {
-        "pass" {
-            $step.status = "PASS"
-            $step.message = "All parameters validated successfully. Forced PASS by E_Mode."
-            $exitCode = 0
-            $overallStatus = "PASS"
-        }
-        "fail" {
-            $step.status = "FAIL"
-            $step.message = "Forced FAIL by E_Mode=fail"
-            $exitCode = 1
-            $overallStatus = "FAIL"
-        }
-        "timeout" {
-            $step.status = "FAIL"
-            $step.message = "Forcing timeout by sleeping longer than allowed (Runner should mark as Timeout)"
-            $exitCode = 1
-            $overallStatus = "FAIL"
-            Start-Sleep -Seconds 5    # exceeds timeoutSec=2 (manifest); Runner should terminate and mark Timeout
-        }
-        "error" {
-            throw "Forced error from E_Mode=error"
-        }
-    }
+  $step1.status = 'PASS'
+  $step1.message = 'Basic params OK.'
 }
 catch {
-    $overallStatus = "FAIL"
-    $step.status = "FAIL"
-    $step.message = "Script error: $($_.Exception.Message)"
-    $step.error = @{
-        kind = "SCRIPT"
-        code = "SCRIPT_ERROR"
-        message = $_.Exception.Message
-        exception_type = $_.Exception.GetType().FullName
-        stack = $_.ScriptStackTrace
-    }
-    $exitCode = 2
+  Fail-Step $step1 "Basic param verification failed: $($_.Exception.Message)" $_
+  throw
 }
 finally {
-    if ($swStep -ne $null) {
-        $swStep.Stop()
-        $step.timing.duration_ms = [int]$swStep.ElapsedMilliseconds
+  $sw1.Stop()
+  $step1.timing.duration_ms = [int]$sw1.ElapsedMilliseconds
+  $steps += $step1
+}
+
+# ----------------------------
+# Step 2: path + json
+# ----------------------------
+$step2 = New-Step 'verify_path_and_json' 2 'Verify path + JSON params'
+$sw2 = [Diagnostics.Stopwatch]::StartNew()
+try {
+  $items  = $ItemsJson  | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+  $config = $ConfigJson | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+
+  if ($items -isnot [object[]])   { throw 'ItemsJson must be a JSON array (e.g., [1,2,3]).' }
+  if ($config -isnot [hashtable]) { throw 'ConfigJson must be a JSON object (e.g., {"timeout":30}).' }
+
+  $baseDir = $env:PVTX_TESTCASE_PATH ?? $PSScriptRoot
+  $resolvedPath = [IO.Path]::IsPathRooted($P_Path) ? $P_Path : (Join-Path $baseDir $P_Path)
+  $pathExists = Test-Path -LiteralPath $resolvedPath -ErrorAction SilentlyContinue
+
+  $step2.metrics = @{
+    items_count   = $items.Count
+    timeout       = $config.timeout
+    retry         = $config.retry
+    path_exists   = $pathExists
+    path_resolved = $resolvedPath
+  }
+
+  $step2.status = 'PASS'
+  $step2.message = 'Path + JSON OK.'
+}
+catch {
+  Fail-Step $step2 "Path/JSON verification failed: $($_.Exception.Message)" $_
+  throw
+}
+finally {
+  $sw2.Stop()
+  $step2.timing.duration_ms = [int]$sw2.ElapsedMilliseconds
+  $steps += $step2
+}
+
+# ----------------------------
+# Mode forcing, for demo purpose only. Actaual case should rely on real step results.
+# ----------------------------
+try {
+  switch ($E_Mode) {
+    'pass'    { $overall='PASS'; $exitCode=0 }
+    'fail'    { $overall='FAIL'; $exitCode=1 }
+    'timeout' { $overall='FAIL'; $exitCode=1; Start-Sleep 5 }
+    'error'   { throw 'Forced error from E_Mode=error' }
+  }
+
+  $details.Add("basic: text_len=$($step1.metrics.text_length) int=$($step1.metrics.int_value) flag=$($step1.metrics.flag) double=$($step1.metrics.double_value)")
+  $details.Add("path+json: items=$($step2.metrics.items_count) path_exists=$($step2.metrics.path_exists) timeout=$($step2.metrics.timeout) retry=$($step2.metrics.retry)")
+}
+catch {
+  $overall='FAIL'
+  $exitCode=2
+  $details.Clear()
+  $details.Add("reason: $($_.Exception.Message)")
+  $details.Add("exception: $($_.Exception.GetType().FullName)")
+}
+finally {
+  $swTotal.Stop()
+
+  $passCount = ($steps | Where-Object status -EQ 'PASS').Count
+  $failCount = ($steps | Where-Object status -EQ 'FAIL').Count
+  $skipCount = ($steps | Where-Object status -EQ 'SKIP').Count
+
+  $report = @{
+    schema  = @{ version = '1.0' }
+    test    = @{
+      id = $TestId
+      name = $TestId
+      params = @{
+        e_mode = $E_Mode
+        s_text = $S_Text
+        n_int  = $N_Int
+        b_flag = $B_Flag
+        n_double = $N_Double
+        p_path = $P_Path
+        items_json  = $ItemsJson
+        config_json = $ConfigJson
+      }
     }
-    $swTotal.Stop()
-    $totalMs = [int]$swTotal.ElapsedMilliseconds
-
-    $passCount = ($step.status -eq "PASS") ? 1 : 0
-    $failCount = ($step.status -eq "FAIL") ? 1 : 0
-    $skipCount = ($step.status -eq "SKIP") ? 1 : 0
-
-    # ----------------------------
-    # report.json (structured format like NetworkPingConnectivity)
-    # ----------------------------
-    $report = @{
-        schema = @{ version = "1.0" }
-        test = @{
-            id = $TestId
-            name = $TestId
-            params = @{
-                e_mode = $E_Mode
-                s_text = $S_Text
-                n_int = $N_Int
-                b_flag = $B_Flag
-                n_double = $N_Double
-                p_path = $P_Path
-                items_json = $ItemsJson
-                config_json = $ConfigJson
-            }
-        }
-        summary = @{
-            status = $overallStatus
-            exit_code = $exitCode
-            counts = @{
-                total = 1
-                pass = $passCount
-                fail = $failCount
-                skip = $skipCount
-            }
-            duration_ms = $totalMs
-        }
-        steps = @($step)
+    summary = @{
+      status      = $overall
+      exit_code   = $exitCode
+      counts      = @{
+        total = $steps.Count
+        pass  = $passCount
+        fail  = $failCount
+        skip  = $skipCount
+      }
+      duration_ms = [int]$swTotal.ElapsedMilliseconds
+      ts_utc      = $TsUtc
     }
+    steps = $steps
+  }
 
-    Write-JsonFile $ReportPath $report
+  $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8NoBOM
 
-    # ----------------------------
-    # stdout (compact format like NetworkPingConnectivity)
-    # ----------------------------
-    $dotCount = [Math]::Max(3, 30 - $step.name.Length)
-    $stepLine = "[1/1] {0} {1} {2}" -f $step.name, ("." * $dotCount), $step.status
+  $stepLines = @()
+  for ($i=0; $i -lt $steps.Count; $i++) {
+    $nm = $steps[$i].name
+    $dots = [Math]::Max(3, 30 - $nm.Length)
+    $stepLines += ("[{0}/{1}] {2} {3} {4}" -f ($i+1), $steps.Count, $nm, ("." * $dots), $steps[$i].status)
+  }
 
-    $details = New-Object System.Collections.Generic.List[string]
-    if ($step.status -eq "PASS") {
-        $d = "mode=$E_Mode text='$S_Text' int=$N_Int flag=$B_Flag double=$N_Double"
-        $details.Add($d)
-        if ($step.metrics.items_count) { 
-            $details.Add("items_count=$($step.metrics.items_count) path_exists=$($step.metrics.path_exists)")
-        }
-    }
-    else {
-        if ($step.message) { $details.Add("reason: $($step.message)") }
-        $details.Add("expected: all_params_valid=true mode_allowed=true")
-        
-        $act = @()
-        $act += "mode=$E_Mode"
-        $act += "text_length=$($S_Text.Length)"
-        $act += "int=$N_Int"
-        if ($act.Count -gt 0) { $details.Add(("actual:   " + ($act -join " "))) }
-    }
+  Write-Stdout-Compact `
+    -TestName $TestId `
+    -Overall $overall `
+    -ExitCode $exitCode `
+    -TsUtc $TsUtc `
+    -StepLine ($stepLines -join "`n") `
+    -StepDetails $details.ToArray() `
+    -Total $steps.Count `
+    -Passed ($steps | Where-Object status -EQ 'PASS').Count `
+    -Failed ($steps | Where-Object status -EQ 'FAIL').Count `
+    -Skipped ($steps | Where-Object status -EQ 'SKIP').Count
 
-    Write-Stdout-Compact `
-        -TestName $TestId `
-        -Overall $overallStatus `
-        -ExitCode $exitCode `
-        -TsUtc $TsUtc `
-        -StepLine $stepLine `
-        -StepDetails $details.ToArray() `
-        -Total 1 `
-        -Passed $passCount `
-        -Failed $failCount `
-        -Skipped $skipCount
-
-    exit $exitCode
+  exit $exitCode
 }

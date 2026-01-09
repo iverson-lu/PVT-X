@@ -55,6 +55,73 @@ function Normalize-Text {
     return $t
 }
 
+function ParseJson {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string] $json,
+
+        [Parameter(Mandatory=$true)]
+        [string] $name
+    )
+
+    try {
+        $json | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+    }
+    catch {
+        throw ('Failed to parse {0}: {1}' -f $name, $_.Exception.Message)
+    }
+}
+
+function New-Step {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string] $id,
+
+        [Parameter(Mandatory=$true)]
+        [int] $index,
+
+        [Parameter(Mandatory=$true)]
+        [string] $name
+    )
+
+    @{
+        id      = $id
+        index   = $index
+        name    = $name
+        status  = 'FAIL'
+        message = $null
+        metrics = @{}
+        timing  = @{ duration_ms = $null }
+        error   = $null
+    }
+}
+
+function Fail-Step {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [hashtable] $step,
+
+        [Parameter(Mandatory=$true)]
+        [string] $msg,
+
+        [Parameter(Mandatory=$true)]
+        $ex
+    )
+
+    $step.status  = 'FAIL'
+    $step.message = $msg
+    $step.error   = @{
+        kind           = 'SCRIPT'
+        code           = 'STEP_ERROR'
+        message        = $ex.Exception.Message
+        exception_type = $ex.Exception.GetType().FullName
+        stack          = $ex.ScriptStackTrace
+    }
+}
+
 function Write-Stdout-Compact {
     [CmdletBinding()]
     param(
@@ -97,4 +164,4 @@ function Write-Stdout-Compact {
     Write-Output "=================================================="
 }
 
-Export-ModuleMember -Function Ensure-Dir, Write-JsonFile, Normalize-Text, Write-Stdout-Compact
+Export-ModuleMember -Function Ensure-Dir, Write-JsonFile, Normalize-Text, ParseJson, New-Step, Fail-Step, Write-Stdout-Compact
