@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.hw.cpu.core.params_verify",
+  "name": "CPU Parameters Verify",
+  "description": "Verifies key CPU parameters (cores/threads, frequency, x64, and virtualization flags) using Win32_Processor and produces structured report.json output.",
+  "version": "1.0.0",
+  "category": "HW.CPU",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "MinPhysicalCores",
+      "type": "int",
+      "required": false,
+      "default": 2,
+      "min": 0,
+      "max": 1024,
+      "help": "Minimum total physical cores across all sockets."
+    },
+    {
+      "name": "MinLogicalProcessors",
+      "type": "int",
+      "required": false,
+      "default": 2,
+      "min": 0,
+      "max": 4096,
+      "help": "Minimum total logical processors (threads) across all sockets."
+    },
+    {
+      "name": "MinMaxClockMHz",
+      "type": "int",
+      "required": false,
+      "default": 1000,
+      "min": 0,
+      "max": 100000,
+      "unit": "MHz",
+      "help": "Minimum reported MaxClockSpeed in MHz. Set 0 to skip."
+    },
+    {
+      "name": "RequireX64",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "Require AddressWidth=64 on all sockets."
+    },
+    {
+      "name": "E_Virtualization",
+      "type": "enum",
+      "required": false,
+      "default": "any",
+      "enumValues": [
+        "any",
+        "supported",
+        "enabled"
+      ],
+      "help": "Virtualization requirement: any|supported|enabled."
+    },
+    {
+      "name": "ExpectedVendor",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "help": "Expected vendor substring (e.g., GenuineIntel / AuthenticAMD). Empty = skip."
+    },
+    {
+      "name": "ExpectedNameRegex",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "help": "Regex to match Win32_Processor.Name for all sockets. Empty = skip."
+    },
+    {
+      "name": "MaxSockets",
+      "type": "int",
+      "required": false,
+      "default": 0,
+      "min": 0,
+      "max": 64,
+      "help": "Maximum allowed socket count. 0 = skip."
+    },
+    {
+      "name": "B_SaveRaw",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "If true, also write artifacts/cpu_raw.json with selected Win32_Processor fields."
+    }
+  ],
+  "tags": [
+    "cpu",
+    "hw",
+    "verify",
+    "cim",
+    "win32_processor"
+  ]
+}
