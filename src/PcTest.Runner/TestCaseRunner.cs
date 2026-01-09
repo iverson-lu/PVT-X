@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Text.Json;
 using PcTest.Contracts;
 using PcTest.Contracts.Results;
 using PcTest.Contracts.Validation;
@@ -28,6 +29,33 @@ public sealed class TestCaseRunner
     {
         var startTime = DateTime.UtcNow;
         using var folderManager = new CaseRunFolderManager(context.RunsRoot, context.IsResume);
+
+        // Preserve original startTime when resuming from reboot
+        if (context.IsResume)
+        {
+            var existingResultPath = Path.Combine(context.RunFolderPath ?? context.RunId, "result.json");
+            if (File.Exists(existingResultPath))
+            {
+                try
+                {
+                    var existingJson = await File.ReadAllTextAsync(existingResultPath);
+                    using var doc = JsonDocument.Parse(existingJson);
+                    if (doc.RootElement.TryGetProperty("startTime", out var startTimeProp))
+                    {
+                        var startTimeStr = startTimeProp.GetString();
+                        if (!string.IsNullOrEmpty(startTimeStr) &&
+                            DateTime.TryParse(startTimeStr, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedStartTime))
+                        {
+                            startTime = parsedStartTime.Kind == DateTimeKind.Utc ? parsedStartTime : parsedStartTime.ToUniversalTime();
+                        }
+                    }
+                }
+                catch
+                {
+                    // If we can't read existing startTime, use current time
+                }
+            }
+        }
 
         // Create Case Run Folder
         var caseRunFolder = context.IsResume

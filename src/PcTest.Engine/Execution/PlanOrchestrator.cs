@@ -78,6 +78,44 @@ public sealed class PlanOrchestrator
 
         var startTime = DateTime.UtcNow;
         var groupRunId = resumeSession?.RunId ?? GroupRunFolderManager.GenerateGroupRunId("P");
+        
+        // Preserve original startTime when resuming from reboot by reading from events.jsonl
+        if (resumeSession is not null)
+        {
+            var eventsPath = Path.Combine(resumeSession.RunFolder, "events.jsonl");
+            if (File.Exists(eventsPath))
+            {
+                try
+                {
+                    // Read first TestPlan.Started event to get original startTime
+                    var lines = await File.ReadAllLinesAsync(eventsPath);
+                    foreach (var line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        
+                        using var doc = JsonDocument.Parse(line);
+                        var root = doc.RootElement;
+                        
+                        if (root.TryGetProperty("code", out var code) && 
+                            code.GetString() == "TestPlan.Started" &&
+                            root.TryGetProperty("timestamp", out var timestamp))
+                        {
+                            var timestampStr = timestamp.GetString();
+                            if (!string.IsNullOrEmpty(timestampStr) &&
+                                DateTime.TryParse(timestampStr, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedStartTime))
+                            {
+                                startTime = parsedStartTime.Kind == DateTimeKind.Utc ? parsedStartTime : parsedStartTime.ToUniversalTime();
+                                break; // Use first occurrence
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // If we can't read events, use current time
+                }
+            }
+        }
         var folderManager = new GroupRunFolderManager(_runsRoot);
         var groupRunFolder = resumeSession is null
             ? folderManager.CreateGroupRunFolder(groupRunId)

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "suite.system.core.reboot_test",
+  "name": "Reboot Test",
+  "description": "For reboot test",
+  "version": "1.0.0",
+  "controls": {
+    "repeat": 3,
+    "maxParallel": 1,
+    "continueOnFailure": true,
+    "retryOnError": 0,
+    "timeoutPolicy": "AbortOnTimeout"
+  },
+  "testCases": [
+    {
+      "nodeId": "case.hw.device.core.health_check@1.0.0",
+      "ref": "Device Health Check",
+      "inputs": {
+        "RestrictedMode": false
+      }
+    },
+    {
+      "nodeId": "case.system.reboot_resume.mini@1.0.0",
+      "ref": "Reboot Resume MVP"
+    },
+    {
+      "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
+      "ref": "Timezone Verification",
+      "inputs": {
+        "ExpectedUtcOffset": "\u002B08:00"
+      }
+    }
+  ]
+}

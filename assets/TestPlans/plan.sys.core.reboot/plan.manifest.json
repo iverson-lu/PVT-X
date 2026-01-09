@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "plan.sys.core.reboot",
+  "name": "Reboot Test",
+  "description": "New test plan",
+  "version": "1.0.0",
+  "suites": [
+    "suite.sw.os.network.ping_test@1.0.0",
+    "suite.system.core.reboot_test@1.0.0",
+    "suite.sw.os.sanity_check@1.0.0"
+  ]
+}
