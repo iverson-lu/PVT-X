@@ -1,14 +1,14 @@
 param(
   [Parameter(Mandatory)]
   [ValidateSet('pass','fail','timeout','error')]
-  [string]$E_Mode,
-  [string]$S_Text = 'hello',
-  [int]$N_Int = 42,
-  [bool]$B_Flag = $true,
-  [double]$N_Double = 3.14,
-  [string]$P_Path = 'data/test-data.txt',
-  [string]$ItemsJson  = '[1, 2, 3]',
-  [string]$ConfigJson = '{"timeout":30,"retry":true}'
+  [string]$Mode,
+  [string]$Message = 'hello',
+  [int]$Count = 42,
+  [bool]$Enabled = $true,
+  [double]$Threshold = 3.14,
+  [string]$DataPath = 'data/test-data.txt',
+  [string]$Items  = '[1, 2, 3]',
+  [string]$Config = '{"timeout":30,"retry":true}'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -18,7 +18,7 @@ $ErrorActionPreference = 'Stop'
 # ----------------------------
 $TestId = $env:PVTX_TESTCASE_ID ?? 'unknown_test'
 $TsUtc  = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-$E_Mode = (Normalize-Text $E_Mode).ToLowerInvariant()
+$Mode = (Normalize-Text $Mode).ToLowerInvariant()
 
 $ArtifactsRoot = Join-Path (Get-Location) 'artifacts'
 Ensure-Dir $ArtifactsRoot
@@ -38,16 +38,16 @@ $step1 = New-Step 'verify_basic_params' 1 'Verify basic params'
 $sw1 = [Diagnostics.Stopwatch]::StartNew()
 try {
   # 这里不做“类型校验”（param 已经保证类型），只做一些“基本合理性”示例
-  if ([string]::IsNullOrWhiteSpace($S_Text)) { throw 'S_Text cannot be empty.' }
-  if ($N_Int -lt 0) { throw 'N_Int must be >= 0.' }
-  if ([double]::IsNaN($N_Double) -or [double]::IsInfinity($N_Double)) { throw 'N_Double must be a finite number.' }
+  if ([string]::IsNullOrWhiteSpace($Message)) { throw 'Message cannot be empty.' }
+  if ($Count -lt 0) { throw 'Count must be >= 0.' }
+  if ([double]::IsNaN($Threshold) -or [double]::IsInfinity($Threshold)) { throw 'Threshold must be a finite number.' }
 
   $step1.metrics = @{
-    mode        = $E_Mode
-    text_length = $S_Text.Length
-    int_value   = $N_Int
-    flag        = $B_Flag
-    double_value= $N_Double
+    mode           = $Mode
+    message_length = $Message.Length
+    count          = $Count
+    enabled        = $Enabled
+    threshold      = $Threshold
   }
 
   $step1.status = 'PASS'
@@ -69,20 +69,20 @@ finally {
 $step2 = New-Step 'verify_path_and_json' 2 'Verify path + JSON params'
 $sw2 = [Diagnostics.Stopwatch]::StartNew()
 try {
-  $items  = $ItemsJson  | ConvertFrom-Json -AsHashtable -ErrorAction Stop
-  $config = $ConfigJson | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+  $itemsData  = $Items  | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+  $configData = $Config | ConvertFrom-Json -AsHashtable -ErrorAction Stop
 
-  if ($items -isnot [object[]])   { throw 'ItemsJson must be a JSON array (e.g., [1,2,3]).' }
-  if ($config -isnot [hashtable]) { throw 'ConfigJson must be a JSON object (e.g., {"timeout":30}).' }
+  if ($itemsData -isnot [object[]])   { throw 'Items must be a JSON array (e.g., [1,2,3]).' }
+  if ($configData -isnot [hashtable]) { throw 'Config must be a JSON object (e.g., {"timeout":30}).' }
 
   $baseDir = $env:PVTX_TESTCASE_PATH ?? $PSScriptRoot
-  $resolvedPath = [IO.Path]::IsPathRooted($P_Path) ? $P_Path : (Join-Path $baseDir $P_Path)
+  $resolvedPath = [IO.Path]::IsPathRooted($DataPath) ? $DataPath : (Join-Path $baseDir $DataPath)
   $pathExists = Test-Path -LiteralPath $resolvedPath -ErrorAction SilentlyContinue
 
   $step2.metrics = @{
-    items_count   = $items.Count
-    timeout       = $config.timeout
-    retry         = $config.retry
+    items_count   = $itemsData.Count
+    timeout       = $configData.timeout
+    retry         = $configData.retry
     path_exists   = $pathExists
     path_resolved = $resolvedPath
   }
@@ -104,14 +104,14 @@ finally {
 # Mode forcing, for demo purpose only. Actaual case should rely on real step results.
 # ----------------------------
 try {
-  switch ($E_Mode) {
+  switch ($Mode) {
     'pass'    { $overall='PASS'; $exitCode=0 }
     'fail'    { $overall='FAIL'; $exitCode=1 }
     'timeout' { $overall='FAIL'; $exitCode=1; Start-Sleep 5 }
-    'error'   { throw 'Forced error from E_Mode=error' }
+    'error'   { throw 'Forced error from Mode=error' }
   }
 
-  $details.Add("basic: text_len=$($step1.metrics.text_length) int=$($step1.metrics.int_value) flag=$($step1.metrics.flag) double=$($step1.metrics.double_value)")
+  $details.Add("basic: message_len=$($step1.metrics.message_length) count=$($step1.metrics.count) enabled=$($step1.metrics.enabled) threshold=$($step1.metrics.threshold)")
   $details.Add("path+json: items=$($step2.metrics.items_count) path_exists=$($step2.metrics.path_exists) timeout=$($step2.metrics.timeout) retry=$($step2.metrics.retry)")
 }
 catch {
@@ -134,14 +134,14 @@ finally {
       id = $TestId
       name = $TestId
       params = @{
-        e_mode = $E_Mode
-        s_text = $S_Text
-        n_int  = $N_Int
-        b_flag = $B_Flag
-        n_double = $N_Double
-        p_path = $P_Path
-        items_json  = $ItemsJson
-        config_json = $ConfigJson
+        mode      = $Mode
+        message   = $Message
+        count     = $Count
+        enabled   = $Enabled
+        threshold = $Threshold
+        data_path = $DataPath
+        items     = $Items
+        config    = $Config
       }
     }
     summary = @{

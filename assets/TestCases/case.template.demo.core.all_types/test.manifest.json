@@ -10,22 +10,22 @@
   "timeoutSec": 2,
   "parameters": [
     {
-      "name": "E_Mode",
+      "name": "Mode",
       "type": "enum",
-      "required": true,
+      "required": false,
       "default": "pass",
       "enumValues": ["pass", "fail", "timeout", "error"],
       "help": "Controls test outcome: pass|fail|timeout|error"
     },
     {
-      "name": "S_Text",
+      "name": "Message",
       "type": "string",
       "required": false,
       "default": "hello",
       "help": "String parameter example"
     },
     {
-      "name": "N_Int",
+      "name": "Count",
       "type": "int",
       "required": false,
       "default": 42,
@@ -34,14 +34,14 @@
       "help": "Integer parameter with min/max constraints"
     },
     {
-      "name": "B_Flag",
+      "name": "Enabled",
       "type": "boolean",
       "required": false,
       "default": true,
-      "help": "Boolean parameter (CLI: -B_Flag:$true or -B_Flag:$false)"
+      "help": "Boolean parameter (CLI: -Enabled:$true or -Enabled:$false)"
     },
     {
-      "name": "N_Double",
+      "name": "Threshold",
       "type": "double",
       "required": false,
       "default": 3.14,
@@ -51,14 +51,14 @@
       "help": "Double parameter with min/max and unit"
     },
     {
-      "name": "P_Path",
+      "name": "DataPath",
       "type": "path",
       "required": false,
       "default": "data/test-data.txt",
       "help": "Path parameter (relative to test case directory, resolved using PVTX_TESTCASE_PATH)"
     },
     {
-      "name": "ItemsJson",
+      "name": "Items",
       "type": "json",
       "required": false,
       "default": "[1, 2, 3]",
@@ -66,7 +66,7 @@
       "help": "JSON array example - parsed by script using ConvertFrom-Json"
     },
     {
-      "name": "ConfigJson",
+      "name": "Config",
       "type": "json",
       "required": false,
       "default": "{\"timeout\": 30, \"retry\": true}",

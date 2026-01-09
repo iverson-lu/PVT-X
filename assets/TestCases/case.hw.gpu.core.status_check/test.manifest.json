@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.hw.gpu.core.status_check",
+  "name": "GPU Status Check",
+  "description": "Checks current GPU presence and driver status; optionally collects utilization and memory telemetry via Windows performance counters and vendor tools.",
+  "version": "1.0.0",
+  "category": "Hardware",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "N_SampleDurationSec",
+      "type": "int",
+      "required": false,
+      "default": 5,
+      "min": 1,
+      "max": 60,
+      "help": "Total duration (seconds) to sample GPU performance counters."
+    },
+    {
+      "name": "N_SampleIntervalSec",
+      "type": "int",
+      "required": false,
+      "default": 1,
+      "min": 1,
+      "max": 10,
+      "help": "Sampling interval (seconds) for GPU performance counters."
+    },
+    {
+      "name": "B_CollectPerfCounters",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "Collect Windows GPU performance counters when available."
+    },
+    {
+      "name": "B_RequirePerfCounters",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "Fail the test if GPU performance counters are missing or unreadable."
+    },
+    {
+      "name": "B_UseVendorTools",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "Use vendor tools (e.g., nvidia-smi) when present to collect extra telemetry."
+    },
+    {
+      "name": "B_SaveRawOutputs",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "Save raw diagnostic outputs to artifacts/gpu_status.txt for troubleshooting."
+    },
+    {
+      "name": "N_MaxUtilizationPercent",
+      "type": "int",
+      "required": false,
+      "default": 100,
+      "min": 1,
+      "max": 100,
+      "help": "Optional threshold: fail if max sampled GPU utilization (%) exceeds this value."
+    },
+    {
+      "name": "N_MaxDedicatedMemUsagePercent",
+      "type": "int",
+      "required": false,
+      "default": 100,
+      "min": 1,
+      "max": 100,
+      "help": "Optional threshold: fail if max dedicated memory usage (%) exceeds this value."
+    }
+  ],
+  "tags": [
+    "template",
+    "parameters",
+    "demo",
+    "all-types"
+  ]
+}

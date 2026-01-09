@@ -259,7 +259,7 @@ Example:
 |---|---|---|---|
 | name | string | Yes | Parameter name |
 | type | string | Yes | Supported: int, double, string, boolean, path, file, folder, enum, json |
-| required | bool | Yes | Required or not |
+| required | boolean | Yes | Required or not |
 | default | any | No | Default value |
 | min / max | number | No | Numeric range |
 | enumValues | string[] | No | Enum candidates |
@@ -467,8 +467,8 @@ Rules:
 - Any input value (Suite.node.inputs, RunRequest.caseInputs, RunRequest.nodeOverrides.inputs) MAY be either a JSON literal consistent with ParameterDefinition.type (string/int/double/boolean/enum/path/file/folder/string[]/int[]/double[]/boolean[]/enum[]/path[]/file[]/folder[]) or an EnvRef object with the shape:
   - `$env` (string, required): environment variable name to read; MUST be non-empty.
   - `default` (any, optional): literal fallback when the env variable is missing or empty (per empty definition below).
-  - `required` (bool, optional, default false): if true and the env variable is missing/empty (per empty definition below) and no default is provided, validation MUST fail before execution.
-  - `secret` (bool, optional, default false): if true, Engine/Runner MUST redact the value in logs, summaries, manifest snapshots, and index entries (e.g., replace with `***`); execution MUST still use the real value.
+  - `required` (boolean, optional, default false): if true and the env variable is missing/empty (per empty definition below) and no default is provided, validation MUST fail before execution.
+  - `secret` (boolean, optional, default false): if true, Engine/Runner MUST redact the value in logs, summaries, manifest snapshots, and index entries (e.g., replace with `***`); execution MUST still use the real value.
 - Empty is defined as the env variable value being null or the empty string (`""`). Whitespace-only strings are NOT treated as empty unless callers trim them before setting the variable. This empty definition applies to all "missing or empty" checks in this specification.
 - Resolution process:
   - Engine MUST first compute the Effective Environment (section 7.3) for the run context.
@@ -632,7 +632,7 @@ Rules:
 - Array parameters MUST be passed as repeated values: -Modes "A" "B"
 - Runner MUST use ProcessStartInfo.ArgumentList and append each element separately.
 - Boolean values: $true / $false
-- Test Case scripts SHOULD declare boolean parameters as [bool] (accepting $true/$false) rather than [switch]; behavior with [switch] is not guaranteed.
+- Test Case scripts SHOULD declare boolean parameters as [boolean] (accepting $true/$false) rather than [switch]; behavior with [switch] is not guaranteed.
 - Numeric serialization uses invariant culture (decimal point)
 - Strings and paths MUST be passed safely (no shell parsing)
 - Missing optional parameters MUST be omitted
