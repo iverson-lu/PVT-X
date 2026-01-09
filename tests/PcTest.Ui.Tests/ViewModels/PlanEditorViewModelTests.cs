@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Moq;
+using PcTest.Contracts;
+using PcTest.Contracts.Manifests;
 using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
 using PcTest.Ui.ViewModels;
@@ -134,5 +136,116 @@ public class PlanEditorViewModelTests
 
         // Assert
         vm.SelectedSuiteReference.Should().BeNull();
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_CaseCount_ShouldReturn0_WhenDiscoveryIsNull()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0"
+        };
+
+        // Act & Assert
+        suiteRef.CaseCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_CaseCount_ShouldReturnCorrectCount_WhenSuiteExists()
+    {
+        // Arrange
+        var discovery = new DiscoveryResult();
+        discovery.TestSuites.Add("suite.test@1.0.0", new DiscoveredTestSuite
+        {
+            Manifest = new TestSuiteManifest
+            {
+                Id = "suite.test",
+                Name = "Test Suite",
+                Version = "1.0.0",
+                SchemaVersion = "1.5.0",
+                TestCases = new List<TestCaseNode>
+                {
+                    new TestCaseNode { NodeId = "node1", Ref = "case1" },
+                    new TestCaseNode { NodeId = "node2", Ref = "case2" },
+                    new TestCaseNode { NodeId = "node3", Ref = "case3" }
+                }
+            },
+            FolderPath = "path/to/suite",
+            ManifestPath = "path/to/suite/suite.manifest.json"
+        });
+
+        var discoveryMock = new Mock<IDiscoveryService>();
+        discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+
+        var suiteRef = new SuiteReferenceViewModel(discoveryMock.Object)
+        {
+            SuiteIdentity = "suite.test@1.0.0"
+        };
+
+        // Act & Assert
+        suiteRef.CaseCount.Should().Be(3);
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_Name_ShouldReturnSuiteName_WhenSuiteExists()
+    {
+        // Arrange
+        var discovery = new DiscoveryResult();
+        discovery.TestSuites.Add("suite.test@1.0.0", new DiscoveredTestSuite
+        {
+            Manifest = new TestSuiteManifest
+            {
+                Id = "suite.test",
+                Name = "Test Suite",
+                Version = "1.0.0",
+                SchemaVersion = "1.5.0",
+                TestCases = new List<TestCaseNode>()
+            },
+            FolderPath = "path/to/suite",
+            ManifestPath = "path/to/suite/suite.manifest.json"
+        });
+
+        var discoveryMock = new Mock<IDiscoveryService>();
+        discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+
+        var suiteRef = new SuiteReferenceViewModel(discoveryMock.Object)
+        {
+            SuiteIdentity = "suite.test@1.0.0"
+        };
+
+        // Act & Assert
+        suiteRef.Name.Should().Be("Test Suite");
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_CaseCount_ShouldReturn0_WhenSuiteHasNoTestCases()
+    {
+        // Arrange
+        var discovery = new DiscoveryResult();
+        discovery.TestSuites.Add("suite.empty@1.0.0", new DiscoveredTestSuite
+        {
+            Manifest = new TestSuiteManifest
+            {
+                Id = "suite.empty",
+                Name = "Empty Suite",
+                Version = "1.0.0",
+                SchemaVersion = "1.5.0",
+                TestCases = new List<TestCaseNode>()
+            },
+            FolderPath = "path/to/suite",
+            ManifestPath = "path/to/suite/suite.manifest.json"
+        });
+
+        var discoveryMock = new Mock<IDiscoveryService>();
+        discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+
+        var suiteRef = new SuiteReferenceViewModel(discoveryMock.Object)
+        {
+            SuiteIdentity = "suite.empty@1.0.0"
+        };
+
+        // Act & Assert
+        suiteRef.CaseCount.Should().Be(0);
     }
 }

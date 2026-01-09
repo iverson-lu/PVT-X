@@ -121,7 +121,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
             {
                 Id = suite.Manifest.Id,
                 Name = suite.Manifest.Name,
-                Version = suite.Manifest.Version
+                Version = suite.Manifest.Version,
+                NodeCount = suite.Manifest.TestCases?.Count ?? 0
             });
         }
     }
@@ -438,6 +439,23 @@ public partial class SuiteReferenceViewModel : ViewModelBase
         }
     }
     
+    public int CaseCount
+    {
+        get
+        {
+            // Try to get case count from discovery service
+            if (_discoveryService?.CurrentDiscovery?.TestSuites != null)
+            {
+                var suite = _discoveryService.CurrentDiscovery.TestSuites.Values
+                    .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == SuiteIdentity);
+                if (suite != null)
+                    return suite.Manifest.TestCases?.Count ?? 0;
+            }
+            
+            return 0;
+        }
+    }
+    
     public SuiteReferenceViewModel(IDiscoveryService? discoveryService = null)
     {
         _discoveryService = discoveryService;
@@ -447,5 +465,6 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Id));
+        OnPropertyChanged(nameof(CaseCount));
     }
 }

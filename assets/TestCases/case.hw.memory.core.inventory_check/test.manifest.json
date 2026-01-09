@@ -2,7 +2,7 @@
   "schemaVersion": "1.5.0",
   "id": "case.hw.memory.core.inventory_check",
   "name": "Memory Static Verification",
-  "description": "Enumerates physical memory modules via Win32_PhysicalMemory and validates optional requirements (total capacity, module count, DDR type, configured clock speed). Produces structured artifacts/report.json and optionally artifacts/memory_modules.json.",
+  "description": "Enumerates physical memory modules and validates optional requirements (total capacity, module count, DDR type, configured clock speed).",
   "version": "1.0.0",
   "category": "Hardware",
   "owner": "PVT-X",
