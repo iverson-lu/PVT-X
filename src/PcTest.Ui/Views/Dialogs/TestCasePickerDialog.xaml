@@ -81,11 +81,12 @@
                                     </TextBlock>
                                     <ui:SymbolIcon Symbol="Shield24"
                                                   Foreground="#2F6FED"
+                                                  Filled="True"
                                                   ToolTip="Administrator required"
                                                   Margin="6,0,0,0"
                                                   Visibility="{Binding IsAdminRequired, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                     <ui:SymbolIcon Symbol="Shield24"
-                                                  Foreground="#8FAEF5"
+                                                  Foreground="#2F6FED"
                                                   ToolTip="Administrator recommended"
                                                   Margin="6,0,0,0"
                                                   Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
