@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PcTest.Contracts;
+using PcTest.Engine;
 using PcTest.Contracts.Manifests;
 using PcTest.Ui.Services;
 
@@ -121,10 +123,18 @@ public partial class SuitesTabViewModel : ViewModelBase
         try
         {
             var suites = await _suiteRepository.GetAllAsync();
+            var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
             _allSuites.Clear();
             
             foreach (var suite in suites.OrderBy(s => s.Manifest.Name))
             {
+                var identity = $"{suite.Manifest.Id}@{suite.Manifest.Version}";
+                var discoveredSuite = discovery.TestSuites.Values
+                    .FirstOrDefault(s => s.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase));
+                var requiredPrivilege = discoveredSuite is null
+                    ? Privilege.User
+                    : PrivilegeChecker.GetSuitePrivilege(discoveredSuite.Manifest, discovery);
+
                 _allSuites.Add(new SuiteListItemViewModel
                 {
                     Id = suite.Manifest.Id,
@@ -133,6 +143,7 @@ public partial class SuitesTabViewModel : ViewModelBase
                     Description = suite.Manifest.Description,
                     Tags = suite.Manifest.Tags?.ToList() ?? new(),
                     NodeCount = suite.Manifest.TestCases.Count,
+                    RequiredPrivilege = requiredPrivilege,
                     FolderPath = suite.FolderPath,
                     ManifestPath = suite.ManifestPath
                 });
@@ -328,9 +339,25 @@ public partial class SuiteListItemViewModel : ViewModelBase
     [ObservableProperty] private string? _description;
     [ObservableProperty] private List<string> _tags = new();
     [ObservableProperty] private int _nodeCount;
+    [ObservableProperty] private Privilege _requiredPrivilege = Privilege.User;
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
+    public bool IsAdminRequired => RequiredPrivilege == Privilege.AdminRequired;
+    public bool IsAdminPreferred => RequiredPrivilege == Privilege.AdminPreferred;
+    public string AdminPrivilegeToolTip => RequiredPrivilege switch
+    {
+        Privilege.AdminRequired => "Requires administrator privileges",
+        Privilege.AdminPreferred => "Prefers administrator privileges",
+        _ => string.Empty
+    };
+
+    partial void OnRequiredPrivilegeChanged(Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+        OnPropertyChanged(nameof(AdminPrivilegeToolTip));
+    }
 }

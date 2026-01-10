@@ -72,12 +72,26 @@
                                       Margin="0,0,12,0"/>
                             
                             <StackPanel Grid.Column="1">
-                                <TextBlock FontWeight="SemiBold" FontSize="14">
-                                    <Run Text="{Binding Name}"/>
-                                    <Run Text=" "/>
-                                    <Run Text="{Binding Version, StringFormat='v{0}'}" 
-                                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                </TextBlock>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Symbol="Shield24"
+                                                   FontSize="16"
+                                                   Foreground="{DynamicResource StatusErrorBrush}"
+                                                   Margin="0,0,6,0"
+                                                   ToolTip="{Binding AdminPrivilegeToolTip}"
+                                                   Visibility="{Binding IsAdminRequired, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    <ui:SymbolIcon Symbol="Shield24"
+                                                   FontSize="16"
+                                                   Foreground="{DynamicResource StatusWarningBrush}"
+                                                   Margin="0,0,6,0"
+                                                   ToolTip="{Binding AdminPrivilegeToolTip}"
+                                                   Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    <TextBlock FontWeight="SemiBold" FontSize="14">
+                                        <Run Text="{Binding Name}"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding Version, StringFormat='v{0}'}" 
+                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    </TextBlock>
+                                </StackPanel>
                                 <TextBlock Text="{Binding Id}" 
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                            FontSize="12"/>
