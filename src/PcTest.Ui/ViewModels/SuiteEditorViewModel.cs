@@ -185,7 +185,15 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             tc.Identity.Equals(testCaseIdentity, StringComparison.OrdinalIgnoreCase));
             
         if (testCase?.Manifest.Parameters is null)
+        {
+            if (testCase != null)
+            {
+                nodeVm.Privilege = testCase.Manifest.Privilege;
+            }
             return;
+        }
+
+        nodeVm.Privilege = testCase.Manifest.Privilege;
             
         nodeVm.Parameters.Clear();
         
@@ -244,7 +252,8 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             {
                 NodeId = nodeId,
                 Ref = tc.Name,
-                InputsJson = "{}"
+                InputsJson = "{}",
+                Privilege = tc.Privilege
             };
             
             // Load parameters for this test case
@@ -635,6 +644,7 @@ public partial class TestCaseNodeViewModel : ViewModelBase
     [ObservableProperty] private string _ref = string.Empty;
     [ObservableProperty] private string _inputsJson = "{}";
     [ObservableProperty] private ObservableCollection<ParameterViewModel> _parameters = new();
+    [ObservableProperty] private Privilege _privilege = Privilege.User;
 
     public TestCaseNodeViewModel()
     {
@@ -643,4 +653,6 @@ public partial class TestCaseNodeViewModel : ViewModelBase
 
     public string DisplayName => string.IsNullOrEmpty(Ref) ? NodeId : $"{NodeId} ({Ref})";
     public bool HasParameters => Parameters.Count > 0;
+    public bool IsAdminRequired => Privilege == Privilege.AdminRequired;
+    public bool IsAdminPreferred => Privilege == Privilege.AdminPreferred;
 }
