@@ -41,6 +41,13 @@
     {
       "nodeId": "case.hw.bios.core.version_check@1.0.0",
       "ref": "BIOS Version Check"
+    },
+    {
+      "nodeId": "case.hw.camera.core.detect@1.0.0",
+      "ref": "Camera Verification",
+      "inputs": {
+        "MinExpectedCount": "1"
+      }
     }
   ]
 }
