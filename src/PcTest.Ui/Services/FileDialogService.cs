@@ -84,7 +84,7 @@ public sealed class FileDialogService : IFileDialogService
         };
     }
 
-    public IReadOnlyList<(string Id, string Name, string Version, string FolderName)> ShowTestCasePicker(
+    public IReadOnlyList<(string Id, string Name, string Version, string FolderName, PcTest.Contracts.Privilege Privilege)> ShowTestCasePicker(
         PcTest.Engine.Discovery.DiscoveryResult discovery,
         IEnumerable<string>? excludeRefs = null)
     {
@@ -100,11 +100,11 @@ public sealed class FileDialogService : IFileDialogService
         if (dialog.ShowDialog() == true)
         {
             return dialog.SelectedTestCases
-                .Select(tc => (tc.Id, tc.Name, tc.Version, tc.FolderName))
+                .Select(tc => (tc.Id, tc.Name, tc.Version, tc.FolderName, tc.Privilege))
                 .ToList();
         }
 
-        return Array.Empty<(string, string, string, string)>();
+        return Array.Empty<(string, string, string, string, PcTest.Contracts.Privilege)>();
     }
 
     public IReadOnlyList<string> ShowSuitePicker(

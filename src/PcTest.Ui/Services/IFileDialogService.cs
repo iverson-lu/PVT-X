@@ -52,8 +52,8 @@ public interface IFileDialogService
     /// </summary>
     /// <param name="discovery">The discovery result containing available test cases.</param>
     /// <param name="excludeRefs">Optional list of test case refs to exclude (already in suite).</param>
-    /// <returns>List of selected test case info (id, name, version, folderName) or empty if cancelled.</returns>
-    IReadOnlyList<(string Id, string Name, string Version, string FolderName)> ShowTestCasePicker(
+    /// <returns>List of selected test case info (id, name, version, folderName, privilege) or empty if cancelled.</returns>
+    IReadOnlyList<(string Id, string Name, string Version, string FolderName, PcTest.Contracts.Privilege Privilege)> ShowTestCasePicker(
         PcTest.Engine.Discovery.DiscoveryResult discovery,
         IEnumerable<string>? excludeRefs = null);
     
