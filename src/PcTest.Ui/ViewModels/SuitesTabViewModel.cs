@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
+using PcTest.Engine;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -120,6 +122,7 @@ public partial class SuitesTabViewModel : ViewModelBase
         
         try
         {
+            var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
             var suites = await _suiteRepository.GetAllAsync();
             _allSuites.Clear();
             
@@ -134,7 +137,8 @@ public partial class SuitesTabViewModel : ViewModelBase
                     Tags = suite.Manifest.Tags?.ToList() ?? new(),
                     NodeCount = suite.Manifest.TestCases.Count,
                     FolderPath = suite.FolderPath,
-                    ManifestPath = suite.ManifestPath
+                    ManifestPath = suite.ManifestPath,
+                    Privilege = PrivilegeChecker.GetSuitePrivilege(suite.Manifest, discovery)
                 });
             }
             
@@ -330,6 +334,7 @@ public partial class SuiteListItemViewModel : ViewModelBase
     [ObservableProperty] private int _nodeCount;
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
+    [ObservableProperty] private Privilege _privilege = Privilege.User;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);

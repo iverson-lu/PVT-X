@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
+using PcTest.Engine;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -114,6 +115,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     {
         AvailableSuites.Clear();
 
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
         var suites = await _suiteRepository.GetAllAsync();
         foreach (var suite in suites.OrderBy(s => s.Manifest.Name))
         {
@@ -122,7 +124,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 Id = suite.Manifest.Id,
                 Name = suite.Manifest.Name,
                 Version = suite.Manifest.Version,
-                NodeCount = suite.Manifest.TestCases?.Count ?? 0
+                NodeCount = suite.Manifest.TestCases?.Count ?? 0,
+                Privilege = PrivilegeChecker.GetSuitePrivilege(suite.Manifest, discovery)
             });
         }
     }
@@ -440,6 +443,7 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     private readonly IDiscoveryService? _discoveryService;
     
     [ObservableProperty] private string _suiteIdentity = string.Empty;
+    [ObservableProperty] private Privilege _privilege = Privilege.User;
 
     public string DisplayName => SuiteIdentity;
     
@@ -495,8 +499,22 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     
     partial void OnSuiteIdentityChanged(string value)
     {
+        Privilege = GetPrivilege();
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Id));
         OnPropertyChanged(nameof(CaseCount));
+    }
+
+    private Privilege GetPrivilege()
+    {
+        if (_discoveryService?.CurrentDiscovery?.TestSuites != null)
+        {
+            var suite = _discoveryService.CurrentDiscovery.TestSuites.Values
+                .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == SuiteIdentity);
+            if (suite != null)
+                return PrivilegeChecker.GetSuitePrivilege(suite.Manifest, _discoveryService.CurrentDiscovery);
+        }
+
+        return Privilege.User;
     }
 }
