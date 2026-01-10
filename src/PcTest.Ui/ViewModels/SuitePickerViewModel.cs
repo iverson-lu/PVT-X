@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PcTest.Contracts;
 
 namespace PcTest.Ui.ViewModels;
 
@@ -48,7 +49,8 @@ public partial class SuitePickerViewModel : ViewModelBase
                 Name = suite.Name,
                 Version = suite.Version,
                 Description = suite.Description,
-                NodeCount = suite.NodeCount
+                NodeCount = suite.NodeCount,
+                RequiredPrivilege = suite.RequiredPrivilege
             };
             
             vm.PropertyChanged += (s, e) =>
@@ -123,9 +125,26 @@ public partial class SelectableSuiteViewModel : ViewModelBase
     [ObservableProperty] private string _version = string.Empty;
     [ObservableProperty] private string? _description;
     [ObservableProperty] private int _nodeCount;
+    [ObservableProperty] private Privilege _requiredPrivilege = Privilege.User;
     
     /// <summary>
     /// The suite identity (id@version).
     /// </summary>
     public string Identity => $"{Id}@{Version}";
+
+    public bool IsAdminRequired => RequiredPrivilege == Privilege.AdminRequired;
+    public bool IsAdminPreferred => RequiredPrivilege == Privilege.AdminPreferred;
+    public string AdminPrivilegeToolTip => RequiredPrivilege switch
+    {
+        Privilege.AdminRequired => "Requires administrator privileges",
+        Privilege.AdminPreferred => "Prefers administrator privileges",
+        _ => string.Empty
+    };
+
+    partial void OnRequiredPrivilegeChanged(Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+        OnPropertyChanged(nameof(AdminPrivilegeToolTip));
+    }
 }

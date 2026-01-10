@@ -4,6 +4,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
+using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
 using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
@@ -183,6 +184,8 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         // Find the test case by the stripped identity (id@version)
         var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
             tc.Identity.Equals(testCaseIdentity, StringComparison.OrdinalIgnoreCase));
+
+        nodeVm.RequiredPrivilege = testCase?.Manifest.Privilege ?? Privilege.User;
             
         if (testCase?.Manifest.Parameters is null)
             return;
@@ -635,6 +638,7 @@ public partial class TestCaseNodeViewModel : ViewModelBase
     [ObservableProperty] private string _ref = string.Empty;
     [ObservableProperty] private string _inputsJson = "{}";
     [ObservableProperty] private ObservableCollection<ParameterViewModel> _parameters = new();
+    [ObservableProperty] private Privilege _requiredPrivilege = Privilege.User;
 
     public TestCaseNodeViewModel()
     {
@@ -643,4 +647,19 @@ public partial class TestCaseNodeViewModel : ViewModelBase
 
     public string DisplayName => string.IsNullOrEmpty(Ref) ? NodeId : $"{NodeId} ({Ref})";
     public bool HasParameters => Parameters.Count > 0;
+    public bool IsAdminRequired => RequiredPrivilege == Privilege.AdminRequired;
+    public bool IsAdminPreferred => RequiredPrivilege == Privilege.AdminPreferred;
+    public string AdminPrivilegeToolTip => RequiredPrivilege switch
+    {
+        Privilege.AdminRequired => "Requires administrator privileges",
+        Privilege.AdminPreferred => "Prefers administrator privileges",
+        _ => string.Empty
+    };
+
+    partial void OnRequiredPrivilegeChanged(Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+        OnPropertyChanged(nameof(AdminPrivilegeToolTip));
+    }
 }

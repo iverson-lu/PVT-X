@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
+using PcTest.Engine;
+using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
 using PcTest.Ui.Services;
 
@@ -115,14 +117,23 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         AvailableSuites.Clear();
 
         var suites = await _suiteRepository.GetAllAsync();
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
         foreach (var suite in suites.OrderBy(s => s.Manifest.Name))
         {
+            var identity = $"{suite.Manifest.Id}@{suite.Manifest.Version}";
+            var discoveredSuite = discovery.TestSuites.Values
+                .FirstOrDefault(s => s.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase));
+            var requiredPrivilege = discoveredSuite is null
+                ? Privilege.User
+                : PrivilegeChecker.GetSuitePrivilege(discoveredSuite.Manifest, discovery);
+
             AvailableSuites.Add(new SuiteListItemViewModel
             {
                 Id = suite.Manifest.Id,
                 Name = suite.Manifest.Name,
                 Version = suite.Manifest.Version,
-                NodeCount = suite.Manifest.TestCases?.Count ?? 0
+                NodeCount = suite.Manifest.TestCases?.Count ?? 0,
+                RequiredPrivilege = requiredPrivilege
             });
         }
     }
@@ -440,6 +451,7 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     private readonly IDiscoveryService? _discoveryService;
     
     [ObservableProperty] private string _suiteIdentity = string.Empty;
+    [ObservableProperty] private Privilege _requiredPrivilege = Privilege.User;
 
     public string DisplayName => SuiteIdentity;
     
@@ -495,8 +507,39 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     
     partial void OnSuiteIdentityChanged(string value)
     {
+        RequiredPrivilege = GetRequiredPrivilege(value);
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Id));
         OnPropertyChanged(nameof(CaseCount));
+    }
+
+    public bool IsAdminRequired => RequiredPrivilege == Privilege.AdminRequired;
+    public bool IsAdminPreferred => RequiredPrivilege == Privilege.AdminPreferred;
+    public string AdminPrivilegeToolTip => RequiredPrivilege switch
+    {
+        Privilege.AdminRequired => "Requires administrator privileges",
+        Privilege.AdminPreferred => "Prefers administrator privileges",
+        _ => string.Empty
+    };
+
+    partial void OnRequiredPrivilegeChanged(Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+        OnPropertyChanged(nameof(AdminPrivilegeToolTip));
+    }
+
+    private Privilege GetRequiredPrivilege(string identity)
+    {
+        var discovery = _discoveryService?.CurrentDiscovery;
+        if (discovery?.TestSuites is null)
+            return Privilege.User;
+
+        var suite = discovery.TestSuites.Values
+            .FirstOrDefault(s => s.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase));
+        if (suite is null)
+            return Privilege.User;
+
+        return PrivilegeChecker.GetSuitePrivilege(suite.Manifest, discovery);
     }
 }

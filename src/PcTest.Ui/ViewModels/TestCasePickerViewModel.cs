@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PcTest.Contracts;
 using PcTest.Engine.Discovery;
 
 namespace PcTest.Ui.ViewModels;
@@ -51,7 +52,8 @@ public partial class TestCasePickerViewModel : ViewModelBase
                 Version = tc.Manifest.Version,
                 Description = tc.Manifest.Description,
                 Category = tc.Manifest.Category,
-                FolderName = Path.GetFileName(tc.FolderPath)
+                FolderName = Path.GetFileName(tc.FolderPath),
+                RequiredPrivilege = tc.Manifest.Privilege
             };
             
             vm.PropertyChanged += (s, e) =>
@@ -128,9 +130,26 @@ public partial class SelectableTestCaseViewModel : ViewModelBase
     [ObservableProperty] private string? _description;
     [ObservableProperty] private string? _category;
     [ObservableProperty] private string _folderName = string.Empty;
+    [ObservableProperty] private Privilege _requiredPrivilege = Privilege.User;
     
     /// <summary>
     /// The reference path to use in the suite (folder name under TestCases root).
     /// </summary>
     public string Ref => FolderName;
+
+    public bool IsAdminRequired => RequiredPrivilege == Privilege.AdminRequired;
+    public bool IsAdminPreferred => RequiredPrivilege == Privilege.AdminPreferred;
+    public string AdminPrivilegeToolTip => RequiredPrivilege switch
+    {
+        Privilege.AdminRequired => "Requires administrator privileges",
+        Privilege.AdminPreferred => "Prefers administrator privileges",
+        _ => string.Empty
+    };
+
+    partial void OnRequiredPrivilegeChanged(Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+        OnPropertyChanged(nameof(AdminPrivilegeToolTip));
+    }
 }
