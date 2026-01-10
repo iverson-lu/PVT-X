@@ -108,7 +108,8 @@ plan.sw.smoke_test
   "name": "Display Name",
   "description": "...",
   "category": "...",
-  "tags": ["..."]
+  "tags": ["..."],
+  "privilege": "User | AdminPreferred | AdminRequired"
 }
 ```
 
@@ -120,6 +121,11 @@ plan.sw.smoke_test
   - Recommended values: `Hardware` / `Software` / `Firmware`
 - `tags`:
   - Used **only for classification and filtering**
+- `privilege` (optional, defaults to `User`):
+  - `User`: No special privileges required
+  - `AdminPreferred`: Test prefers admin rights but can run without (shows warning)
+  - `AdminRequired`: Test must run as administrator (blocks execution if not elevated)
+  - Suite/Plan privilege is computed as max(child privileges)
 
 ---
 

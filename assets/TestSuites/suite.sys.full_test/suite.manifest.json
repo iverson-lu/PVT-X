@@ -17,13 +17,6 @@
   },
   "testCases": [
     {
-      "nodeId": "case.hw.camera.core.detect@1.0.0",
-      "ref": "Camera Verification",
-      "inputs": {
-        "MinExpectedCount": "1"
-      }
-    },
-    {
       "nodeId": "case.hw.device.core.health_check@1.0.0",
       "ref": "Device Health Check",
       "inputs": {
@@ -43,6 +36,10 @@
         "RequiredSoftware": "[\u0022Microsoft Edge\u0022, \u0022Microsoft 365\u0022]",
         "MinimumRequirements": "{\u0022cores\u0022: 4, \u0022memoryGB\u0022: 8, \u0022diskTotalGB\u0022: 100, \u0022webcamCount\u0022: 1}"
       }
+    },
+    {
+      "nodeId": "case.hw.bios.core.version_check@1.0.0",
+      "ref": "BIOS Version Check"
     }
   ]
 }

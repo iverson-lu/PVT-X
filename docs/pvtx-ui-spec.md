@@ -92,6 +92,10 @@
 
 ### 3.1.3 Cases Tab (Read-only)
 - Display fields: name, id, version, tags, timeout, privilege
+- **Privilege indicators**:
+  - Shield icon (filled, blue) for `AdminRequired`
+  - Shield icon (outline, blue) for `AdminPreferred`
+  - No icon for `User` (default)
 - Detail panel: manifest metadata, parameter definitions summary
 - Actions:
   - **Discover…** (scan and refresh Case assets)
@@ -191,6 +195,12 @@ Used for:
 - Monitor pipeline progress
 - Control Stop / Abort
 - **Navigate back to source** (when triggered from Plan page)
+
+### Privilege Checking
+Before execution starts, the UI validates privilege requirements:
+- **AdminRequired**: Blocks execution if not elevated, shows error dialog
+- **AdminPreferred**: Shows warning dialog, allows user to continue or cancel
+- Suite/Plan privilege = max(child privileges): `AdminRequired > AdminPreferred > User`
 
 ### Layout
 - **Back button** (top-left, shown when navigated from Plan page)

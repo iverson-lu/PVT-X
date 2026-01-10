@@ -72,12 +72,25 @@
                                       Margin="0,0,12,0"/>
                             
                             <StackPanel Grid.Column="1">
-                                <TextBlock FontWeight="SemiBold" FontSize="14">
-                                    <Run Text="{Binding Name}"/>
-                                    <Run Text=" "/>
-                                    <Run Text="{Binding Version, StringFormat='v{0}'}" 
-                                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                                </TextBlock>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontWeight="SemiBold" FontSize="14">
+                                        <Run Text="{Binding Name}"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding Version, StringFormat='v{0}'}" 
+                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                    </TextBlock>
+                                    <ui:SymbolIcon Symbol="Shield24"
+                                                  Foreground="#2F6FED"
+                                                  Filled="True"
+                                                  ToolTip="Administrator required"
+                                                  Margin="6,0,0,0"
+                                                  Visibility="{Binding IsAdminRequired, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                    <ui:SymbolIcon Symbol="Shield24"
+                                                  Foreground="#2F6FED"
+                                                  ToolTip="Administrator recommended"
+                                                  Margin="6,0,0,0"
+                                                  Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                </StackPanel>
                                 <TextBlock Text="{Binding Id}" 
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                            FontSize="12"/>

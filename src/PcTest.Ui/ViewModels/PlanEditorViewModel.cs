@@ -115,6 +115,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         AvailableSuites.Clear();
 
         var suites = await _suiteRepository.GetAllAsync();
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
         foreach (var suite in suites.OrderBy(s => s.Manifest.Name))
         {
             AvailableSuites.Add(new SuiteListItemViewModel
@@ -122,7 +123,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 Id = suite.Manifest.Id,
                 Name = suite.Manifest.Name,
                 Version = suite.Manifest.Version,
-                NodeCount = suite.Manifest.TestCases?.Count ?? 0
+                NodeCount = suite.Manifest.TestCases?.Count ?? 0,
+                Privilege = PrivilegeIndicatorHelper.GetSuitePrivilege(suite.Manifest, discovery)
             });
         }
     }
@@ -440,6 +442,7 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     private readonly IDiscoveryService? _discoveryService;
     
     [ObservableProperty] private string _suiteIdentity = string.Empty;
+    [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
 
     public string DisplayName => SuiteIdentity;
     
@@ -487,6 +490,9 @@ public partial class SuiteReferenceViewModel : ViewModelBase
             return 0;
         }
     }
+
+    public bool IsAdminRequired => Privilege == PcTest.Contracts.Privilege.AdminRequired;
+    public bool IsAdminPreferred => Privilege == PcTest.Contracts.Privilege.AdminPreferred;
     
     public SuiteReferenceViewModel(IDiscoveryService? discoveryService = null)
     {
@@ -498,5 +504,27 @@ public partial class SuiteReferenceViewModel : ViewModelBase
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Id));
         OnPropertyChanged(nameof(CaseCount));
+        UpdatePrivilege();
+    }
+
+    private void UpdatePrivilege()
+    {
+        if (_discoveryService?.CurrentDiscovery?.TestSuites is null)
+        {
+            Privilege = PcTest.Contracts.Privilege.User;
+            return;
+        }
+
+        var suite = _discoveryService.CurrentDiscovery.TestSuites.Values
+            .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == SuiteIdentity);
+        Privilege = suite is null
+            ? PcTest.Contracts.Privilege.User
+            : PrivilegeIndicatorHelper.GetSuitePrivilege(suite.Manifest, _discoveryService.CurrentDiscovery);
+    }
+
+    partial void OnPrivilegeChanged(PcTest.Contracts.Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
     }
 }
