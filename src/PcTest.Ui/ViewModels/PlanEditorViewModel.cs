@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
+using PcTest.Engine;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -114,6 +115,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     {
         AvailableSuites.Clear();
 
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+
         var suites = await _suiteRepository.GetAllAsync();
         foreach (var suite in suites.OrderBy(s => s.Manifest.Name))
         {
@@ -122,7 +125,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 Id = suite.Manifest.Id,
                 Name = suite.Manifest.Name,
                 Version = suite.Manifest.Version,
-                NodeCount = suite.Manifest.TestCases?.Count ?? 0
+                NodeCount = suite.Manifest.TestCases?.Count ?? 0,
+                Privilege = PrivilegeChecker.GetSuitePrivilege(suite.Manifest, discovery)
             });
         }
     }
@@ -487,6 +491,26 @@ public partial class SuiteReferenceViewModel : ViewModelBase
             return 0;
         }
     }
+
+    public Privilege Privilege
+    {
+        get
+        {
+            if (_discoveryService?.CurrentDiscovery?.TestSuites != null)
+            {
+                var discovery = _discoveryService.CurrentDiscovery;
+                var suite = discovery.TestSuites.Values
+                    .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == SuiteIdentity);
+                if (suite != null)
+                    return PrivilegeChecker.GetSuitePrivilege(suite.Manifest, discovery);
+            }
+
+            return Privilege.User;
+        }
+    }
+
+    public bool IsAdminRequired => Privilege == Privilege.AdminRequired;
+    public bool IsAdminPreferred => Privilege == Privilege.AdminPreferred;
     
     public SuiteReferenceViewModel(IDiscoveryService? discoveryService = null)
     {
@@ -498,5 +522,8 @@ public partial class SuiteReferenceViewModel : ViewModelBase
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Id));
         OnPropertyChanged(nameof(CaseCount));
+        OnPropertyChanged(nameof(Privilege));
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
     }
 }

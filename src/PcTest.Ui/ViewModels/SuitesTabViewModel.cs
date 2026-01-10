@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using PcTest.Contracts;
 using PcTest.Contracts.Manifests;
 using PcTest.Ui.Services;
 
@@ -330,6 +331,7 @@ public partial class SuiteListItemViewModel : ViewModelBase
     [ObservableProperty] private int _nodeCount;
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
+    [ObservableProperty] private Privilege _privilege = Privilege.User;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
