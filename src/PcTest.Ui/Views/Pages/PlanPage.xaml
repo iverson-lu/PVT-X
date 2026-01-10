@@ -881,6 +881,7 @@
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
                                                             <Grid.RowDefinitions>
                                                                 <RowDefinition Height="Auto"/>
@@ -898,8 +899,19 @@
                                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                                       FontSize="{StaticResource FontSizeM}"
                                                                       Foreground="{DynamicResource TextPrimaryBrush}"/>
+
+                                                            <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0">
+                                                                <ui:SymbolIcon Symbol="Shield24"
+                                                                              Foreground="{DynamicResource StatusErrorBrush}"
+                                                                              ToolTip="Administrator required"
+                                                                              Visibility="{Binding IsAdminRequired, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                <ui:SymbolIcon Symbol="Shield24"
+                                                                              Foreground="{DynamicResource StatusWarningBrush}"
+                                                                              ToolTip="Administrator recommended"
+                                                                              Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                            </StackPanel>
                                                             
-                                                            <TextBlock Grid.Row="1" Grid.Column="1"
+                                                            <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                                                       Text="{Binding NodeId}" 
                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       FontSize="{StaticResource FontSizeXS}"
@@ -1539,6 +1551,7 @@
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
                                                             <Grid.RowDefinitions>
                                                                 <RowDefinition Height="Auto"/>
@@ -1558,15 +1571,26 @@
                                                                       FontWeight="{StaticResource FontWeightSemiBold}"
                                                                       Foreground="{DynamicResource TextPrimaryBrush}"
                                                                       TextTrimming="CharacterEllipsis"/>
+
+                                                            <StackPanel Grid.Column="2" Grid.Row="0" Orientation="Horizontal" Margin="8,0,0,0">
+                                                                <ui:SymbolIcon Symbol="Shield24"
+                                                                              Foreground="{DynamicResource StatusErrorBrush}"
+                                                                              ToolTip="Administrator required"
+                                                                              Visibility="{Binding IsAdminRequired, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                <ui:SymbolIcon Symbol="Shield24"
+                                                                              Foreground="{DynamicResource StatusWarningBrush}"
+                                                                              ToolTip="Administrator recommended"
+                                                                              Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                            </StackPanel>
                                                             
-                                                            <TextBlock Grid.Column="1" Grid.Row="1"
+                                                            <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2"
                                                                       Text="{Binding Id}" 
                                                                       FontSize="{StaticResource FontSizeXS}"
                                                                       Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       Margin="0,2,0,0"
                                                                       TextTrimming="CharacterEllipsis"/>
                                                             
-                                                            <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
+                                                            <StackPanel Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,2,0,0">
                                                                 <Ellipse Width="4" Height="4" 
                                                                         Fill="{DynamicResource TextTertiaryBrush}"
                                                                         VerticalAlignment="Center"

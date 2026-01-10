@@ -120,6 +120,7 @@ public partial class SuitesTabViewModel : ViewModelBase
         
         try
         {
+            var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
             var suites = await _suiteRepository.GetAllAsync();
             _allSuites.Clear();
             
@@ -133,6 +134,7 @@ public partial class SuitesTabViewModel : ViewModelBase
                     Description = suite.Manifest.Description,
                     Tags = suite.Manifest.Tags?.ToList() ?? new(),
                     NodeCount = suite.Manifest.TestCases.Count,
+                    Privilege = PrivilegeIndicatorHelper.GetSuitePrivilege(suite.Manifest, discovery),
                     FolderPath = suite.FolderPath,
                     ManifestPath = suite.ManifestPath
                 });
@@ -330,7 +332,16 @@ public partial class SuiteListItemViewModel : ViewModelBase
     [ObservableProperty] private int _nodeCount;
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
+    [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
+    public bool IsAdminRequired => Privilege == PcTest.Contracts.Privilege.AdminRequired;
+    public bool IsAdminPreferred => Privilege == PcTest.Contracts.Privilege.AdminPreferred;
+
+    partial void OnPrivilegeChanged(PcTest.Contracts.Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+    }
 }

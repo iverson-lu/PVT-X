@@ -51,7 +51,8 @@ public partial class TestCasePickerViewModel : ViewModelBase
                 Version = tc.Manifest.Version,
                 Description = tc.Manifest.Description,
                 Category = tc.Manifest.Category,
-                FolderName = Path.GetFileName(tc.FolderPath)
+                FolderName = Path.GetFileName(tc.FolderPath),
+                Privilege = tc.Manifest.Privilege
             };
             
             vm.PropertyChanged += (s, e) =>
@@ -128,9 +129,19 @@ public partial class SelectableTestCaseViewModel : ViewModelBase
     [ObservableProperty] private string? _description;
     [ObservableProperty] private string? _category;
     [ObservableProperty] private string _folderName = string.Empty;
+    [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
     
     /// <summary>
     /// The reference path to use in the suite (folder name under TestCases root).
     /// </summary>
     public string Ref => FolderName;
+
+    public bool IsAdminRequired => Privilege == PcTest.Contracts.Privilege.AdminRequired;
+    public bool IsAdminPreferred => Privilege == PcTest.Contracts.Privilege.AdminPreferred;
+
+    partial void OnPrivilegeChanged(PcTest.Contracts.Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+    }
 }

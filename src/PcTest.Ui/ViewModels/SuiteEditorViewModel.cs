@@ -183,6 +183,11 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         // Find the test case by the stripped identity (id@version)
         var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
             tc.Identity.Equals(testCaseIdentity, StringComparison.OrdinalIgnoreCase));
+
+        if (testCase is not null)
+        {
+            nodeVm.Privilege = testCase.Manifest.Privilege;
+        }
             
         if (testCase?.Manifest.Parameters is null)
             return;
@@ -244,7 +249,8 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             {
                 NodeId = nodeId,
                 Ref = tc.Name,
-                InputsJson = "{}"
+                InputsJson = "{}",
+                Privilege = tc.Privilege
             };
             
             // Load parameters for this test case
@@ -635,6 +641,7 @@ public partial class TestCaseNodeViewModel : ViewModelBase
     [ObservableProperty] private string _ref = string.Empty;
     [ObservableProperty] private string _inputsJson = "{}";
     [ObservableProperty] private ObservableCollection<ParameterViewModel> _parameters = new();
+    [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
 
     public TestCaseNodeViewModel()
     {
@@ -643,4 +650,12 @@ public partial class TestCaseNodeViewModel : ViewModelBase
 
     public string DisplayName => string.IsNullOrEmpty(Ref) ? NodeId : $"{NodeId} ({Ref})";
     public bool HasParameters => Parameters.Count > 0;
+    public bool IsAdminRequired => Privilege == PcTest.Contracts.Privilege.AdminRequired;
+    public bool IsAdminPreferred => Privilege == PcTest.Contracts.Privilege.AdminPreferred;
+
+    partial void OnPrivilegeChanged(PcTest.Contracts.Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+    }
 }
