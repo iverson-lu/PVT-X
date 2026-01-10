@@ -112,6 +112,7 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
 
         // Load nodes
         Nodes.Clear();
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
         
         // Load available test cases first (needed for parameter discovery)
         await LoadAvailableTestCasesAsync();
@@ -124,7 +125,8 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
                 Ref = node.Ref,
                 InputsJson = node.Inputs is not null 
                     ? JsonSerializer.Serialize(node.Inputs, new JsonSerializerOptions { WriteIndented = true }) 
-                    : "{}"
+                    : "{}",
+                Privilege = GetNodePrivilege(node.NodeId, discovery)
             };
             
             // Load parameters for this test case
@@ -244,7 +246,8 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             {
                 NodeId = nodeId,
                 Ref = tc.Name,
-                InputsJson = "{}"
+                InputsJson = "{}",
+                Privilege = tc.Privilege
             };
             
             // Load parameters for this test case
@@ -281,6 +284,14 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     {
         var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
         return match.Success ? match.Groups[1].Value : nodeId;
+    }
+
+    private static Privilege GetNodePrivilege(string nodeId, DiscoveryResult discovery)
+    {
+        var testCaseIdentity = StripNodeIdSuffix(nodeId);
+        var testCase = discovery.TestCases.Values.FirstOrDefault(tc =>
+            tc.Identity.Equals(testCaseIdentity, StringComparison.OrdinalIgnoreCase));
+        return testCase?.Manifest.Privilege ?? Privilege.User;
     }
 
     [RelayCommand]
@@ -635,6 +646,7 @@ public partial class TestCaseNodeViewModel : ViewModelBase
     [ObservableProperty] private string _ref = string.Empty;
     [ObservableProperty] private string _inputsJson = "{}";
     [ObservableProperty] private ObservableCollection<ParameterViewModel> _parameters = new();
+    [ObservableProperty] private Privilege _privilege = Privilege.User;
 
     public TestCaseNodeViewModel()
     {
