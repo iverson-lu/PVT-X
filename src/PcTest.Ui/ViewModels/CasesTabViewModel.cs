@@ -254,9 +254,40 @@ public partial class CasesTabViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Run()
+    private async Task Run()
     {
         if (SelectedCase is null) return;
+
+        // Check privilege requirements before navigation
+        var discovery = _discoveryService.CurrentDiscovery;
+        if (discovery is null)
+        {
+            discovery = await _discoveryService.DiscoverAsync();
+        }
+
+        var (isValid, requiredPrivilege, message) = PcTest.Engine.PrivilegeChecker.ValidatePrivilege(
+            PcTest.Contracts.RunType.TestCase, SelectedCase.Identity, discovery);
+
+        if (!isValid)
+        {
+            if (requiredPrivilege == PcTest.Contracts.Privilege.AdminRequired)
+            {
+                // AdminRequired: Block execution
+                _fileDialogService.ShowError("Administrator Privileges Required", message!);
+                return;
+            }
+            else if (requiredPrivilege == PcTest.Contracts.Privilege.AdminPreferred)
+            {
+                // AdminPreferred: Show warning and let user decide
+                var continueAnyway = _fileDialogService.ShowConfirmation(
+                    "Administrator Privileges Recommended", message!);
+                
+                if (!continueAnyway)
+                {
+                    return;
+                }
+            }
+        }
 
         // Build parameter overrides from edited values
         var overrides = new Dictionary<string, object?>();

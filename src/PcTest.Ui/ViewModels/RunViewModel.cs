@@ -20,6 +20,7 @@ public partial class RunViewModel : ViewModelBase
     private readonly ISuiteRepository _suiteRepository;
     private readonly IPlanRepository _planRepository;
     private readonly IRunRepository _runRepository;
+    private readonly IFileDialogService _fileDialogService;
 
     private CancellationTokenSource? _runCts;
     private Dictionary<string, object?>? _parameterOverrides;
@@ -90,7 +91,8 @@ public partial class RunViewModel : ViewModelBase
         IDiscoveryService discoveryService,
         ISuiteRepository suiteRepository,
         IPlanRepository planRepository,
-        IRunRepository runRepository)
+        IRunRepository runRepository,
+        IFileDialogService fileDialogService)
     {
         _runService = runService;
         _navigationService = navigationService;
@@ -98,6 +100,7 @@ public partial class RunViewModel : ViewModelBase
         _suiteRepository = suiteRepository;
         _planRepository = planRepository;
         _runRepository = runRepository;
+        _fileDialogService = fileDialogService;
 
         _runService.StateChanged += OnStateChanged;
         _runService.ConsoleOutput += OnConsoleOutput;

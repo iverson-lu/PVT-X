@@ -1122,15 +1122,42 @@ Same schema as Test Case reboot info (section 13.2).
 | privilege | Behavior |
 |---|---|
 | User | Run as standard user |
-| AdminPreferred | Warn if not elevated |
+| AdminPreferred | Warn if not elevated, allow user to continue |
 | AdminRequired | Block execution if not elevated |
 
-Rules:
-- Privilege enforcement is performed by Engine before execution.
-- Suite privilege MUST be computed as the max(child privileges): AdminRequired > AdminPreferred > User.
-- Engine MUST precheck privilege before starting a Suite.
-- Plan privilege MUST be computed as the max privilege of all referenced Suites (using the Suite-level max rule above). When a Plan run is initiated, Engine MUST perform privilege evaluation once for the Plan run (prompt/elevate/reject) rather than diverging per Suite at runtime.
-- For any run (Suite or Plan), if AdminRequired is unmet and no explicit policy allows skipping affected Suites/Cases, Engine MUST reject execution.
+### Privilege Enforcement
+
+**Elevation Check:**
+- Windows: Process checks `WindowsPrincipal.IsInRole(WindowsBuiltInRole.Administrator)`
+- Non-Windows: Assumes elevated (not enforced on other platforms)
+
+**Hierarchical Privilege Computation:**
+- Suite privilege = max(child test case privileges): `AdminRequired` > `AdminPreferred` > `User`
+- Plan privilege = max(referenced suite privileges)
+- The Engine performs privilege validation ONCE before execution begins
+
+**Execution Behavior:**
+
+1. **AdminRequired violations:**
+   - UI: Displays error dialog, prevents execution start
+   - CLI: Writes error to stderr, exits with code 1
+   - Message: "'{name}' requires administrator privileges but the current process is not elevated. Please restart the application as administrator to run this {type}."
+
+2. **AdminPreferred violations:**
+   - UI: Displays confirmation dialog with warning, user can choose to continue
+   - CLI: Writes warning to stdout, prompts for Y/N confirmation
+   - Message: "'{name}' prefers administrator privileges but the current process is not elevated. Some tests may fail or produce incomplete results. Do you want to continue anyway?"
+   - User can cancel (UI: No button / CLI: any input other than Y/YES)
+
+3. **User level:**
+   - No validation performed, execution proceeds normally
+
+**Implementation Notes:**
+- Privilege checking is performed by `PrivilegeChecker` utility class in `PcTest.Engine`
+- UI uses `IFileDialogService.ShowError()` and `ShowConfirmation()` for user interaction
+- CLI uses `Console.Error.WriteLine()` for errors and `Console.ReadLine()` for confirmation
+- Validation occurs after discovery completes and before engine.ExecuteAsync() is called
+- For Suites/Plans, the maximum privilege among all contained test cases is computed recursively
 
 ---
 

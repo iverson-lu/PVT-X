@@ -37,6 +37,10 @@
         "B_AllowMixedDdrTypes": false,
         "B_ExportModulesJson": true
       }
+    },
+    {
+      "nodeId": "case.hw.bios.core.version_check@1.0.0",
+      "ref": "BIOS Version Check"
     }
   ]
 }

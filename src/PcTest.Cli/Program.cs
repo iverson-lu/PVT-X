@@ -231,11 +231,13 @@ public static class Program
 
             runRequest.EnvironmentOverrides = envOverrides;
 
+            RunType runType;
             switch (target.ToLowerInvariant())
             {
                 case "testcase":
                     runRequest.TestCase = id;
                     runRequest.CaseInputs = parsedInputs;
+                    runType = RunType.TestCase;
                     break;
 
                 case "suite":
@@ -244,6 +246,7 @@ public static class Program
                     {
                         Console.Error.WriteLine("Note: For Suite runs, use --nodeOverrides instead of --inputs");
                     }
+                    runType = RunType.TestSuite;
                     break;
 
                 case "plan":
@@ -254,12 +257,37 @@ public static class Program
                         Environment.ExitCode = 1;
                         return;
                     }
+                    runType = RunType.TestPlan;
                     break;
 
                 default:
                     Console.Error.WriteLine($"Unknown target type: {target}. Use: testcase, suite, or plan");
                     Environment.ExitCode = 1;
                     return;
+            }
+
+            // Validate privilege requirements
+            var discovery = engine.Discover();
+            var (isValid, requiredPrivilege, message) = PrivilegeChecker.ValidatePrivilege(
+                runType, id, discovery);
+
+            if (!isValid && requiredPrivilege == Privilege.AdminRequired)
+            {
+                Console.Error.WriteLine(message);
+                Environment.ExitCode = 1;
+                return;
+            }
+
+            if (!isValid && requiredPrivilege == Privilege.AdminPreferred)
+            {
+                Console.WriteLine(message);
+                Console.Write("Do you want to continue anyway? (Y/N): ");
+                var response = Console.ReadLine()?.Trim().ToUpperInvariant();
+                if (response != "Y" && response != "YES")
+                {
+                    Console.WriteLine("Execution cancelled by user.");
+                    return;
+                }
             }
 
             Console.WriteLine($"Executing {target}: {id}");

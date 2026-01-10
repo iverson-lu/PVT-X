@@ -31,13 +31,6 @@
       }
     },
     {
-      "nodeId": "case.hw.memory.core.size_check@1.0.0",
-      "ref": "Memory Check Test",
-      "inputs": {
-        "MinMemoryMB": "100"
-      }
-    },
-    {
       "nodeId": "case.os.windows.core.system_info_verify@1.0.0",
       "ref": "System Information Verification",
       "inputs": {

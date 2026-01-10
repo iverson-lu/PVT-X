@@ -350,7 +350,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     }
 
     [RelayCommand]
-    private void RunPlan()
+    private async Task RunPlan()
     {
         if (IsDirty)
         {
@@ -359,6 +359,38 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         }
 
         var identity = $"{Id}@{Version}";
+
+        // Check privilege requirements before navigation
+        var discovery = _discoveryService.CurrentDiscovery;
+        if (discovery is null)
+        {
+            discovery = await _discoveryService.DiscoverAsync();
+        }
+
+        var (isValid, requiredPrivilege, message) = PcTest.Engine.PrivilegeChecker.ValidatePrivilege(
+            RunType.TestPlan, identity, discovery);
+
+        if (!isValid)
+        {
+            if (requiredPrivilege == PcTest.Contracts.Privilege.AdminRequired)
+            {
+                // AdminRequired: Block execution
+                _fileDialogService.ShowError("Administrator Privileges Required", message!);
+                return;
+            }
+            else if (requiredPrivilege == PcTest.Contracts.Privilege.AdminPreferred)
+            {
+                // AdminPreferred: Show warning and let user decide
+                var continueAnyway = _fileDialogService.ShowConfirmation(
+                    "Administrator Privileges Recommended", message!);
+                
+                if (!continueAnyway)
+                {
+                    return;
+                }
+            }
+        }
+
         var navParam = new RunNavigationParameter
         {
             TargetIdentity = identity,
