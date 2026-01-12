@@ -967,6 +967,15 @@ public partial class HistoryViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void CopyEventDetailsJson()
+    {
+        if (!string.IsNullOrWhiteSpace(EventDetailsJson))
+        {
+            System.Windows.Clipboard.SetText(EventDetailsJson);
+        }
+    }
+
+    [RelayCommand]
     private void OpenFilePath()
     {
         if (SelectedEvent?.FilePath is not null && _fileSystemService.FileExists(SelectedEvent.FilePath))
