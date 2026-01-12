@@ -456,7 +456,7 @@
                                            Style="{StaticResource SegmentButtonStyle}"
                                            GroupName="DetailView"
                                            IsChecked="{Binding SelectedDetailView, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Stderr}"/>
-                                <RadioButton Content="Structured Events" 
+                                <RadioButton Content="Events" 
                                            Style="{StaticResource SegmentButtonStyle}"
                                            GroupName="DetailView"
                                            IsChecked="{Binding SelectedDetailView, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=StructuredEvents}"/>
@@ -602,7 +602,7 @@
                             
                             <!-- Structured Events View -->
                             <Grid Visibility="{Binding SelectedDetailView, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=StructuredEvents}">
-                            <Grid>
+                            <Grid Margin="0,0,0,16">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
@@ -640,7 +640,47 @@
                                          SelectionMode="Single"
                                          VirtualizingPanel.IsVirtualizing="True"
                                          VirtualizingPanel.VirtualizationMode="Recycling"
-                                         EnableRowVirtualization="True">
+                                         EnableRowVirtualization="True"
+                                         GridLinesVisibility="None"
+                                         HeadersVisibility="Column"
+                                         RowHeight="32"
+                                         CanUserResizeRows="False"
+                                         CanUserSortColumns="True"
+                                         Background="{DynamicResource CardBackgroundBrush}"
+                                         BorderThickness="0"
+                                         Margin="16,0"
+                                         CellStyle="{DynamicResource EventGridCellStyle}"
+                                         RowStyle="{DynamicResource EventGridRowStyle}">
+                                    <DataGrid.Resources>
+                                        <Style x:Key="EventGridRowStyle" TargetType="DataGridRow">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                        <Style x:Key="EventGridCellStyle" TargetType="DataGridCell">
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="Padding" Value="8,4"/>
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="Transparent"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGrid.Resources>
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Timestamp" Binding="{Binding TimestampDisplay}" Width="120"/>
                                         <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80"/>
@@ -650,8 +690,10 @@
                                 </DataGrid>
                                 
                                 <!-- Event Details -->
-                                <ui:CardExpander Grid.Row="2" Header="Event Details" IsExpanded="True" MaxHeight="200">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <ui:CardExpander Grid.Row="2" Header="Event Details" IsExpanded="True" Margin="16,8,16,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                                                 HorizontalScrollBarVisibility="Auto"
+                                                 Height="150">
                                         <TextBox Text="{Binding EventDetailsJson, Mode=OneWay}" 
                                                 IsReadOnly="True" 
                                                 FontFamily="Cascadia Code, Consolas" 
@@ -659,7 +701,8 @@
                                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                                 BorderThickness="0"
                                                 Background="Transparent"
-                                                Padding="8"/>
+                                                TextWrapping="Wrap"
+                                                Padding="12"/>
                                     </ScrollViewer>
                                 </ui:CardExpander>
                             </Grid>
