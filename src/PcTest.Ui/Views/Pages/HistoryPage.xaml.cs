@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using PcTest.Ui.Services;
 using PcTest.Ui.ViewModels;
@@ -37,6 +38,14 @@ public partial class HistoryPage : Page
         if (e.NewValue is ArtifactNodeViewModel artifact)
         {
             _viewModel.SelectedArtifact = artifact;
+        }
+    }
+
+    private void CopyEventJson_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(_viewModel.EventDetailsJson))
+        {
+            Clipboard.SetText(_viewModel.EventDetailsJson);
         }
     }
 }
