@@ -911,6 +911,15 @@ public partial class HistoryViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void CopyEventDetails()
+    {
+        if (!string.IsNullOrWhiteSpace(EventDetailsJson))
+        {
+            System.Windows.Clipboard.SetText(EventDetailsJson);
+        }
+    }
+
+    [RelayCommand]
     private void GoToSource()
     {
         if (SelectedRun is null) return;
