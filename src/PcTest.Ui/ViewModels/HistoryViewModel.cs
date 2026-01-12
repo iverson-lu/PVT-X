@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts;
@@ -200,6 +201,17 @@ public partial class HistoryViewModel : ViewModelBase
         {
             EventDetailsJson = string.Empty;
         }
+    }
+
+    [RelayCommand]
+    private void CopyEventDetailsJson()
+    {
+        if (string.IsNullOrWhiteSpace(EventDetailsJson))
+        {
+            return;
+        }
+
+        Clipboard.SetText(EventDetailsJson);
     }
 
     private void ApplyFilter()
