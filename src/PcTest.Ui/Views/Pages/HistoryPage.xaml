@@ -603,65 +603,234 @@
                             <!-- Structured Events View -->
                             <Grid Visibility="{Binding SelectedDetailView, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=StructuredEvents}">
                             <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
+                                <Grid.Resources>
+                                    <Style x:Key="EventsToolbarToggleStyle" TargetType="ToggleButton">
+                                        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/>
+                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Setter Property="Padding" Value="10,4"/>
+                                        <Setter Property="FontSize" Value="12"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ToggleButton">
+                                                    <Border x:Name="ToggleBorder"
+                                                            Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="12">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center"
+                                                                          Margin="{TemplateBinding Padding}"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="ToggleBorder" Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="ToggleBorder" Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                    
+                                    <Style x:Key="StructuredEventsListItemStyle" TargetType="ListViewItem">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding" Value="8,4"/>
+                                        <Setter Property="Height" Value="48"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListViewItem">
+                                                    <Border x:Name="RowBorder"
+                                                            Background="{TemplateBinding Background}"
+                                                            CornerRadius="6">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Grid.Resources>
                                 
-                                <!-- Event Filters -->
-                                <Border Grid.Row="0" Background="{DynamicResource CardBackgroundBrush}" 
-                                        BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,0,0,1"
-                                        Padding="{StaticResource CardPadding}">
-                                    <WrapPanel>
-                                        <ui:TextBox PlaceholderText="Filter events..." 
-                                                   Text="{Binding EventSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                                   Width="200" 
-                                                   Margin="{StaticResource ControlMarginMedium}"
-                                                   Icon="{ui:SymbolIcon Filter24}"/>
-                                        <CheckBox Content="Errors only" 
-                                                 IsChecked="{Binding ErrorsOnly}"
-                                                 VerticalAlignment="Center"
-                                                 Margin="{StaticResource ControlMarginMedium}"/>
-                                        <ui:Button Content="Refresh" Icon="{ui:SymbolIcon ArrowSync24}" 
-                                                  Command="{Binding RefreshEventsCommand}"
-                                                  Margin="{StaticResource ControlMarginMedium}"/>
-                                        <ui:Button Content="Clear" Icon="{ui:SymbolIcon Dismiss24}" 
-                                                  Command="{Binding ClearEventFiltersCommand}"/>
-                                    </WrapPanel>
-                                </Border>
-                                
-                                <!-- Events Grid -->
-                                <DataGrid Grid.Row="1" 
-                                         ItemsSource="{Binding FilteredEvents}"
-                                         SelectedItem="{Binding SelectedEvent}"
-                                         AutoGenerateColumns="False"
-                                         IsReadOnly="True"
-                                         SelectionMode="Single"
-                                         VirtualizingPanel.IsVirtualizing="True"
-                                         VirtualizingPanel.VirtualizationMode="Recycling"
-                                         EnableRowVirtualization="True">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Timestamp" Binding="{Binding TimestampDisplay}" Width="120"/>
-                                        <DataGridTextColumn Header="Level" Binding="{Binding Level}" Width="80"/>
-                                        <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="200"/>
-                                        <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                                
-                                <!-- Event Details -->
-                                <ui:CardExpander Grid.Row="2" Header="Event Details" IsExpanded="True" MaxHeight="200">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <DockPanel LastChildFill="True">
+                                    <!-- Event Filters -->
+                                    <Border DockPanel.Dock="Top"
+                                            Background="{DynamicResource CardBackgroundBrush}" 
+                                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            Padding="{StaticResource CardPadding}">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <ui:TextBox PlaceholderText="Filter events..." 
+                                                       Text="{Binding EventSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                                       Width="220" 
+                                                       Margin="0,0,12,0"
+                                                       Icon="{ui:SymbolIcon Filter24}"/>
+                                            <ToggleButton Content="Only Errors"
+                                                          IsChecked="{Binding ErrorsOnly}"
+                                                          Style="{StaticResource EventsToolbarToggleStyle}"
+                                                          Margin="0,0,12,0"/>
+                                            <ui:Button Content="Refresh"
+                                                      Icon="{ui:SymbolIcon ArrowSync24}" 
+                                                      Command="{Binding RefreshEventsCommand}"
+                                                      Margin="0,0,8,0"/>
+                                            <ui:Button Content="Clear"
+                                                      Icon="{ui:SymbolIcon Dismiss24}" 
+                                                      Command="{Binding ClearEventFiltersCommand}"/>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- Events Header -->
+                                    <Border DockPanel.Dock="Top"
+                                            Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            Padding="12,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="120"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="1" Text="Event"
+                                                      FontSize="11"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"/>
+                                            <TextBlock Grid.Column="2" Text="Timestamp"
+                                                      FontSize="11"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      HorizontalAlignment="Right"/>
+                                        </Grid>
+                                    </Border>
+                                    
+                                    <!-- Event Details -->
+                                    <ui:CardExpander DockPanel.Dock="Bottom"
+                                                     IsExpanded="True"
+                                                     Height="220">
+                                        <ui:CardExpander.HeaderTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="Event Details"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                    <ui:Button Grid.Column="1"
+                                                              Content="Copy JSON"
+                                                              Icon="{ui:SymbolIcon Copy24}"
+                                                              Appearance="Secondary"
+                                                              Click="CopyEventJson_Click"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ui:CardExpander.HeaderTemplate>
                                         <TextBox Text="{Binding EventDetailsJson, Mode=OneWay}" 
-                                                IsReadOnly="True" 
+                                                IsReadOnly="True"
+                                                AcceptsReturn="True"
+                                                TextWrapping="NoWrap"
+                                                VerticalScrollBarVisibility="Auto"
+                                                HorizontalScrollBarVisibility="Auto"
                                                 FontFamily="Cascadia Code, Consolas" 
                                                 FontSize="11"
                                                 Foreground="{DynamicResource TextPrimaryBrush}"
                                                 BorderThickness="0"
-                                                Background="Transparent"
-                                                Padding="8"/>
-                                    </ScrollViewer>
-                                </ui:CardExpander>
+                                                Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                Padding="10"/>
+                                    </ui:CardExpander>
+                                    
+                                    <!-- Events List -->
+                                    <ListView ItemsSource="{Binding FilteredEvents}"
+                                             SelectedItem="{Binding SelectedEvent}"
+                                             AlternationCount="2"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                             VirtualizingPanel.IsVirtualizing="True"
+                                             VirtualizingPanel.VirtualizationMode="Recycling"
+                                             VirtualizingPanel.CacheLength="20"
+                                             VirtualizingPanel.CacheLengthUnit="Item"
+                                             ItemContainerStyle="{StaticResource StructuredEventsListItemStyle}">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="120"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    
+                                                    <Grid Grid.Column="0">
+                                                        <Border Width="3"
+                                                                HorizontalAlignment="Left"
+                                                                Margin="0,6,0,6"
+                                                                CornerRadius="2"
+                                                                Background="{Binding Level, Converter={StaticResource EventLevelToBrushConverter}}"/>
+                                                        <Border Width="28" Height="28"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                                CornerRadius="14">
+                                                            <TextBlock Text="{Binding Level, Converter={StaticResource EventLevelToIconConverter}}"
+                                                                      FontFamily="Segoe MDL2 Assets"
+                                                                      FontSize="14"
+                                                                      Foreground="{Binding Level, Converter={StaticResource EventLevelToBrushConverter}}"
+                                                                      HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </Grid>
+                                                    
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="4,0,8,0">
+                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Code, Converter={StaticResource EventCodeToTitleConverter}}"
+                                                                      FontWeight="SemiBold"
+                                                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                      TextTrimming="CharacterEllipsis"/>
+                                                            <Border Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                                                    CornerRadius="4"
+                                                                    Padding="6,1"
+                                                                    Margin="8,0,0,0">
+                                                                <TextBlock Text="{Binding Code}"
+                                                                          FontSize="11"
+                                                                          Foreground="{DynamicResource TextTertiaryBrush}"/>
+                                                            </Border>
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding Message}"
+                                                                  FontSize="12"
+                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                  TextTrimming="CharacterEllipsis"/>
+                                                    </StackPanel>
+                                                    
+                                                    <TextBlock Grid.Column="2"
+                                                              Text="{Binding TimestampDisplay}"
+                                                              FontFamily="Cascadia Code, Consolas"
+                                                              FontSize="11"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                                              HorizontalAlignment="Right"
+                                                              VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </DockPanel>
                             </Grid>
                             </Grid>
                             
