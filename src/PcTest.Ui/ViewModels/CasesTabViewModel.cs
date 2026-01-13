@@ -354,6 +354,8 @@ public partial class TestCaseItemViewModel : ViewModelBase
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
     public bool HasParameters => ParameterWrappers.Count > 0;
+    public bool IsAdminRequired => Privilege == "AdminRequired";
+    public bool IsAdminPreferred => Privilege == "AdminPreferred";
     
     // Expose parameters for binding - allows both get and set
     public List<ParameterViewModel> Parameters
