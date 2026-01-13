@@ -57,7 +57,9 @@ public class PrivilegeCheckerTests : IDisposable
     {
         // Create a suite with no test cases
         var suiteId = "S-EmptySuite";
-        var suitePath = Path.Combine(_suitesRoot, $"{suiteId}.suite.json");
+        var suiteFolderPath = Path.Combine(_suitesRoot, suiteId);
+        Directory.CreateDirectory(suiteFolderPath);
+        var suitePath = Path.Combine(suiteFolderPath, "suite.manifest.json");
 
         var suite = new TestSuiteManifest
         {
@@ -87,7 +89,9 @@ public class PrivilegeCheckerTests : IDisposable
 
         // Create suite referencing them
         var suiteId = "S-AllUser";
-        var suitePath = Path.Combine(_suitesRoot, $"{suiteId}.suite.json");
+        var suiteFolderPath = Path.Combine(_suitesRoot, suiteId);
+        Directory.CreateDirectory(suiteFolderPath);
+        var suitePath = Path.Combine(suiteFolderPath, "suite.manifest.json");
 
         var suite = new TestSuiteManifest
         {
@@ -121,7 +125,9 @@ public class PrivilegeCheckerTests : IDisposable
 
         // Create suite referencing them
         var suiteId = "S-Mixed1";
-        var suitePath = Path.Combine(_suitesRoot, $"{suiteId}.suite.json");
+        var suiteFolderPath = Path.Combine(_suitesRoot, suiteId);
+        Directory.CreateDirectory(suiteFolderPath);
+        var suitePath = Path.Combine(suiteFolderPath, "suite.manifest.json");
 
         var suite = new TestSuiteManifest
         {
@@ -156,7 +162,9 @@ public class PrivilegeCheckerTests : IDisposable
 
         // Create suite referencing them
         var suiteId = "S-Mixed2";
-        var suitePath = Path.Combine(_suitesRoot, $"{suiteId}.suite.json");
+        var suiteFolderPath = Path.Combine(_suitesRoot, suiteId);
+        Directory.CreateDirectory(suiteFolderPath);
+        var suitePath = Path.Combine(suiteFolderPath, "suite.manifest.json");
 
         var suite = new TestSuiteManifest
         {
@@ -187,7 +195,9 @@ public class PrivilegeCheckerTests : IDisposable
     {
         // Create a plan with no suites
         var planId = "P-Empty";
-        var planPath = Path.Combine(_plansRoot, $"{planId}.plan.json");
+        var planFolderPath = Path.Combine(_plansRoot, planId);
+        Directory.CreateDirectory(planFolderPath);
+        var planPath = Path.Combine(planFolderPath, "plan.manifest.json");
 
         var plan = new TestPlanManifest
         {
@@ -221,7 +231,9 @@ public class PrivilegeCheckerTests : IDisposable
 
         // Create plan
         var planId = "P-AllUser";
-        var planPath = Path.Combine(_plansRoot, $"{planId}.plan.json");
+        var planFolderPath = Path.Combine(_plansRoot, planId);
+        Directory.CreateDirectory(planFolderPath);
+        var planPath = Path.Combine(planFolderPath, "plan.manifest.json");
 
         var plan = new TestPlanManifest
         {
@@ -257,7 +269,9 @@ public class PrivilegeCheckerTests : IDisposable
 
         // Create plan with mixed suites
         var planId = "P-Mixed";
-        var planPath = Path.Combine(_plansRoot, $"{planId}.plan.json");
+        var planFolderPath = Path.Combine(_plansRoot, planId);
+        Directory.CreateDirectory(planFolderPath);
+        var planPath = Path.Combine(planFolderPath, "plan.manifest.json");
 
         var plan = new TestPlanManifest
         {
@@ -347,7 +361,7 @@ public class PrivilegeCheckerTests : IDisposable
             Assert.Equal(Privilege.AdminRequired, requiredPrivilege);
             Assert.NotNull(message);
             Assert.Contains("administrator", message.ToLowerInvariant());
-            Assert.Contains("required", message.ToLowerInvariant());
+            Assert.Contains("requires", message.ToLowerInvariant());
         }
     }
 
@@ -390,7 +404,9 @@ public class PrivilegeCheckerTests : IDisposable
 
         // Create plan
         var planId = "P-Mixed";
-        var planPath = Path.Combine(_plansRoot, $"{planId}.plan.json");
+        var planFolderPath = Path.Combine(_plansRoot, planId);
+        Directory.CreateDirectory(planFolderPath);
+        var planPath = Path.Combine(planFolderPath, "plan.manifest.json");
 
         var plan = new TestPlanManifest
         {
@@ -434,7 +450,7 @@ public class PrivilegeCheckerTests : IDisposable
             Parameters = new List<ParameterDefinition>()
         };
 
-        var manifestPath = Path.Combine(casePath, "manifest.json");
+        var manifestPath = Path.Combine(casePath, "test.manifest.json");
         File.WriteAllText(manifestPath, JsonDefaults.Serialize(manifest), Encoding.UTF8);
 
         // Create a minimal test script
@@ -444,7 +460,9 @@ public class PrivilegeCheckerTests : IDisposable
 
     private void CreateSuite(string id, string[] testCaseIds)
     {
-        var suitePath = Path.Combine(_suitesRoot, $"{id}.suite.json");
+        var suiteFolderPath = Path.Combine(_suitesRoot, id);
+        Directory.CreateDirectory(suiteFolderPath);
+        var suitePath = Path.Combine(suiteFolderPath, "suite.manifest.json");
 
         var suite = new TestSuiteManifest
         {

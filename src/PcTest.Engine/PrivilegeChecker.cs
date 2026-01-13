@@ -53,10 +53,10 @@ public static class PrivilegeChecker
 
         foreach (var node in suite.TestCases)
         {
-            // Try to resolve the test case from discovery by identity
-            // Note: node.NodeId contains the full identity (id@version), not node.Ref
+            // Try to resolve the test case from discovery by ref (id@version format)
+            // NodeId may have suffixes like _1, _2 for duplicate references, so we use Ref
             var testCase = discovery.TestCases.Values
-                .FirstOrDefault(tc => tc.Identity.Equals(node.NodeId, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(tc => tc.Identity.Equals(node.Ref, StringComparison.OrdinalIgnoreCase));
 
             if (testCase != null)
             {

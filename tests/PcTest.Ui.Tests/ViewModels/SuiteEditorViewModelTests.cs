@@ -186,10 +186,10 @@ public class SuiteEditorViewModelTests
         _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
         _fileDialogMock
             .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
-            .Returns(new List<(string Id, string Name, string Version, string FolderName)>
+            .Returns(new List<(string Id, string Name, string Version, string FolderName, PcTest.Contracts.Privilege Privilege)>
             {
-                ("TestCase1", "Test Case 1", "1.0.0", "TestCase1"),
-                ("TestCase2", "Test Case 2", "1.0.0", "TestCase2")
+                ("TestCase1", "Test Case 1", "1.0.0", "TestCase1", PcTest.Contracts.Privilege.User),
+                ("TestCase2", "Test Case 2", "1.0.0", "TestCase2", PcTest.Contracts.Privilege.User)
             });
 
         // Act
@@ -214,7 +214,7 @@ public class SuiteEditorViewModelTests
         _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
         _fileDialogMock
             .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
-            .Returns(Array.Empty<(string, string, string, string)>());
+            .Returns(Array.Empty<(string, string, string, string, PcTest.Contracts.Privilege)>());
 
         // Act
         await vm.AddNodeCommand.ExecuteAsync(null);
@@ -237,9 +237,9 @@ public class SuiteEditorViewModelTests
         _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
         _fileDialogMock
             .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
-            .Returns(new List<(string Id, string Name, string Version, string FolderName)>
+            .Returns(new List<(string Id, string Name, string Version, string FolderName, PcTest.Contracts.Privilege Privilege)>
             {
-                ("TestCase1", "Test Case 1", "1.0.0", "TestCase1")
+                ("TestCase1", "Test Case 1", "1.0.0", "TestCase1", PcTest.Contracts.Privilege.User)
             });
 
         // Act
@@ -291,9 +291,9 @@ public class SuiteEditorViewModelTests
         _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
         _fileDialogMock
             .Setup(f => f.ShowTestCasePicker(It.IsAny<DiscoveryResult>(), It.IsAny<IEnumerable<string>?>()))
-            .Returns(new List<(string Id, string Name, string Version, string FolderName)>
+            .Returns(new List<(string Id, string Name, string Version, string FolderName, PcTest.Contracts.Privilege Privilege)>
             {
-                ("SampleCase", "Sample Case", "1.0.0", "SampleCase")
+                ("SampleCase", "Sample Case", "1.0.0", "SampleCase", PcTest.Contracts.Privilege.User)
             });
 
         // Act
