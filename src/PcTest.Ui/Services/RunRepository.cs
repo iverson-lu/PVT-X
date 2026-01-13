@@ -365,7 +365,7 @@ public sealed class RunRepository : IRunRepository
             throw new ArgumentOutOfRangeException(nameof(days), "Days must be at least 1.");
         }
 
-        var cutoff = DateTime.UtcNow.AddDays(-days);
+        var cutoff = DateTime.Now.AddDays(-days);
         var runs = await GetAllRunsAsync(cancellationToken);
         var candidates = runs.Where(entry => entry.StartTime < cutoff).ToList();
 
@@ -417,7 +417,7 @@ public sealed class RunRepository : IRunRepository
             return new HistoryPurgeResult { RunCount = 0, TotalArtifactSize = 0 };
         }
 
-        var cutoff = DateTime.UtcNow.AddDays(-days);
+        var cutoff = DateTime.Now.AddDays(-days);
         var lines = await _fileSystemService.ReadAllLinesAsync(indexPath, cancellationToken);
         var keptLines = new List<string>();
         var runIdsToPurge = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

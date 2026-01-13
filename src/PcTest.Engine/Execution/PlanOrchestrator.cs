@@ -76,7 +76,7 @@ public sealed class PlanOrchestrator
                 "Plan RunRequest must not include caseInputs");
         }
 
-        var startTime = DateTime.UtcNow;
+        var startTime = DateTime.Now;
         var groupRunId = resumeSession?.RunId ?? GroupRunFolderManager.GenerateGroupRunId("P");
         
         // Preserve original startTime when resuming from reboot by reading from events.jsonl
@@ -152,7 +152,7 @@ public sealed class PlanOrchestrator
                 PlanId = plan.Manifest.Id,
                 PlanVersion = plan.Manifest.Version,
                 OriginalManifest = JsonSerializer.SerializeToElement(plan.Manifest, JsonDefaults.WriteOptions),
-                ResolvedAt = DateTime.UtcNow.ToString("o"),
+                ResolvedAt = DateTime.Now.ToString("o"),
                 EngineVersion = "1.0.0"
             };
             if (!isResuming || !File.Exists(Path.Combine(groupRunFolder, "manifest.json")))
@@ -172,7 +172,7 @@ public sealed class PlanOrchestrator
             {
                 await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = "TestPlan.Resumed",
                     Level = "info",
                     Message = $"Test plan '{plan.Manifest.Id}' (version {plan.Manifest.Version}) execution resumed after reboot",
@@ -191,7 +191,7 @@ public sealed class PlanOrchestrator
                 // Record plan started event
                 await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = "TestPlan.Started",
                     Level = "info",
                     Message = $"Test plan '{plan.Manifest.Id}' (version {plan.Manifest.Version}) execution started",
@@ -235,7 +235,7 @@ public sealed class PlanOrchestrator
                 // Report node started
                 _reporter.OnNodeStarted(groupRunId, suiteIdentity);
 
-                var suiteStartTime = DateTime.UtcNow;
+                var suiteStartTime = DateTime.Now;
 
                 // Resolve Suite
                 if (!_discovery.TestSuites.TryGetValue(suiteIdentity, out var suite))
@@ -252,7 +252,7 @@ public sealed class PlanOrchestrator
                         NodeId = suiteIdentity,
                         Status = RunStatus.Error,
                         StartTime = suiteStartTime,
-                        EndTime = DateTime.UtcNow,
+                        EndTime = DateTime.Now,
                         Message = $"Suite '{suiteIdentity}' not found"
                     });
                     continue;
@@ -322,7 +322,7 @@ public sealed class PlanOrchestrator
                         NodeId = suiteIdentity,
                         Status = RunStatus.RebootRequired,
                         StartTime = suiteStartTime,
-                        EndTime = DateTime.UtcNow,
+                        EndTime = DateTime.Now,
                         Message = suiteResult.Reboot?.Reason
                     });
 
@@ -334,7 +334,7 @@ public sealed class PlanOrchestrator
                         PlanVersion = plan.Manifest.Version,
                         Status = RunStatus.RebootRequired,
                         StartTime = startTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                        EndTime = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                        EndTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                         Counts = statusCounts,
                         ChildRunIds = childRunIds,
                         Reboot = suiteResult.Reboot
@@ -351,13 +351,13 @@ public sealed class PlanOrchestrator
                     NodeId = suiteIdentity,
                     Status = suiteResult.Status,
                     StartTime = suiteStartTime,
-                    EndTime = DateTime.UtcNow,
+                    EndTime = DateTime.Now,
                     Message = suiteResult.Message
                 });
             }
 
             // Compute aggregate status
-            var endTime = DateTime.UtcNow;
+            var endTime = DateTime.Now;
             var aggregateStatus = ComputeAggregateStatus(childResults, _cancellationToken.IsCancellationRequested);
 
             statusCounts.Total = childResults.Count;
@@ -380,7 +380,7 @@ public sealed class PlanOrchestrator
             // Record plan completed event
             await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
             {
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.Now.ToString("o"),
                 Code = "TestPlan.Completed",
                 Level = aggregateStatus == RunStatus.Passed ? "info" : "warning",
                 Message = $"Test plan '{plan.Manifest.Id}' execution completed with status: {aggregateStatus}",
@@ -416,7 +416,7 @@ public sealed class PlanOrchestrator
         }
         catch (Exception ex)
         {
-            var endTime = DateTime.UtcNow;
+            var endTime = DateTime.Now;
             var result = new GroupResult
             {
                 SchemaVersion = "1.5.0",
@@ -457,7 +457,7 @@ public sealed class PlanOrchestrator
         string message)
     {
         var parseResult = IdentityParser.Parse(identity);
-        var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var now = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
         return new GroupResult
         {

@@ -193,7 +193,7 @@ public sealed class LogTailService : IDisposable
             if (_pendingOutput.Length == 0)
                 return;
 
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             var timeSinceLastUpdate = now - _lastUiUpdate;
 
             // Only emit if forced or enough time has passed (throttling)

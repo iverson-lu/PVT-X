@@ -108,8 +108,8 @@ public class SuiteOrchestratorExceptionTests
         {
             NodeId = "node-1",
             Status = RunStatus.Passed,
-            StartTime = DateTime.UtcNow.AddSeconds(-2),
-            EndTime = DateTime.UtcNow
+            StartTime = DateTime.Now.AddSeconds(-2),
+            EndTime = DateTime.Now
         });
 
         // Simulate exception scenario for node-2
@@ -122,8 +122,8 @@ public class SuiteOrchestratorExceptionTests
         {
             NodeId = "node-2",
             Status = RunStatus.Error,
-            StartTime = DateTime.UtcNow.AddSeconds(-1),
-            EndTime = DateTime.UtcNow,
+            StartTime = DateTime.Now.AddSeconds(-1),
+            EndTime = DateTime.Now,
             Message = "Node execution failed: Test exception"
         });
 
@@ -207,8 +207,8 @@ public class SuiteOrchestratorExceptionTests
         {
             NodeId = "node-1",
             Status = RunStatus.Passed,
-            StartTime = DateTime.UtcNow.AddSeconds(-3),
-            EndTime = DateTime.UtcNow.AddSeconds(-2)
+            StartTime = DateTime.Now.AddSeconds(-3),
+            EndTime = DateTime.Now.AddSeconds(-2)
         });
 
         // Node 2: Exception (but properly handled with OnNodeFinished)
@@ -217,8 +217,8 @@ public class SuiteOrchestratorExceptionTests
         {
             NodeId = "node-2",
             Status = RunStatus.Error,
-            StartTime = DateTime.UtcNow.AddSeconds(-2),
-            EndTime = DateTime.UtcNow.AddSeconds(-1),
+            StartTime = DateTime.Now.AddSeconds(-2),
+            EndTime = DateTime.Now.AddSeconds(-1),
             Message = "Node execution failed: Exception during test"
         });
 
@@ -228,8 +228,8 @@ public class SuiteOrchestratorExceptionTests
         {
             NodeId = "node-3",
             Status = RunStatus.Passed,
-            StartTime = DateTime.UtcNow.AddSeconds(-1),
-            EndTime = DateTime.UtcNow
+            StartTime = DateTime.Now.AddSeconds(-1),
+            EndTime = DateTime.Now
         });
 
         reporter.OnRunFinished("suite-run-1", RunStatus.Error);

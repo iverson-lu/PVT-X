@@ -561,7 +561,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             RunId = string.Empty, // Will be set by OnRunPlanned
             RunType = runType,
             TargetIdentity = targetIdentity,
-            StartTime = DateTime.UtcNow,
+            StartTime = DateTime.Now,
             CancellationSource = cts
         };
         
@@ -1086,7 +1086,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             _ => "R"
         };
         
-        return $"{prefix}-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}"[..35];
+        return $"{prefix}-{DateTime.Now:yyyyMMddHHmmss}-{Guid.NewGuid():N}"[..35];
     }
 
     private static RunStatus GetStatusFromResult(object result)

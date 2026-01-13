@@ -40,7 +40,7 @@ function Write-Stdout-Compact {
         [string]   $TestName,
         [string]   $Overall,
         [int]      $ExitCode,
-        [string]   $TsUtc,
+        [string]   $Ts,
         [string]   $StepLine,
         [string[]] $StepDetails,
         [int]      $Total,
@@ -51,7 +51,7 @@ function Write-Stdout-Compact {
 
     Write-Output "=================================================="
     Write-Output ("TEST: {0}  RESULT: {1}  EXIT: {2}" -f $TestName, $Overall, $ExitCode)
-    Write-Output ("UTC:  {0}" -f $TsUtc)
+    Write-Output ("UTC:  {0}" -f $Ts)
     Write-Output "--------------------------------------------------"
     Write-Output $StepLine
     foreach ($d in $StepDetails) { Write-Output ("      " + $d) }
@@ -65,7 +65,7 @@ function Write-Stdout-Compact {
 # Metadata
 # ----------------------------
 $TestId = "EventViewerCheck"
-$TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize parameters
 $ProhibitedLevel = Normalize-Text $ProhibitedLevel
@@ -271,7 +271,7 @@ finally {
         -TestName $TestId `
         -Overall $overallStatus `
         -ExitCode $exitCode `
-        -TsUtc $TsUtc `
+        -Ts $Ts `
         -StepLine $stepLine `
         -StepDetails $details.ToArray() `
         -Total 1 `

@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 # Metadata (case-level only)
 # ----------------------------
 $TestId = "NetworkPingConnectivity"
-$TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Artifacts
 $ArtifactsRoot = Join-Path (Get-Location) "artifacts"
@@ -210,7 +210,7 @@ finally {
         -TestName $TestId `
         -Overall $overallStatus `
         -ExitCode $exitCode `
-        -TsUtc $TsUtc `
+        -Ts $Ts `
         -StepLine $stepLine `
         -StepDetails $details.ToArray() `
         -Total 1 `

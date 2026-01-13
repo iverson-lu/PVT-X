@@ -2,6 +2,8 @@
     "chat.tools.terminal.autoApprove": {
         "dotnet publish": true,
         "dotnet build": true,
-        "dotnet test": true
+        "dotnet test": true,
+        "Set-Content": true,
+        "dotnet script": true
     }
 }

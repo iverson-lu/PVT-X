@@ -80,7 +80,7 @@ function Write-Stdout-Compact {
     [Parameter(Mandatory)][string]$TestName,
     [Parameter(Mandatory)][string]$Overall,
     [Parameter(Mandatory)][int]$ExitCode,
-    [Parameter(Mandatory)][string]$TsUtc,
+    [Parameter(Mandatory)][string]$Ts,
     [Parameter(Mandatory)][string]$StepLine,
     [string[]]$StepDetails = @(),
     [int]$Total = 0,
@@ -92,7 +92,7 @@ function Write-Stdout-Compact {
   Write-Output ("test_name: {0}" -f $TestName)
   Write-Output ("overall: {0}" -f $Overall)
   Write-Output ("exit_code: {0}" -f $ExitCode)
-  Write-Output ("ts_utc: {0}" -f $TsUtc)
+  Write-Output ("ts_utc: {0}" -f $Ts)
   Write-Output ("counts: total={0} pass={1} fail={2} skip={3}" -f $Total, $Passed, $Failed, $Skipped)
   Write-Output "steps:"
   if (-not [string]::IsNullOrWhiteSpace($StepLine)) {
@@ -118,7 +118,7 @@ function Append-Raw {
 $TestId  = $env:PVTX_TESTCASE_ID  ?? 'unknown_test'
 $TestName= $env:PVTX_TESTCASE_NAME ?? $TestId
 $TestVer = $env:PVTX_TESTCASE_VER ?? '0.0.0'
-$TsUtc   = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+$Ts   = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
 
 $ArtifactsRoot = Join-Path (Get-Location) 'artifacts'
 Ensure-Dir $ArtifactsRoot
@@ -152,7 +152,7 @@ try {
     $step1.metrics.gpu_count = $gpuList.Count
 
     if ($B_SaveRawOutputs) {
-      Append-Raw $RawPath ("=== Win32_VideoController ({0}) ===`n" -f $TsUtc)
+      Append-Raw $RawPath ("=== Win32_VideoController ({0}) ===`n" -f $Ts)
       Append-Raw $RawPath (($gpuList | Select-Object Name, Status, DriverVersion, PNPDeviceID, AdapterCompatibility, VideoProcessor, AdapterRAM | Format-List | Out-String).TrimEnd() + "`n`n")
     }
 
@@ -272,7 +272,7 @@ try {
         }
         else {
           if ($B_SaveRawOutputs) {
-            Append-Raw $RawPath ("=== Perf Counters ({0}) ===`n" -f $TsUtc)
+            Append-Raw $RawPath ("=== Perf Counters ({0}) ===`n" -f $Ts)
             Append-Raw $RawPath ("Requested samples={0} interval={1}s duration={2}s`n" -f $samples, $N_SampleIntervalSec, $N_SampleDurationSec)
             Append-Raw $RawPath (($cs | Select-Object Path, CookedValue | Format-Table -AutoSize | Out-String).TrimEnd() + "`n`n")
           }
@@ -370,7 +370,7 @@ try {
             stack   = $_.Exception.StackTrace
           }
           if ($B_SaveRawOutputs -and $null -ne $raw) {
-            Append-Raw $RawPath ("=== nvidia-smi (failed) ({0}) ===`n" -f $TsUtc)
+            Append-Raw $RawPath ("=== nvidia-smi (failed) ({0}) ===`n" -f $Ts)
             Append-Raw $RawPath (($raw | Out-String).TrimEnd() + "`n`n")
           }
           Skip-Step $step4 ("nvidia-smi failed; vendor telemetry skipped: {0}" -f $_.Exception.Message)
@@ -379,7 +379,7 @@ try {
 
         if ($step4.status -ne 'SKIP') {
           if ($B_SaveRawOutputs) {
-            Append-Raw $RawPath ("=== nvidia-smi ({0}) ===`n" -f $TsUtc)
+            Append-Raw $RawPath ("=== nvidia-smi ({0}) ===`n" -f $Ts)
             Append-Raw $RawPath (($raw | Out-String).TrimEnd() + "`n`n")
           }
 
@@ -508,7 +508,7 @@ finally {
       id      = $TestId
       name    = $TestName
       version = $TestVer
-      ts_utc  = $TsUtc
+      ts_utc  = $Ts
       parameters = @{
         N_SampleDurationSec = $N_SampleDurationSec
         N_SampleIntervalSec = $N_SampleIntervalSec
@@ -530,7 +530,7 @@ finally {
         skip  = $skipCount
       }
       duration_ms = [int]$swTotal.ElapsedMilliseconds
-      ts_utc      = $TsUtc
+      ts_utc      = $Ts
     }
     steps = $steps
   }
@@ -548,7 +548,7 @@ finally {
     -TestName $TestId `
     -Overall $overall `
     -ExitCode $exitCode `
-    -TsUtc $TsUtc `
+    -Ts $Ts `
     -StepLine ($stepLines -join "`n") `
     -StepDetails $details.ToArray() `
     -Total $steps.Count `

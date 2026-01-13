@@ -5,7 +5,7 @@
   "category": "System",
   "description": "Comprehensive system information validation including CPU, OS version, activation status, installed software, and minimum hardware requirements.",
   "version": "1.0.0",
-  "privilege": "User",
+  "privilege": "AdminPreferred",
   "timeoutSec": 120,
   "tags": ["system", "hardware", "validation", "requirements"],
   "parameters": [

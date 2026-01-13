@@ -27,7 +27,7 @@ public sealed class TestCaseRunner
     /// </summary>
     public async Task<TestCaseResult> ExecuteAsync(RunContext context)
     {
-        var startTime = DateTime.UtcNow;
+        var startTime = DateTime.Now;
         using var folderManager = new CaseRunFolderManager(context.RunsRoot, context.IsResume);
 
         // Preserve original startTime when resuming from reboot
@@ -145,7 +145,7 @@ public sealed class TestCaseRunner
             {
                 await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = "TestCase.Resumed",
                     Level = "info",
                     Message = $"Test case '{context.Manifest.Id}' (version {context.Manifest.Version}) execution resumed after reboot",
@@ -164,7 +164,7 @@ public sealed class TestCaseRunner
             // Record test started event
             await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
             {
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.Now.ToString("o"),
                 Code = "TestCase.Started",
                 Level = "info",
                 Message = $"Test case '{context.Manifest.Id}' (version {context.Manifest.Version}) execution started",
@@ -190,7 +190,7 @@ public sealed class TestCaseRunner
             {
                 await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = ErrorCodes.EnvRefSecretOnCommandLine,
                     Level = "warning",
                     Message = "Secret values are being passed via command-line arguments",
@@ -261,7 +261,7 @@ public sealed class TestCaseRunner
 
                 await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = "TestCase.RebootRequested",
                     Level = "warning",
                     Message = $"Test case '{context.Manifest.Id}' requested a reboot.",
@@ -289,7 +289,7 @@ public sealed class TestCaseRunner
             }
 
             // Build result
-            var endTime = DateTime.UtcNow;
+            var endTime = DateTime.Now;
             var result = new TestCaseResult
             {
                 SchemaVersion = "1.5.0",
@@ -325,7 +325,7 @@ public sealed class TestCaseRunner
             // Record test completed event
             await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
             {
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.Now.ToString("o"),
                 Code = "TestCase.Completed",
                 Level = result.Status == RunStatus.Passed ? "info" : "warning",
                 Message = $"Test case '{context.Manifest.Id}' execution completed with status: {result.Status}",
@@ -351,7 +351,7 @@ public sealed class TestCaseRunner
             // Record test error event
             await folderManager.AppendEventAsync(caseRunFolder, new EventEntry
             {
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.Now.ToString("o"),
                 Code = "TestCase.Error",
                 Level = "error",
                 Message = $"Test case '{context.Manifest.Id}' execution failed with exception: {ex.Message}",
@@ -383,7 +383,7 @@ public sealed class TestCaseRunner
             EffectiveEnvironment = enhancedEnvironment,
             EffectiveInputs = context.EffectiveInputs,
             InputTemplates = context.InputTemplates,
-            ResolvedAt = DateTime.UtcNow.ToString("o"),
+            ResolvedAt = DateTime.Now.ToString("o"),
             EngineVersion = "1.0.0"
         };
     }
@@ -413,7 +413,7 @@ public sealed class TestCaseRunner
         ErrorType errorType,
         string message)
     {
-        var endTime = DateTime.UtcNow;
+        var endTime = DateTime.Now;
         var result = new TestCaseResult
         {
             SchemaVersion = "1.5.0",
@@ -451,7 +451,7 @@ public sealed class TestCaseRunner
         DateTime startTime,
         RebootRequest rebootRequest)
     {
-        var endTime = DateTime.UtcNow;
+        var endTime = DateTime.Now;
         var result = new TestCaseResult
         {
             SchemaVersion = "1.5.0",
@@ -514,7 +514,7 @@ public sealed class TestCaseRunner
     /// </summary>
     public static string GenerateRunId()
     {
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
         var shortGuid = Guid.NewGuid().ToString("N")[..8];
         return $"R-{timestamp}-{shortGuid}";
     }
@@ -580,7 +580,7 @@ public sealed class TestCaseRunner
             return;
         }
 
-        var archivePath = Path.Combine(controlDir, $"reboot.json.{DateTime.UtcNow:yyyyMMddHHmmss}.archive");
+        var archivePath = Path.Combine(controlDir, $"reboot.json.{DateTime.Now:yyyyMMddHHmmss}.archive");
         File.Move(rebootPath, archivePath, true);
     }
 }

@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "category": "Hardware",
   "owner": "PVT-X",
-  "privilege": "AdminPreferred",
+  "privilege": "User",
   "timeoutSec": 30,
   "parameters": [
     {

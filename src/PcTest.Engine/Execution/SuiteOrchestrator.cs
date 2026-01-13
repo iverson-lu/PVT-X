@@ -96,7 +96,7 @@ public sealed class SuiteOrchestrator
         string? suiteRunId,
         RebootResumeSession? resumeSession)
     {
-        var startTime = DateTime.UtcNow;
+        var startTime = DateTime.Now;
         var groupRunId = suiteRunId ?? GroupRunFolderManager.GenerateGroupRunId("S");
         
         // Preserve original startTime when resuming from reboot by reading from events.jsonl
@@ -168,7 +168,7 @@ public sealed class SuiteOrchestrator
                 PlanId = planId,
                 PlanVersion = planVersion,
                 OriginalManifest = JsonSerializer.SerializeToElement(suite.Manifest, JsonDefaults.WriteOptions),
-                ResolvedAt = DateTime.UtcNow.ToString("o"),
+                ResolvedAt = DateTime.Now.ToString("o"),
                 EngineVersion = "1.0.0"
             };
 
@@ -202,7 +202,7 @@ public sealed class SuiteOrchestrator
             {
                 await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = "TestSuite.Resumed",
                     Level = "info",
                     Message = $"Test suite '{suite.Manifest.Id}' (version {suite.Manifest.Version}) execution resumed after reboot",
@@ -224,7 +224,7 @@ public sealed class SuiteOrchestrator
                 // Record suite started event
                 await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = "TestSuite.Started",
                     Level = "info",
                     Message = $"Test suite '{suite.Manifest.Id}' (version {suite.Manifest.Version}) execution started",
@@ -245,7 +245,7 @@ public sealed class SuiteOrchestrator
             {
                 await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = isResuming ? "TestSuite.Resumed" : "TestSuite.Started",
                     Level = "info",
                     Message = isResuming
@@ -270,7 +270,7 @@ public sealed class SuiteOrchestrator
             {
                 await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = ErrorCodes.ControlsMaxParallelIgnored,
                     Level = "warning",
                     Message = $"maxParallel={controls.MaxParallel} is not supported; executing sequentially",
@@ -365,8 +365,8 @@ public sealed class SuiteOrchestrator
                             {
                                 NodeId = node.NodeId,
                                 Status = RunStatus.Error,
-                                StartTime = DateTime.UtcNow,
-                                EndTime = DateTime.UtcNow,
+                                StartTime = DateTime.Now,
+                                EndTime = DateTime.Now,
                                 Message = refError?.Message ?? "Ref resolution failed",
                                 ParentNodeId = parentNodeId
                             });
@@ -421,8 +421,8 @@ public sealed class SuiteOrchestrator
                                 {
                                     NodeId = node.NodeId,
                                     Status = RunStatus.Error,
-                                    StartTime = DateTime.UtcNow,
-                                    EndTime = DateTime.UtcNow,
+                                    StartTime = DateTime.Now,
+                                    EndTime = DateTime.Now,
                                     Message = string.Join("; ", inputResult.Errors.Select(e => e.Message)),
                                     ParentNodeId = parentNodeId
                                 });
@@ -450,7 +450,7 @@ public sealed class SuiteOrchestrator
                         string.IsNullOrEmpty(parentPlanRunId) ? groupRunId : parentPlanRunId,
                         node.NodeId);
 
-                    var nodeStartTime = DateTime.UtcNow;
+                    var nodeStartTime = DateTime.Now;
 
                     try
                     {
@@ -464,7 +464,7 @@ public sealed class SuiteOrchestrator
                             // Forward test case started event to suite events.jsonl
                             await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                             {
-                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Timestamp = DateTime.Now.ToString("o"),
                                 Code = "TestCase.Started",
                                 Level = "info",
                                 Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') execution started",
@@ -482,7 +482,7 @@ public sealed class SuiteOrchestrator
                             {
                                 await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
                                 {
-                                    Timestamp = DateTime.UtcNow.ToString("o"),
+                                    Timestamp = DateTime.Now.ToString("o"),
                                     Code = "TestCase.Started",
                                     Level = "info",
                                     Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') execution started",
@@ -544,7 +544,7 @@ public sealed class SuiteOrchestrator
                             {
                                 await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                                 {
-                                    Timestamp = DateTime.UtcNow.ToString("o"),
+                                    Timestamp = DateTime.Now.ToString("o"),
                                     Code = "TestCase.RebootRequested",
                                     Level = "warning",
                                     Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') requested a reboot.",
@@ -563,7 +563,7 @@ public sealed class SuiteOrchestrator
                                 {
                                     await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
                                     {
-                                        Timestamp = DateTime.UtcNow.ToString("o"),
+                                        Timestamp = DateTime.Now.ToString("o"),
                                         Code = "TestCase.RebootRequested",
                                         Level = "warning",
                                         Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') requested a reboot.",
@@ -583,7 +583,7 @@ public sealed class SuiteOrchestrator
                             // Forward test case events to suite events.jsonl
                             await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                             {
-                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Timestamp = DateTime.Now.ToString("o"),
                                 Code = "TestCase.Completed",
                                 Level = nodeResult.Status == RunStatus.Passed ? "info" : "warning",
                                 Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') completed with status: {nodeResult.Status}",
@@ -603,7 +603,7 @@ public sealed class SuiteOrchestrator
                             {
                                 await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
                                 {
-                                    Timestamp = DateTime.UtcNow.ToString("o"),
+                                    Timestamp = DateTime.Now.ToString("o"),
                                     Code = "TestCase.Completed",
                                     Level = nodeResult.Status == RunStatus.Passed ? "info" : "warning",
                                     Message = $"Test case '{testCaseManifest.Id}' (node '{node.NodeId}') completed with status: {nodeResult.Status}",
@@ -675,7 +675,7 @@ public sealed class SuiteOrchestrator
                                         NodeId = node.NodeId,
                                         Status = RunStatus.RebootRequired,
                                         StartTime = nodeStartTime,
-                                        EndTime = DateTime.UtcNow,
+                                        EndTime = DateTime.Now,
                                         Message = nodeResult.Reboot?.Reason,
                                         RetryCount = attempt,
                                         ParentNodeId = parentNodeId
@@ -691,7 +691,7 @@ public sealed class SuiteOrchestrator
                                     PlanVersion = planVersion,
                                     Status = RunStatus.RebootRequired,
                                     StartTime = startTime.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                                    EndTime = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                                    EndTime = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
                                     Counts = statusCounts,
                                     ChildRunIds = childRunIds,
                                     Reboot = nodeResult.Reboot
@@ -706,7 +706,7 @@ public sealed class SuiteOrchestrator
                             {
                                 await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                                 {
-                                    Timestamp = DateTime.UtcNow.ToString("o"),
+                                    Timestamp = DateTime.Now.ToString("o"),
                                     Code = "Node.Retry",
                                     Level = "info",
                                     Message = $"Retrying node '{node.NodeId}' (attempt {attempt + 2}/{attempts})"
@@ -714,7 +714,7 @@ public sealed class SuiteOrchestrator
                             }
                         }
 
-                        var nodeEndTime = DateTime.UtcNow;
+                        var nodeEndTime = DateTime.Now;
 
                         if (nodeResult is not null)
                         {
@@ -747,7 +747,7 @@ public sealed class SuiteOrchestrator
                     {
                         // CRITICAL: If exception occurs during node execution, we must call OnNodeFinished
                         // to prevent the node from being stuck in "Running" state forever
-                        var nodeEndTime = DateTime.UtcNow;
+                        var nodeEndTime = DateTime.Now;
                         
                         // Create error result for the failed node
                         var errorResult = CreateNodeErrorResult(
@@ -778,7 +778,7 @@ public sealed class SuiteOrchestrator
                         {
                             await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
                             {
-                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                Timestamp = DateTime.Now.ToString("o"),
                                 Code = "Node.ExecutionError",
                                 Level = "error",
                                 Message = $"Node '{node.NodeId}' execution failed with exception: {nodeEx.Message}",
@@ -808,7 +808,7 @@ public sealed class SuiteOrchestrator
             }
 
             // Compute aggregate status per spec section 13.4
-            var endTime = DateTime.UtcNow;
+            var endTime = DateTime.Now;
             var aggregateStatus = ComputeAggregateStatus(childResults, _cancellationToken.IsCancellationRequested);
 
             statusCounts.Total = childResults.Count;
@@ -833,7 +833,7 @@ public sealed class SuiteOrchestrator
             // Record suite completed event
             await folderManager.AppendEventAsync(groupRunFolder, new EventEntry
             {
-                Timestamp = DateTime.UtcNow.ToString("o"),
+                Timestamp = DateTime.Now.ToString("o"),
                 Code = "TestSuite.Completed",
                 Level = aggregateStatus == RunStatus.Passed ? "info" : "warning",
                 Message = $"Test suite '{suite.Manifest.Id}' execution completed with status: {aggregateStatus}",
@@ -855,7 +855,7 @@ public sealed class SuiteOrchestrator
             {
                 await folderManager.AppendEventAsync(parentPlanRunFolder, new EventEntry
                 {
-                    Timestamp = DateTime.UtcNow.ToString("o"),
+                    Timestamp = DateTime.Now.ToString("o"),
                     Code = "TestSuite.Completed",
                     Level = aggregateStatus == RunStatus.Passed ? "info" : "warning",
                     Message = $"Test suite '{suite.Manifest.Id}' execution completed with status: {aggregateStatus}",
@@ -898,7 +898,7 @@ public sealed class SuiteOrchestrator
         }
         catch (Exception ex)
         {
-            var endTime = DateTime.UtcNow;
+            var endTime = DateTime.Now;
             var result = new GroupResult
             {
                 SchemaVersion = "1.5.0",
@@ -1015,7 +1015,7 @@ public sealed class SuiteOrchestrator
         string? planVersion,
         string message)
     {
-        var now = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        var now = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
         return new TestCaseResult
         {
             SchemaVersion = "1.5.0",

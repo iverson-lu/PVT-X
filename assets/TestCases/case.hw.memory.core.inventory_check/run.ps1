@@ -37,7 +37,7 @@ function Write-Stdout-Compact {
         [string]   $TestName,
         [string]   $Overall,
         [int]      $ExitCode,
-        [string]   $TsUtc,
+        [string]   $Ts,
         [string]   $StepLine,
         [string[]] $StepDetails,
         [int]      $Total,
@@ -46,7 +46,7 @@ function Write-Stdout-Compact {
         [int]      $Skipped
     )
 
-    Write-Output ("TEST: name={0} ts_utc={1}" -f $TestName, $TsUtc)
+    Write-Output ("TEST: name={0} ts_utc={1}" -f $TestName, $Ts)
     Write-Output ("STEPS: total={0} pass={1} fail={2} skip={3}" -f $Total, $Passed, $Failed, $Skipped)
     Write-Output ("STEP: {0}" -f $StepLine)
     foreach ($d in $StepDetails) {
@@ -68,7 +68,7 @@ function Convert-SmbiosMemoryTypeToDdrType([int] $SmbiosMemoryType) {
 # ----------------------------
 $TestId = $env:PVTX_TESTCASE_ID
 if ([string]::IsNullOrWhiteSpace($TestId)) { $TestId = "case.hw.memory.core.inventory_check" }
-$TsUtc  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize E_ExpectedDdrType
 $E_ExpectedDdrType = Normalize-Text $E_ExpectedDdrType
@@ -306,7 +306,7 @@ finally {
         -TestName $TestId `
         -Overall $overallStatus `
         -ExitCode $exitCode `
-        -TsUtc $TsUtc `
+        -Ts $Ts `
         -StepLine $stepLine `
         -StepDetails $details.ToArray() `
         -Total 1 `

@@ -17,7 +17,7 @@ $ErrorActionPreference = 'Stop'
 # Metadata
 # ----------------------------
 $TestId = $env:PVTX_TESTCASE_ID ?? 'unknown_test'
-$TsUtc  = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+$Ts  = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
 $Mode = (Normalize-Text $Mode).ToLowerInvariant()
 
 $ArtifactsRoot = Join-Path (Get-Location) 'artifacts'
@@ -154,7 +154,7 @@ finally {
         skip  = $skipCount
       }
       duration_ms = [int]$swTotal.ElapsedMilliseconds
-      ts_utc      = $TsUtc
+      ts_utc      = $Ts
     }
     steps = $steps
   }
@@ -172,7 +172,7 @@ finally {
     -TestName $TestId `
     -Overall $overall `
     -ExitCode $exitCode `
-    -TsUtc $TsUtc `
+    -Ts $Ts `
     -StepLine ($stepLines -join "`n") `
     -StepDetails $details.ToArray() `
     -Total $steps.Count `

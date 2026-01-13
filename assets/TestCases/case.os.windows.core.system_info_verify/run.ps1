@@ -17,7 +17,7 @@ $ErrorActionPreference = "Stop"
 #region constants / globals
 $script:TestId = "SystemInfoVerification"
 $script:TotalChecks = 8
-$script:StartTimeUtc = (Get-Date).ToUniversalTime()
+$script:StartTime = (Get-Date)
 $script:ValidationFailures = @()
 $script:SkippedChecks = @()
 $script:ArtifactsRoot = Join-Path (Get-Location) "artifacts"
@@ -55,7 +55,7 @@ function Write-TestResult {
         [Parameter(Mandatory=$false)] [hashtable] $Metrics = @{}
     )
     
-    $endTimeUtc = (Get-Date).ToUniversalTime()
+    $endTime = (Get-Date)
     
     $report = [ordered]@{
         testId = $script:TestId
@@ -63,8 +63,8 @@ function Write-TestResult {
         summary = $Summary
         details = $Details
         metrics = $Metrics
-        startTimeUtc = $script:StartTimeUtc.ToString("o")
-        endTimeUtc = $endTimeUtc.ToString("o")
+        StartTime = $script:StartTime.ToString("o")
+        endTime = $endTime.ToString("o")
     }
     
     if ($script:SkippedChecks.Count -gt 0) {

@@ -53,8 +53,8 @@ public class ExecutionReporterTests
         {
             NodeId = "node-1",
             Status = RunStatus.Passed,
-            StartTime = DateTime.UtcNow,
-            EndTime = DateTime.UtcNow
+            StartTime = DateTime.Now,
+            EndTime = DateTime.Now
         });
         reporter.OnRunFinished("run-1", RunStatus.Passed);
     }
@@ -117,16 +117,16 @@ public class ExecutionReporterTests
         {
             NodeId = "node-1",
             Status = RunStatus.Passed,
-            StartTime = DateTime.UtcNow,
-            EndTime = DateTime.UtcNow
+            StartTime = DateTime.Now,
+            EndTime = DateTime.Now
         });
         reporter.OnNodeStarted(runId, "node-2");
         reporter.OnNodeFinished(runId, new NodeFinishedState
         {
             NodeId = "node-2",
             Status = RunStatus.Failed,
-            StartTime = DateTime.UtcNow,
-            EndTime = DateTime.UtcNow
+            StartTime = DateTime.Now,
+            EndTime = DateTime.Now
         });
         reporter.OnRunFinished(runId, RunStatus.Failed);
 
@@ -152,8 +152,8 @@ public class ExecutionReporterTests
         {
             NodeId = "node-1",
             Status = RunStatus.Error,
-            StartTime = DateTime.UtcNow,
-            EndTime = DateTime.UtcNow,
+            StartTime = DateTime.Now,
+            EndTime = DateTime.Now,
             Message = "Test error message",
             RetryCount = 2
         };

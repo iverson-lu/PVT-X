@@ -87,7 +87,7 @@ public sealed class StandaloneCaseExecutor
         // Report node started
         _reporter.OnNodeStarted(runId, nodeId);
 
-        var startTime = DateTime.UtcNow;
+        var startTime = DateTime.Now;
 
         // Execute
         var runner = new TestCaseRunner(_cancellationToken);
@@ -112,7 +112,7 @@ public sealed class StandaloneCaseExecutor
 
         var result = await runner.ExecuteAsync(context);
 
-        var endTime = DateTime.UtcNow;
+        var endTime = DateTime.Now;
 
         // Report node finished
         _reporter.OnNodeFinished(runId, new NodeFinishedState
