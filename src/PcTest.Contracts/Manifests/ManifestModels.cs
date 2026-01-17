@@ -191,6 +191,33 @@ public sealed class PlanEnvironment
 }
 
 /// <summary>
+/// Test Suite node within a Plan per spec section 6.4.
+/// Allows referencing the same suite multiple times with different controls.
+/// </summary>
+public sealed class TestSuiteNode
+{
+    /// <summary>
+    /// Suite identity in the form suiteId@version.
+    /// </summary>
+    [JsonPropertyName("nodeId")]
+    public string NodeId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Human-readable reference name for this node instance.
+    /// Allows distinguishing multiple instances of the same suite.
+    /// </summary>
+    [JsonPropertyName("ref")]
+    public string Ref { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional execution control overrides for this suite instance.
+    /// If null, the suite's default controls are used.
+    /// </summary>
+    [JsonPropertyName("controls")]
+    public SuiteControls? Controls { get; set; }
+}
+
+/// <summary>
 /// Test Plan manifest per spec section 6.4.
 /// </summary>
 public sealed class TestPlanManifest
@@ -216,8 +243,8 @@ public sealed class TestPlanManifest
     [JsonPropertyName("environment")]
     public PlanEnvironment? Environment { get; set; }
 
-    [JsonPropertyName("suites")]
-    public List<string> Suites { get; set; } = new();
+    [JsonPropertyName("testSuites")]
+    public List<TestSuiteNode> TestSuites { get; set; } = new();
 
     [JsonIgnore]
     public string Identity => $"{Id}@{Version}";

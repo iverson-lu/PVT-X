@@ -99,9 +99,14 @@ public partial class PlanEditorViewModel : EditableViewModelBase
 
         // Load suite references
         SuiteReferences.Clear();
-        foreach (var suiteRef in m.Suites)
+        foreach (var suiteNode in m.TestSuites)
         {
-            var refVm = new SuiteReferenceViewModel(_discoveryService) { SuiteIdentity = suiteRef };
+            var refVm = new SuiteReferenceViewModel(_discoveryService) 
+            { 
+                SuiteIdentity = suiteNode.NodeId,
+                Ref = suiteNode.Ref
+            };
+            refVm.LoadControls(suiteNode.Controls);
             refVm.PropertyChanged += (s, e) =>
             {
                 // Don't mark dirty for update-tracking properties (these are UI-only state)
@@ -210,8 +215,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
     [RelayCommand]
     private async Task AddSuiteReferenceAsync()
     {
-        // Get existing suite identities to exclude from picker
-        var existingIdentities = SuiteReferences.Select(r => r.SuiteIdentity).ToList();
+        // No longer exclude existing identities - same suite can be added multiple times with different refs
+        var existingIdentities = new List<string>();
 
         // Show picker dialog
         var selected = _fileDialogService.ShowSuitePicker(AvailableSuites, existingIdentities);
@@ -219,13 +224,28 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         if (selected.Count == 0)
             return;
 
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+        
         // Add suite references for each selected suite
         foreach (var identity in selected)
         {
+            // Get suite manifest
+            var suite = discovery.TestSuites.Values
+                .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == identity);
+            var suiteName = suite?.Manifest.Name ?? identity;
+            
             var refVm = new SuiteReferenceViewModel(_discoveryService)
             {
-                SuiteIdentity = identity
+                SuiteIdentity = identity,
+                Ref = suiteName
             };
+            
+            // Load suite's default controls
+            if (suite?.Manifest.Controls != null)
+            {
+                refVm.LoadControls(suite.Manifest.Controls);
+            }
+            
             refVm.PropertyChanged += (s, e) => MarkDirty();
             SuiteReferences.Add(refVm);
         }
@@ -545,7 +565,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 : TagsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
         };
 
-        manifest.Suites = SuiteReferences.Select(sr => sr.SuiteIdentity).ToList();
+        manifest.TestSuites = SuiteReferences.Select(sr => sr.ToSuiteNode()).ToList();
 
         // Add environment variables
         var envDict = EnvironmentEditor.ToDictionary();
@@ -563,19 +583,28 @@ public partial class PlanEditorViewModel : EditableViewModelBase
 
 /// <summary>
 /// ViewModel for a suite reference in a plan.
+/// Supports controls overrides and ref for distinguishing multiple instances of the same suite.
 /// </summary>
 public partial class SuiteReferenceViewModel : ViewModelBase
 {
     private readonly IDiscoveryService? _discoveryService;
     
     [ObservableProperty] private string _suiteIdentity = string.Empty;
+    [ObservableProperty] private string _ref = string.Empty;
     [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
+    
+    // Controls overrides (using double for NumberBox binding compatibility)
+    [ObservableProperty] private double _repeat = 1;
+    [ObservableProperty] private double _maxParallel = 1;
+    [ObservableProperty] private bool _continueOnFailure;
+    [ObservableProperty] private double _retryOnError;
+    [ObservableProperty] private bool _hasControlsOverride;
     
     [ObservableProperty] private bool _hasUpdate;
     [ObservableProperty] private string _currentVersion = string.Empty;
     [ObservableProperty] private string _latestVersion = string.Empty;
 
-    public string DisplayName => SuiteIdentity;
+    public string DisplayName => string.IsNullOrEmpty(Ref) ? SuiteIdentity : $"{Ref} ({SuiteIdentity})";
     
     public string ParsedSuiteId
     {
@@ -602,6 +631,10 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     {
         get
         {
+            // If we have a ref, use it as the display name
+            if (!string.IsNullOrEmpty(Ref))
+                return Ref;
+            
             // Try to get suite name from discovery service
             if (_discoveryService?.CurrentDiscovery?.TestSuites != null)
             {
@@ -650,14 +683,76 @@ public partial class SuiteReferenceViewModel : ViewModelBase
         _discoveryService = discoveryService;
     }
     
+    /// <summary>
+    /// Loads controls from a SuiteControls object.
+    /// </summary>
+    public void LoadControls(SuiteControls? controls)
+    {
+        if (controls is null)
+        {
+            HasControlsOverride = false;
+            Repeat = 1;
+            MaxParallel = 1;
+            ContinueOnFailure = false;
+            RetryOnError = 0;
+            return;
+        }
+        
+        HasControlsOverride = true;
+        Repeat = controls.Repeat;
+        MaxParallel = controls.MaxParallel;
+        ContinueOnFailure = controls.ContinueOnFailure;
+        RetryOnError = controls.RetryOnError;
+    }
+    
+    /// <summary>
+    /// Converts this ViewModel to a TestSuiteNode for serialization.
+    /// Always includes controls to preserve suite's settings in plan manifest.
+    /// </summary>
+    public TestSuiteNode ToSuiteNode()
+    {
+        var node = new TestSuiteNode
+        {
+            NodeId = SuiteIdentity,
+            Ref = Ref,
+            // Always include controls to preserve suite's default or overridden settings
+            Controls = new SuiteControls
+            {
+                Repeat = (int)Repeat,
+                MaxParallel = (int)MaxParallel,
+                ContinueOnFailure = ContinueOnFailure,
+                RetryOnError = (int)RetryOnError
+            }
+        };
+        
+        return node;
+    }
+    
     partial void OnSuiteIdentityChanged(string value)
     {
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Id));
+        OnPropertyChanged(nameof(DisplayName));
         OnPropertyChanged(nameof(CaseCount));
         OnPropertyChanged(nameof(ParsedSuiteId));
         OnPropertyChanged(nameof(ParsedVersion));
         UpdatePrivilege();
+    }
+    
+    partial void OnRefChanged(string value)
+    {
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(DisplayName));
+    }
+    
+    partial void OnRepeatChanged(double value) => UpdateHasControlsOverride();
+    partial void OnMaxParallelChanged(double value) => UpdateHasControlsOverride();
+    partial void OnContinueOnFailureChanged(bool value) => UpdateHasControlsOverride();
+    partial void OnRetryOnErrorChanged(double value) => UpdateHasControlsOverride();
+    
+    private void UpdateHasControlsOverride()
+    {
+        HasControlsOverride = Repeat != 1 || MaxParallel != 1 || ContinueOnFailure || RetryOnError != 0;
     }
 
     private void UpdatePrivilege()

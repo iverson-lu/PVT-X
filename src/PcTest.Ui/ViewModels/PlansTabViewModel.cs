@@ -156,7 +156,7 @@ public partial class PlansTabViewModel : ViewModelBase
                     Version = plan.Manifest.Version,
                     Description = plan.Manifest.Description,
                     Tags = plan.Manifest.Tags?.ToList() ?? new(),
-                    SuiteCount = plan.Manifest.Suites.Count,
+                    SuiteCount = plan.Manifest.TestSuites.Count,
                     FolderPath = plan.FolderPath,
                     ManifestPath = plan.ManifestPath,
                     HasUpdates = hasUpdates
@@ -173,9 +173,10 @@ public partial class PlansTabViewModel : ViewModelBase
     
     private bool CheckForPlanUpdates(DiscoveredTestPlan plan, DiscoveryResult discovery)
     {
-        foreach (var suiteRef in plan.Manifest.Suites)
+        foreach (var suiteNode in plan.Manifest.TestSuites)
         {
             // Parse suite id@version
+            var suiteRef = suiteNode.NodeId;
             var atIndex = suiteRef.IndexOf('@');
             if (atIndex <= 0) continue;
             

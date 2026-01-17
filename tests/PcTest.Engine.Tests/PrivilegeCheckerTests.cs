@@ -204,7 +204,7 @@ public class PrivilegeCheckerTests : IDisposable
             Id = planId,
             Name = "Empty Plan",
             Version = "1.0.0",
-            Suites = new List<string>()
+            TestSuites = new List<TestSuiteNode>()
         };
 
         File.WriteAllText(planPath, JsonDefaults.Serialize(plan), Encoding.UTF8);
@@ -240,7 +240,11 @@ public class PrivilegeCheckerTests : IDisposable
             Id = planId,
             Name = "All User Plan",
             Version = "1.0.0",
-            Suites = new List<string> { "S-User1@1.0.0", "S-User2@1.0.0" }
+            TestSuites = new List<TestSuiteNode> 
+            { 
+                new TestSuiteNode { NodeId = "S-User1@1.0.0", Ref = "S-User1" }, 
+                new TestSuiteNode { NodeId = "S-User2@1.0.0", Ref = "S-User2" } 
+            }
         };
 
         File.WriteAllText(planPath, JsonDefaults.Serialize(plan), Encoding.UTF8);
@@ -278,7 +282,12 @@ public class PrivilegeCheckerTests : IDisposable
             Id = planId,
             Name = "Mixed Plan",
             Version = "1.0.0",
-            Suites = new List<string> { "S-User@1.0.0", "S-AdminPref@1.0.0", "S-AdminReq@1.0.0" }
+            TestSuites = new List<TestSuiteNode> 
+            { 
+                new TestSuiteNode { NodeId = "S-User@1.0.0", Ref = "S-User" }, 
+                new TestSuiteNode { NodeId = "S-AdminPref@1.0.0", Ref = "S-AdminPref" }, 
+                new TestSuiteNode { NodeId = "S-AdminReq@1.0.0", Ref = "S-AdminReq" } 
+            }
         };
 
         File.WriteAllText(planPath, JsonDefaults.Serialize(plan), Encoding.UTF8);
@@ -413,7 +422,11 @@ public class PrivilegeCheckerTests : IDisposable
             Id = planId,
             Name = "Mixed Plan",
             Version = "1.0.0",
-            Suites = new List<string> { "S-User@1.0.0", "S-AdminPref@1.0.0" }
+            TestSuites = new List<TestSuiteNode> 
+            { 
+                new TestSuiteNode { NodeId = "S-User@1.0.0", Ref = "S-User" }, 
+                new TestSuiteNode { NodeId = "S-AdminPref@1.0.0", Ref = "S-AdminPref" } 
+            }
         };
 
         File.WriteAllText(planPath, JsonDefaults.Serialize(plan), Encoding.UTF8);

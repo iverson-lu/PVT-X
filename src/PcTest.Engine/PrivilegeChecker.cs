@@ -75,16 +75,16 @@ public static class PrivilegeChecker
     /// </summary>
     public static Privilege GetPlanPrivilege(TestPlanManifest plan, DiscoveryResult discovery)
     {
-        if (plan.Suites == null || plan.Suites.Count == 0)
+        if (plan.TestSuites == null || plan.TestSuites.Count == 0)
             return Privilege.User;
 
         var maxPrivilege = Privilege.User;
 
-        foreach (var suiteRef in plan.Suites)
+        foreach (var suiteNode in plan.TestSuites)
         {
             // Try to resolve the suite from discovery
             var suite = discovery.TestSuites.Values
-                .FirstOrDefault(s => s.Identity.Equals(suiteRef, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(s => s.Identity.Equals(suiteNode.NodeId, StringComparison.OrdinalIgnoreCase));
 
             if (suite != null)
             {

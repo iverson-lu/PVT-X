@@ -369,13 +369,24 @@ Example:
 | version | string | Yes | Plan version |
 | tags | string[] | No | Tags |
 | environment | object | No | Environment injection (env vars only) |
-| suites | string[] | Yes | List of Test Suite identities (`suiteId@version`) |
+| testSuites | TestSuiteNode[] | Yes | List of Test Suite nodes |
+
+#### TestSuiteNode Schema
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| nodeId | string | Yes | Suite identity in the form `suiteId@version` |
+| ref | string | No | Human-readable reference name for this node instance; allows distinguishing multiple instances of the same suite |
+| controls | object | No | Execution control overrides for this suite instance |
 
 Rules:
-- A Plan MUST only reference Test Suites.
-- suites entries MUST be suite identities in the form `suiteId@version`.
-- Engine MUST resolve each suites entry against discovered Test Suites under ResolvedTestSuiteRoot; if not found, validation MUST fail; if multiple matches are found, validation MUST fail with an error containing entityType=suite, id, version, and conflictPaths.
-- Order in suites defines execution order.
+- A Plan MUST only reference Test Suites via testSuites array.
+- testSuites[].nodeId MUST be suite identities in the form `suiteId@version`.
+- Engine MUST resolve each nodeId against discovered Test Suites under ResolvedTestSuiteRoot; if not found, validation MUST fail; if multiple matches are found, validation MUST fail with an error containing entityType=suite, id, version, and conflictPaths.
+- Order in testSuites defines execution order.
+- The same suite MAY appear multiple times in testSuites with different refs and/or controls.
+- testSuites[].ref is used to distinguish multiple instances of the same suite; if not provided, the suite name is used.
+- testSuites[].controls MAY override suite-level execution controls (repeat, maxParallel, continueOnFailure, retryOnError, timeoutPolicy); plan-level overrides take precedence over suite defaults.
 - A Plan MUST NOT define or override Test Case inputs, Suite.nodeInputs, or any per-node parameters.
 - A Plan MUST NOT embed Test Suites or Test Cases.
 - If environment is present in the Plan manifest, its env map participates in Effective Environment as defined in section 7.3; values MUST be strings and keys MUST be non-empty.
@@ -389,9 +400,26 @@ Example:
   "id": "SystemValidation",
   "name": "System Validation",
   "version": "1.2.0",
-  "suites": [
-    "ThermalSuite@1.0.0",
-    "StorageSuite@1.0.0"
+  "testSuites": [
+    {
+      "nodeId": "ThermalSuite@1.0.0",
+      "ref": "Thermal Test"
+    },
+    {
+      "nodeId": "StorageSuite@1.0.0",
+      "ref": "Storage Test",
+      "controls": {
+        "repeat": 3,
+        "continueOnFailure": true
+      }
+    },
+    {
+      "nodeId": "ThermalSuite@1.0.0",
+      "ref": "Thermal Retest",
+      "controls": {
+        "retryOnError": 2
+      }
+    }
   ]
 }
 ```

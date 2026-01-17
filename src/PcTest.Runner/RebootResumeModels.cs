@@ -206,6 +206,7 @@ public sealed class SuiteResumeContext
     public string? ParentNodeId { get; init; }
     public string? ParentPlanRunFolder { get; init; }
     public TestPlanManifest? PlanManifest { get; init; }
+    public SuiteControls? ControlOverrides { get; init; }
     public int CurrentIteration { get; init; }
 }
 

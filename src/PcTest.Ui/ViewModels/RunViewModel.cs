@@ -888,6 +888,7 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
     /// <summary>
     /// Display name only (without version).
     /// For test cases in suites, uses ReferenceName if available, otherwise falls back to TestName.
+    /// For suites in plans, uses ReferenceName if available, otherwise falls back to SuiteName.
     /// </summary>
     public string DisplayName
     {
@@ -896,7 +897,7 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
             return NodeType switch
             {
                 RunType.TestCase => ReferenceName ?? TestName ?? TestId,
-                RunType.TestSuite => SuiteName ?? TestId,
+                RunType.TestSuite => ReferenceName ?? SuiteName ?? TestId,
                 RunType.TestPlan => PlanName ?? TestId,
                 _ => TestId
             };
@@ -914,8 +915,8 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
         {
             var name = NodeType switch
             {
-                RunType.TestCase => TestName ?? TestId,
-                RunType.TestSuite => SuiteName ?? TestId,
+                RunType.TestCase => ReferenceName ?? TestName ?? TestId,
+                RunType.TestSuite => ReferenceName ?? SuiteName ?? TestId,
                 RunType.TestPlan => PlanName ?? TestId,
                 _ => TestId
             };

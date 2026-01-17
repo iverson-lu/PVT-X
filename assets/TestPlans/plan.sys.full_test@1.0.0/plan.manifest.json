@@ -9,8 +9,14 @@
     "regression",
     "full"
   ],
-  "suites": [
-    "suite.sys.full_test@1.0.0",
-    "suite.sw.os.sanity_check@1.0.1"
+  "testSuites": [
+    {
+      "nodeId": "suite.sys.full_test@1.0.0",
+      "ref": "Full Test"
+    },
+    {
+      "nodeId": "suite.sw.os.sanity_check@1.0.1",
+      "ref": "Sanity Check"
+    }
   ]
 }

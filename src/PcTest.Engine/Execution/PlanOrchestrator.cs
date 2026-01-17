@@ -127,7 +127,7 @@ public sealed class PlanOrchestrator
         var isResuming = resumeSession is not null;
         var startNodeIndex = resumeSession?.CurrentNodeIndex ?? 0;
 
-        if (isResuming && (startNodeIndex < 0 || startNodeIndex >= plan.Manifest.Suites.Count))
+        if (isResuming && (startNodeIndex < 0 || startNodeIndex >= plan.Manifest.TestSuites.Count))
         {
             throw new InvalidOperationException($"Invalid resume node index {startNodeIndex} for plan '{plan.Manifest.Id}'.");
         }
@@ -181,7 +181,7 @@ public sealed class PlanOrchestrator
                         ["planId"] = plan.Manifest.Id,
                         ["planVersion"] = plan.Manifest.Version,
                         ["runId"] = groupRunId,
-                        ["suiteCount"] = plan.Manifest.Suites.Count,
+                        ["suiteCount"] = plan.Manifest.TestSuites.Count,
                         ["currentNodeIndex"] = resumeSession?.CurrentNodeIndex
                     }
                 });
@@ -200,35 +200,37 @@ public sealed class PlanOrchestrator
                         ["planId"] = plan.Manifest.Id,
                         ["planVersion"] = plan.Manifest.Version,
                         ["runId"] = groupRunId,
-                        ["suiteCount"] = plan.Manifest.Suites.Count
+                        ["suiteCount"] = plan.Manifest.TestSuites.Count
                     }
                 });
             }
 
             // Report planned nodes - plan level shows suites as nodes
             var plannedNodes = new List<PlannedNode>();
-            foreach (var suiteIdentity in plan.Manifest.Suites)
+            foreach (var suiteNode in plan.Manifest.TestSuites)
             {
-                var parseResult = IdentityParser.Parse(suiteIdentity);
+                var parseResult = IdentityParser.Parse(suiteNode.NodeId);
                 plannedNodes.Add(new PlannedNode
                 {
-                    NodeId = suiteIdentity,
-                    TestId = parseResult.Success ? parseResult.Id : suiteIdentity,
+                    NodeId = suiteNode.NodeId,
+                    TestId = parseResult.Success ? parseResult.Id : suiteNode.NodeId,
                     TestVersion = parseResult.Success ? parseResult.Version : "unknown",
-                    NodeType = RunType.TestSuite
+                    NodeType = RunType.TestSuite,
+                    ReferenceName = string.IsNullOrWhiteSpace(suiteNode.Ref) ? null : suiteNode.Ref
                 });
             }
             _reporter.OnRunPlanned(groupRunId, RunType.TestPlan, plannedNodes);
 
             // Execute each Suite in order per spec section 6.4
-            for (var suiteIndex = 0; suiteIndex < plan.Manifest.Suites.Count; suiteIndex++)
+            for (var suiteIndex = 0; suiteIndex < plan.Manifest.TestSuites.Count; suiteIndex++)
             {
                 if (suiteIndex < startNodeIndex)
                 {
                     continue;
                 }
 
-                var suiteIdentity = plan.Manifest.Suites[suiteIndex];
+                var suiteNode = plan.Manifest.TestSuites[suiteIndex];
+                var suiteIdentity = suiteNode.NodeId;
                 if (_cancellationToken.IsCancellationRequested)
                     break;
 
@@ -269,7 +271,7 @@ public sealed class PlanOrchestrator
                     EnvironmentOverrides = runRequest.EnvironmentOverrides
                 };
 
-                // Execute Suite
+                // Execute Suite with optional control overrides from the plan node
                 var suiteOrchestrator = new SuiteOrchestrator(_discovery, _runsRoot, _assetsRoot, _reporter, _cancellationToken);
                 var suiteRunId = isResuming && suiteIndex == startNodeIndex && resumeSession?.CurrentChildRunId is not null
                     ? resumeSession.CurrentChildRunId
@@ -293,7 +295,8 @@ public sealed class PlanOrchestrator
                         suiteIdentity,
                         groupRunFolder,
                         plan.Manifest,
-                        suiteRunId);  // Pass plan manifest for env resolution
+                        suiteRunId,
+                        suiteNode.Controls);  // Pass plan-level control overrides
                 }
 
                 // Append to children.jsonl
@@ -391,7 +394,7 @@ public sealed class PlanOrchestrator
                     ["runId"] = groupRunId,
                     ["status"] = aggregateStatus.ToString(),
                     ["duration"] = (endTime - startTime).TotalSeconds,
-                    ["totalSuites"] = plan.Manifest.Suites.Count,
+                    ["totalSuites"] = plan.Manifest.TestSuites.Count,
                     ["passedSuites"] = statusCounts.Passed,
                     ["failedSuites"] = statusCounts.Failed
                 }

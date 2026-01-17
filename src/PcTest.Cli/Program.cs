@@ -154,7 +154,7 @@ public static class Program
             {
                 Console.WriteLine($"  - {tp.Identity} ({tp.Manifest.Name})");
                 Console.WriteLine($"    Path: {tp.FolderPath}");
-                Console.WriteLine($"    Suites: {string.Join(", ", tp.Manifest.Suites)}");
+                Console.WriteLine($"    Suites: {string.Join(", ", tp.Manifest.TestSuites.Select(n => n.NodeId))}");
             }
         }
         catch (ValidationException ex)

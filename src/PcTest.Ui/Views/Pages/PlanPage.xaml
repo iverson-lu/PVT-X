@@ -1897,7 +1897,8 @@
                                     </ui:CardExpander.Header>
                                     <Grid IsEnabled="{Binding IsEditing}">
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="240"/>
+                                            <RowDefinition Height="200"/>
+                                            <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         
                                         <!-- Execution Flow List -->
@@ -2037,6 +2038,105 @@
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
+                                        </Border>
+                                        
+                                        <!-- Suite Node Settings Panel -->
+                                        <Border Grid.Row="1"
+                                               Background="{DynamicResource ControlBackgroundSecondaryBrush}"
+                                               BorderBrush="{DynamicResource BorderSubtleBrush}"
+                                               BorderThickness="1"
+                                               CornerRadius="8"
+                                               Margin="0,12,0,0"
+                                               Padding="16,12"
+                                               Visibility="{Binding SelectedSuiteReference, Converter={StaticResource NullToVisibilityConverter}}">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                
+                                                <!-- Header -->
+                                                <TextBlock Grid.Row="0" 
+                                                          Text="Suite Node Settings" 
+                                                          FontSize="{StaticResource FontSizeS}"
+                                                          FontWeight="{StaticResource FontWeightSemiBold}"
+                                                          Foreground="{DynamicResource TextSecondaryBrush}"
+                                                          Margin="0,0,0,12"/>
+                                                
+                                                <!-- Reference Name -->
+                                                <StackPanel Grid.Row="1" Margin="0,0,0,12">
+                                                    <TextBlock Text="Reference Name" 
+                                                              FontSize="{StaticResource FontSizeXS}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                                              Margin="0,0,0,4"/>
+                                                    <ui:TextBox Text="{Binding SelectedSuiteReference.Ref, UpdateSourceTrigger=PropertyChanged}"
+                                                               PlaceholderText="Display name for this suite instance"/>
+                                                </StackPanel>
+                                                
+                                                <!-- Controls Override -->
+                                                <StackPanel Grid.Row="2">
+                                                    <TextBlock Text="Execution Controls Override" 
+                                                              FontSize="{StaticResource FontSizeXS}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}"
+                                                              Margin="0,0,0,8"/>
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        
+                                                        <!-- Repeat -->
+                                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                            <TextBlock Text="Repeat" 
+                                                                      FontSize="{StaticResource FontSizeXS}"
+                                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                      Margin="0,0,0,4"/>
+                                                            <ui:NumberBox Value="{Binding SelectedSuiteReference.Repeat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Minimum="1"
+                                                                         Maximum="100"
+                                                                         SpinButtonPlacementMode="Compact"/>
+                                                        </StackPanel>
+                                                        
+                                                        <!-- Retry on Error -->
+                                                        <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                                            <TextBlock Text="Retry on Error" 
+                                                                      FontSize="{StaticResource FontSizeXS}"
+                                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                      Margin="0,0,0,4"/>
+                                                            <ui:NumberBox Value="{Binding SelectedSuiteReference.RetryOnError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Minimum="0"
+                                                                         Maximum="10"
+                                                                         SpinButtonPlacementMode="Compact"/>
+                                                        </StackPanel>
+                                                        
+                                                        <!-- Max Parallel -->
+                                                        <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                                                            <TextBlock Text="Max Parallel" 
+                                                                      FontSize="{StaticResource FontSizeXS}"
+                                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                      Margin="0,0,0,4"/>
+                                                            <ui:NumberBox Value="{Binding SelectedSuiteReference.MaxParallel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                         Minimum="1"
+                                                                         Maximum="32"
+                                                                         SpinButtonPlacementMode="Compact"/>
+                                                        </StackPanel>
+                                                        
+                                                        <!-- Continue on Failure -->
+                                                        <StackPanel Grid.Column="3">
+                                                            <TextBlock Text="Continue on Failure" 
+                                                                      FontSize="{StaticResource FontSizeXS}"
+                                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                      Margin="0,0,0,4"/>
+                                                            <ui:ToggleSwitch IsChecked="{Binding SelectedSuiteReference.ContinueOnFailure, Mode=TwoWay}"
+                                                                            OnContent="Yes"
+                                                                            OffContent="No"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
                                         </Border>
                                     </Grid>
                                 </ui:CardExpander>

@@ -47,7 +47,8 @@ public sealed class SuiteOrchestrator
         string? parentNodeId = null,
         string? parentPlanRunFolder = null,
         TestPlanManifest? planManifest = null,
-        string? suiteRunId = null)
+        string? suiteRunId = null,
+        SuiteControls? controlOverrides = null)
     {
         return await ExecuteInternalAsync(
             suite,
@@ -59,7 +60,8 @@ public sealed class SuiteOrchestrator
             parentPlanRunFolder,
             planManifest,
             suiteRunId,
-            null);
+            null,
+            controlOverrides);
     }
 
     public async Task<GroupResult> ResumeAsync(
@@ -81,7 +83,8 @@ public sealed class SuiteOrchestrator
             session.SuiteContext.ParentPlanRunFolder,
             session.SuiteContext.PlanManifest,
             session.RunId,
-            session);
+            session,
+            session.SuiteContext.ControlOverrides);
     }
 
     private async Task<GroupResult> ExecuteInternalAsync(
@@ -94,7 +97,8 @@ public sealed class SuiteOrchestrator
         string? parentPlanRunFolder,
         TestPlanManifest? planManifest,
         string? suiteRunId,
-        RebootResumeSession? resumeSession)
+        RebootResumeSession? resumeSession,
+        SuiteControls? controlOverrides = null)
     {
         var startTime = DateTime.Now;
         var groupRunId = suiteRunId ?? GroupRunFolderManager.GenerateGroupRunId("S");
@@ -177,7 +181,9 @@ public sealed class SuiteOrchestrator
                 await folderManager.WriteManifestAsync(groupRunFolder, manifestSnapshot);
             }
 
-            var controls = suite.Manifest.Controls ?? new SuiteControls();
+            // Merge controls: plan-level overrides take precedence over suite defaults
+            var baseControls = suite.Manifest.Controls ?? new SuiteControls();
+            var controls = MergeControls(baseControls, controlOverrides);
             if (!isResuming || !File.Exists(Path.Combine(groupRunFolder, "controls.json")))
             {
                 await folderManager.WriteControlsAsync(groupRunFolder, controls);
@@ -661,6 +667,7 @@ public sealed class SuiteOrchestrator
                                     parentNodeId,
                                     parentPlanRunFolder,
                                     planManifest,
+                                    controlOverrides,
                                     iteration,
                                     nodeIndex,
                                     node,
@@ -953,6 +960,7 @@ public sealed class SuiteOrchestrator
         string? parentNodeId,
         string? parentPlanRunFolder,
         TestPlanManifest? planManifest,
+        SuiteControls? controlOverrides,
         int iteration,
         int nodeIndex,
         TestCaseNode node,
@@ -986,6 +994,7 @@ public sealed class SuiteOrchestrator
                 ParentNodeId = parentNodeId,
                 ParentPlanRunFolder = parentPlanRunFolder,
                 PlanManifest = planManifest,
+                ControlOverrides = controlOverrides,
                 CurrentIteration = iteration
             },
             Paths = BuildResumePaths()
@@ -1159,6 +1168,30 @@ public sealed class SuiteOrchestrator
             TestPlansRoot = _discovery.ResolvedTestPlanRoot,
             AssetsRoot = _assetsRoot,
             RunsRoot = _runsRoot
+        };
+    }
+
+    /// <summary>
+    /// Merges suite controls with optional plan-level overrides.
+    /// Plan-level overrides take precedence over suite defaults.
+    /// Only non-default values in the override are applied.
+    /// </summary>
+    private static SuiteControls MergeControls(SuiteControls baseControls, SuiteControls? overrides)
+    {
+        if (overrides is null)
+        {
+            return baseControls;
+        }
+
+        return new SuiteControls
+        {
+            Repeat = overrides.Repeat != 1 ? overrides.Repeat : baseControls.Repeat,
+            MaxParallel = overrides.MaxParallel != 1 ? overrides.MaxParallel : baseControls.MaxParallel,
+            ContinueOnFailure = overrides.ContinueOnFailure || baseControls.ContinueOnFailure,
+            RetryOnError = overrides.RetryOnError != 0 ? overrides.RetryOnError : baseControls.RetryOnError,
+            TimeoutPolicy = !string.IsNullOrEmpty(overrides.TimeoutPolicy) && overrides.TimeoutPolicy != "AbortOnTimeout" 
+                ? overrides.TimeoutPolicy 
+                : baseControls.TimeoutPolicy
         };
     }
 

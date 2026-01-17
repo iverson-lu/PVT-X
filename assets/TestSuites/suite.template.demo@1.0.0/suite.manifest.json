@@ -25,14 +25,14 @@
       "nodeId": "case.template.demo.core.all_types@1.0.0",
       "ref": "Template Case",
       "inputs": {
-        "E_Mode": "pass",
-        "S_Text": "hello",
-        "N_Int": "42",
-        "B_Flag": true,
-        "N_Double": "3.14",
-        "P_Path": "data/test-data.txt",
-        "ItemsJson": "[1, 2, 3]",
-        "ConfigJson": "{\u0022timeout\u0022: 30, \u0022retry\u0022: true}"
+        "Mode": "pass",
+        "Message": "hello",
+        "Count": "42",
+        "Enabled": true,
+        "Threshold": "3.14",
+        "DataPath": "data/test-data.txt",
+        "Items": "[1, 2, 3]",
+        "Config": "{\u0022timeout\u0022: 30, \u0022retry\u0022: true}"
       }
     },
     {

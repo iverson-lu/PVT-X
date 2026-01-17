@@ -140,22 +140,22 @@ public sealed class PlanRepository : IPlanRepository
             result.Errors.Add("Plan version is required");
         }
         
-        if (manifest.Suites.Count == 0)
+        if (manifest.TestSuites.Count == 0)
         {
             result.Warnings.Add("Plan has no suites");
         }
         
         // Validate suite references
-        foreach (var suiteRef in manifest.Suites)
+        foreach (var suiteNode in manifest.TestSuites)
         {
-            if (string.IsNullOrWhiteSpace(suiteRef))
+            if (string.IsNullOrWhiteSpace(suiteNode.NodeId))
             {
                 result.IsValid = false;
                 result.Errors.Add("Empty suite reference found");
             }
-            else if (!suiteRef.Contains('@'))
+            else if (!suiteNode.NodeId.Contains('@'))
             {
-                result.Warnings.Add($"Suite reference '{suiteRef}' should include version (e.g., '{suiteRef}@1.0.0')");
+                result.Warnings.Add($"Suite reference '{suiteNode.NodeId}' should include version (e.g., '{suiteNode.NodeId}@1.0.0')");
             }
         }
         

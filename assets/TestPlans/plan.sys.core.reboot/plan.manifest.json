@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "plan.sys.core.reboot",
+  "name": "Reboot Test",
+  "description": "Reboot test plan",
+  "version": "1.0.0",
+  "testSuites": [
+    {
+      "nodeId": "suite.sw.os.network.ping_test@1.0.0",
+      "ref": "Network Test",
+      "controls": {
+        "repeat": 2,
+        "maxParallel": 1,
+        "continueOnFailure": false,
+        "retryOnError": 0,
+        "timeoutPolicy": "AbortOnTimeout"
+      }
+    },
+    {
+      "nodeId": "suite.system.core.reboot_test@1.0.0",
+      "ref": "Reboot Test"
+    },
+    {
+      "nodeId": "suite.sw.os.sanity_check@1.0.1",
+      "ref": "Sanity Check"
+    }
+  ]
+}

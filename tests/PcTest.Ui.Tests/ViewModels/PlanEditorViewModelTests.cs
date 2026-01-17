@@ -248,4 +248,172 @@ public class PlanEditorViewModelTests
         // Act & Assert
         suiteRef.CaseCount.Should().Be(0);
     }
+
+    [Fact]
+    public void SuiteReferenceViewModel_ToSuiteNode_ShouldAlwaysIncludeControls()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Ref = "Test Suite"
+        };
+
+        // Act
+        var node = suiteRef.ToSuiteNode();
+
+        // Assert
+        node.NodeId.Should().Be("suite.test@1.0.0");
+        node.Ref.Should().Be("Test Suite");
+        node.Controls.Should().NotBeNull();
+        node.Controls!.Repeat.Should().Be(1);
+        node.Controls.MaxParallel.Should().Be(1);
+        node.Controls.ContinueOnFailure.Should().BeFalse();
+        node.Controls.RetryOnError.Should().Be(0);
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_ToSuiteNode_ShouldIncludeControls_WhenRepeatIsOverridden()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Ref = "Test Suite",
+            Repeat = 3.0
+        };
+
+        // Act
+        var node = suiteRef.ToSuiteNode();
+
+        // Assert
+        node.Controls.Should().NotBeNull();
+        node.Controls!.Repeat.Should().Be(3);
+        node.Controls.MaxParallel.Should().Be(1);
+        node.Controls.ContinueOnFailure.Should().BeFalse();
+        node.Controls.RetryOnError.Should().Be(0);
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_ToSuiteNode_ShouldIncludeControls_WhenMaxParallelIsOverridden()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Ref = "Test Suite",
+            MaxParallel = 4.0
+        };
+
+        // Act
+        var node = suiteRef.ToSuiteNode();
+
+        // Assert
+        node.Controls.Should().NotBeNull();
+        node.Controls!.MaxParallel.Should().Be(4);
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_ToSuiteNode_ShouldIncludeControls_WhenContinueOnFailureIsTrue()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Ref = "Test Suite",
+            ContinueOnFailure = true
+        };
+
+        // Act
+        var node = suiteRef.ToSuiteNode();
+
+        // Assert
+        node.Controls.Should().NotBeNull();
+        node.Controls!.ContinueOnFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_ToSuiteNode_ShouldIncludeControls_WhenRetryOnErrorIsSet()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Ref = "Test Suite",
+            RetryOnError = 2.0
+        };
+
+        // Act
+        var node = suiteRef.ToSuiteNode();
+
+        // Assert
+        node.Controls.Should().NotBeNull();
+        node.Controls!.RetryOnError.Should().Be(2);
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_LoadControls_ShouldSetDefaultValues_WhenControlsIsNull()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Repeat = 5.0,
+            MaxParallel = 3.0
+        };
+
+        // Act
+        suiteRef.LoadControls(null);
+
+        // Assert
+        suiteRef.Repeat.Should().Be(1);
+        suiteRef.MaxParallel.Should().Be(1);
+        suiteRef.ContinueOnFailure.Should().BeFalse();
+        suiteRef.RetryOnError.Should().Be(0);
+        suiteRef.HasControlsOverride.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_LoadControls_ShouldSetValues_WhenControlsIsProvided()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0"
+        };
+        var controls = new SuiteControls
+        {
+            Repeat = 5,
+            MaxParallel = 3,
+            ContinueOnFailure = true,
+            RetryOnError = 2
+        };
+
+        // Act
+        suiteRef.LoadControls(controls);
+
+        // Assert
+        suiteRef.Repeat.Should().Be(5);
+        suiteRef.MaxParallel.Should().Be(3);
+        suiteRef.ContinueOnFailure.Should().BeTrue();
+        suiteRef.RetryOnError.Should().Be(2);
+        suiteRef.HasControlsOverride.Should().BeTrue();
+    }
+
+    [Fact]
+    public void SuiteReferenceViewModel_HasControlsOverride_ShouldUpdate_WhenRepeatChanges()
+    {
+        // Arrange
+        var suiteRef = new SuiteReferenceViewModel(null)
+        {
+            SuiteIdentity = "suite.test@1.0.0"
+        };
+        suiteRef.HasControlsOverride.Should().BeFalse();
+
+        // Act
+        suiteRef.Repeat = 2.0;
+
+        // Assert
+        suiteRef.HasControlsOverride.Should().BeTrue();
+    }
 }
