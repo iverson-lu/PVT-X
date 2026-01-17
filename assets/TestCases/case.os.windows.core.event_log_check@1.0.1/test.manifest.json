@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.os.windows.core.event_log_check",
+  "name": "Event Viewer Level Check",
+  "description": "Checks the most recent N events in Event Viewer to ensure none have a specified severity level.",
+  "version": "1.0.1",
+  "category": "System",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "EventCount",
+      "type": "int",
+      "required": false,
+      "default": 100,
+      "min": 1,
+      "max": 10000,
+      "help": "Number of recent events to check"
+    },
+    {
+      "name": "ProhibitedLevel",
+      "type": "enum",
+      "required": false,
+      "default": "Error",
+      "enumValues": ["Critical", "Error", "Warning", "Information", "Verbose"],
+      "help": "Event level to check for"
+    },
+    {
+      "name": "LogName",
+      "type": "string",
+      "required": false,
+      "default": "System",
+      "help": "Event log name to check (System, Application, Security, etc.)"
+    }
+  ],
+  "tags": ["eventviewer", "system", "logs", "events"]
+}
