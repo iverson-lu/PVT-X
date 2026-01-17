@@ -154,7 +154,7 @@ public partial class SuitesTabViewModel : ViewModelBase
                     Description = suite.Manifest.Description,
                     Tags = suite.Manifest.Tags?.ToList() ?? new(),
                     NodeCount = suite.Manifest.TestCases.Count,
-                    Privilege = PrivilegeIndicatorHelper.GetSuitePrivilege(suite.Manifest, discovery),
+                    Privilege = PcTest.Engine.PrivilegeChecker.GetSuitePrivilege(suite.Manifest, discovery),
                     FolderPath = suite.FolderPath,
                     ManifestPath = suite.ManifestPath,
                     HasUpdates = hasUpdates

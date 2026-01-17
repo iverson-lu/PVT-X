@@ -267,7 +267,7 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         
         // Strip _1, _2, etc. suffix from nodeId to get the actual test case identity
         // e.g., "hw.bios.version_check@1.0.0_1" -> "hw.bios.version_check@1.0.0"
-        var testCaseIdentity = StripNodeIdSuffix(nodeVm.NodeId);
+        var testCaseIdentity = PcTest.Engine.NodeIdHelper.StripInstanceSuffix(nodeVm.NodeId);
         
         // Find the test case by the stripped identity (id@version)
         var testCase = discovery.TestCases.Values.FirstOrDefault(tc => 
@@ -368,15 +368,6 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         return nodeId;
     }
 
-    /// <summary>
-    /// Strips the _1, _2, etc. suffix from a nodeId to get the base test case identity.
-    /// e.g., "hw.bios.version_check@1.0.0_1" -> "hw.bios.version_check@1.0.0"
-    /// </summary>
-    private static string StripNodeIdSuffix(string nodeId)
-    {
-        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
-        return match.Success ? match.Groups[1].Value : nodeId;
-    }
 
     [RelayCommand]
     private void RemoveNode()

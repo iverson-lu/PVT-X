@@ -232,7 +232,7 @@ public sealed class PlanOrchestrator
                 var suiteNode = plan.Manifest.TestSuites[suiteIndex];
                 var suiteNodeId = suiteNode.NodeId;
                 // Strip _1, _2, etc. suffix to get the actual suite identity for discovery lookup
-                var suiteIdentity = StripNodeIdSuffix(suiteNodeId);
+                var suiteIdentity = NodeIdHelper.StripInstanceSuffix(suiteNodeId);
                 if (_cancellationToken.IsCancellationRequested)
                     break;
 
@@ -454,16 +454,6 @@ public sealed class PlanOrchestrator
 
             return result;
         }
-    }
-
-    /// <summary>
-    /// Strips the _1, _2, etc. suffix from a nodeId to get the base identity.
-    /// e.g., "suite.test@1.0.0_1" -> "suite.test@1.0.0"
-    /// </summary>
-    private static string StripNodeIdSuffix(string nodeId)
-    {
-        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
-        return match.Success ? match.Groups[1].Value : nodeId;
     }
 
     private static GroupResult CreateSuiteErrorResult(

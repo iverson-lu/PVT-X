@@ -60,7 +60,7 @@ public static class PrivilegeChecker
             
             if (!string.IsNullOrWhiteSpace(node.NodeId))
             {
-                var identity = StripNodeIdSuffix(node.NodeId);
+                var identity = NodeIdHelper.StripInstanceSuffix(node.NodeId);
                 testCase = discovery.TestCases.Values
                     .FirstOrDefault(tc => tc.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase));
             }
@@ -96,7 +96,7 @@ public static class PrivilegeChecker
         foreach (var suiteNode in plan.TestSuites)
         {
             // Strip _1, _2, etc. suffix from nodeId to get the actual suite identity
-            var suiteIdentity = StripNodeIdSuffix(suiteNode.NodeId);
+            var suiteIdentity = NodeIdHelper.StripInstanceSuffix(suiteNode.NodeId);
             
             // Try to resolve the suite from discovery
             var suite = discovery.TestSuites.Values
@@ -111,16 +111,6 @@ public static class PrivilegeChecker
         }
 
         return maxPrivilege;
-    }
-
-    /// <summary>
-    /// Strips the _1, _2, etc. suffix from a nodeId to get the base identity.
-    /// e.g., "suite.test@1.0.0_1" -> "suite.test@1.0.0"
-    /// </summary>
-    private static string StripNodeIdSuffix(string nodeId)
-    {
-        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
-        return match.Success ? match.Groups[1].Value : nodeId;
     }
 
     /// <summary>

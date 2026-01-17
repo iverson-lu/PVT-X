@@ -102,7 +102,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         foreach (var suiteNode in m.TestSuites)
         {
             // Strip _1, _2, etc. suffix from nodeId to get the actual suite identity
-            var suiteIdentity = StripNodeIdSuffix(suiteNode.NodeId);
+            var suiteIdentity = PcTest.Engine.NodeIdHelper.StripInstanceSuffix(suiteNode.NodeId);
             
             var refVm = new SuiteReferenceViewModel(_discoveryService) 
             { 
@@ -210,7 +210,7 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 Name = suite.Manifest.Name,
                 Version = suite.Manifest.Version,
                 NodeCount = suite.Manifest.TestCases?.Count ?? 0,
-                Privilege = PrivilegeIndicatorHelper.GetSuitePrivilege(suite.Manifest, discovery)
+                Privilege = PcTest.Engine.PrivilegeChecker.GetSuitePrivilege(suite.Manifest, discovery)
             });
         }
     }
@@ -606,15 +606,6 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         return nodeId;
     }
 
-    /// <summary>
-    /// Strips the _1, _2, etc. suffix from a nodeId to get the base suite identity.
-    /// e.g., "suite.test@1.0.0_1" -> "suite.test@1.0.0"
-    /// </summary>
-    private static string StripNodeIdSuffix(string nodeId)
-    {
-        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
-        return match.Success ? match.Groups[1].Value : nodeId;
-    }
 }
 
 /// <summary>
@@ -803,7 +794,7 @@ public partial class SuiteReferenceViewModel : ViewModelBase
             .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == SuiteIdentity);
         Privilege = suite is null
             ? PcTest.Contracts.Privilege.User
-            : PrivilegeIndicatorHelper.GetSuitePrivilege(suite.Manifest, _discoveryService.CurrentDiscovery);
+            : PcTest.Engine.PrivilegeChecker.GetSuitePrivilege(suite.Manifest, _discoveryService.CurrentDiscovery);
     }
 
     partial void OnPrivilegeChanged(PcTest.Contracts.Privilege value)
