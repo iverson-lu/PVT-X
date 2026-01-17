@@ -1,15 +1,15 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "plan.sys.core.regression",
-  "name": "Regression Test Plan",
-  "description": "Regression test plan",
+  "id": "plan.sys.core.reboot",
+  "name": "Reboot Test",
+  "description": "Reboot test plan",
   "version": "1.0.0",
   "testSuites": [
     {
       "nodeId": "suite.sw.os.sanity_check@1.0.1",
       "ref": "Sanity Check",
       "controls": {
-        "repeat": 2,
+        "repeat": 1,
         "maxParallel": 1,
         "continueOnFailure": false,
         "retryOnError": 0,
@@ -17,12 +17,12 @@
       }
     },
     {
-      "nodeId": "suite.template.demo@1.0.0",
-      "ref": "Template Suite",
+      "nodeId": "suite.system.core.reboot_test@1.0.0",
+      "ref": "Reboot Test",
       "controls": {
-        "repeat": 2,
+        "repeat": 3,
         "maxParallel": 1,
-        "continueOnFailure": false,
+        "continueOnFailure": true,
         "retryOnError": 0,
         "timeoutPolicy": "AbortOnTimeout"
       }
