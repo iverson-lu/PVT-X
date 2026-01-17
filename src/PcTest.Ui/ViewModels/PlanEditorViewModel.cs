@@ -101,12 +101,14 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         SuiteReferences.Clear();
         foreach (var suiteNode in m.TestSuites)
         {
-            // Strip _1, _2, etc. suffix from nodeId to get the actual suite identity
+            // Keep full nodeId (with _1, _2 suffix if present) for display consistency
+            // Use stripped identity for discovery lookup
             var suiteIdentity = PcTest.Engine.NodeIdHelper.StripInstanceSuffix(suiteNode.NodeId);
             
             var refVm = new SuiteReferenceViewModel(_discoveryService) 
             { 
-                SuiteIdentity = suiteIdentity,
+                NodeId = suiteNode.NodeId,  // Full nodeId with suffix
+                SuiteIdentity = suiteIdentity,  // Base identity for discovery
                 Ref = suiteNode.Ref
             };
             refVm.LoadControls(suiteNode.Controls);
@@ -237,9 +239,13 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 .FirstOrDefault(s => $"{s.Manifest.Id}@{s.Manifest.Version}" == identity);
             var suiteName = suite?.Manifest.Name ?? identity;
             
+            // Generate unique nodeId if this suite already exists in the list
+            var nodeId = GenerateUniqueNodeId(identity);
+            
             var refVm = new SuiteReferenceViewModel(_discoveryService)
             {
-                SuiteIdentity = identity,
+                NodeId = nodeId,  // Full nodeId with suffix if needed
+                SuiteIdentity = identity,  // Base identity for discovery
                 Ref = suiteName
             };
             
@@ -568,15 +574,8 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 : TagsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
         };
 
-        // Generate unique node IDs for suite references
-        var suiteNodes = new List<TestSuiteNode>();
-        foreach (var sr in SuiteReferences)
-        {
-            var node = sr.ToSuiteNode();
-            // Generate unique node ID if there are duplicates
-            node.NodeId = GenerateUniqueNodeId(node.NodeId, suiteNodes);
-            suiteNodes.Add(node);
-        }
+        // Suite references already have unique node IDs assigned
+        var suiteNodes = SuiteReferences.Select(sr => sr.ToSuiteNode()).ToList();
         manifest.TestSuites = suiteNodes;
 
         // Add environment variables
@@ -592,12 +591,12 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         return manifest;
     }
 
-    private string GenerateUniqueNodeId(string baseId, List<TestSuiteNode> existingNodes)
+    private string GenerateUniqueNodeId(string baseId)
     {
         var nodeId = baseId;
         var counter = 1;
         
-        while (existingNodes.Any(n => n.NodeId.Equals(nodeId, StringComparison.OrdinalIgnoreCase)))
+        while (SuiteReferences.Any(sr => sr.NodeId.Equals(nodeId, StringComparison.OrdinalIgnoreCase)))
         {
             nodeId = $"{baseId}_{counter}";
             counter++;
@@ -616,7 +615,8 @@ public partial class SuiteReferenceViewModel : ViewModelBase
 {
     private readonly IDiscoveryService? _discoveryService;
     
-    [ObservableProperty] private string _suiteIdentity = string.Empty;
+    [ObservableProperty] private string _nodeId = string.Empty;  // Full nodeId with suffix (e.g., suite.test@1.0.0_1)
+    [ObservableProperty] private string _suiteIdentity = string.Empty;  // Base identity for discovery (e.g., suite.test@1.0.0)
     [ObservableProperty] private string _ref = string.Empty;
     [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
     
@@ -631,13 +631,13 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     [ObservableProperty] private string _currentVersion = string.Empty;
     [ObservableProperty] private string _latestVersion = string.Empty;
 
-    public string DisplayName => string.IsNullOrEmpty(Ref) ? SuiteIdentity : $"{Ref} ({SuiteIdentity})";
+    public string DisplayName => string.IsNullOrEmpty(Ref) ? NodeId : $"{Ref} ({NodeId})";
     
     public string ParsedSuiteId
     {
         get
         {
-            // Parse suite.xxx@1.0.0 -> suite.xxx
+            // Parse suite.xxx@1.0.0 -> suite.xxx (use SuiteIdentity which has no suffix)
             var atIndex = SuiteIdentity.IndexOf('@');
             return atIndex > 0 ? SuiteIdentity.Substring(0, atIndex) : SuiteIdentity;
         }
@@ -647,7 +647,7 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     {
         get
         {
-            // Parse suite.xxx@1.0.0 -> 1.0.0
+            // Parse suite.xxx@1.0.0 -> 1.0.0 (use SuiteIdentity which has no suffix)
             var atIndex = SuiteIdentity.IndexOf('@');
             return atIndex > 0 && atIndex < SuiteIdentity.Length - 1 ? SuiteIdentity.Substring(atIndex + 1) : "";
         }
@@ -680,8 +680,8 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     {
         get
         {
-            // Return full identity (id@version) to show version information
-            return SuiteIdentity;
+            // Return full nodeId (with suffix) for display
+            return NodeId;
         }
     }
     
@@ -740,7 +740,7 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     {
         var node = new TestSuiteNode
         {
-            NodeId = SuiteIdentity,
+            NodeId = NodeId,  // Use full nodeId with suffix
             Ref = Ref,
             // Always include controls to preserve suite's default or overridden settings
             Controls = new SuiteControls
@@ -755,11 +755,15 @@ public partial class SuiteReferenceViewModel : ViewModelBase
         return node;
     }
     
+    partial void OnNodeIdChanged(string value)
+    {
+        OnPropertyChanged(nameof(Id));
+        OnPropertyChanged(nameof(DisplayName));
+    }
+    
     partial void OnSuiteIdentityChanged(string value)
     {
         OnPropertyChanged(nameof(Name));
-        OnPropertyChanged(nameof(Id));
-        OnPropertyChanged(nameof(DisplayName));
         OnPropertyChanged(nameof(CaseCount));
         OnPropertyChanged(nameof(ParsedSuiteId));
         OnPropertyChanged(nameof(ParsedVersion));

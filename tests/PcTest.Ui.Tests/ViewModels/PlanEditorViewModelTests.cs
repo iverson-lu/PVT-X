@@ -255,6 +255,7 @@ public class PlanEditorViewModelTests
         // Arrange
         var suiteRef = new SuiteReferenceViewModel(null)
         {
+            NodeId = "suite.test@1.0.0",
             SuiteIdentity = "suite.test@1.0.0",
             Ref = "Test Suite"
         };
@@ -278,6 +279,7 @@ public class PlanEditorViewModelTests
         // Arrange
         var suiteRef = new SuiteReferenceViewModel(null)
         {
+            NodeId = "suite.test@1.0.0",
             SuiteIdentity = "suite.test@1.0.0",
             Ref = "Test Suite",
             Repeat = 3.0
@@ -453,14 +455,18 @@ public class PlanEditorViewModelTests
         await vm.LoadAsync(planInfo, isNew: false);
 
         // Add same suite twice with different control settings
+        // Note: In actual use, AddSuiteReferenceAsync generates unique NodeIds.
+        // For this test, we set them manually to verify BuildManifest preserves them.
         vm.SuiteReferences.Add(new SuiteReferenceViewModel(_discoveryMock.Object)
         {
+            NodeId = "suite.test@1.0.0",
             SuiteIdentity = "suite.test@1.0.0",
             Ref = "First Instance",
             Repeat = 1
         });
         vm.SuiteReferences.Add(new SuiteReferenceViewModel(_discoveryMock.Object)
         {
+            NodeId = "suite.test@1.0.0_1",  // Pre-set unique NodeId
             SuiteIdentity = "suite.test@1.0.0",
             Ref = "Second Instance",
             Repeat = 2
@@ -540,7 +546,10 @@ public class PlanEditorViewModelTests
 
         // Assert
         vm.SuiteReferences.Should().HaveCount(2);
-        // Both should have the same base suite identity (without suffix)
+        // NodeId should preserve the original value (with suffix if present)
+        vm.SuiteReferences[0].NodeId.Should().Be("suite.test@1.0.0");
+        vm.SuiteReferences[1].NodeId.Should().Be("suite.test@1.0.0_1"); // Suffix preserved in NodeId
+        // SuiteIdentity should be stripped (without suffix) for discovery lookup
         vm.SuiteReferences[0].SuiteIdentity.Should().Be("suite.test@1.0.0");
         vm.SuiteReferences[1].SuiteIdentity.Should().Be("suite.test@1.0.0"); // Suffix stripped
         // And should be able to look up case count correctly
