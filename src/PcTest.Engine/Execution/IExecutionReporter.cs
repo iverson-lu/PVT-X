@@ -67,6 +67,12 @@ public sealed class PlannedNode
     /// Parent node ID if this is a nested node (e.g., test case under suite in plan).
     /// </summary>
     public string? ParentNodeId { get; init; }
+
+    /// <summary>
+    /// Reference name for the test case (from suite manifest's "ref" field).
+    /// Used for display instead of the raw test name.
+    /// </summary>
+    public string? ReferenceName { get; init; }
 }
 
 /// <summary>

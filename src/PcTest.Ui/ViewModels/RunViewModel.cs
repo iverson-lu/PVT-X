@@ -482,6 +482,7 @@ public partial class RunViewModel : ViewModelBase
                     TestName = template.TestName,
                     SuiteName = template.SuiteName,
                     PlanName = template.PlanName,
+                    ReferenceName = template.ReferenceName,
                     Status = null,
                     Duration = null,
                     RetryCount = 0,
@@ -524,6 +525,7 @@ public partial class RunViewModel : ViewModelBase
             TestName = nodeState.TestName,
             SuiteName = nodeState.SuiteName,
             PlanName = nodeState.PlanName,
+            ReferenceName = nodeState.ReferenceName,
             Status = nodeState.Status,
             Duration = nodeState.Duration,
             RetryCount = nodeState.RetryCount,
@@ -803,6 +805,7 @@ public sealed class PlannedNodeTemplate
         TestName = nodeState.TestName;
         SuiteName = nodeState.SuiteName;
         PlanName = nodeState.PlanName;
+        ReferenceName = nodeState.ReferenceName;
         ParentNodeId = nodeState.ParentNodeId;
         SequenceIndex = nodeState.SequenceIndex;
     }
@@ -814,6 +817,7 @@ public sealed class PlannedNodeTemplate
     public string? TestName { get; }
     public string? SuiteName { get; }
     public string? PlanName { get; }
+    public string? ReferenceName { get; }
     public string? ParentNodeId { get; }
     public int SequenceIndex { get; }
 }
@@ -863,6 +867,7 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
     [ObservableProperty] private string? _testName;
     [ObservableProperty] private string? _suiteName;
     [ObservableProperty] private string? _planName;
+    [ObservableProperty] private string? _referenceName;
     [ObservableProperty] private RunType _nodeType;
     [ObservableProperty] private RunStatus? _status;
     [ObservableProperty] private TimeSpan? _duration;
@@ -882,6 +887,7 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
     
     /// <summary>
     /// Display name only (without version).
+    /// For test cases in suites, uses ReferenceName if available, otherwise falls back to TestName.
     /// </summary>
     public string DisplayName
     {
@@ -889,7 +895,7 @@ public partial class NodeExecutionStateViewModel : ViewModelBase
         {
             return NodeType switch
             {
-                RunType.TestCase => TestName ?? TestId,
+                RunType.TestCase => ReferenceName ?? TestName ?? TestId,
                 RunType.TestSuite => SuiteName ?? TestId,
                 RunType.TestPlan => PlanName ?? TestId,
                 _ => TestId

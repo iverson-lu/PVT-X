@@ -5,6 +5,7 @@
         "dotnet test": true,
         "Set-Content": true,
         "dotnet script": true,
-        "Rename-Item": true
+        "Rename-Item": true,
+        "dotnet run": true
     }
 }

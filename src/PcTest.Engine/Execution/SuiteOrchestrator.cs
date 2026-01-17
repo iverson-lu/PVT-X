@@ -313,7 +313,8 @@ public sealed class SuiteOrchestrator
                     TestId = testCaseManifest?.Id ?? "unknown",
                     TestVersion = testCaseManifest?.Version ?? "unknown",
                     NodeType = RunType.TestCase,
-                    ParentNodeId = parentNodeId
+                    ParentNodeId = parentNodeId,
+                    ReferenceName = string.IsNullOrWhiteSpace(node.Ref) ? null : node.Ref
                 });
             }
             _reporter.OnRunPlanned(

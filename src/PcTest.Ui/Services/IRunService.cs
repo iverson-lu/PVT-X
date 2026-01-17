@@ -76,6 +76,7 @@ public sealed class NodeExecutionState
     public string? TestName { get; set; }
     public string? SuiteName { get; set; }
     public string? PlanName { get; set; }
+    public string? ReferenceName { get; set; }
     public RunStatus? Status { get; set; }
     public TimeSpan? Duration { get; set; }
     public int RetryCount { get; set; }

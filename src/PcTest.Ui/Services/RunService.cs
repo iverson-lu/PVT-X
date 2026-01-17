@@ -219,6 +219,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
                 TestName = testName,
                 SuiteName = suiteName,
                 PlanName = planName,
+                ReferenceName = planned.ReferenceName,
                 Status = null, // Pending
                 IsRunning = false,
                 ParentNodeId = planned.ParentNodeId,
@@ -431,6 +432,7 @@ public sealed class RunService : IRunService, IExecutionReporter, IDisposable
             TestName = FindDisplayName(planned),
             SuiteName = FindSuiteName(planned),
             PlanName = FindPlanName(planned),
+            ReferenceName = planned?.ReferenceName,
             Status = null,
             IsRunning = false,
             ParentNodeId = planned?.ParentNodeId,
