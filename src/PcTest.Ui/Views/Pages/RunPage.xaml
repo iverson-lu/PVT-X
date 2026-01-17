@@ -189,9 +189,9 @@
         <!-- Main Content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="380"/>
-                <ColumnDefinition Width="16"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="380" MinWidth="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" MinWidth="300"/>
             </Grid.ColumnDefinitions>
             
             <!-- Execution Pipeline Card -->
@@ -837,6 +837,13 @@
                     </ListBox>
                 </Grid>
             </Border>
+            
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" 
+                         Width="16" 
+                         HorizontalAlignment="Stretch" 
+                         Background="Transparent"
+                         ShowsPreview="False"/>
             
             <!-- Output Panels -->
             <Grid Grid.Column="2">

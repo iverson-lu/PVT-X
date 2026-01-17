@@ -19,9 +19,9 @@
             <TabItem Header="Cases" Style="{StaticResource SegmentedControlTabItem}">
                 <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="380"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="380" MinWidth="300"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MinWidth="300"/>
                     </Grid.ColumnDefinitions>
                     
                     <!-- Cases List Card -->
@@ -228,6 +228,13 @@
                             </ListBox>
                         </Grid>
                     </Border>
+                    
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 Width="16" 
+                                 HorizontalAlignment="Stretch" 
+                                 Background="Transparent"
+                                 ShowsPreview="False"/>
                     
                     <!-- Case Details Card -->
                     <Border Grid.Column="2"
@@ -546,9 +553,9 @@
             <TabItem Header="Suites" Style="{StaticResource SegmentedControlTabItem}">
                 <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="380"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="380" MinWidth="300"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MinWidth="300"/>
                     </Grid.ColumnDefinitions>
                     
                     <!-- Suites List Card -->
@@ -770,6 +777,13 @@
                             </ListBox>
                         </Grid>
                     </Border>
+                    
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 Width="16" 
+                                 HorizontalAlignment="Stretch" 
+                                 Background="Transparent"
+                                 ShowsPreview="False"/>
                     
                     <!-- Suite Editor Card -->
                     <Border Grid.Column="2"
@@ -1381,9 +1395,9 @@
             <TabItem Header="Plans" Style="{StaticResource SegmentedControlTabItem}">
                 <Grid Margin="0,6,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="380"/>
-                        <ColumnDefinition Width="16"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="380" MinWidth="300"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*" MinWidth="300"/>
                     </Grid.ColumnDefinitions>
                     
                     <!-- Plans List Card -->
@@ -1605,6 +1619,13 @@
                             </ListBox>
                         </Grid>
                     </Border>
+                    
+                    <!-- Splitter -->
+                    <GridSplitter Grid.Column="1" 
+                                 Width="16" 
+                                 HorizontalAlignment="Stretch" 
+                                 Background="Transparent"
+                                 ShowsPreview="False"/>
                     
                     <!-- Plan Editor Card -->
                     <Border Grid.Column="2"
