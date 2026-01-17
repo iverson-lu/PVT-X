@@ -82,9 +82,12 @@ public static class PrivilegeChecker
 
         foreach (var suiteNode in plan.TestSuites)
         {
+            // Strip _1, _2, etc. suffix from nodeId to get the actual suite identity
+            var suiteIdentity = StripNodeIdSuffix(suiteNode.NodeId);
+            
             // Try to resolve the suite from discovery
             var suite = discovery.TestSuites.Values
-                .FirstOrDefault(s => s.Identity.Equals(suiteNode.NodeId, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(s => s.Identity.Equals(suiteIdentity, StringComparison.OrdinalIgnoreCase));
 
             if (suite != null)
             {
@@ -95,6 +98,16 @@ public static class PrivilegeChecker
         }
 
         return maxPrivilege;
+    }
+
+    /// <summary>
+    /// Strips the _1, _2, etc. suffix from a nodeId to get the base identity.
+    /// e.g., "suite.test@1.0.0_1" -> "suite.test@1.0.0"
+    /// </summary>
+    private static string StripNodeIdSuffix(string nodeId)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
+        return match.Success ? match.Groups[1].Value : nodeId;
     }
 
     /// <summary>

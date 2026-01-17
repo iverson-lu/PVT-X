@@ -230,16 +230,18 @@ public sealed class PlanOrchestrator
                 }
 
                 var suiteNode = plan.Manifest.TestSuites[suiteIndex];
-                var suiteIdentity = suiteNode.NodeId;
+                var suiteNodeId = suiteNode.NodeId;
+                // Strip _1, _2, etc. suffix to get the actual suite identity for discovery lookup
+                var suiteIdentity = StripNodeIdSuffix(suiteNodeId);
                 if (_cancellationToken.IsCancellationRequested)
                     break;
 
-                // Report node started
-                _reporter.OnNodeStarted(groupRunId, suiteIdentity);
+                // Report node started (use original nodeId with suffix)
+                _reporter.OnNodeStarted(groupRunId, suiteNodeId);
 
                 var suiteStartTime = DateTime.Now;
 
-                // Resolve Suite
+                // Resolve Suite using the base identity (without suffix)
                 if (!_discovery.TestSuites.TryGetValue(suiteIdentity, out var suite))
                 {
                     // Suite not found
@@ -251,7 +253,7 @@ public sealed class PlanOrchestrator
                     // Report node finished with error
                     _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
                     {
-                        NodeId = suiteIdentity,
+                        NodeId = suiteNodeId,
                         Status = RunStatus.Error,
                         StartTime = suiteStartTime,
                         EndTime = DateTime.Now,
@@ -292,7 +294,7 @@ public sealed class PlanOrchestrator
                         plan.Manifest.Id,
                         plan.Manifest.Version,
                         groupRunId,
-                        suiteIdentity,
+                        suiteNodeId,
                         groupRunFolder,
                         plan.Manifest,
                         suiteRunId,
@@ -322,7 +324,7 @@ public sealed class PlanOrchestrator
 
                     _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
                     {
-                        NodeId = suiteIdentity,
+                        NodeId = suiteNodeId,
                         Status = RunStatus.RebootRequired,
                         StartTime = suiteStartTime,
                         EndTime = DateTime.Now,
@@ -351,7 +353,7 @@ public sealed class PlanOrchestrator
                 // Report node finished
                 _reporter.OnNodeFinished(groupRunId, new NodeFinishedState
                 {
-                    NodeId = suiteIdentity,
+                    NodeId = suiteNodeId,
                     Status = suiteResult.Status,
                     StartTime = suiteStartTime,
                     EndTime = DateTime.Now,
@@ -452,6 +454,16 @@ public sealed class PlanOrchestrator
 
             return result;
         }
+    }
+
+    /// <summary>
+    /// Strips the _1, _2, etc. suffix from a nodeId to get the base identity.
+    /// e.g., "suite.test@1.0.0_1" -> "suite.test@1.0.0"
+    /// </summary>
+    private static string StripNodeIdSuffix(string nodeId)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
+        return match.Success ? match.Groups[1].Value : nodeId;
     }
 
     private static GroupResult CreateSuiteErrorResult(

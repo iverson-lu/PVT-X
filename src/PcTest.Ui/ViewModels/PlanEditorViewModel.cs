@@ -101,9 +101,12 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         SuiteReferences.Clear();
         foreach (var suiteNode in m.TestSuites)
         {
+            // Strip _1, _2, etc. suffix from nodeId to get the actual suite identity
+            var suiteIdentity = StripNodeIdSuffix(suiteNode.NodeId);
+            
             var refVm = new SuiteReferenceViewModel(_discoveryService) 
             { 
-                SuiteIdentity = suiteNode.NodeId,
+                SuiteIdentity = suiteIdentity,
                 Ref = suiteNode.Ref
             };
             refVm.LoadControls(suiteNode.Controls);
@@ -565,7 +568,16 @@ public partial class PlanEditorViewModel : EditableViewModelBase
                 : TagsText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList()
         };
 
-        manifest.TestSuites = SuiteReferences.Select(sr => sr.ToSuiteNode()).ToList();
+        // Generate unique node IDs for suite references
+        var suiteNodes = new List<TestSuiteNode>();
+        foreach (var sr in SuiteReferences)
+        {
+            var node = sr.ToSuiteNode();
+            // Generate unique node ID if there are duplicates
+            node.NodeId = GenerateUniqueNodeId(node.NodeId, suiteNodes);
+            suiteNodes.Add(node);
+        }
+        manifest.TestSuites = suiteNodes;
 
         // Add environment variables
         var envDict = EnvironmentEditor.ToDictionary();
@@ -578,6 +590,30 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         }
 
         return manifest;
+    }
+
+    private string GenerateUniqueNodeId(string baseId, List<TestSuiteNode> existingNodes)
+    {
+        var nodeId = baseId;
+        var counter = 1;
+        
+        while (existingNodes.Any(n => n.NodeId.Equals(nodeId, StringComparison.OrdinalIgnoreCase)))
+        {
+            nodeId = $"{baseId}_{counter}";
+            counter++;
+        }
+        
+        return nodeId;
+    }
+
+    /// <summary>
+    /// Strips the _1, _2, etc. suffix from a nodeId to get the base suite identity.
+    /// e.g., "suite.test@1.0.0_1" -> "suite.test@1.0.0"
+    /// </summary>
+    private static string StripNodeIdSuffix(string nodeId)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(nodeId, @"^(.+)_(\d+)$");
+        return match.Success ? match.Groups[1].Value : nodeId;
     }
 }
 

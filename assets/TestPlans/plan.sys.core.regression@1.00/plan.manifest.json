@@ -9,7 +9,7 @@
       "nodeId": "suite.sw.os.sanity_check@1.0.1",
       "ref": "Sanity Check",
       "controls": {
-        "repeat": 2,
+        "repeat": 1,
         "maxParallel": 1,
         "continueOnFailure": false,
         "retryOnError": 0,
@@ -28,10 +28,10 @@
       }
     },
     {
-      "nodeId": "suite.sw.os.sanity_check@1.0.1",
-      "ref": "Sanity Check",
+      "nodeId": "suite.sw.os.sanity_check@1.0.1_1",
+      "ref": "Sanity Check - Repeat",
       "controls": {
-        "repeat": 1,
+        "repeat": 2,
         "maxParallel": 1,
         "continueOnFailure": false,
         "retryOnError": 0,

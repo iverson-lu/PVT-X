@@ -487,4 +487,42 @@ public class PrivilegeCheckerTests : IDisposable
 
         File.WriteAllText(suitePath, JsonDefaults.Serialize(suite), Encoding.UTF8);
     }
-}
+
+    [Fact]
+    public void GetPlanPrivilege_WithDuplicateSuitesWithNodeIdSuffix_ReturnsCorrectPrivilege()
+    {
+        // Create test cases
+        CreateTestCase("TC-AdminReq", Privilege.AdminRequired);
+
+        // Create suite
+        CreateSuite("S-Test", new[] { "TC-AdminReq" });
+
+        // Create plan with duplicate suite references (nodeId with _1 suffix)
+        var planId = "P-DuplicateSuites";
+        var planFolderPath = Path.Combine(_plansRoot, planId);
+        Directory.CreateDirectory(planFolderPath);
+        var planPath = Path.Combine(planFolderPath, "plan.manifest.json");
+
+        var plan = new TestPlanManifest
+        {
+            Id = planId,
+            Name = "Duplicate Suites Plan",
+            Version = "1.0.0",
+            TestSuites = new List<TestSuiteNode> 
+            { 
+                new TestSuiteNode { NodeId = "S-Test@1.0.0", Ref = "First Instance" }, 
+                new TestSuiteNode { NodeId = "S-Test@1.0.0_1", Ref = "Second Instance" } // With suffix
+            }
+        };
+
+        File.WriteAllText(planPath, JsonDefaults.Serialize(plan), Encoding.UTF8);
+
+        var discoveryService = new DiscoveryService();
+        var discovery = discoveryService.Discover(_casesRoot, _suitesRoot, _plansRoot);
+
+        var planManifest = discovery.TestPlans.Values.First(p => p.Manifest.Id == planId).Manifest;
+        var privilege = PrivilegeChecker.GetPlanPrivilege(planManifest, discovery);
+
+        // Should correctly resolve suite even with _1 suffix and return AdminRequired
+        Assert.Equal(Privilege.AdminRequired, privilege);
+    }}

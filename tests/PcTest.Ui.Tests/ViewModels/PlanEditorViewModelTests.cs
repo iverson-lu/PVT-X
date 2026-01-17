@@ -416,4 +416,135 @@ public class PlanEditorViewModelTests
         // Assert
         suiteRef.HasControlsOverride.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task BuildManifest_ShouldGenerateUniqueNodeIds_WhenDuplicateSuiteIdentities()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var planInfo = new PlanInfo
+        {
+            Manifest = new TestPlanManifest
+            {
+                Id = "plan.test",
+                Name = "Test Plan",
+                Version = "1.0.0"
+            }
+        };
+
+        // Setup discovery
+        var discovery = new DiscoveryResult();
+        var suiteManifest = new TestSuiteManifest
+        {
+            Id = "suite.test",
+            Name = "Test Suite",
+            Version = "1.0.0"
+        };
+        discovery.TestSuites["suite.test@1.0.0"] = new DiscoveredTestSuite
+        {
+            Manifest = suiteManifest,
+            ManifestPath = "path/to/suite.manifest.json",
+            FolderPath = "path/to"
+        };
+        _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+        _suiteRepoMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SuiteInfo>());
+
+        await vm.LoadAsync(planInfo, isNew: false);
+
+        // Add same suite twice with different control settings
+        vm.SuiteReferences.Add(new SuiteReferenceViewModel(_discoveryMock.Object)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Ref = "First Instance",
+            Repeat = 1
+        });
+        vm.SuiteReferences.Add(new SuiteReferenceViewModel(_discoveryMock.Object)
+        {
+            SuiteIdentity = "suite.test@1.0.0",
+            Ref = "Second Instance",
+            Repeat = 2
+        });
+
+        // Act - use reflection to call private BuildManifest method
+        var buildManifestMethod = typeof(PlanEditorViewModel).GetMethod("BuildManifest",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var manifest = buildManifestMethod?.Invoke(vm, null) as TestPlanManifest;
+
+        // Assert
+        manifest.Should().NotBeNull();
+        manifest!.TestSuites.Should().HaveCount(2);
+        manifest.TestSuites[0].NodeId.Should().Be("suite.test@1.0.0");
+        manifest.TestSuites[1].NodeId.Should().Be("suite.test@1.0.0_1"); // Should have unique suffix
+    }
+
+    [Fact]
+    public async Task LoadAsync_ShouldStripNodeIdSuffix_WhenLoadingDuplicateSuiteReferences()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        
+        // Setup discovery
+        var discovery = new DiscoveryResult();
+        var suiteManifest = new TestSuiteManifest
+        {
+            Id = "suite.test",
+            Name = "Test Suite",
+            Version = "1.0.0",
+            TestCases = new List<TestCaseNode>
+            {
+                new TestCaseNode { NodeId = "case1", Ref = "Case 1" },
+                new TestCaseNode { NodeId = "case2", Ref = "Case 2" }
+            }
+        };
+        discovery.TestSuites["suite.test@1.0.0"] = new DiscoveredTestSuite
+        {
+            Manifest = suiteManifest,
+            ManifestPath = "path/to/suite.manifest.json",
+            FolderPath = "path/to"
+        };
+        _discoveryMock.Setup(d => d.CurrentDiscovery).Returns(discovery);
+        _discoveryMock.Setup(d => d.DiscoverAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(discovery);
+        _suiteRepoMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<SuiteInfo>());
+
+        // Create plan with duplicate suite references (with _1 suffix in nodeId)
+        var planInfo = new PlanInfo
+        {
+            Manifest = new TestPlanManifest
+            {
+                Id = "plan.test",
+                Name = "Test Plan",
+                Version = "1.0.0",
+                TestSuites = new List<TestSuiteNode>
+                {
+                    new TestSuiteNode 
+                    { 
+                        NodeId = "suite.test@1.0.0", 
+                        Ref = "First Instance",
+                        Controls = new SuiteControls { Repeat = 1 }
+                    },
+                    new TestSuiteNode 
+                    { 
+                        NodeId = "suite.test@1.0.0_1",  // Has suffix in saved manifest
+                        Ref = "Second Instance",
+                        Controls = new SuiteControls { Repeat = 2 }
+                    }
+                }
+            }
+        };
+
+        // Act
+        await vm.LoadAsync(planInfo, isNew: false);
+
+        // Assert
+        vm.SuiteReferences.Should().HaveCount(2);
+        // Both should have the same base suite identity (without suffix)
+        vm.SuiteReferences[0].SuiteIdentity.Should().Be("suite.test@1.0.0");
+        vm.SuiteReferences[1].SuiteIdentity.Should().Be("suite.test@1.0.0"); // Suffix stripped
+        // And should be able to look up case count correctly
+        vm.SuiteReferences[0].CaseCount.Should().Be(2);
+        vm.SuiteReferences[1].CaseCount.Should().Be(2); // Should find the suite now
+    }
 }
