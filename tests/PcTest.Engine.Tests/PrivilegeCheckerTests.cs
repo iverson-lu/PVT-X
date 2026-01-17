@@ -525,4 +525,41 @@ public class PrivilegeCheckerTests : IDisposable
 
         // Should correctly resolve suite even with _1 suffix and return AdminRequired
         Assert.Equal(Privilege.AdminRequired, privilege);
+    }
+    
+    [Fact]
+    public void GetSuitePrivilege_WithCustomRefNames_UsesNodeIdForResolution()
+    {
+        // Create test cases with admin privileges
+        CreateTestCase("case.test.admin.required", Privilege.AdminRequired);
+        CreateTestCase("case.hw.cpu.core.params_verify", Privilege.User);
+
+        // Create suite with custom ref names (not identity format)
+        var suiteId = "suite.test.mixed";
+        var suiteFolderPath = Path.Combine(_suitesRoot, suiteId);
+        Directory.CreateDirectory(suiteFolderPath);
+        var suitePath = Path.Combine(suiteFolderPath, "suite.manifest.json");
+
+        var suite = new TestSuiteManifest
+        {
+            Id = suiteId,
+            Name = "Mixed Privilege Suite",
+            Version = "1.0.0",
+            TestCases = new List<TestCaseNode>
+            {
+                new() { NodeId = "case.hw.cpu.core.params_verify@1.0.0", Ref = "CPU Core Params" },
+                new() { NodeId = "case.test.admin.required@1.0.0", Ref = "Test Admin Required" }
+            }
+        };
+
+        File.WriteAllText(suitePath, JsonDefaults.Serialize(suite), Encoding.UTF8);
+
+        var discoveryService = new DiscoveryService();
+        var discovery = discoveryService.Discover(_casesRoot, _suitesRoot, _plansRoot);
+
+        var suiteManifest = discovery.TestSuites.Values.First(s => s.Manifest.Id == suiteId).Manifest;
+        var privilege = PrivilegeChecker.GetSuitePrivilege(suiteManifest, discovery);
+
+        // Should correctly resolve test cases via NodeId even when Ref is a custom name
+        Assert.Equal(Privilege.AdminRequired, privilege);
     }}

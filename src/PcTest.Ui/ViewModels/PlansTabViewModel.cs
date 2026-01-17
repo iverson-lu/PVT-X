@@ -157,6 +157,7 @@ public partial class PlansTabViewModel : ViewModelBase
                     Description = plan.Manifest.Description,
                     Tags = plan.Manifest.Tags?.ToList() ?? new(),
                     SuiteCount = plan.Manifest.TestSuites.Count,
+                    Privilege = PcTest.Engine.PrivilegeChecker.GetPlanPrivilege(plan.Manifest, discovery),
                     FolderPath = plan.FolderPath,
                     ManifestPath = plan.ManifestPath,
                     HasUpdates = hasUpdates
@@ -389,8 +390,17 @@ public partial class PlanListItemViewModel : ViewModelBase
     [ObservableProperty] private int _suiteCount;
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
+    [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
     [ObservableProperty] private bool _hasUpdates;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
+    public bool IsAdminRequired => Privilege == PcTest.Contracts.Privilege.AdminRequired;
+    public bool IsAdminPreferred => Privilege == PcTest.Contracts.Privilege.AdminPreferred;
+
+    partial void OnPrivilegeChanged(PcTest.Contracts.Privilege value)
+    {
+        OnPropertyChanged(nameof(IsAdminRequired));
+        OnPropertyChanged(nameof(IsAdminPreferred));
+    }
 }
