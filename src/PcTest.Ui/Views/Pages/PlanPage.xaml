@@ -965,23 +965,62 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="Test Flow" VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" IsEnabled="{Binding IsEditing}" Margin="16,0,32,0">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Test Flow" VerticalAlignment="Center"/>
+                                                <!-- Update Available Indicator -->
+                                                <Border Background="#FFF3CD" 
+                                                       BorderBrush="#FFE69C"
+                                                       BorderThickness="1"
+                                                       CornerRadius="12"
+                                                       Padding="8,4"
+                                                       Margin="12,0,0,0"
+                                                       Visibility="{Binding HasUpdatableNodes, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ui:SymbolIcon Symbol="ArrowSync24"
+                                                                      FontSize="12"
+                                                                      Foreground="#856404"
+                                                                      Margin="0,0,4,0"/>
+                                                        <TextBlock FontSize="11" 
+                                                                  FontWeight="{StaticResource FontWeightSemiBold}"
+                                                                  Foreground="#856404">
+                                                            <Run Text="{Binding UpdatableNodesCount, Mode=OneWay}"/>
+                                                            <Run Text="update(s) available"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,32,0">
+                                                <!-- Update All Button -->
+                                                <ui:Button Content="Update All" 
+                                                          Icon="{ui:SymbolIcon ArrowSync24}" 
+                                                          Command="{Binding UpdateAllNodesCommand}"
+                                                          Visibility="{Binding HasUpdatableNodes, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                          Appearance="Primary"
+                                                          ToolTip="Update all test cases to latest versions"
+                                                          Margin="0,0,16,0"/>
+                                                <Separator Width="1" 
+                                                          Background="{DynamicResource BorderSubtleBrush}"
+                                                          Margin="0,4"
+                                                          Visibility="{Binding HasUpdatableNodes, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                 <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
                                                           Command="{Binding MoveNodeUpCommand}"
                                                           ToolTip="Move Up"
-                                                          Margin="0,0,8,0"/>
+                                                          IsEnabled="{Binding IsEditing}"
+                                                          Margin="16,0,8,0"/>
                                                 <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
                                                           Command="{Binding MoveNodeDownCommand}"
                                                           ToolTip="Move Down"
+                                                          IsEnabled="{Binding IsEditing}"
                                                           Margin="0,0,8,0"/>
                                                 <ui:Button Content="Remove" 
                                                           Icon="{ui:SymbolIcon Delete24}" 
-                                                          Command="{Binding RemoveNodeCommand}" 
+                                                          Command="{Binding RemoveNodeCommand}"
+                                                          IsEnabled="{Binding IsEditing}"
                                                           Margin="0,0,8,0"/>
                                                 <ui:Button Content="Add Case" 
                                                           Icon="{ui:SymbolIcon Add24}" 
                                                           Command="{Binding AddNodeCommand}"
+                                                          IsEnabled="{Binding IsEditing}"
                                                           Appearance="Primary"/>
                                             </StackPanel>
                                         </Grid>
@@ -1039,6 +1078,7 @@
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
                                                             <Grid.RowDefinitions>
                                                                 <RowDefinition Height="Auto"/>
@@ -1051,23 +1091,53 @@
                                                                     VerticalAlignment="Center"
                                                                     Margin="0,0,10,0"/>
                                                             
-                                                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
+                                                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding Ref}" 
                                                                           FontWeight="{StaticResource FontWeightSemiBold}"
                                                                           FontSize="{StaticResource FontSizeM}"
-                                                                          Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                          VerticalAlignment="Center"/>
                                                                 <ui:SymbolIcon Symbol="Shield24"
                                                                               Foreground="#2F6FED"
                                                                               Filled="True"
                                                                               ToolTip="Administrator required"
                                                                               Margin="6,0,0,0"
+                                                                              VerticalAlignment="Center"
                                                                               Visibility="{Binding IsAdminRequired, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                                 <ui:SymbolIcon Symbol="Shield24"
                                                                               Foreground="#2F6FED"
                                                                               ToolTip="Administrator recommended"
                                                                               Margin="6,0,0,0"
+                                                                              VerticalAlignment="Center"
                                                                               Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                <!-- Update Available Chip -->
+                                                                <Border Background="#FFF3CD" 
+                                                                       BorderBrush="#FFE69C"
+                                                                       BorderThickness="1"
+                                                                       CornerRadius="10"
+                                                                       Padding="6,2"
+                                                                       Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                                    <TextBlock FontSize="10" 
+                                                                              FontWeight="{StaticResource FontWeightSemiBold}"
+                                                                              Foreground="#856404"
+                                                                              VerticalAlignment="Center"
+                                                                              Text="{Binding LatestVersion, StringFormat='v{0} available'}"/>
+                                                                </Border>
                                                             </StackPanel>
+                                                            
+                                                            <!-- Update Button (appears on hover/selection) -->
+                                                            <ui:Button Grid.Row="0" Grid.Column="2"
+                                                                      Content="Update"
+                                                                      Icon="{ui:SymbolIcon ArrowSync20}"
+                                                                      FontSize="11"
+                                                                      Padding="8,4"
+                                                                      Margin="8,0,0,0"
+                                                                      Command="{Binding DataContext.UpdateNodeCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                      CommandParameter="{Binding}"
+                                                                      Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                      ToolTip="Update to latest version"/>
                                                             
                                                             <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                                                       Text="{Binding NodeId}" 
@@ -1710,23 +1780,62 @@
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Grid.Column="0" Text="Execution Flow" VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" IsEnabled="{Binding IsEditing}" Margin="16,0,32,0">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Execution Flow" VerticalAlignment="Center"/>
+                                                <!-- Update Available Indicator -->
+                                                <Border Background="#FFF3CD" 
+                                                       BorderBrush="#FFE69C"
+                                                       BorderThickness="1"
+                                                       CornerRadius="12"
+                                                       Padding="8,4"
+                                                       Margin="12,0,0,0"
+                                                       Visibility="{Binding HasUpdatableSuites, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <ui:SymbolIcon Symbol="ArrowSync24"
+                                                                      FontSize="12"
+                                                                      Foreground="#856404"
+                                                                      Margin="0,0,4,0"/>
+                                                        <TextBlock FontSize="11" 
+                                                                  FontWeight="{StaticResource FontWeightSemiBold}"
+                                                                  Foreground="#856404">
+                                                            <Run Text="{Binding UpdatableSuitesCount, Mode=OneWay}"/>
+                                                            <Run Text="update(s) available"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,32,0">
+                                                <!-- Update All Button -->
+                                                <ui:Button Content="Update All" 
+                                                          Icon="{ui:SymbolIcon ArrowSync24}" 
+                                                          Command="{Binding UpdateAllSuiteReferencesCommand}"
+                                                          Visibility="{Binding HasUpdatableSuites, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                          Appearance="Primary"
+                                                          ToolTip="Update all test suites to latest versions"
+                                                          Margin="0,0,16,0"/>
+                                                <Separator Width="1" 
+                                                          Background="{DynamicResource BorderSubtleBrush}"
+                                                          Margin="0,4"
+                                                          Visibility="{Binding HasUpdatableSuites, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                 <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" 
                                                           Command="{Binding MoveSuiteReferenceUpCommand}"
                                                           ToolTip="Move Up"
-                                                          Margin="0,0,8,0"/>
+                                                          IsEnabled="{Binding IsEditing}"
+                                                          Margin="16,0,8,0"/>
                                                 <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" 
                                                           Command="{Binding MoveSuiteReferenceDownCommand}"
                                                           ToolTip="Move Down"
+                                                          IsEnabled="{Binding IsEditing}"
                                                           Margin="0,0,8,0"/>
                                                 <ui:Button Content="Remove" 
                                                           Icon="{ui:SymbolIcon Delete24}" 
-                                                          Command="{Binding RemoveSuiteReferenceCommand}" 
+                                                          Command="{Binding RemoveSuiteReferenceCommand}"
+                                                          IsEnabled="{Binding IsEditing}"
                                                           Margin="0,0,8,0"/>
                                                 <ui:Button Content="Add Suite" 
                                                           Icon="{ui:SymbolIcon Add24}" 
                                                           Command="{Binding AddSuiteReferenceCommand}"
+                                                          IsEnabled="{Binding IsEditing}"
                                                           Appearance="Primary"/>
                                             </StackPanel>
                                         </Grid>
@@ -1782,6 +1891,7 @@
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="Auto"/>
                                                                 <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
                                                             </Grid.ColumnDefinitions>
                                                             <Grid.RowDefinitions>
                                                                 <RowDefinition Height="Auto"/>
@@ -1795,24 +1905,54 @@
                                                                     VerticalAlignment="Center"
                                                                     Margin="0,0,10,0"/>
                                                             
-                                                            <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
+                                                            <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding Name}" 
                                                                           FontSize="{StaticResource FontSizeM}"
                                                                           FontWeight="{StaticResource FontWeightSemiBold}"
                                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                          VerticalAlignment="Center"
                                                                           TextTrimming="CharacterEllipsis"/>
                                                                 <ui:SymbolIcon Symbol="Shield24"
                                                                               Foreground="#2F6FED"
                                                                               Filled="True"
                                                                               ToolTip="Administrator required"
                                                                               Margin="6,0,0,0"
+                                                                              VerticalAlignment="Center"
                                                                               Visibility="{Binding IsAdminRequired, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                                 <ui:SymbolIcon Symbol="Shield24"
                                                                               Foreground="#2F6FED"
                                                                               ToolTip="Administrator recommended"
                                                                               Margin="6,0,0,0"
+                                                                              VerticalAlignment="Center"
                                                                               Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                                <!-- Update Available Chip -->
+                                                                <Border Background="#FFF3CD" 
+                                                                       BorderBrush="#FFE69C"
+                                                                       BorderThickness="1"
+                                                                       CornerRadius="10"
+                                                                       Padding="6,2"
+                                                                       Margin="8,0,0,0"
+                                                                       VerticalAlignment="Center"
+                                                                       Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                                    <TextBlock FontSize="10" 
+                                                                              FontWeight="{StaticResource FontWeightSemiBold}"
+                                                                              Foreground="#856404"
+                                                                              VerticalAlignment="Center"
+                                                                              Text="{Binding LatestVersion, StringFormat='v{0} available'}"/>
+                                                                </Border>
                                                             </StackPanel>
+                                                            
+                                                            <!-- Update Button -->
+                                                            <ui:Button Grid.Row="0" Grid.Column="2"
+                                                                      Content="Update"
+                                                                      Icon="{ui:SymbolIcon ArrowSync20}"
+                                                                      FontSize="11"
+                                                                      Padding="8,4"
+                                                                      Margin="8,0,0,0"
+                                                                      Command="{Binding DataContext.UpdateSuiteReferenceCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                                      CommandParameter="{Binding}"
+                                                                      Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                                      ToolTip="Update to latest version"/>
                                                             
                                                             <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2"
                                                                       Text="{Binding Id}" 

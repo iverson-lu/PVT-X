@@ -30,6 +30,15 @@
         "TargetAddress": "www.baidu.com",
         "MaxReplyTimeMs": "0"
       }
+    },
+    {
+      "nodeId": "case.os.windows.core.event_log_check@1.0.0",
+      "ref": "Event Viewer Level Check",
+      "inputs": {
+        "EventCount": "100",
+        "ProhibitedLevel": "Error",
+        "LogName": "System"
+      }
     }
   ]
 }

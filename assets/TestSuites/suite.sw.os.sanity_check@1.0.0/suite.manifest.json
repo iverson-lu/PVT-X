@@ -14,21 +14,26 @@
   "testCases": [
     {
       "nodeId": "case.hw.device.core.health_check@1.0.0",
-      "ref": "Device Health Check",
+      "ref": "case.hw.device.core.health_check@1.0.0",
       "inputs": {
         "RestrictedMode": false
       }
     },
     {
+      "nodeId": "case.os.windows.core.event_log_check@1.0.0",
+      "ref": "case.os.windows.core.event_log_check@1.0.0",
+      "inputs": {}
+    },
+    {
       "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
-      "ref": "Timezone Verification",
+      "ref": "case.os.windows.core.timezone_verify@1.0.0",
       "inputs": {
         "ExpectedUtcOffset": "\u002B08:00"
       }
     },
     {
       "nodeId": "case.hw.memory.core.inventory_check@1.0.0",
-      "ref": "Memory Static Verification",
+      "ref": "case.hw.memory.core.inventory_check@1.0.0",
       "inputs": {
         "N_MinTotalGB": "32",
         "N_MinModuleCount": "2",

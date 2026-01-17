@@ -50,6 +50,12 @@ public partial class PlanEditorViewModel : EditableViewModelBase
 
     [ObservableProperty]
     private EnvVarEditorViewModel _environmentEditor = new();
+    
+    [ObservableProperty]
+    private int _updatableSuitesCount;
+    
+    [ObservableProperty]
+    private bool _hasUpdatableSuites;
 
     public PlanEditorViewModel(
         IPlanRepository planRepository,
@@ -96,7 +102,16 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         foreach (var suiteRef in m.Suites)
         {
             var refVm = new SuiteReferenceViewModel(_discoveryService) { SuiteIdentity = suiteRef };
-            refVm.PropertyChanged += (s, e) => MarkDirty();
+            refVm.PropertyChanged += (s, e) =>
+            {
+                // Don't mark dirty for update-tracking properties (these are UI-only state)
+                if (e.PropertyName != nameof(SuiteReferenceViewModel.HasUpdate) &&
+                    e.PropertyName != nameof(SuiteReferenceViewModel.CurrentVersion) &&
+                    e.PropertyName != nameof(SuiteReferenceViewModel.LatestVersion))
+                {
+                    MarkDirty();
+                }
+            };
             SuiteReferences.Add(refVm);
         }
 
@@ -108,6 +123,69 @@ public partial class PlanEditorViewModel : EditableViewModelBase
 
         ClearDirty();
         IsEditing = false;
+        
+        // Check for updates
+        await CheckForUpdatesAsync();
+    }
+    
+    /// <summary>
+    /// Checks all suite references for available updates by comparing current version with latest in repository.
+    /// </summary>
+    private async Task CheckForUpdatesAsync()
+    {
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+        
+        foreach (var suiteRef in SuiteReferences)
+        {
+            var suiteId = suiteRef.ParsedSuiteId;
+            var currentVersion = suiteRef.ParsedVersion;
+            
+            if (string.IsNullOrEmpty(suiteId) || string.IsNullOrEmpty(currentVersion))
+            {
+                suiteRef.HasUpdate = false;
+                continue;
+            }
+            
+            // Find all versions of this suite
+            var allVersions = discovery.TestSuites.Values
+                .Where(s => s.Manifest.Id.Equals(suiteId, StringComparison.OrdinalIgnoreCase))
+                .Select(s => s.Manifest.Version)
+                .ToList();
+            
+            if (allVersions.Count == 0)
+            {
+                suiteRef.HasUpdate = false;
+                continue;
+            }
+            
+            // Find the latest version (semantic version comparison)
+            var latestVersion = allVersions
+                .OrderByDescending(v => System.Version.TryParse(v, out var ver) ? ver : new System.Version(0, 0, 0))
+                .First();
+            
+            suiteRef.CurrentVersion = currentVersion;
+            suiteRef.LatestVersion = latestVersion;
+            
+            // Check if update is available
+            if (System.Version.TryParse(currentVersion, out var currentVer) && 
+                System.Version.TryParse(latestVersion, out var latestVer))
+            {
+                suiteRef.HasUpdate = latestVer > currentVer;
+            }
+            else
+            {
+                // Fallback to string comparison if version parse fails
+                suiteRef.HasUpdate = !currentVersion.Equals(latestVersion, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        
+        UpdateUpdatableSuitesCount();
+    }
+    
+    private void UpdateUpdatableSuitesCount()
+    {
+        UpdatableSuitesCount = SuiteReferences.Count(s => s.HasUpdate);
+        HasUpdatableSuites = UpdatableSuitesCount > 0;
     }
 
     private async Task LoadAvailableSuitesAsync()
@@ -183,6 +261,55 @@ public partial class PlanEditorViewModel : EditableViewModelBase
         var index = SuiteReferences.IndexOf(SelectedSuiteReference);
         if (index < 0 || index >= SuiteReferences.Count - 1) return;
         SuiteReferences.Move(index, index + 1);
+        MarkDirty();
+    }
+    
+    [RelayCommand]
+    private async Task UpdateSuiteReference(SuiteReferenceViewModel suiteRef)
+    {
+        if (suiteRef == null || !suiteRef.HasUpdate)
+            return;
+        
+        var suiteId = suiteRef.ParsedSuiteId;
+        var latestVersion = suiteRef.LatestVersion;
+        
+        // Update the SuiteIdentity
+        suiteRef.SuiteIdentity = $"{suiteId}@{latestVersion}";
+        
+        // Clear update status
+        suiteRef.HasUpdate = false;
+        suiteRef.CurrentVersion = latestVersion;
+        
+        UpdateUpdatableSuitesCount();
+        
+        // Mark dirty for the actual identity change
+        MarkDirty();
+    }
+    
+    [RelayCommand]
+    private async Task UpdateAllSuiteReferences()
+    {
+        var suitesToUpdate = SuiteReferences.Where(s => s.HasUpdate).ToList();
+        
+        if (suitesToUpdate.Count == 0)
+            return;
+        
+        foreach (var suiteRef in suitesToUpdate)
+        {
+            var suiteId = suiteRef.ParsedSuiteId;
+            var latestVersion = suiteRef.LatestVersion;
+            
+            // Update the SuiteIdentity
+            suiteRef.SuiteIdentity = $"{suiteId}@{latestVersion}";
+            
+            // Clear update status
+            suiteRef.HasUpdate = false;
+            suiteRef.CurrentVersion = latestVersion;
+        }
+        
+        UpdateUpdatableSuitesCount();
+        
+        // Mark dirty for all the identity changes
         MarkDirty();
     }
 
@@ -443,8 +570,32 @@ public partial class SuiteReferenceViewModel : ViewModelBase
     
     [ObservableProperty] private string _suiteIdentity = string.Empty;
     [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
+    
+    [ObservableProperty] private bool _hasUpdate;
+    [ObservableProperty] private string _currentVersion = string.Empty;
+    [ObservableProperty] private string _latestVersion = string.Empty;
 
     public string DisplayName => SuiteIdentity;
+    
+    public string ParsedSuiteId
+    {
+        get
+        {
+            // Parse suite.xxx@1.0.0 -> suite.xxx
+            var atIndex = SuiteIdentity.IndexOf('@');
+            return atIndex > 0 ? SuiteIdentity.Substring(0, atIndex) : SuiteIdentity;
+        }
+    }
+    
+    public string ParsedVersion
+    {
+        get
+        {
+            // Parse suite.xxx@1.0.0 -> 1.0.0
+            var atIndex = SuiteIdentity.IndexOf('@');
+            return atIndex > 0 && atIndex < SuiteIdentity.Length - 1 ? SuiteIdentity.Substring(atIndex + 1) : "";
+        }
+    }
     
     // Parse identity to extract Name and Id
     public string Name
@@ -504,6 +655,8 @@ public partial class SuiteReferenceViewModel : ViewModelBase
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Id));
         OnPropertyChanged(nameof(CaseCount));
+        OnPropertyChanged(nameof(ParsedSuiteId));
+        OnPropertyChanged(nameof(ParsedVersion));
         UpdatePrivilege();
     }
 

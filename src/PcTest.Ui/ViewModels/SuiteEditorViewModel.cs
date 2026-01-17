@@ -58,6 +58,12 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
 
     [ObservableProperty]
     private EnvVarEditorViewModel _environmentEditor = new();
+    
+    [ObservableProperty]
+    private int _updatableNodesCount;
+    
+    [ObservableProperty]
+    private bool _hasUpdatableNodes;
 
     public SuiteEditorViewModel(
         ISuiteRepository suiteRepository,
@@ -130,7 +136,16 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
             // Load parameters for this test case
             await LoadNodeParametersAsync(nodeVm, node.Inputs);
             
-            nodeVm.PropertyChanged += (s, e) => MarkDirty();
+            nodeVm.PropertyChanged += (s, e) =>
+            {
+                // Don't mark dirty for update-tracking properties (these are UI-only state)
+                if (e.PropertyName != nameof(TestCaseNodeViewModel.HasUpdate) &&
+                    e.PropertyName != nameof(TestCaseNodeViewModel.CurrentVersion) &&
+                    e.PropertyName != nameof(TestCaseNodeViewModel.LatestVersion))
+                {
+                    MarkDirty();
+                }
+            };
             Nodes.Add(nodeVm);
         }
 
@@ -140,6 +155,80 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
         // Clear dirty state after loading
         ClearDirty();
         IsEditing = false;
+        
+        // Check for updates
+        await CheckForUpdatesAsync();
+    }
+    
+    /// <summary>
+    /// Checks all nodes for available updates by comparing current version with latest in repository.
+    /// </summary>
+    private async Task CheckForUpdatesAsync()
+    {
+        var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
+        
+        System.Diagnostics.Debug.WriteLine($"CheckForUpdatesAsync: Checking {Nodes.Count} nodes");
+        
+        foreach (var node in Nodes)
+        {
+            var caseId = node.ParsedCaseId;
+            var currentVersion = node.ParsedVersion;
+            
+            System.Diagnostics.Debug.WriteLine($"Node: {node.Ref}, CaseId: {caseId}, CurrentVersion: {currentVersion}");
+            
+            if (string.IsNullOrEmpty(caseId) || string.IsNullOrEmpty(currentVersion))
+            {
+                node.HasUpdate = false;
+                continue;
+            }
+            
+            // Find all versions of this case
+            var allVersions = discovery.TestCases.Values
+                .Where(tc => tc.Manifest.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase))
+                .Select(tc => tc.Manifest.Version)
+                .ToList();
+            
+            System.Diagnostics.Debug.WriteLine($"Found {allVersions.Count} versions: {string.Join(", ", allVersions)}");
+            
+            if (allVersions.Count == 0)
+            {
+                node.HasUpdate = false;
+                continue;
+            }
+            
+            // Find the latest version (semantic version comparison)
+            var latestVersion = allVersions
+                .OrderByDescending(v => System.Version.TryParse(v, out var ver) ? ver : new System.Version(0, 0, 0))
+                .First();
+            
+            node.CurrentVersion = currentVersion;
+            node.LatestVersion = latestVersion;
+            
+            System.Diagnostics.Debug.WriteLine($"Latest: {latestVersion}, Current: {currentVersion}");
+            
+            // Check if update is available
+            if (System.Version.TryParse(currentVersion, out var currentVer) && 
+                System.Version.TryParse(latestVersion, out var latestVer))
+            {
+                node.HasUpdate = latestVer > currentVer;
+                System.Diagnostics.Debug.WriteLine($"HasUpdate: {node.HasUpdate} ({latestVer} > {currentVer})");
+            }
+            else
+            {
+                // Fallback to string comparison if version parse fails
+                node.HasUpdate = !currentVersion.Equals(latestVersion, StringComparison.OrdinalIgnoreCase);
+                System.Diagnostics.Debug.WriteLine($"HasUpdate (fallback): {node.HasUpdate}");
+            }
+        }
+        
+        UpdateUpdatableNodesCount();
+        System.Diagnostics.Debug.WriteLine($"Total updatable nodes: {UpdatableNodesCount}");
+    }
+    
+    private void UpdateUpdatableNodesCount()
+    {
+        UpdatableNodesCount = Nodes.Count(n => n.HasUpdate);
+        HasUpdatableNodes = UpdatableNodesCount > 0;
     }
 
     private async Task LoadAvailableTestCasesAsync()
@@ -337,6 +426,57 @@ public partial class SuiteEditorViewModel : EditableViewModelBase
     }
 
     private bool CanEditSuite() => !IsEditing;
+    
+    [RelayCommand]
+    private async Task UpdateNode(TestCaseNodeViewModel node)
+    {
+        if (node == null || !node.HasUpdate)
+            return;
+        
+        var caseId = node.ParsedCaseId;
+        var latestVersion = node.LatestVersion;
+        var instanceSuffix = node.GetInstanceSuffix();
+        
+        // Update the NodeId (which contains the case reference), preserving the instance suffix
+        node.NodeId = $"{caseId}@{latestVersion}{instanceSuffix}";
+        
+        // Clear HasUpdate without triggering dirty state
+        node.HasUpdate = false;
+        node.CurrentVersion = latestVersion;
+        
+        UpdateUpdatableNodesCount();
+        
+        // Only mark dirty once for the actual NodeId change
+        MarkDirty();
+    }
+    
+    [RelayCommand]
+    private async Task UpdateAllNodes()
+    {
+        var nodesToUpdate = Nodes.Where(n => n.HasUpdate).ToList();
+        
+        if (nodesToUpdate.Count == 0)
+            return;
+        
+        foreach (var node in nodesToUpdate)
+        {
+            var caseId = node.ParsedCaseId;
+            var latestVersion = node.LatestVersion;
+            var instanceSuffix = node.GetInstanceSuffix();
+            
+            // Update the NodeId (which contains the case reference), preserving the instance suffix
+            node.NodeId = $"{caseId}@{latestVersion}{instanceSuffix}";
+            
+            // Clear HasUpdate without triggering dirty state
+            node.HasUpdate = false;
+            node.CurrentVersion = latestVersion;
+        }
+        
+        UpdateUpdatableNodesCount();
+        
+        // Only mark dirty once for all the NodeId changes
+        MarkDirty();
+    }
 
     [RelayCommand]
     private void ValidateSuite()
@@ -642,6 +782,10 @@ public partial class TestCaseNodeViewModel : ViewModelBase
     [ObservableProperty] private string _inputsJson = "{}";
     [ObservableProperty] private ObservableCollection<ParameterViewModel> _parameters = new();
     [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
+    
+    [ObservableProperty] private bool _hasUpdate;
+    [ObservableProperty] private string _currentVersion = string.Empty;
+    [ObservableProperty] private string _latestVersion = string.Empty;
 
     public TestCaseNodeViewModel()
     {
@@ -652,10 +796,92 @@ public partial class TestCaseNodeViewModel : ViewModelBase
     public bool HasParameters => Parameters.Count > 0;
     public bool IsAdminRequired => Privilege == PcTest.Contracts.Privilege.AdminRequired;
     public bool IsAdminPreferred => Privilege == PcTest.Contracts.Privilege.AdminPreferred;
+    
+    public string ParsedCaseId
+    {
+        get
+        {
+            // Parse case.xxx@1.0.0_1 -> case.xxx
+            // First strip the instance suffix (_1, _2, etc.)
+            var nodeIdWithoutSuffix = StripInstanceSuffix(NodeId);
+            var atIndex = nodeIdWithoutSuffix.IndexOf('@');
+            return atIndex > 0 ? nodeIdWithoutSuffix.Substring(0, atIndex) : nodeIdWithoutSuffix;
+        }
+    }
+    
+    public string ParsedVersion
+    {
+        get
+        {
+            // Parse case.xxx@1.0.0_1 -> 1.0.0
+            // First strip the instance suffix (_1, _2, etc.)
+            var nodeIdWithoutSuffix = StripInstanceSuffix(NodeId);
+            var atIndex = nodeIdWithoutSuffix.IndexOf('@');
+            return atIndex > 0 && atIndex < nodeIdWithoutSuffix.Length - 1 ? nodeIdWithoutSuffix.Substring(atIndex + 1) : "";
+        }
+    }
+    
+    /// <summary>
+    /// Strips the instance suffix (_1, _2, etc.) from a NodeId.
+    /// Example: case.xxx@1.0.0_1 -> case.xxx@1.0.0
+    /// </summary>
+    public string StripInstanceSuffix(string nodeId)
+    {
+        if (string.IsNullOrEmpty(nodeId))
+            return nodeId;
+        
+        // Check if there's an underscore followed by digits at the end
+        var lastUnderscore = nodeId.LastIndexOf('_');
+        if (lastUnderscore > 0 && lastUnderscore < nodeId.Length - 1)
+        {
+            var suffix = nodeId.Substring(lastUnderscore + 1);
+            // If the suffix is all digits, strip it
+            if (suffix.All(char.IsDigit))
+            {
+                return nodeId.Substring(0, lastUnderscore);
+            }
+        }
+        
+        return nodeId;
+    }
+    
+    /// <summary>
+    /// Gets the instance suffix (_1, _2, etc.) from the NodeId, if any.
+    /// </summary>
+    public string GetInstanceSuffix()
+    {
+        if (string.IsNullOrEmpty(NodeId))
+            return "";
+        
+        var lastUnderscore = NodeId.LastIndexOf('_');
+        if (lastUnderscore > 0 && lastUnderscore < NodeId.Length - 1)
+        {
+            var suffix = NodeId.Substring(lastUnderscore);
+            // If the suffix is underscore + digits, return it
+            if (suffix.Length > 1 && suffix.Substring(1).All(char.IsDigit))
+            {
+                return suffix;
+            }
+        }
+        
+        return "";
+    }
 
     partial void OnPrivilegeChanged(PcTest.Contracts.Privilege value)
     {
         OnPropertyChanged(nameof(IsAdminRequired));
         OnPropertyChanged(nameof(IsAdminPreferred));
+    }
+    
+    partial void OnRefChanged(string value)
+    {
+        OnPropertyChanged(nameof(ParsedCaseId));
+        OnPropertyChanged(nameof(ParsedVersion));
+    }
+    
+    partial void OnNodeIdChanged(string value)
+    {
+        OnPropertyChanged(nameof(ParsedCaseId));
+        OnPropertyChanged(nameof(ParsedVersion));
     }
 }
