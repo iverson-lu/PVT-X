@@ -968,21 +968,20 @@
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="Test Flow" VerticalAlignment="Center"/>
                                                 <!-- Update Available Indicator -->
-                                                <Border Background="#FFF3CD" 
-                                                       BorderBrush="#FFE69C"
-                                                       BorderThickness="1"
-                                                       CornerRadius="12"
-                                                       Padding="8,4"
-                                                       Margin="12,0,0,0"
+                                                <Border Background="Transparent" 
+                                                       BorderBrush="Transparent"
+                                                       BorderThickness="0"
+                                                       Padding="7,3"
+                                                       Margin="10,0,0,0"
                                                        Visibility="{Binding HasUpdatableNodes, Converter={StaticResource BoolToVisibilityConverter}}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <ui:SymbolIcon Symbol="ArrowSync24"
-                                                                      FontSize="12"
-                                                                      Foreground="#856404"
-                                                                      Margin="0,0,4,0"/>
+                                                                      FontSize="11"
+                                                                      Foreground="#6B9080"
+                                                                      Margin="0,0,5,0"/>
                                                         <TextBlock FontSize="11" 
-                                                                  FontWeight="{StaticResource FontWeightSemiBold}"
-                                                                  Foreground="#856404">
+                                                                  FontWeight="Normal"
+                                                                  Foreground="{DynamicResource TextSecondaryBrush}">
                                                             <Run Text="{Binding UpdatableNodesCount, Mode=OneWay}"/>
                                                             <Run Text="update(s) available"/>
                                                         </TextBlock>
@@ -1111,19 +1110,25 @@
                                                                               VerticalAlignment="Center"
                                                                               Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                                 <!-- Update Available Chip -->
-                                                                <Border Background="#FFF3CD" 
-                                                                       BorderBrush="#FFE69C"
-                                                                       BorderThickness="1"
-                                                                       CornerRadius="10"
-                                                                       Padding="6,2"
+                                                                <Border Background="Transparent" 
+                                                                       BorderBrush="Transparent"
+                                                                       BorderThickness="0"
+                                                                       Padding="0"
                                                                        Margin="8,0,0,0"
                                                                        VerticalAlignment="Center"
                                                                        Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                                    <TextBlock FontSize="10" 
-                                                                              FontWeight="{StaticResource FontWeightSemiBold}"
-                                                                              Foreground="#856404"
-                                                                              VerticalAlignment="Center"
-                                                                              Text="{Binding LatestVersion, StringFormat='v{0} available'}"/>
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <ui:SymbolIcon Symbol="ArrowCircleUp20"
+                                                                                      FontSize="12"
+                                                                                      Foreground="#5B8FA3"
+                                                                                      Margin="0,0,4,0"
+                                                                                      VerticalAlignment="Center"/>
+                                                                        <TextBlock FontSize="10.5" 
+                                                                                  FontWeight="Normal"
+                                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                  VerticalAlignment="Center"
+                                                                                  Text="{Binding LatestVersion, StringFormat='v{0} available'}"/>
+                                                                    </StackPanel>
                                                                 </Border>
                                                             </StackPanel>
                                                             
@@ -1783,21 +1788,20 @@
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="Execution Flow" VerticalAlignment="Center"/>
                                                 <!-- Update Available Indicator -->
-                                                <Border Background="#FFF3CD" 
-                                                       BorderBrush="#FFE69C"
-                                                       BorderThickness="1"
-                                                       CornerRadius="12"
-                                                       Padding="8,4"
-                                                       Margin="12,0,0,0"
+                                                <Border Background="Transparent" 
+                                                       BorderBrush="Transparent"
+                                                       BorderThickness="0"
+                                                       Padding="7,3"
+                                                       Margin="10,0,0,0"
                                                        Visibility="{Binding HasUpdatableSuites, Converter={StaticResource BoolToVisibilityConverter}}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <ui:SymbolIcon Symbol="ArrowSync24"
-                                                                      FontSize="12"
-                                                                      Foreground="#856404"
-                                                                      Margin="0,0,4,0"/>
+                                                                      FontSize="11"
+                                                                      Foreground="#6B9080"
+                                                                      Margin="0,0,5,0"/>
                                                         <TextBlock FontSize="11" 
-                                                                  FontWeight="{StaticResource FontWeightSemiBold}"
-                                                                  Foreground="#856404">
+                                                                  FontWeight="Normal"
+                                                                  Foreground="{DynamicResource TextSecondaryBrush}">
                                                             <Run Text="{Binding UpdatableSuitesCount, Mode=OneWay}"/>
                                                             <Run Text="update(s) available"/>
                                                         </TextBlock>
@@ -1926,19 +1930,25 @@
                                                                               VerticalAlignment="Center"
                                                                               Visibility="{Binding IsAdminPreferred, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                                                 <!-- Update Available Chip -->
-                                                                <Border Background="#FFF3CD" 
-                                                                       BorderBrush="#FFE69C"
-                                                                       BorderThickness="1"
-                                                                       CornerRadius="10"
-                                                                       Padding="6,2"
+                                                                <Border Background="Transparent" 
+                                                                       BorderBrush="Transparent"
+                                                                       BorderThickness="0"
+                                                                       Padding="0"
                                                                        Margin="8,0,0,0"
                                                                        VerticalAlignment="Center"
                                                                        Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                                    <TextBlock FontSize="10" 
-                                                                              FontWeight="{StaticResource FontWeightSemiBold}"
-                                                                              Foreground="#856404"
-                                                                              VerticalAlignment="Center"
-                                                                              Text="{Binding LatestVersion, StringFormat='v{0} available'}"/>
+                                                                    <StackPanel Orientation="Horizontal">
+                                                                        <ui:SymbolIcon Symbol="ArrowCircleUp20"
+                                                                                      FontSize="12"
+                                                                                      Foreground="#5B8FA3"
+                                                                                      Margin="0,0,4,0"
+                                                                                      VerticalAlignment="Center"/>
+                                                                        <TextBlock FontSize="10.5" 
+                                                                                  FontWeight="Normal"
+                                                                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                                  VerticalAlignment="Center"
+                                                                                  Text="{Binding LatestVersion, StringFormat='v{0} available'}"/>
+                                                                    </StackPanel>
                                                                 </Border>
                                                             </StackPanel>
                                                             
