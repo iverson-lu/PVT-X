@@ -53,7 +53,7 @@ public sealed class PlanRepository : IPlanRepository
         var plansRoot = settings.ResolvedTestPlansRoot;
         
         // Create folder for the plan
-        var folderName = manifest.Id;
+        var folderName = $"{manifest.Id}@{manifest.Version}";
         var folderPath = Path.Combine(plansRoot, folderName);
         _fileSystemService.CreateDirectory(folderPath);
         

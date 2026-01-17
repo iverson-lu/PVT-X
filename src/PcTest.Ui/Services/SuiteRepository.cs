@@ -54,7 +54,7 @@ public sealed class SuiteRepository : ISuiteRepository
         var suitesRoot = settings.ResolvedTestSuitesRoot;
         
         // Create folder for the suite
-        var folderName = manifest.Id;
+        var folderName = $"{manifest.Id}@{manifest.Version}";
         var folderPath = Path.Combine(suitesRoot, folderName);
         _fileSystemService.CreateDirectory(folderPath);
         
