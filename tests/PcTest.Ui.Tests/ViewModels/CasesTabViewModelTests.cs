@@ -405,4 +405,84 @@ public class CasesTabViewModelTests : IDisposable
             Parameters = new List<ParameterDefinition>()
         };
     }
+
+    [Fact]
+    public async Task ShowLatestVersionOnly_ShouldFilterToLatestVersions()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var discovery = new DiscoveryResult
+        {
+            ResolvedTestCaseRoot = _testTempDir
+        };
+        
+        discovery.TestCases["case.test@1.0.0"] = new()
+        {
+            Manifest = CreateValidManifest("case.test", "1.0.0"),
+            ManifestPath = Path.Combine(_testTempDir, "case1", "test.manifest.json"),
+            FolderPath = Path.Combine(_testTempDir, "case1")
+        };
+        
+        discovery.TestCases["case.test@2.0.0"] = new()
+        {
+            Manifest = CreateValidManifest("case.test", "2.0.0"),
+            ManifestPath = Path.Combine(_testTempDir, "case2", "test.manifest.json"),
+            FolderPath = Path.Combine(_testTempDir, "case2")
+        };
+        
+        discovery.TestCases["case.other@1.0.0"] = new()
+        {
+            Manifest = CreateValidManifest("case.other", "1.0.0"),
+            ManifestPath = Path.Combine(_testTempDir, "case3", "test.manifest.json"),
+            FolderPath = Path.Combine(_testTempDir, "case3")
+        };
+
+        _discoveryMock.Setup(x => x.CurrentDiscovery).Returns(discovery);
+
+        // Act
+        await vm.LoadAsync();
+
+        // Assert - should show only latest versions (2 cases total)
+        vm.ShowLatestVersionOnly.Should().BeTrue(); // Default is true
+        vm.Cases.Should().HaveCount(2);
+        vm.Cases.Should().Contain(c => c.Id == "case.test" && c.Version == "2.0.0");
+        vm.Cases.Should().Contain(c => c.Id == "case.other" && c.Version == "1.0.0");
+        vm.Cases.Should().NotContain(c => c.Version == "1.0.0" && c.Id == "case.test");
+    }
+
+    [Fact]
+    public async Task ShowLatestVersionOnly_WhenDisabled_ShouldShowAllVersions()
+    {
+        // Arrange
+        var vm = CreateViewModel();
+        var discovery = new DiscoveryResult
+        {
+            ResolvedTestCaseRoot = _testTempDir
+        };
+        
+        discovery.TestCases["case.test@1.0.0"] = new()
+        {
+            Manifest = CreateValidManifest("case.test", "1.0.0"),
+            ManifestPath = Path.Combine(_testTempDir, "case1", "test.manifest.json"),
+            FolderPath = Path.Combine(_testTempDir, "case1")
+        };
+        
+        discovery.TestCases["case.test@2.0.0"] = new()
+        {
+            Manifest = CreateValidManifest("case.test", "2.0.0"),
+            ManifestPath = Path.Combine(_testTempDir, "case2", "test.manifest.json"),
+            FolderPath = Path.Combine(_testTempDir, "case2")
+        };
+
+        _discoveryMock.Setup(x => x.CurrentDiscovery).Returns(discovery);
+
+        // Act
+        await vm.LoadAsync();
+        vm.ShowLatestVersionOnly = false; // Disable filter
+
+        // Assert - should show all versions (2 cases total)
+        vm.Cases.Should().HaveCount(2);
+        vm.Cases.Should().Contain(c => c.Id == "case.test" && c.Version == "1.0.0");
+        vm.Cases.Should().Contain(c => c.Id == "case.test" && c.Version == "2.0.0");
+    }
 }

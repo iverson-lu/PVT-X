@@ -32,6 +32,9 @@ public partial class PlansTabViewModel : ViewModelBase
     private string _searchText = string.Empty;
 
     [ObservableProperty]
+    private bool _showLatestVersionOnly = true;
+
+    [ObservableProperty]
     private bool _isEditorVisible;
 
     public PlansTabViewModel(
@@ -96,6 +99,11 @@ public partial class PlansTabViewModel : ViewModelBase
         ApplyFilter();
     }
 
+    partial void OnShowLatestVersionOnlyChanged(bool value)
+    {
+        ApplyFilter();
+    }
+
     private void ApplyFilter()
     {
         Plans.Clear();
@@ -104,6 +112,14 @@ public partial class PlansTabViewModel : ViewModelBase
             : _allPlans.Where(p =>
                 p.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 p.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+        
+        // Apply version filtering if enabled
+        if (ShowLatestVersionOnly)
+        {
+            filtered = filtered
+                .GroupBy(p => p.Id)
+                .Select(g => g.OrderByDescending(p => p.Version).First());
+        }
 
         foreach (var p in filtered)
         {

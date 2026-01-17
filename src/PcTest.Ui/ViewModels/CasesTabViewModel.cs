@@ -31,6 +31,9 @@ public partial class CasesTabViewModel : ViewModelBase
     private string _searchText = string.Empty;
 
     [ObservableProperty]
+    private bool _showLatestVersionOnly = true;
+
+    [ObservableProperty]
     private bool _isDiscovering;
 
     public CasesTabViewModel(
@@ -51,6 +54,12 @@ public partial class CasesTabViewModel : ViewModelBase
         ApplyFilter();
     }
 
+    partial void OnShowLatestVersionOnlyChanged(bool value)
+    {
+        // Re-apply filter when version filter changes
+        ApplyFilter();
+    }
+
     private List<TestCaseItemViewModel> _allCases = new();
 
     private void ApplyFilter()
@@ -62,6 +71,14 @@ public partial class CasesTabViewModel : ViewModelBase
                 c.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 c.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 (c.Tags?.Any(t => t.Contains(SearchText, StringComparison.OrdinalIgnoreCase)) ?? false));
+        
+        // Apply version filtering if enabled
+        if (ShowLatestVersionOnly)
+        {
+            filtered = filtered
+                .GroupBy(c => c.Id)
+                .Select(g => g.OrderByDescending(c => c.Version).First());
+        }
         
         foreach (var c in filtered)
         {

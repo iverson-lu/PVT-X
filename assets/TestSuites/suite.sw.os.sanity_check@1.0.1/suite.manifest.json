@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "suite.sw.os.sanity_check",
+  "name": "Sanity Check",
+  "description": "Sanity testing",
+  "version": "1.0.1",
+  "controls": {
+    "repeat": 1,
+    "maxParallel": 1,
+    "continueOnFailure": false,
+    "retryOnError": 0,
+    "timeoutPolicy": "AbortOnTimeout"
+  },
+  "testCases": [
+    {
+      "nodeId": "case.hw.device.core.health_check@1.0.0",
+      "ref": "Device Health Check",
+      "inputs": {
+        "RestrictedMode": false
+      }
+    },
+    {
+      "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
+      "ref": "Timezone Verification",
+      "inputs": {
+        "ExpectedUtcOffset": "\u002B08:00"
+      }
+    },
+    {
+      "nodeId": "case.hw.memory.core.inventory_check@1.0.0",
+      "ref": "Memory Static Verification",
+      "inputs": {
+        "N_MinTotalGB": "32",
+        "N_MinModuleCount": "2",
+        "E_ExpectedDdrType": "any",
+        "N_MinConfiguredClockMHz": "4800",
+        "B_AllowMixedDdrTypes": false,
+        "B_ExportModulesJson": true
+      }
+    }
+  ]
+}

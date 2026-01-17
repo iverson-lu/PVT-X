@@ -31,6 +31,9 @@ public partial class SuitesTabViewModel : ViewModelBase
     private string _searchText = string.Empty;
 
     [ObservableProperty]
+    private bool _showLatestVersionOnly = true;
+
+    [ObservableProperty]
     private bool _isEditorVisible;
 
     public SuitesTabViewModel(
@@ -93,6 +96,11 @@ public partial class SuitesTabViewModel : ViewModelBase
         ApplyFilter();
     }
 
+    partial void OnShowLatestVersionOnlyChanged(bool value)
+    {
+        ApplyFilter();
+    }
+
     private void ApplyFilter()
     {
         Suites.Clear();
@@ -101,6 +109,14 @@ public partial class SuitesTabViewModel : ViewModelBase
             : _allSuites.Where(s =>
                 s.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 s.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+        
+        // Apply version filtering if enabled
+        if (ShowLatestVersionOnly)
+        {
+            filtered = filtered
+                .GroupBy(s => s.Id)
+                .Select(g => g.OrderByDescending(s => s.Version).First());
+        }
 
         foreach (var s in filtered)
         {
