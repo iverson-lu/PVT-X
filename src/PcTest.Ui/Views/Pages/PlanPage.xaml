@@ -721,34 +721,49 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-                                            <TextBlock Grid.Row="0"
-                                                      Text="{Binding Name}" 
-                                                      FontWeight="{StaticResource FontWeightSemiBold}"
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Grid.Row="1"
-                                                      Text="{Binding Identity}" 
-                                                      Foreground="{DynamicResource TextSecondaryBrush}" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Margin="0,2,0,0"
-                                                      TextTrimming="CharacterEllipsis"/>
-                                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
-                                                <Ellipse Width="4" Height="4" 
-                                                        Fill="{DynamicResource TextTertiaryBrush}"
-                                                        VerticalAlignment="Center"
-                                                        Margin="0,0,6,0"/>
-                                                <TextBlock Foreground="{DynamicResource TextTertiaryBrush}" 
-                                                          FontSize="{StaticResource FontSizeXS}">
-                                                    <Run Text="{Binding NodeCount}"/>
-                                                    <Run Text="nodes"/>
-                                                </TextBlock>
-                                            </StackPanel>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Grid.Column="0">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Grid.Row="0"
+                                                          Text="{Binding Name}" 
+                                                          FontWeight="{StaticResource FontWeightSemiBold}"
+                                                          FontSize="{StaticResource FontSizeM}"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                                          TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Row="1"
+                                                          Text="{Binding Identity}" 
+                                                          Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Margin="0,2,0,0"
+                                                          TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
+                                                    <Ellipse Width="4" Height="4" 
+                                                            Fill="{DynamicResource TextTertiaryBrush}"
+                                                            VerticalAlignment="Center"
+                                                            Margin="0,0,6,0"/>
+                                                    <TextBlock Foreground="{DynamicResource TextTertiaryBrush}" 
+                                                              FontSize="{StaticResource FontSizeXS}">
+                                                        <Run Text="{Binding NodeCount}"/>
+                                                        <Run Text="nodes"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                            <!-- Update indicator -->
+                                            <ui:SymbolIcon Grid.Column="1"
+                                                          Symbol="ArrowSync20"
+                                                          FontSize="14"
+                                                          Foreground="#5B8FA3"
+                                                          VerticalAlignment="Center"
+                                                          Margin="8,0,0,0"
+                                                          ToolTip="Updates available"
+                                                          Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>
@@ -1541,34 +1556,49 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
-                                            <TextBlock Grid.Row="0"
-                                                      Text="{Binding Name}" 
-                                                      FontWeight="{StaticResource FontWeightSemiBold}"
-                                                      FontSize="{StaticResource FontSizeM}"
-                                                      Foreground="{DynamicResource TextPrimaryBrush}"
-                                                      TextTrimming="CharacterEllipsis"/>
-                                            <TextBlock Grid.Row="1"
-                                                      Text="{Binding Identity}" 
-                                                      Foreground="{DynamicResource TextSecondaryBrush}" 
-                                                      FontSize="{StaticResource FontSizeXS}"
-                                                      Margin="0,2,0,0"
-                                                      TextTrimming="CharacterEllipsis"/>
-                                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
-                                                <Ellipse Width="4" Height="4" 
-                                                        Fill="{DynamicResource TextTertiaryBrush}"
-                                                        VerticalAlignment="Center"
-                                                        Margin="0,0,6,0"/>
-                                                <TextBlock Foreground="{DynamicResource TextTertiaryBrush}" 
-                                                          FontSize="{StaticResource FontSizeXS}">
-                                                    <Run Text="{Binding SuiteCount}"/>
-                                                    <Run Text="suites"/>
-                                                </TextBlock>
-                                            </StackPanel>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Grid.Column="0">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Grid.Row="0"
+                                                          Text="{Binding Name}" 
+                                                          FontWeight="{StaticResource FontWeightSemiBold}"
+                                                          FontSize="{StaticResource FontSizeM}"
+                                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                                          TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Row="1"
+                                                          Text="{Binding Identity}" 
+                                                          Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                          FontSize="{StaticResource FontSizeXS}"
+                                                          Margin="0,2,0,0"
+                                                          TextTrimming="CharacterEllipsis"/>
+                                                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,2,0,0">
+                                                    <Ellipse Width="4" Height="4" 
+                                                            Fill="{DynamicResource TextTertiaryBrush}"
+                                                            VerticalAlignment="Center"
+                                                            Margin="0,0,6,0"/>
+                                                    <TextBlock Foreground="{DynamicResource TextTertiaryBrush}" 
+                                                              FontSize="{StaticResource FontSizeXS}">
+                                                        <Run Text="{Binding SuiteCount}"/>
+                                                        <Run Text="suites"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </Grid>
+                                            <!-- Update indicator -->
+                                            <ui:SymbolIcon Grid.Column="1"
+                                                          Symbol="ArrowSync20"
+                                                          FontSize="14"
+                                                          Foreground="#5B8FA3"
+                                                          VerticalAlignment="Center"
+                                                          Margin="8,0,0,0"
+                                                          ToolTip="Updates available"
+                                                          Visibility="{Binding HasUpdates, Converter={StaticResource BoolToVisibilityConverter}}"/>
                                         </Grid>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>

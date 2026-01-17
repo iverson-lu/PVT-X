@@ -3,6 +3,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts.Manifests;
+using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -139,11 +140,15 @@ public partial class PlansTabViewModel : ViewModelBase
 
         try
         {
+            var discovery = _discoveryService.CurrentDiscovery ?? await _discoveryService.DiscoverAsync();
             var plans = await _planRepository.GetAllAsync();
             _allPlans.Clear();
 
             foreach (var plan in plans.OrderBy(p => p.Manifest.Name))
             {
+                var discoveredPlan = discovery.TestPlans.TryGetValue(plan.Identity, out var dp) ? dp : null;
+                var hasUpdates = discoveredPlan != null && CheckForPlanUpdates(discoveredPlan, discovery);
+                
                 _allPlans.Add(new PlanListItemViewModel
                 {
                     Id = plan.Manifest.Id,
@@ -153,7 +158,8 @@ public partial class PlansTabViewModel : ViewModelBase
                     Tags = plan.Manifest.Tags?.ToList() ?? new(),
                     SuiteCount = plan.Manifest.Suites.Count,
                     FolderPath = plan.FolderPath,
-                    ManifestPath = plan.ManifestPath
+                    ManifestPath = plan.ManifestPath,
+                    HasUpdates = hasUpdates
                 });
             }
 
@@ -163,6 +169,42 @@ public partial class PlansTabViewModel : ViewModelBase
         {
             SetBusy(false);
         }
+    }
+    
+    private bool CheckForPlanUpdates(DiscoveredTestPlan plan, DiscoveryResult discovery)
+    {
+        foreach (var suiteRef in plan.Manifest.Suites)
+        {
+            // Parse suite id@version
+            var atIndex = suiteRef.IndexOf('@');
+            if (atIndex <= 0) continue;
+            
+            var suiteId = suiteRef.Substring(0, atIndex);
+            var currentVersion = suiteRef.Substring(atIndex + 1);
+            
+            // Find all versions of this suite
+            var allVersions = discovery.TestSuites.Values
+                .Where(s => s.Manifest.Id.Equals(suiteId, StringComparison.OrdinalIgnoreCase))
+                .Select(s => s.Manifest.Version)
+                .ToList();
+            
+            if (allVersions.Count == 0) continue;
+            
+            // Find the latest version
+            var latestVersion = allVersions
+                .OrderByDescending(v => System.Version.TryParse(v, out var ver) ? ver : new System.Version(0, 0, 0))
+                .First();
+            
+            // Check if update is available
+            if (System.Version.TryParse(currentVersion, out var currentVer) && 
+                System.Version.TryParse(latestVersion, out var latestVer))
+            {
+                if (latestVer > currentVer)
+                    return true;
+            }
+        }
+        
+        return false;
     }
 
     private async void LoadPlanForEditing(PlanListItemViewModel item)
@@ -346,6 +388,7 @@ public partial class PlanListItemViewModel : ViewModelBase
     [ObservableProperty] private int _suiteCount;
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
+    [ObservableProperty] private bool _hasUpdates;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);

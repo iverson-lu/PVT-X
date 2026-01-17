@@ -3,6 +3,7 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using PcTest.Contracts.Manifests;
+using PcTest.Engine.Discovery;
 using PcTest.Ui.Services;
 
 namespace PcTest.Ui.ViewModels;
@@ -142,6 +143,9 @@ public partial class SuitesTabViewModel : ViewModelBase
             
             foreach (var suite in suites.OrderBy(s => s.Manifest.Name))
             {
+                var discoveredSuite = discovery.TestSuites.TryGetValue(suite.Identity, out var ds) ? ds : null;
+                var hasUpdates = discoveredSuite != null && CheckForSuiteUpdates(discoveredSuite, discovery);
+                
                 _allSuites.Add(new SuiteListItemViewModel
                 {
                     Id = suite.Manifest.Id,
@@ -152,7 +156,8 @@ public partial class SuitesTabViewModel : ViewModelBase
                     NodeCount = suite.Manifest.TestCases.Count,
                     Privilege = PrivilegeIndicatorHelper.GetSuitePrivilege(suite.Manifest, discovery),
                     FolderPath = suite.FolderPath,
-                    ManifestPath = suite.ManifestPath
+                    ManifestPath = suite.ManifestPath,
+                    HasUpdates = hasUpdates
                 });
             }
             
@@ -162,6 +167,55 @@ public partial class SuitesTabViewModel : ViewModelBase
         {
             SetBusy(false);
         }
+    }
+    
+    private bool CheckForSuiteUpdates(DiscoveredTestSuite suite, DiscoveryResult discovery)
+    {
+        foreach (var testCase in suite.Manifest.TestCases)
+        {
+            var nodeId = testCase.NodeId;
+            
+            // Strip instance suffix (_1, _2, etc.)
+            var lastUnderscore = nodeId.LastIndexOf('_');
+            if (lastUnderscore > 0 && lastUnderscore < nodeId.Length - 1)
+            {
+                var suffix = nodeId.Substring(lastUnderscore + 1);
+                if (suffix.All(char.IsDigit))
+                {
+                    nodeId = nodeId.Substring(0, lastUnderscore);
+                }
+            }
+            
+            // Parse id@version
+            var atIndex = nodeId.IndexOf('@');
+            if (atIndex <= 0) continue;
+            
+            var caseId = nodeId.Substring(0, atIndex);
+            var currentVersion = nodeId.Substring(atIndex + 1);
+            
+            // Find all versions of this case
+            var allVersions = discovery.TestCases.Values
+                .Where(tc => tc.Manifest.Id.Equals(caseId, StringComparison.OrdinalIgnoreCase))
+                .Select(tc => tc.Manifest.Version)
+                .ToList();
+            
+            if (allVersions.Count == 0) continue;
+            
+            // Find the latest version
+            var latestVersion = allVersions
+                .OrderByDescending(v => System.Version.TryParse(v, out var ver) ? ver : new System.Version(0, 0, 0))
+                .First();
+            
+            // Check if update is available
+            if (System.Version.TryParse(currentVersion, out var currentVer) && 
+                System.Version.TryParse(latestVersion, out var latestVer))
+            {
+                if (latestVer > currentVer)
+                    return true;
+            }
+        }
+        
+        return false;
     }
 
     private async void LoadSuiteForEditing(SuiteListItemViewModel item)
@@ -349,6 +403,7 @@ public partial class SuiteListItemViewModel : ViewModelBase
     [ObservableProperty] private string _folderPath = string.Empty;
     [ObservableProperty] private string _manifestPath = string.Empty;
     [ObservableProperty] private PcTest.Contracts.Privilege _privilege = PcTest.Contracts.Privilege.User;
+    [ObservableProperty] private bool _hasUpdates;
 
     public string Identity => $"{Id}@{Version}";
     public string TagsDisplay => string.Join(", ", Tags);
