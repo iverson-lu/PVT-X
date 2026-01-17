@@ -164,7 +164,7 @@ TestCases/
 ```
 
 Rules:
-- Test Case folder name SHOULD match the manifest id for clarity (e.g., folder `hw.bios.version_check` for id `hw.bios.version_check`).
+- Test Case folder name SHOULD follow `id@version` format matching manifest id and version (e.g., `hw.bios.version_check@1.0.0`). Discovery relies on manifest content, not folder name; this convention aids version distinction and consistency.
 - Test Case folders are immutable during execution.
 - Discovery is read-only.
 - All outputs MUST be written to the Run Folder.
@@ -229,7 +229,7 @@ Rules:
 
 Rules:
 - Test Case identity is id + version.
-- Folder name MUST NOT affect identity.
+- Folder name MUST NOT affect identity (discovery reads manifest, not folder name).
 - parameters define schema and defaults only; no concrete runtime values are stored here.
 - Test Case manifests MUST NOT define environment sections; any such fields MUST be ignored at discovery and execution time.
 

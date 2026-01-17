@@ -91,7 +91,7 @@ plan.sw.smoke_test
   - `case.*`
   - `suite.*`
   - `plan.*`
-- It is **strongly recommended** that directory names match their IDs (not mandatory)
+- Directory names **should follow `id@version` format** (e.g., `case.hw.cpu.core.check@1.0.0`) to match manifest id and version. Discovery reads manifests, not directory names; this convention helps distinguish versions and maintain consistency.
 - IDs are **decoupled from UI display names**
 - IDs must appear in:
   - `test.manifest.json` (meta section)
