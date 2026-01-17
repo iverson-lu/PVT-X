@@ -6,6 +6,13 @@
         "Set-Content": true,
         "dotnet script": true,
         "Rename-Item": true,
-        "dotnet run": true
+        "dotnet run": true,
+        "ForEach-Object": true,
+        "ConvertFrom-Json": true,
+        "ConvertTo-Json": true,
+        "Out-File": true,
+        "Add-Member": true,
+        "New-Item": true,
+        "Out-Null": true
     }
 }

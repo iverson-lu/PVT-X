@@ -194,6 +194,13 @@ public sealed class RunRepository : IRunRepository
             details.EnvJson = await _fileSystemService.ReadAllTextAsync(envPath, cancellationToken);
         }
         
+        // Read controls.json
+        var controlsPath = Path.Combine(runFolder, "controls.json");
+        if (_fileSystemService.FileExists(controlsPath))
+        {
+            details.ControlsJson = await _fileSystemService.ReadAllTextAsync(controlsPath, cancellationToken);
+        }
+        
         return details;
     }
 

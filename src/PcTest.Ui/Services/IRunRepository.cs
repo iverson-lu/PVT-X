@@ -130,6 +130,7 @@ public sealed class RunDetails
     public string? ManifestJson { get; set; }
     public string? ParamsJson { get; set; }
     public string? EnvJson { get; set; }
+    public string? ControlsJson { get; set; }
 }
 
 /// <summary>

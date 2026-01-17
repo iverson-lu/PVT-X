@@ -403,7 +403,16 @@ public partial class HistoryViewModel : ViewModelBase
         {
             var suite = discovery.TestSuites.Values.FirstOrDefault(s =>
                 s.Manifest.Id.Equals(node.Run.SuiteId, StringComparison.OrdinalIgnoreCase));
-            var repeat = Math.Max(1, suite?.Manifest.Controls?.Repeat ?? 1);
+            
+            // Try to get effective repeat from controls.json first (includes plan overrides)
+            var repeat = GetEffectiveRepeatFromControls(node.Run.RunId);
+            
+            // If not found in controls.json, fall back to suite manifest
+            if (repeat == 1)
+            {
+                repeat = Math.Max(1, suite?.Manifest.Controls?.Repeat ?? 1);
+            }
+            
             var caseCount = suite?.Manifest.TestCases?.Count ?? 0;
 
             if (repeat > 1 && caseCount > 0)
@@ -427,6 +436,31 @@ public partial class HistoryViewModel : ViewModelBase
         {
             ApplySuiteIterationsRecursive(child, discovery);
         }
+    }
+
+    private int GetEffectiveRepeatFromControls(string runId)
+    {
+        try
+        {
+            var runFolder = _runRepository.GetRunFolderPath(runId);
+            var controlsPath = Path.Combine(runFolder, "controls.json");
+            
+            if (File.Exists(controlsPath))
+            {
+                var json = File.ReadAllText(controlsPath);
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("repeat", out var repeatProp))
+                {
+                    return Math.Max(1, repeatProp.GetInt32());
+                }
+            }
+        }
+        catch
+        {
+            // Ignore errors and fall back to manifest
+        }
+        
+        return 1;
     }
 
     private void UpdateDepths(RunTreeNodeViewModel node, int depth)
