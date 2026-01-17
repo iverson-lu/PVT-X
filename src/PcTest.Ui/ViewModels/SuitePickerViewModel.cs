@@ -18,6 +18,9 @@ public partial class SuitePickerViewModel : ViewModelBase
     private string _searchText = string.Empty;
 
     [ObservableProperty]
+    private bool _showLatestVersionOnly = true;
+
+    [ObservableProperty]
     private int _selectedCount;
 
     [ObservableProperty]
@@ -71,6 +74,11 @@ public partial class SuitePickerViewModel : ViewModelBase
         ApplyFilter();
     }
 
+    partial void OnShowLatestVersionOnlyChanged(bool value)
+    {
+        ApplyFilter();
+    }
+
     private void ApplyFilter()
     {
         FilteredSuites.Clear();
@@ -81,6 +89,14 @@ public partial class SuitePickerViewModel : ViewModelBase
                 suite.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 suite.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 (suite.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+        
+        // Apply version filtering if enabled
+        if (ShowLatestVersionOnly)
+        {
+            filtered = filtered
+                .GroupBy(suite => suite.Id)
+                .Select(g => g.OrderByDescending(suite => suite.Version).First());
+        }
         
         foreach (var suite in filtered)
         {

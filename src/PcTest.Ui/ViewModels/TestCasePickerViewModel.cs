@@ -20,6 +20,9 @@ public partial class TestCasePickerViewModel : ViewModelBase
     private string _searchText = string.Empty;
 
     [ObservableProperty]
+    private bool _showLatestVersionOnly = true;
+
+    [ObservableProperty]
     private int _selectedCount;
 
     [ObservableProperty]
@@ -74,6 +77,11 @@ public partial class TestCasePickerViewModel : ViewModelBase
         ApplyFilter();
     }
 
+    partial void OnShowLatestVersionOnlyChanged(bool value)
+    {
+        ApplyFilter();
+    }
+
     private void ApplyFilter()
     {
         FilteredTestCases.Clear();
@@ -85,6 +93,14 @@ public partial class TestCasePickerViewModel : ViewModelBase
                 tc.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                 (tc.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
                 (tc.Category?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+        
+        // Apply version filtering if enabled
+        if (ShowLatestVersionOnly)
+        {
+            filtered = filtered
+                .GroupBy(tc => tc.Id)
+                .Select(g => g.OrderByDescending(tc => tc.Version).First());
+        }
         
         foreach (var tc in filtered)
         {

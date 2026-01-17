@@ -10,7 +10,7 @@
     "full"
   ],
   "suites": [
-    "suite.sw.os.sanity_check@1.0.0",
-    "suite.sys.full_test@1.0.0"
+    "suite.sys.full_test@1.0.0",
+    "suite.sw.os.sanity_check@1.0.1"
   ]
 }

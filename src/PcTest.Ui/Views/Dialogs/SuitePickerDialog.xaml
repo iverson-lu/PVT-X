@@ -35,15 +35,88 @@
                    FontWeight="SemiBold"
                    Margin="0,0,0,16"/>
         
-        <!-- Search -->
-        <ui:TextBox Grid.Row="1" 
-                    PlaceholderText="Search test suites..." 
-                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                    Margin="0,0,0,12">
-            <ui:TextBox.Icon>
-                <ui:SymbolIcon Symbol="Search24"/>
-            </ui:TextBox.Icon>
-        </ui:TextBox>
+        <!-- Search and Filter Row -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Search -->
+            <ui:TextBox Grid.Column="0"
+                        PlaceholderText="Search test suites..." 
+                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}">
+                <ui:TextBox.Icon>
+                    <ui:SymbolIcon Symbol="Search24"/>
+                </ui:TextBox.Icon>
+            </ui:TextBox>
+            
+            <!-- Filter Chip (Latest Version) -->
+            <ToggleButton Grid.Column="2"
+                         IsChecked="{Binding ShowLatestVersionOnly}"
+                         Height="28"
+                         Padding="9,0,10,0"
+                         ToolTip="Show only the latest version of each test suite">
+                <ToggleButton.Style>
+                    <Style TargetType="ToggleButton">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}"/>
+                        <Setter Property="FontSize" Value="12"/>
+                        <Setter Property="FontWeight" Value="Normal"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="border"
+                                           Background="{TemplateBinding Background}"
+                                           BorderBrush="{TemplateBinding BorderBrush}"
+                                           BorderThickness="{TemplateBinding BorderThickness}"
+                                           CornerRadius="14"
+                                           Padding="{TemplateBinding Padding}">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <TextBlock x:Name="checkmark" 
+                                                      Text="●" 
+                                                      FontSize="8" 
+                                                      Margin="0,0,5,0"
+                                                      Visibility="Collapsed"
+                                                      VerticalAlignment="Center"
+                                                      Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+                                            <ContentPresenter VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/>
+                                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                            <Setter TargetName="checkmark" Property="Visibility" Value="Visible"/>
+                                        </Trigger>
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsMouseOver" Value="True"/>
+                                                <Condition Property="IsChecked" Value="True"/>
+                                            </MultiTrigger.Conditions>
+                                            <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}"/>
+                                        </MultiTrigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ToggleButton.Style>
+                <TextBlock Text="Latest" FontSize="12"/>
+            </ToggleButton>
+        </Grid>
         
         <!-- Test Suites List -->
         <Border Grid.Row="2" 
