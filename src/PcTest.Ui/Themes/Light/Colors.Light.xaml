@@ -65,6 +65,14 @@
     <Color x:Key="InteractiveHoverColor">#E5E7EB</Color>
     <Color x:Key="InteractivePressedColor">#CED4DA</Color>
     <Color x:Key="InteractiveSelectedColor">#E7F1FF</Color>
+
+    <!-- Plan Selected Colors -->
+    <Color x:Key="PlanSelectedTopColor">#DCE6F3</Color>
+    <Color x:Key="PlanSelectedBottomColor">#C9D6E6</Color>
+    <Color x:Key="PlanSelectedBorderColor">#B8C6D8</Color>
+    <Color x:Key="PlanSelectedInnerBorderColor">#FFFFFF</Color>
+    <Color x:Key="PlanSelectedTopHighlightColor">#66FFFFFF</Color>
+    <Color x:Key="PlanSelectedInnerShadowColor">#1A000000</Color>
     
     <!-- Badge Colors (for parameter type badges) -->
     <Color x:Key="BadgeBackgroundColor">#EFF4FF</Color>
@@ -195,6 +203,16 @@
     <SolidColorBrush x:Key="InteractiveHoverBrush" Color="{StaticResource InteractiveHoverColor}"/>
     <SolidColorBrush x:Key="InteractivePressedBrush" Color="{StaticResource InteractivePressedColor}"/>
     <SolidColorBrush x:Key="InteractiveSelectedBrush" Color="{StaticResource InteractiveSelectedColor}"/>
+
+    <!-- Plan Selected Brushes -->
+    <LinearGradientBrush x:Key="PlanSelectedBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource PlanSelectedTopColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource PlanSelectedBottomColor}" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="PlanSelectedBorderBrush" Color="{StaticResource PlanSelectedBorderColor}"/>
+    <SolidColorBrush x:Key="PlanSelectedInnerBorderBrush" Color="{StaticResource PlanSelectedInnerBorderColor}"/>
+    <SolidColorBrush x:Key="PlanSelectedTopHighlightBrush" Color="{StaticResource PlanSelectedTopHighlightColor}"/>
+    <SolidColorBrush x:Key="PlanSelectedInnerShadowBrush" Color="{StaticResource PlanSelectedInnerShadowColor}"/>
     
     <!-- Badge Brushes -->
     <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="{StaticResource BadgeBackgroundColor}"/>
