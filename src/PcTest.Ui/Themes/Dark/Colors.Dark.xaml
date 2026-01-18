@@ -11,13 +11,19 @@
          These are the semantic color definitions
          ======================================== -->
     
-    <!-- App Background Colors -->
-    <Color x:Key="AppBackgroundColor">#1A1A1A</Color>
-    <Color x:Key="PanelBackgroundColor">#242424</Color>
-    <Color x:Key="SidebarBackgroundColor">#1E1E1E</Color>
-    <Color x:Key="CardBackgroundColor">#2D2D2D</Color>
-    <Color x:Key="CardBackgroundHoverColor">#353535</Color>
-    <Color x:Key="SurfaceAlternateColor">#383838</Color>
+    <!-- App Background Colors (Layered Surface System) -->
+    <Color x:Key="AppBackgroundColor">#161618</Color>
+    <Color x:Key="PanelBackgroundColor">#1E1E20</Color>
+    <Color x:Key="SidebarBackgroundColor">#1A1A1C</Color>
+    <Color x:Key="CardBackgroundColor">#252528</Color>
+    <Color x:Key="CardBackgroundHoverColor">#2C2C30</Color>
+    <Color x:Key="SurfaceAlternateColor">#323236</Color>
+    
+    <!-- Premium Surface Layers (Subtle Elevation) -->
+    <Color x:Key="SurfaceElevatedColor">#2A2A2E</Color>
+    <Color x:Key="SurfaceRaisedColor">#282828</Color>
+    <Color x:Key="SurfaceInsetColor">#1C1C1E</Color>
+    <Color x:Key="SectionHeaderBackgroundColor">#222226</Color>
     
     <!-- Text Colors -->
     <Color x:Key="TextPrimaryColor">#E4E4E4</Color>
@@ -27,11 +33,13 @@
     <Color x:Key="TextOnPrimaryColor">#FFFFFF</Color>
     <Color x:Key="TextOnDarkColor">#FFFFFF</Color>
     
-    <!-- Border Colors -->
-    <Color x:Key="BorderDefaultColor">#404040</Color>
-    <Color x:Key="BorderSubtleColor">#333333</Color>
-    <Color x:Key="BorderStrongColor">#5A5A5A</Color>
-    <Color x:Key="DividerColor">#333333</Color>
+    <!-- Border Colors (Refined for Depth) -->
+    <Color x:Key="BorderDefaultColor">#3A3A3E</Color>
+    <Color x:Key="BorderSubtleColor">#2E2E32</Color>
+    <Color x:Key="BorderStrongColor">#52525A</Color>
+    <Color x:Key="DividerColor">#303034</Color>
+    <Color x:Key="CardBorderColor">#343438</Color>
+    <Color x:Key="CardBorderHoverColor">#424248</Color>
     
     <!-- Primary Brand Colors -->
     <Color x:Key="PrimaryColor">#3B82F6</Color>
@@ -119,7 +127,12 @@
     
     <!-- Overlay/Modal Colors -->
     <Color x:Key="OverlayBackgroundColor">#B0000000</Color>
-    <Color x:Key="ShadowColor">#40000000</Color>
+    <Color x:Key="ShadowColor">#30000000</Color>
+    
+    <!-- Premium Shadow Tokens (For Elevation Layers) -->
+    <Color x:Key="ShadowSoftColor">#18000000</Color>
+    <Color x:Key="ShadowMediumColor">#24000000</Color>
+    <Color x:Key="ShadowStrongColor">#38000000</Color>
     
     <!-- Terminal/Console Colors (same as light - always dark) -->
     <Color x:Key="TerminalBackgroundColor">#0C0C0C</Color>
@@ -148,6 +161,14 @@
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}"/>
     <SolidColorBrush x:Key="CardBackgroundHoverBrush" Color="{StaticResource CardBackgroundHoverColor}"/>
     <SolidColorBrush x:Key="SurfaceAlternateBrush" Color="{StaticResource SurfaceAlternateColor}"/>
+    
+    <!-- Premium Surface Brushes -->
+    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceElevatedColor}"/>
+    <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="{StaticResource SurfaceRaisedColor}"/>
+    <SolidColorBrush x:Key="SurfaceInsetBrush" Color="{StaticResource SurfaceInsetColor}"/>
+    <SolidColorBrush x:Key="SectionHeaderBackgroundBrush" Color="{StaticResource SectionHeaderBackgroundColor}"/>
+    <SolidColorBrush x:Key="CardBorderBrush" Color="{StaticResource CardBorderColor}"/>
+    <SolidColorBrush x:Key="CardBorderHoverBrush" Color="{StaticResource CardBorderHoverColor}"/>
     
     <!-- Text Brushes -->
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}"/>
@@ -238,6 +259,11 @@
     <!-- Overlay Brushes -->
     <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="{StaticResource OverlayBackgroundColor}"/>
     <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}"/>
+    
+    <!-- Premium Shadow Brushes -->
+    <SolidColorBrush x:Key="ShadowSoftBrush" Color="{StaticResource ShadowSoftColor}"/>
+    <SolidColorBrush x:Key="ShadowMediumBrush" Color="{StaticResource ShadowMediumColor}"/>
+    <SolidColorBrush x:Key="ShadowStrongBrush" Color="{StaticResource ShadowStrongColor}"/>
     
     <!-- Terminal Brushes -->
     <SolidColorBrush x:Key="TerminalBackgroundBrush" Color="{StaticResource TerminalBackgroundColor}"/>

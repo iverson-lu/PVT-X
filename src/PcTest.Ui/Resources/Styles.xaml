@@ -143,6 +143,7 @@
     <!-- ========================================
          BADGE STYLE FIX
          Custom template for Secondary appearance
+         Premium low-contrast visual tokens
          ======================================== -->
     
     <Style TargetType="{x:Type ui:Badge}" BasedOn="{StaticResource {x:Type ui:Badge}}">
@@ -154,11 +155,11 @@
                             <Border Background="{DynamicResource BadgeBackgroundBrush}" 
                                     BorderBrush="{DynamicResource BadgeBorderBrush}" 
                                     BorderThickness="1"
-                                    CornerRadius="4"
-                                    Padding="6,2">
+                                    CornerRadius="5"
+                                    Padding="8,3">
                                 <TextBlock Text="{TemplateBinding Content}" 
                                           Foreground="{DynamicResource BadgeTextBrush}"
-                                          FontSize="11"
+                                          FontSize="10"
                                           FontWeight="Medium"
                                           VerticalAlignment="Center"
                                           HorizontalAlignment="Center"/>
@@ -170,7 +171,7 @@
         </Style.Triggers>
     </Style>
     
-    <!-- Required Badge Style (red variant, same style as Secondary) -->
+    <!-- Required Badge Style (red variant - calm, muted tone) -->
     <Style x:Key="RequiredBadgeStyle" TargetType="{x:Type ui:Badge}" BasedOn="{StaticResource {x:Type ui:Badge}}">
         <Setter Property="Template">
             <Setter.Value>
@@ -178,11 +179,11 @@
                     <Border Background="{DynamicResource RequiredBadgeBackgroundBrush}" 
                             BorderBrush="{DynamicResource RequiredBadgeBorderBrush}" 
                             BorderThickness="1"
-                            CornerRadius="4"
-                            Padding="6,2">
+                            CornerRadius="5"
+                            Padding="8,3">
                         <TextBlock Text="{TemplateBinding Content}" 
                                   Foreground="{DynamicResource RequiredBadgeTextBrush}"
-                                  FontSize="11"
+                                  FontSize="10"
                                   FontWeight="Medium"
                                   VerticalAlignment="Center"
                                   HorizontalAlignment="Center"/>
@@ -192,7 +193,7 @@
         </Setter>
     </Style>
     
-    <!-- Tag Badge Style (neutral gray variant) -->
+    <!-- Tag Badge Style (neutral gray - soft, scannable tokens) -->
     <Style x:Key="TagBadgeStyle" TargetType="{x:Type ui:Badge}" BasedOn="{StaticResource {x:Type ui:Badge}}">
         <Setter Property="Template">
             <Setter.Value>
@@ -200,11 +201,55 @@
                     <Border Background="{DynamicResource TagBadgeBackgroundBrush}" 
                             BorderBrush="{DynamicResource TagBadgeBorderBrush}" 
                             BorderThickness="1"
-                            CornerRadius="4"
-                            Padding="6,2">
+                            CornerRadius="5"
+                            Padding="8,3">
                         <TextBlock Text="{TemplateBinding Content}" 
                                   Foreground="{DynamicResource TagBadgeTextBrush}"
-                                  FontSize="11"
+                                  FontSize="10"
+                                  FontWeight="Medium"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Version Badge Style (premium subtle styling) -->
+    <Style x:Key="VersionBadgeStyle" TargetType="{x:Type ui:Badge}" BasedOn="{StaticResource {x:Type ui:Badge}}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ui:Badge}">
+                    <Border Background="{DynamicResource SurfaceInsetBrush}" 
+                            BorderBrush="{DynamicResource BorderSubtleBrush}" 
+                            BorderThickness="1"
+                            CornerRadius="5"
+                            Padding="8,3">
+                        <TextBlock Text="{TemplateBinding Content}" 
+                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                  FontSize="10"
+                                  FontWeight="Medium"
+                                  FontFamily="Consolas, Courier New"
+                                  VerticalAlignment="Center"
+                                  HorizontalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Category Badge Style (muted, classification purpose) -->
+    <Style x:Key="CategoryBadgeStyle" TargetType="{x:Type ui:Badge}" BasedOn="{StaticResource {x:Type ui:Badge}}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ui:Badge}">
+                    <Border Background="{DynamicResource SurfaceAlternateBrush}" 
+                            BorderThickness="0"
+                            CornerRadius="5"
+                            Padding="8,4">
+                        <TextBlock Text="{TemplateBinding Content}" 
+                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                  FontSize="10"
                                   FontWeight="Medium"
                                   VerticalAlignment="Center"
                                   HorizontalAlignment="Center"/>
@@ -216,14 +261,14 @@
     
     <!-- ========================================
          SEGMENTED CONTROL (PILL-STYLE TABS)
-         Modern navigation tabs with rounded container
+         Modern navigation tabs with premium elevation
          ======================================== -->
     
     <Style x:Key="SegmentedControlTabItem" TargetType="{x:Type TabItem}">
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="20,10"/>
+        <Setter Property="Padding" Value="22,11"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -241,7 +286,7 @@
                                         HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                         TextElement.Foreground="{DynamicResource TextSecondaryBrush}"
-                                        TextElement.FontSize="14"
+                                        TextElement.FontSize="13"
                                         TextElement.FontWeight="Normal"/>
                     </Border>
                     
@@ -255,16 +300,16 @@
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource TabHoverBackgroundBrush}"/>
                         </MultiTrigger>
                         
-                        <!-- Selected State -->
+                        <!-- Selected State - Premium elevation -->
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource TabSelectedBackgroundBrush}"/>
                             <Setter TargetName="Border" Property="Effect">
                                 <Setter.Value>
-                                    <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="6" ShadowDepth="1" Direction="270" Opacity="0.25"/>
+                                    <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="10" ShadowDepth="2" Direction="270" Opacity="0.15"/>
                                 </Setter.Value>
                             </Setter>
                             <Setter TargetName="ContentSite" Property="TextElement.Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
-                            <Setter TargetName="ContentSite" Property="TextElement.FontWeight" Value="Medium"/>
+                            <Setter TargetName="ContentSite" Property="TextElement.FontWeight" Value="SemiBold"/>
                         </Trigger>
                         
                         <!-- Selected + Hover -->
@@ -294,13 +339,16 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         
-                        <!-- Tab Headers Container (Segmented Control) -->
+                        <!-- Tab Headers Container (Segmented Control with subtle depth) -->
                         <Border Grid.Row="0"
                                 Background="{DynamicResource TabContainerBackgroundBrush}"
                                 CornerRadius="10"
                                 Padding="4"
                                 HorizontalAlignment="Left"
-                                Margin="0,0,0,8">
+                                Margin="0,0,0,12">
+                            <Border.Effect>
+                                <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="4" ShadowDepth="1" Direction="270" Opacity="0.04"/>
+                            </Border.Effect>
                             <StackPanel Orientation="Horizontal"
                                        IsItemsHost="True"/>
                         </Border>
@@ -412,6 +460,98 @@
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Track" Property="Opacity" Value="0.4"/>
                             <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- ========================================
+         PREMIUM ACTION BUTTON STYLES
+         Solid, reliable, purposeful primary actions
+         ======================================== -->
+    
+    <!-- Primary Action Button - Solid with subtle depth -->
+    <Style x:Key="PremiumPrimaryButtonStyle" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="{DynamicResource PrimaryColor}" 
+                                          BlurRadius="12" 
+                                          ShadowDepth="2" 
+                                          Direction="270" 
+                                          Opacity="0.25"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="{DynamicResource PrimaryColor}" 
+                                          BlurRadius="6" 
+                                          ShadowDepth="1" 
+                                          Direction="270" 
+                                          Opacity="0.15"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Secondary Action Button - Subtle with clear affordance -->
+    <Style x:Key="PremiumSecondaryButtonStyle" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Padding" Value="14,9"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="{DynamicResource ShadowColor}" 
+                                          BlurRadius="8" 
+                                          ShadowDepth="1" 
+                                          Direction="270" 
+                                          Opacity="0.1"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- ========================================
+         PREMIUM LISTBOX ITEM STYLE
+         Refined selection and hover states
+         ======================================== -->
+    
+    <Style x:Key="PremiumListBoxItemStyle" TargetType="ListBoxItem">
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="Margin" Value="4,2"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            CornerRadius="8">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource SelectionIndicatorBrush}"/>
+                            <Setter TargetName="Border" Property="BorderThickness" Value="0,0,0,0"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

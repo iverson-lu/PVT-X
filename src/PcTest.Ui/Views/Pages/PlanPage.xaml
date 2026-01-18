@@ -28,10 +28,10 @@
                     <Border Grid.Column="0" 
                             Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource CardBorderBrush}"
                             BorderThickness="1">
                         <Border.Effect>
-                            <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                            <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                         </Border.Effect>
                         <Grid>
                             <Grid.RowDefinitions>
@@ -240,10 +240,10 @@
                     <Border Grid.Column="2"
                             Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource CardBorderBrush}"
                             BorderThickness="1">
                         <Border.Effect>
-                            <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                            <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                         </Border.Effect>
                         <Grid DataContext="{Binding CasesTab.SelectedCase}">
                             <Grid.RowDefinitions>
@@ -562,10 +562,10 @@
                     <Border Grid.Column="0" 
                             Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource CardBorderBrush}"
                             BorderThickness="1">
                         <Border.Effect>
-                            <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                            <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                         </Border.Effect>
                         <Grid>
                             <Grid.RowDefinitions>
@@ -801,11 +801,11 @@
                     <Border Grid.Column="2"
                             Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource CardBorderBrush}"
                             BorderThickness="1"
                             Visibility="{Binding SuitesTab.IsEditorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Border.Effect>
-                            <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                            <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                         </Border.Effect>
                         <Grid DataContext="{Binding SuitesTab.Editor}">
                             <Grid.RowDefinitions>
@@ -1429,10 +1429,10 @@
                     <Border Grid.Column="0" 
                             Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource CardBorderBrush}"
                             BorderThickness="1">
                         <Border.Effect>
-                            <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                            <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                         </Border.Effect>
                         <Grid>
                             <Grid.RowDefinitions>
@@ -1668,11 +1668,11 @@
                     <Border Grid.Column="2"
                             Background="{DynamicResource CardBackgroundBrush}"
                             CornerRadius="{StaticResource RadiusM}"
-                            BorderBrush="{DynamicResource BorderSubtleBrush}"
+                            BorderBrush="{DynamicResource CardBorderBrush}"
                             BorderThickness="1"
                             Visibility="{Binding PlansTab.IsEditorVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Border.Effect>
-                            <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                            <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                         </Border.Effect>
                         <Grid DataContext="{Binding PlansTab.Editor}">
                             <Grid.RowDefinitions>

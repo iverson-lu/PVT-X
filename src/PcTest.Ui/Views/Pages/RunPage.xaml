@@ -78,13 +78,13 @@
         <!-- Control Bar Card -->
         <Border Grid.Row="0" 
                 Background="{DynamicResource CardBackgroundBrush}" 
-                BorderBrush="{DynamicResource BorderSubtleBrush}" 
+                BorderBrush="{DynamicResource CardBorderBrush}" 
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusM}"
                 Padding="20"
                 Margin="0,0,0,16">
             <Border.Effect>
-                <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
             </Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -197,11 +197,11 @@
             <!-- Execution Pipeline Card -->
             <Border Grid.Column="0" 
                     Background="{DynamicResource CardBackgroundBrush}"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
+                    BorderBrush="{DynamicResource CardBorderBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}">
                 <Border.Effect>
-                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                    <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                 </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -856,11 +856,11 @@
                 <!-- Console Output Card -->
                 <Border Grid.Row="0"
                        Background="{DynamicResource CardBackgroundBrush}"
-                       BorderBrush="{DynamicResource BorderSubtleBrush}"
+                       BorderBrush="{DynamicResource CardBorderBrush}"
                        BorderThickness="1"
                        CornerRadius="{StaticResource RadiusM}">
                     <Border.Effect>
-                        <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                        <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                     </Border.Effect>
                     <Grid>
                         <Grid.RowDefinitions>
@@ -915,11 +915,11 @@
                 <!-- Events Card - Timeline View -->
                 <Border Grid.Row="2"
                        Background="{DynamicResource CardBackgroundBrush}"
-                       BorderBrush="{DynamicResource BorderSubtleBrush}"
+                       BorderBrush="{DynamicResource CardBorderBrush}"
                        BorderThickness="1"
                        CornerRadius="{StaticResource RadiusM}">
                     <Border.Effect>
-                        <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                        <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                     </Border.Effect>
                     <Border.Resources>
                         <!-- Event Timeline Converters -->

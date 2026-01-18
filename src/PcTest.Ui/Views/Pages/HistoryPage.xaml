@@ -21,12 +21,12 @@
         <!-- Filters Card -->
         <Border Grid.Row="0" 
                 Background="{DynamicResource CardBackgroundBrush}" 
-                BorderBrush="{DynamicResource BorderSubtleBrush}" 
+                BorderBrush="{DynamicResource CardBorderBrush}" 
                 BorderThickness="1"
                 CornerRadius="{StaticResource RadiusM}"
                 Padding="20">
             <Border.Effect>
-                <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
             </Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -107,11 +107,11 @@
             <!-- Master: Run Tree List Card -->
             <Border Grid.Column="0"
                    Background="{DynamicResource CardBackgroundBrush}"
-                   BorderBrush="{DynamicResource BorderSubtleBrush}"
+                   BorderBrush="{DynamicResource CardBorderBrush}"
                    BorderThickness="1"
                    CornerRadius="{StaticResource RadiusM}">
                 <Border.Effect>
-                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                    <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                 </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -296,11 +296,11 @@
             <!-- Detail: Run Inspector Card -->
             <Border Grid.Column="2" 
                     Background="{DynamicResource CardBackgroundBrush}"
-                    BorderBrush="{DynamicResource BorderSubtleBrush}" 
+                    BorderBrush="{DynamicResource CardBorderBrush}" 
                     BorderThickness="1"
                     CornerRadius="{StaticResource RadiusM}">
                 <Border.Effect>
-                    <DropShadowEffect Color="#20000000" BlurRadius="8" ShadowDepth="2" Direction="270" Opacity="0.3"/>
+                    <DropShadowEffect Color="{DynamicResource ShadowColor}" BlurRadius="20" ShadowDepth="3" Direction="270" Opacity="0.1"/>
                 </Border.Effect>
                 
                 <Grid>

@@ -96,6 +96,44 @@
     
     
     <!-- ========================================
+         PREMIUM ELEVATION EFFECTS
+         Diffused shadows for depth without heaviness
+         ======================================== -->
+    
+    <!-- Card Elevation - Primary content panels -->
+    <DropShadowEffect x:Key="ElevationCard"
+                      Color="{DynamicResource ShadowColor}"
+                      BlurRadius="16"
+                      ShadowDepth="2"
+                      Direction="270"
+                      Opacity="0.08"/>
+    
+    <!-- Raised Elevation - Interactive/focused cards -->
+    <DropShadowEffect x:Key="ElevationRaised"
+                      Color="{DynamicResource ShadowColor}"
+                      BlurRadius="24"
+                      ShadowDepth="4"
+                      Direction="270"
+                      Opacity="0.12"/>
+    
+    <!-- Subtle Elevation - Section headers, metadata panels -->
+    <DropShadowEffect x:Key="ElevationSubtle"
+                      Color="{DynamicResource ShadowColor}"
+                      BlurRadius="8"
+                      ShadowDepth="1"
+                      Direction="270"
+                      Opacity="0.05"/>
+    
+    <!-- Floating Elevation - Dropdowns, popovers -->
+    <DropShadowEffect x:Key="ElevationFloating"
+                      Color="{DynamicResource ShadowColor}"
+                      BlurRadius="32"
+                      ShadowDepth="8"
+                      Direction="270"
+                      Opacity="0.18"/>
+    
+    
+    <!-- ========================================
          TEXT STYLES
          ======================================== -->
     
@@ -157,11 +195,69 @@
     
     <Style x:Key="CardContainerStyle" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="{StaticResource RadiusM}"/>
         <Setter Property="Padding" Value="{StaticResource CardPadding}"/>
         <Setter Property="Margin" Value="{StaticResource CardMargin}"/>
+        <Setter Property="Effect" Value="{StaticResource ElevationCard}"/>
+    </Style>
+    
+    <!-- Premium Card - Elevated appearance for primary content -->
+    <Style x:Key="PremiumCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusM}"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="{DynamicResource ShadowColor}" 
+                                  BlurRadius="20" 
+                                  ShadowDepth="3" 
+                                  Direction="270" 
+                                  Opacity="0.1"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <!-- Interactive Card - With hover state -->
+    <Style x:Key="InteractiveCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusM}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect Color="{DynamicResource ShadowColor}" 
+                                  BlurRadius="16" 
+                                  ShadowDepth="2" 
+                                  Direction="270" 
+                                  Opacity="0.08"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource CardBorderHoverBrush}"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect Color="{DynamicResource ShadowColor}" 
+                                          BlurRadius="24" 
+                                          ShadowDepth="4" 
+                                          Direction="270" 
+                                          Opacity="0.14"/>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <!-- Section Header Style - For titled section containers -->
+    <Style x:Key="SectionHeaderStyle" TargetType="Border">
+        <Setter Property="Background" Value="{DynamicResource SectionHeaderBackgroundBrush}"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="CornerRadius" Value="8,8,0,0"/>
     </Style>
     
     <!-- ========================================
