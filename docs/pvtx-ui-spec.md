@@ -632,28 +632,32 @@ The UI provides automatic parameter editor rendering based on parameter type met
 
 | Parameter Type | Conditions | Control | Description |
 |---|---|---|---|
+| `json` | `type: "json"` AND `enumValues` non-empty | **CheckBox list** (multi-select) | Multiple checkboxes allowing selection of multiple values from enumValues |
 | `enum` | `EnumValues` list non-empty | **ComboBox** | Dropdown showing enumValues as selectable options |
 | `boolean` | `UiHint` contains "checkbox" (case-insensitive) | **CheckBox** (plain) | Standard CheckBox with label |
 | `boolean` | Default (no specific UiHint) | **CheckBox** (Toggle style) | Custom toggle switch appearance (40×20px track, animated thumb) |
-| Other types | `string`, `int`, `double`, `path`, `json`, etc. | **TextBox** | Standard WPF-UI TextBox with placeholder |
+| Other types | `string`, `int`, `double`, `path`, `json` (without enumValues), etc. | **TextBox** | Standard WPF-UI TextBox with placeholder |
 
 ### 8.3 Implementation Details
 
 #### ParameterViewModel Extensions
+- **IsMultiSelect**: `Type == "json" && EnumValues != null && EnumValues.Count > 0`
 - **IsEnum**: `Type == "enum"`
-- **EnumValues**: Exposes `Definition.EnumValues` list for ComboBox binding
+- **EnumValues**: Exposes `Definition.EnumValues` list for ComboBox/CheckBox binding
 - **IsBoolean**: `Type == "boolean"`
 - **UsePlainCheckBox**: `IsBoolean && UiHint.Contains("checkbox")`
 - **HasError** / **ErrorMessage**: Validation state properties
 
 #### DataTemplateSelector
 - **ParameterEditorTemplateSelector** selects appropriate DataTemplate
+- **MultiSelectEditorTemplate**: ItemsControl with CheckBoxes (for json + enumValues)
 - **EnumEditorTemplate**: ComboBox bound to `EnumValues` and `CurrentValue`
 - **BooleanToggleTemplate**: CheckBox with `ToggleSwitchCheckBoxStyle`
 - **BooleanCheckBoxTemplate**: Standard CheckBox
 - **DefaultEditorTemplate**: WPF-UI TextBox
 
-#### Value Binding
+##MultiSelect: Uses `JsonArrayContainsConverter` (MultiBinding) for IsChecked state and `MultiSelectJsonBehavior` for updates
+- ## Value Binding
 - Enum: `SelectedItem="{Binding CurrentValue, Mode=TwoWay}"`
 - Boolean: `IsChecked="{Binding CurrentValue, Converter={StaticResource BooleanStringConverter}}"`
   - Converter maps `"true"`/`"false"` strings ↔ `bool`

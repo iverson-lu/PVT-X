@@ -206,4 +206,51 @@ public class ConverterTests
         // Assert
         result.Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData("[\"OptionA\", \"OptionB\"]", "OptionA", true)]
+    [InlineData("[\"OptionA\", \"OptionB\"]", "OptionC", false)]
+    [InlineData("[]", "OptionA", false)]
+    [InlineData("", "OptionA", false)]
+    [InlineData(null, "OptionA", false)]
+    public void JsonArrayContainsConverter_ShouldCheck_IfValueInArray(string? jsonArray, string value, bool expected)
+    {
+        // Arrange
+        var converter = new JsonArrayContainsConverter();
+        var values = new object[] { jsonArray!, value };
+
+        // Act
+        var result = converter.Convert(values, typeof(bool), null!, CultureInfo.InvariantCulture);
+
+        // Assert
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void JsonArrayContainsConverter_WithInvalidJson_ShouldReturnFalse()
+    {
+        // Arrange
+        var converter = new JsonArrayContainsConverter();
+        var values = new object[] { "not-valid-json", "OptionA" };
+
+        // Act
+        var result = converter.Convert(values, typeof(bool), null!, CultureInfo.InvariantCulture);
+
+        // Assert
+        result.Should().Be(false);
+    }
+
+    [Fact]
+    public void JsonArrayContainsConverter_WithInsufficientValues_ShouldReturnFalse()
+    {
+        // Arrange
+        var converter = new JsonArrayContainsConverter();
+        var values = new object[] { "[\"OptionA\"]" }; // Only one value
+
+        // Act
+        var result = converter.Convert(values, typeof(bool), null!, CultureInfo.InvariantCulture);
+
+        // Assert
+        result.Should().Be(false);
+    }
 }

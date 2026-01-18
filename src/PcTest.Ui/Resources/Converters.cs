@@ -605,3 +605,39 @@ public class EventLevelToIconConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// MultiBinding converter that checks if a JSON array string contains a specific value.
+/// values[0] = JSON array string (e.g., "[\"OptionA\", \"OptionC\"]")
+/// values[1] = value to check (e.g., "OptionA")
+/// Returns true if the value is in the array.
+/// </summary>
+public class JsonArrayContainsConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values.Length != 2)
+            return false;
+
+        if (values[0] is not string jsonString || string.IsNullOrWhiteSpace(jsonString))
+            return false;
+
+        if (values[1] is not string targetValue)
+            return false;
+
+        try
+        {
+            var array = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonString);
+            return array?.Contains(targetValue) ?? false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

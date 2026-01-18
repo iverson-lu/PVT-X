@@ -487,6 +487,12 @@ public partial class ParameterViewModel : ViewModelBase
     public bool IsEnum => Type == ParameterTypes.Enum;
     public List<string>? EnumValues => _definition.EnumValues;
     
+    // MultiSelect (json + enumValues)
+    public bool IsMultiSelect => 
+        Type == ParameterTypes.Json && 
+        _definition.EnumValues != null && 
+        _definition.EnumValues.Count > 0;
+    
     // Boolean-specific properties
     public bool IsBoolean => Type == ParameterTypes.Boolean;
     public bool UsePlainCheckBox => 

@@ -8,6 +8,7 @@ param(
   [double]$Threshold = 3.14,
   [string]$DataPath = 'data/test-data.txt',
   [string]$Items  = '[1, 2, 3]',
+  [string]$Options = '["OptionA", "OptionC"]',
   [string]$Config = '{"timeout":30,"retry":true}'
 )
 
@@ -64,15 +65,17 @@ finally {
 }
 
 # ----------------------------
-# Step 2: path + json
+# Step 2: path + json + multiselect
 # ----------------------------
 $step2 = New-Step 'verify_path_and_json' 2 'Verify path + JSON params'
 $sw2 = [Diagnostics.Stopwatch]::StartNew()
 try {
-  $itemsData  = $Items  | ConvertFrom-Json -AsHashtable -ErrorAction Stop
-  $configData = $Config | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+  $itemsData   = $Items   | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+  $optionsData = $Options | ConvertFrom-Json -ErrorAction Stop
+  $configData  = $Config  | ConvertFrom-Json -AsHashtable -ErrorAction Stop
 
   if ($itemsData -isnot [object[]])   { throw 'Items must be a JSON array (e.g., [1,2,3]).' }
+  if ($optionsData -isnot [object[]]) { throw 'Options must be a JSON array of strings (e.g., ["OptionA","OptionB"]).' }
   if ($configData -isnot [hashtable]) { throw 'Config must be a JSON object (e.g., {"timeout":30}).' }
 
   $baseDir = $env:PVTX_TESTCASE_PATH ?? $PSScriptRoot
@@ -80,15 +83,17 @@ try {
   $pathExists = Test-Path -LiteralPath $resolvedPath -ErrorAction SilentlyContinue
 
   $step2.metrics = @{
-    items_count   = $itemsData.Count
-    timeout       = $configData.timeout
-    retry         = $configData.retry
-    path_exists   = $pathExists
-    path_resolved = $resolvedPath
+    items_count     = $itemsData.Count
+    selected_count  = $optionsData.Count
+    selected_values = ($optionsData -join ', ')
+    timeout         = $configData.timeout
+    retry           = $configData.retry
+    path_exists     = $pathExists
+    path_resolved   = $resolvedPath
   }
 
   $step2.status = 'PASS'
-  $step2.message = 'Path + JSON OK.'
+  $step2.message = 'Path + JSON + MultiSelect OK.'
 }
 catch {
   Fail-Step $step2 "Path/JSON verification failed: $($_.Exception.Message)" $_
@@ -108,7 +113,8 @@ try {
     'pass'    { $overall='PASS'; $exitCode=0 }
     'fail'    { $overall='FAIL'; $exitCode=1 }
     'timeout' { $overall='FAIL'; $exitCode=1; Start-Sleep 5 }
-    'error'   { throw 'Forced error from Mode=error' }
+    'error'   { multiselect: selected=[$($step2.metrics.selected_values)]")
+  $details.Add("throw 'Forced error from Mode=error' }
   }
 
   $details.Add("basic: message_len=$($step1.metrics.message_length) count=$($step1.metrics.count) enabled=$($step1.metrics.enabled) threshold=$($step1.metrics.threshold)")
@@ -140,6 +146,7 @@ finally {
         enabled   = $Enabled
         threshold = $Threshold
         data_path = $DataPath
+        options   = $Options
         items     = $Items
         config    = $Config
       }

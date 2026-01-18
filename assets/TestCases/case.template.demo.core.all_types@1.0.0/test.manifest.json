@@ -65,6 +65,14 @@
       "help": "JSON array example - parsed by script using ConvertFrom-Json"
     },
     {
+      "name": "Options",
+      "type": "json",
+      "required": false,
+      "enumValues": ["Windows 7", "Windows 8", "Windows 10", "Windows 11"],
+      "default": "[\"Windows 7\", \"Windows 10\"]",
+      "help": "Multi-select example - UI should render as checkboxes when json+enumValues detected"
+    },
+    {
       "name": "Config",
       "type": "json",
       "required": false,

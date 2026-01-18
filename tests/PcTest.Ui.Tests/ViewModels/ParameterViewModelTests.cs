@@ -273,4 +273,64 @@ public class ParameterViewModelTests
         // Assert
         vm.HasError.Should().BeTrue();
     }
+
+    [Fact]
+    public void IsMultiSelect_ShouldBeTrue_WhenTypeIsJsonWithEnumValues()
+    {
+        // Arrange
+        var definition = new ParameterDefinition
+        {
+            Name = "Options",
+            Type = "json",
+            Required = false,
+            EnumValues = new List<string> { "OptionA", "OptionB", "OptionC" }
+        };
+
+        // Act
+        var vm = new ParameterViewModel(definition);
+
+        // Assert
+        vm.IsMultiSelect.Should().BeTrue();
+        vm.EnumValues.Should().NotBeNull();
+        vm.EnumValues.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public void IsMultiSelect_ShouldBeFalse_WhenTypeIsJsonWithoutEnumValues()
+    {
+        // Arrange
+        var definition = new ParameterDefinition
+        {
+            Name = "Config",
+            Type = "json",
+            Required = false,
+            EnumValues = null
+        };
+
+        // Act
+        var vm = new ParameterViewModel(definition);
+
+        // Assert
+        vm.IsMultiSelect.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsMultiSelect_ShouldBeFalse_WhenTypeIsNotJson()
+    {
+        // Arrange
+        var definition = new ParameterDefinition
+        {
+            Name = "Mode",
+            Type = "enum",
+            Required = false,
+            EnumValues = new List<string> { "A", "B" }
+        };
+
+        // Act
+        var vm = new ParameterViewModel(definition);
+
+        // Assert
+        vm.IsMultiSelect.Should().BeFalse();
+        vm.IsEnum.Should().BeTrue();
+    }
 }

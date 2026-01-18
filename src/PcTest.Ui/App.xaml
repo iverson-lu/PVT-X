@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:converters="clr-namespace:PcTest.Ui.Resources"
+             xmlns:behaviors="clr-namespace:PcTest.Ui.Behaviors"
              DispatcherUnhandledException="OnDispatcherUnhandledException">
     <Application.Resources>
         <ResourceDictionary>
@@ -41,10 +42,31 @@
             <converters:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
             <converters:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter"/>
             <converters:BooleanStringConverter x:Key="BooleanStringConverter"/>
+            <converters:JsonArrayContainsConverter x:Key="JsonArrayContainsConverter"/>
             <converters:EventLevelToBrushConverter x:Key="EventLevelToBrushConverter"/>
             
             <!-- Parameter Editor Template Selector (must be in App.xaml, not in merged dictionary) -->
             <converters:ParameterEditorTemplateSelector x:Key="ParameterEditorTemplateSelector">
+                <converters:ParameterEditorTemplateSelector.MultiSelectEditorTemplate>
+                    <DataTemplate>
+                        <ItemsControl ItemsSource="{Binding EnumValues}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding}"
+                                              Margin="0,4,0,0"
+                                              behaviors:MultiSelectJsonBehavior.SyncWithJson="True">
+                                        <CheckBox.IsChecked>
+                                            <MultiBinding Converter="{StaticResource JsonArrayContainsConverter}" Mode="OneWay">
+                                                <Binding RelativeSource="{RelativeSource AncestorType=ItemsControl}" Path="DataContext.CurrentValue"/>
+                                                <Binding />
+                                            </MultiBinding>
+                                        </CheckBox.IsChecked>
+                                    </CheckBox>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DataTemplate>
+                </converters:ParameterEditorTemplateSelector.MultiSelectEditorTemplate>
                 <converters:ParameterEditorTemplateSelector.EnumEditorTemplate>
                     <DataTemplate>
                         <StackPanel>
