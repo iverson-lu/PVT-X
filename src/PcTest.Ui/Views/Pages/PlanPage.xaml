@@ -2121,7 +2121,6 @@
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="*"/>
-                                                            <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
                                                         
                                                         <!-- Repeat -->
@@ -2148,8 +2147,8 @@
                                                                          SpinButtonPlacementMode="Compact"/>
                                                         </StackPanel>
                                                         
-                                                        <!-- Max Parallel -->
-                                                        <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                                                        <!-- Max Parallel (hidden - not implemented) -->
+                                                        <StackPanel Grid.Column="2" Margin="0,0,8,0" Visibility="Collapsed">
                                                             <TextBlock Text="Max Parallel" 
                                                                       FontSize="{StaticResource FontSizeXS}"
                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
@@ -2161,7 +2160,7 @@
                                                         </StackPanel>
                                                         
                                                         <!-- Continue on Failure -->
-                                                        <StackPanel Grid.Column="3">
+                                                        <StackPanel Grid.Column="2">
                                                             <TextBlock Text="Continue on Failure" 
                                                                       FontSize="{StaticResource FontSizeXS}"
                                                                       Foreground="{DynamicResource TextTertiaryBrush}"
