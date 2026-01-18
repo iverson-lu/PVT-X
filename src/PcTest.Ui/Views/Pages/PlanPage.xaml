@@ -1366,37 +1366,43 @@
                                     <Grid IsEnabled="{Binding IsEditing}">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="8"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="16"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
                                         
-                                        <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <!-- Repeat Count -->
+                                        <StackPanel Grid.Column="0">
                                             <TextBlock Text="Repeat Count" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:NumberBox Value="{Binding Repeat}" Minimum="1" Maximum="100"/>
+                                                      Margin="0,0,0,4"/>
+                                            <ui:NumberBox Value="{Binding Repeat, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Minimum="1" 
+                                                         Maximum="100"
+                                                         SpinButtonPlacementMode="Compact"/>
                                         </StackPanel>
                                         
-                                        <StackPanel Grid.Row="0" Grid.Column="2">
+                                        <!-- Retry on Error -->
+                                        <StackPanel Grid.Column="2">
                                             <TextBlock Text="Retry on Error" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
-                                                      Margin="0,0,0,6"/>
-                                            <ui:NumberBox Value="{Binding RetryOnError}" Minimum="0" Maximum="10"/>
+                                                      Margin="0,0,0,4"/>
+                                            <ui:NumberBox Value="{Binding RetryOnError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Minimum="0" 
+                                                         Maximum="10"
+                                                         SpinButtonPlacementMode="Compact"/>
                                         </StackPanel>
                                         
-                                        <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <!-- Continue on Failure -->
+                                        <StackPanel Grid.Column="4">
                                             <TextBlock Text="Continue on Failure" 
                                                       FontSize="{StaticResource FontSizeXS}"
                                                       Foreground="{DynamicResource TextTertiaryBrush}"
                                                       Margin="0,0,0,4"/>
-                                            <ui:ToggleSwitch IsChecked="{Binding ContinueOnFailure}"
+                                            <ui:ToggleSwitch IsChecked="{Binding ContinueOnFailure, Mode=TwoWay}"
                                                             OnContent="Yes"
                                                             OffContent="No"/>
                                         </StackPanel>

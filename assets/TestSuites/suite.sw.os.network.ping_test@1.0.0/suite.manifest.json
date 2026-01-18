@@ -8,7 +8,7 @@
     "network"
   ],
   "controls": {
-    "repeat": 2,
+    "repeat": 1,
     "maxParallel": 1,
     "continueOnFailure": false,
     "retryOnError": 1,
