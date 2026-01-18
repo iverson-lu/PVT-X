@@ -70,10 +70,11 @@
                 </converters:ParameterEditorTemplateSelector.EnumEditorTemplate>
                 <converters:ParameterEditorTemplateSelector.BooleanToggleTemplate>
                     <DataTemplate>
-                        <CheckBox IsChecked="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BooleanStringConverter}}"
-                                  Style="{StaticResource ModernToggleSwitchStyle}"
-                                  ToolTip="{Binding Help}"
-                                  Margin="0,6,0,0"/>
+                        <ui:ToggleSwitch IsChecked="{Binding CurrentValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BooleanStringConverter}}"
+                                        OnContent="Yes"
+                                        OffContent="No"
+                                        ToolTip="{Binding Help}"
+                                        Margin="0,6,0,0"/>
                     </DataTemplate>
                 </converters:ParameterEditorTemplateSelector.BooleanToggleTemplate>
                 <converters:ParameterEditorTemplateSelector.BooleanCheckBoxTemplate>
