@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 # Metadata (case-level only)
 # ----------------------------
 $TestId = "NetworkPingConnectivity"
-$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Artifacts
 $ArtifactsRoot = Join-Path (Get-Location) "artifacts"

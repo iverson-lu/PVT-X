@@ -59,7 +59,7 @@ function Write-Stdout-Compact {
 # Metadata
 # ----------------------------
 $TestId = "TimezoneCheck"
-$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize parameters
 $ExpectedUtcOffset = Normalize-Text $ExpectedUtcOffset

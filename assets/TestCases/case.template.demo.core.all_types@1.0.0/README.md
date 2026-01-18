@@ -1,107 +1,102 @@
 # Template Case - All Types
 
 ## Purpose
-Demonstrates all supported parameter types and structured output format with controllable test outcomes.
+Demonstrates all supported parameter types and validates PVT-X's parameter passing, JSON parsing, and error handling capabilities.
 
-## Test Logic
-- Validates and parses all parameter types (string, int, boolean, double, enum, path, json)
+## What This Test Does
+
+### Step 1: Basic Parameter Validation
+- Validates string, int, boolean, double, and enum parameters
+- Checks min/max constraints and type correctness
+- Captures parameter values in metrics
+
+### Step 2: Path and JSON Parsing
 - Resolves relative path using `PVTX_TESTCASE_PATH` environment variable
-- If path exists and is a file, reads and includes content preview in metrics
-- Executes based on `Mode` parameter:
-  - `pass`: validates all parameters and returns success
-  - `fail`: validates parameters but forces failure
-  - `timeout`: sleeps 150 seconds to trigger timeout
-  - `error`: throws exception to demonstrate error handling
-- Generates structured `report.json` with all parameter values and validation results
+- Parses JSON array (`Items`) and JSON object (`Config`) using `ConvertFrom-Json`
+- Parses multi-select JSON array (`Options`) from enumValues
+- Validates parsed data structure and types
+
+### Step 3: Outcome Control
+Controlled by `Mode` parameter:
+- **pass** → All validations pass, exit code 0
+- **fail** → Validations pass but forces failure, exit code 1
+- **timeout** → Sleeps 150 seconds to demonstrate timeout handling
+- **error** → Throws exception to demonstrate error capture
 
 ## Parameters
-- **Mode** (enum, required, default: "pass"): Controls test outcome (pass | fail | timeout | error)
-- **Message** (string, optional, default: "hello"): String parameter example
-- **Count** (int, optional, default: 42, range: -100 to 100): Integer parameter with min/max constraints
-- **Enabled** (boolean, optional, default: true): Boolean parameter
-- **Threshold** (double, optional, default: 3.14, range: 0 to 9999): Double parameter with unit
-- **DataPath** (path, optional, default: "data/test-data.txt"): Path parameter (relative to test case directory, resolved using `PVTX_TESTCASE_PATH`)
-- **Items** (json, optional, default: "[1, 2, 3]"): JSON array example parsed using ConvertFrom-Json
-- **Config** (json, optional, default: '{"timeout": 30, "retry": true}'): JSON object example parsed using ConvertFrom-Json
 
-## How to Run Manually
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| Mode | enum | ✓ | pass | Test outcome: pass/fail/timeout/error |
+| Message | string | | "hello" | String example |
+| Count | int | | 42 | Integer with range -100 to 100 |
+| Enabled | boolean | | true | Boolean flag |
+| Threshold | double | | 3.14 | Double with range 0 to 9999 |
+| DataPath | path | | "data/test-data.txt" | Relative path example |
+| Items | json | | [1, 2, 3] | JSON array (textarea in UI) |
+| Options | json | | ["Windows 7", "Windows 10"] | Multi-select from 4 Windows versions |
+| Config | json | | {"timeout": 30, "retry": true} | JSON object (textarea in UI) |
+
+## Implementation Highlights
+
+**Parameter Validation:**
 ```powershell
-# Test pass scenario
-pwsh ./run.ps1 -Mode "pass"
-
-# Test fail scenario
-pwsh ./run.ps1 -Mode "fail"
-
-# Test with custom parameters
-pwsh ./run.ps1 -Mode "pass" -Message "custom text" -Count 99 -Enabled $false
-
-# Test path reading (will use PVTX_TESTCASE_PATH if available, otherwise $PSScriptRoot)
-pwsh ./run.ps1 -Mode "pass" -DataPath "data/test-data.txt"
+if ([string]::IsNullOrWhiteSpace($Message)) { throw 'Message cannot be empty.' }
+if ($Count -lt 0) { throw 'Count must be >= 0.' }
 ```
 
-## Expected Result
-- **Success (Mode="pass")**: All parameters validated, path resolved and read (if exists), structured report generated. Exit code 0.
-- **Failure (Mode="fail")**: Parameters validated but test forced to fail. Exit code 1.
-- **Timeout (Mode="timeout")**: Script sleeps 150 seconds, should be terminated by runner. Exit code varies.
-- **Error (Mode="error")**: Exception thrown, error captured in report. Exit code 2.
-    "exit_code": 0|1|2,
-    "counts": { "total": 1, "pass": 0|1, "fail": 0|1, "skip": 0 },
-    "duration_ms": 123
-  },
-  "steps": [ ... ]
-}
+**JSON Parsing:**
+```powershell
+$itemsData = $Items | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+$optionsData = $Options | ConvertFrom-Json -ErrorAction Stop
+$configData = $Config | ConvertFrom-Json -AsHashtable -ErrorAction Stop
 ```
 
-> **Note:** In timeout mode, Runner may kill the process before `finally` executes.
-
-## Console Output Format
-
-Follows NetworkPingConnectivity compact format:
-
-```
-==================================================
-TEST: TemplateCase  RESULT: PASS  EXIT: 0
-UTC:  2026-01-03T12:34:56Z
---------------------------------------------------
-[1/1] Validate all parameters ... PASS
-      mode=pass text='hello' int=42 flag=True double=3.14
-      items_count=3 path_exists=True
---------------------------------------------------
-SUMMARY: total=1 passed=1 failed=0 skipped=0
-==================================================
-MACHINE: overall=PASS exit_code=0
+**Path Resolution:**
+```powershell
+$baseDir = $env:PVTX_TESTCASE_PATH ?? $PSScriptRoot
+$resolvedPath = [IO.Path]::IsPathRooted($DataPath) ? $DataPath : (Join-Path $baseDir $DataPath)
 ```
 
-## Local Quick Test
+**Structured Output:**
+- Uses `report.json` schema v1.0
+- Two steps with timing, status, and metrics
+- Captures all parameter values and validation results
+
+## Quick Test
 
 ```powershell
-# Test pass mode
+# Test pass
 pwsh .\run.ps1 -Mode pass
-echo $LASTEXITCODE
 
 # Test with custom parameters
-pwsh .\run.ps1 -Mode pass -Message "custom" -Count 99 -Enabled:$false
+pwsh .\run.ps1 -Mode pass -Message "test" -Count 99 -Enabled:$false
+
+# Test multi-select options
+pwsh .\run.ps1 -Mode pass -Options '["Windows 10", "Windows 11"]'
 
 # Test fail mode
 pwsh .\run.ps1 -Mode fail
-echo $LASTEXITCODE
 
-# Test error mode
+# Test error handling
 pwsh .\run.ps1 -Mode error
-echo $LASTEXITCODE
-
-# Test timeout mode (will take 150+ seconds or be killed by runner at 120s)
-pwsh .\run.ps1 -Mode timeout
-
-# Test with JSON parameters
-pwsh .\run.ps1 -Mode pass -Items '[10, 20, 30]' -Config '{"max": 100, "enabled": false}'
 ```
 
-## Validation Features
+## Expected Output
 
-- **Type checking** - Validates all PowerShell parameter types
-- **JSON parsing** - Demonstrates ConvertFrom-Json usage
-- **Enum validation** - Ensures E_Mode is one of allowed values
-- **Structured output** - Uses schema v1.0 format with steps
-- **Metrics collection** - Captures parameter values and computed metrics
-- **Error handling** - Proper try/catch/finally with error details in report
+```
+==================================================
+TEST: case.template.demo.core.all_types  RESULT: PASS  EXIT: 0
+UTC:  2026-01-18T12:34:56Z
+--------------------------------------------------
+[1/2] verify_basic_params ................. PASS
+[2/2] verify_path_and_json ................ PASS
+--------------------------------------------------
+basic: message_len=5 count=42 enabled=True threshold=3.14
+multiselect: selected=[Windows 7, Windows 10]
+path+json: items=3 path_exists=True timeout=30 retry=True
+--------------------------------------------------
+SUMMARY: total=2 passed=2 failed=0 skipped=0
+==================================================
+MACHINE: overall=PASS exit_code=0
+```

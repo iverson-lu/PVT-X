@@ -118,7 +118,7 @@ function Append-Raw {
 $TestId  = $env:PVTX_TESTCASE_ID  ?? 'unknown_test'
 $TestName= $env:PVTX_TESTCASE_NAME ?? $TestId
 $TestVer = $env:PVTX_TESTCASE_VER ?? '0.0.0'
-$Ts   = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+$Ts   = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 
 $ArtifactsRoot = Join-Path (Get-Location) 'artifacts'
 Ensure-Dir $ArtifactsRoot

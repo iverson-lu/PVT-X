@@ -18,7 +18,7 @@ $ErrorActionPreference = 'Stop'
 # Metadata
 # ----------------------------
 $TestId = $env:PVTX_TESTCASE_ID ?? 'unknown_test'
-$Ts  = (Get-Date).ToString('yyyy-MM-ddTHH:mm:ssZ')
+$Ts  = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 $Mode = (Normalize-Text $Mode).ToLowerInvariant()
 
 $ArtifactsRoot = Join-Path (Get-Location) 'artifacts'

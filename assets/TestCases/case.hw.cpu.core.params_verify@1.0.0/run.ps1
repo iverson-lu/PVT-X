@@ -66,7 +66,7 @@ function Write-Stdout-Compact {
 # ----------------------------
 $TestId = $env:PVTX_TESTCASE_ID
 if ([string]::IsNullOrWhiteSpace($TestId)) { $TestId = "case.hw.cpu.core.params_verify" }
-$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize string inputs
 $E_Virtualization  = (Normalize-Text $E_Virtualization).ToLowerInvariant()

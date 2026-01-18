@@ -62,7 +62,7 @@ function Write-Stdout-Compact {
 # ----------------------------
 $TestId   = if ($env:PVTX_TESTCASE_ID) { $env:PVTX_TESTCASE_ID } else { "case.hw.storage.core.min_capacity_check" }
 $TestName = if ($env:PVTX_TESTCASE_NAME) { $env:PVTX_TESTCASE_NAME } else { "Storage Minimum Disk Count and Capacity Check" }
-$Ts    = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts    = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize and validate E_Scope
 $E_Scope = Normalize-Text $E_Scope

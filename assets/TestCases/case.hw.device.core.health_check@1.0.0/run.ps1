@@ -48,7 +48,7 @@ function Write-Stdout-Compact {
 # Metadata
 # ----------------------------
 $TestId = "DeviceHealthCheck"
-$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Artifacts
 $ArtifactsRoot = Join-Path (Get-Location) "artifacts"

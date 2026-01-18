@@ -68,7 +68,7 @@ function Convert-SmbiosMemoryTypeToDdrType([int] $SmbiosMemoryType) {
 # ----------------------------
 $TestId = $env:PVTX_TESTCASE_ID
 if ([string]::IsNullOrWhiteSpace($TestId)) { $TestId = "case.hw.memory.core.inventory_check" }
-$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize E_ExpectedDdrType
 $E_ExpectedDdrType = Normalize-Text $E_ExpectedDdrType

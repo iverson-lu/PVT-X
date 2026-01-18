@@ -65,7 +65,7 @@ function Write-Stdout-Compact {
 # Metadata
 # ----------------------------
 $TestId = "EventViewerCheck"
-$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Normalize parameters
 $ProhibitedLevel = Normalize-Text $ProhibitedLevel

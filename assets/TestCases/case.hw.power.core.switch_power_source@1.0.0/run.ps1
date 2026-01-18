@@ -60,7 +60,7 @@ function Write-Stdout-Compact {
 # Metadata
 # ----------------------------
 $TestId = $env:PVTX_TESTCASE_ID
-$Ts  = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
+$Ts  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Default Test ID (fallback if runner did not inject PVTX_TESTCASE_ID)
 $DefaultTestId = "case.hw.power.core.switch_power_source"
