@@ -28,12 +28,17 @@ To create a multi-select parameter, use `type: "json"` combined with `enumValues
 
 ### UI Behavior
 
-When the UI detects a parameter with `type: "json"` and non-empty `enumValues`, it automatically renders a checkbox list instead of a textarea.
+When the UI detects a parameter with `type: "json"` and non-empty `enumValues`, it automatically renders a collapsible multi-select checkbox list.
 
 **Rendering Rules:**
-- `json` + `enumValues` → **Multi-select checkboxes**
+- `json` + `enumValues` → **Collapsible multi-select checkboxes** (Expander)
 - `json` without `enumValues` → **Textarea** (existing behavior)
 - `enum` → **Single-select dropdown** (existing behavior)
+
+**Expander Behavior:**
+- **Header**: Shows parameter name and selection count (e.g., "Options (2 selected)")
+- **Collapsed (default)**: Saves vertical space, shows only one line
+- **Expanded**: Displays full checkbox list with 24px left indent
 
 ### PowerShell Script Usage
 
@@ -75,8 +80,15 @@ This template demonstrates all parameter types including multi-select.
    - MultiBinding converter that checks if a value exists in a JSON array
    - Used for CheckBox `IsChecked` binding
 
-4. **MultiSelectJsonBehavior** (`src/PcTest.Ui/Behaviors/MultiSelectJsonBehavior.cs`)
-   - Attached behavior that synchronizes CheckBox state with JSON array
+4. **JsonArrayCountConverter** (`src/PcTest.Ui/Resources/Converters.cs`)
+   - Converts JSON array to selection count string (e.g., "2 selected")
+   - Used in Expander header to show current selection count
+
+5. **MultiSelectJsonBehavior** (`src/PcTest.Ui/Behaviors/MultiSelectJsonBehavior.cs`)
+   - Attached behavior that synchronizes CheExpander wrapper
+   - Expander header displays parameter name + selection count
+   - Collapsed by default to save vertical space
+   - CheckBox list indented 24px when expanded
    - Updates `CurrentValue` when checkboxes are checked/unchecked
 
 5. **App.xaml Template**

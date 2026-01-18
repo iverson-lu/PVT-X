@@ -641,3 +641,64 @@ public class JsonArrayContainsConverter : IMultiValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converts a JSON array string to the count of selected items.
+/// Used to display "X selected" in multi-select expander header.
+/// </summary>
+public class JsonArrayCountConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string jsonString || string.IsNullOrWhiteSpace(jsonString))
+            return "0 selected";
+
+        try
+        {
+            var array = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonString);
+            var count = array?.Count ?? 0;
+            return count == 1 ? "1 selected" : $"{count} selected";
+        }
+        catch
+        {
+            return "0 selected";
+        }
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Converts a JSON array string to a comma-separated display string.
+/// Used to display selected values in multi-select expander header.
+/// Example: ["OptionA", "OptionC"] -> "OptionA, OptionC"
+/// </summary>
+public class JsonArrayToDisplayConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is not string jsonString || string.IsNullOrWhiteSpace(jsonString))
+            return "(none)";
+
+        try
+        {
+            var array = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonString);
+            if (array == null || array.Count == 0)
+                return "(none)";
+            
+            return string.Join(", ", array);
+        }
+        catch
+        {
+            return "(none)";
+        }
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
