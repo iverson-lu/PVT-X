@@ -632,7 +632,7 @@ The UI provides automatic parameter editor rendering based on parameter type met
 
 | Parameter Type | Conditions | Control | Description |
 |---|---|---|---|
-| `json` | `type: "json"` AND `enumValues` non-empty | **CheckBox list** (multi-select) | Multiple checkboxes allowing selection of multiple values from enumValues |
+| `json` | `uiHint: "multiselect"` OR (`enumValues` non-empty AND no conflicting uiHint) | **CheckBox list** (multi-select) | Multiple checkboxes in collapsible Expander. uiHint "textarea" overrides default multiselect behavior. |
 | `enum` | `EnumValues` list non-empty | **ComboBox** | Dropdown showing enumValues as selectable options |
 | `boolean` | `UiHint` contains "checkbox" (case-insensitive) | **CheckBox** (plain) | Standard CheckBox with label |
 | `boolean` | Default (no specific UiHint) | **CheckBox** (Toggle style) | Custom toggle switch appearance (40×20px track, animated thumb) |
@@ -641,7 +641,7 @@ The UI provides automatic parameter editor rendering based on parameter type met
 ### 8.3 Implementation Details
 
 #### ParameterViewModel Extensions
-- **IsMultiSelect**: `Type == "json" && EnumValues != null && EnumValues.Count > 0`
+- **IsMultiSelect**: Checks uiHint ("multiselect" = true, "textarea" = false), defaults to true if `json` + `enumValues` without uiHint
 - **IsEnum**: `Type == "enum"`
 - **EnumValues**: Exposes `Definition.EnumValues` list for ComboBox/CheckBox binding
 - **IsBoolean**: `Type == "boolean"`

@@ -488,10 +488,28 @@ public partial class ParameterViewModel : ViewModelBase
     public List<string>? EnumValues => _definition.EnumValues;
     
     // MultiSelect (json + enumValues)
-    public bool IsMultiSelect => 
-        Type == ParameterTypes.Json && 
-        _definition.EnumValues != null && 
-        _definition.EnumValues.Count > 0;
+    // Priority: uiHint "multiselect" > uiHint "textarea" (force textbox) > default (enumValues present = multiselect)
+    public bool IsMultiSelect
+    {
+        get
+        {
+            if (Type != ParameterTypes.Json || _definition.EnumValues == null || _definition.EnumValues.Count == 0)
+                return false;
+
+            // Explicit uiHint takes priority
+            if (!string.IsNullOrEmpty(_definition.UiHint))
+            {
+                var hint = _definition.UiHint.ToLowerInvariant();
+                if (hint.Contains("multiselect"))
+                    return true;
+                if (hint.Contains("textarea") || hint.Contains("textbox"))
+                    return false;
+            }
+
+            // Default: json + enumValues = multiselect (backward compatible)
+            return true;
+        }
+    }
     
     // Boolean-specific properties
     public bool IsBoolean => Type == ParameterTypes.Boolean;

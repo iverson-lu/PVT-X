@@ -8,8 +8,22 @@ PVT-X now supports multi-select parameters (checkboxes) for test cases. This all
 
 ### Manifest Definition
 
-To create a multi-select parameter, use `type: "json"` combined with `enumValues`:
+To create a multi-select parameter, use `type: "json"` with `uiHint: "multiselect"` (explicit) or just `enumValues` (implicit):
 
+**Explicit (Recommended):**
+```json
+{
+  "name": "Options",
+  "type": "json",
+  "required": false,
+  "enumValues": ["OptionA", "OptionB", "OptionC", "OptionD"],
+  "default": "[\"OptionA\", \"OptionC\"]",
+  "uiHint": "multiselect",
+  "help": "Select multiple options"
+}
+```
+
+**Implicit (Backward Compatible):**
 ```json
 {
   "name": "Options",
@@ -21,22 +35,40 @@ To create a multi-select parameter, use `type: "json"` combined with `enumValues
 }
 ```
 
+**Force Textarea (Override):**
+```json
+{
+  "name": "Options",
+  "type": "json",
+  "required": false,
+  "enumValues": ["OptionA", "OptionB", "OptionC", "OptionD"],
+  "default": "[\"OptionA\", \"OptionC\"]",
+  "uiHint": "textarea",
+  "help": "JSON array - uses textarea even with enumValues"
+}
+```
+
 **Key Points:**
 - `type` must be `"json"`
-- `enumValues` must be present (list of selectable options)
+- `enumValues` provides the list of selectable options
 - `default` is a JSON array string (e.g., `["OptionA", "OptionC"]`)
+- `uiHint: "multiselect"` - explicit multi-select checkbox list
+- `uiHint: "textarea"` - force textarea even with enumValues
+- No `uiHint` + `enumValues` present - defaults to multi-select (backward compatible)
 
 ### UI Behavior
 
-When the UI detects a parameter with `type: "json"` and non-empty `enumValues`, it automatically renders a collapsible multi-select checkbox list.
+The UI uses `uiHint` to determine rendering mode for json parameters with enumValues:
 
 **Rendering Rules:**
-- `json` + `enumValues` → **Collapsible multi-select checkboxes** (Expander)
-- `json` without `enumValues` → **Textarea** (existing behavior)
-- `enum` → **Single-select dropdown** (existing behavior)
+- `json` + `uiHint: "multiselect"` → **Collapsible multi-select checkboxes** (Expander)
+- `json` + `uiHint: "textarea"` → **Textarea** (even with enumValues)
+- `json` + `enumValues` (no uiHint) → **Collapsible multi-select checkboxes** (default, backward compatible)
+- `json` without `enumValues` → **TextBox**
+- `enum` → **Single-select dropdown**
 
 **Expander Behavior:**
-- **Header**: Shows parameter name and selection count (e.g., "Options (2 selected)")
+- **Header**: Shows selected values (e.g., "[OptionA, OptionC]")
 - **Collapsed (default)**: Saves vertical space, shows only one line
 - **Expanded**: Displays full checkbox list with 24px left indent
 

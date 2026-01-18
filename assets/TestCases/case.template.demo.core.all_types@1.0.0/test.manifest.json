@@ -70,6 +70,7 @@
       "required": false,
       "enumValues": ["Windows 7", "Windows 8", "Windows 10", "Windows 11"],
       "default": "[\"Windows 7\", \"Windows 10\"]",
+      "uiHint": "multiselect",
       "help": "Multi-select example - UI should render as checkboxes when json+enumValues detected"
     },
     {

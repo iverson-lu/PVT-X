@@ -333,4 +333,64 @@ public class ParameterViewModelTests
         vm.IsMultiSelect.Should().BeFalse();
         vm.IsEnum.Should().BeTrue();
     }
+
+    [Fact]
+    public void IsMultiSelect_ShouldBeTrue_WhenUiHintIsMultiselect()
+    {
+        // Arrange
+        var definition = new ParameterDefinition
+        {
+            Name = "Options",
+            Type = "json",
+            Required = false,
+            EnumValues = new List<string> { "A", "B", "C" },
+            UiHint = "multiselect"
+        };
+
+        // Act
+        var vm = new ParameterViewModel(definition);
+
+        // Assert
+        vm.IsMultiSelect.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsMultiSelect_ShouldBeFalse_WhenUiHintIsTextarea()
+    {
+        // Arrange
+        var definition = new ParameterDefinition
+        {
+            Name = "Options",
+            Type = "json",
+            Required = false,
+            EnumValues = new List<string> { "A", "B", "C" },
+            UiHint = "textarea"  // Explicitly use textarea even with enumValues
+        };
+
+        // Act
+        var vm = new ParameterViewModel(definition);
+
+        // Assert
+        vm.IsMultiSelect.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsMultiSelect_ShouldBeTrue_ByDefault_WhenJsonWithEnumValues()
+    {
+        // Arrange - backward compatibility: json + enumValues without uiHint
+        var definition = new ParameterDefinition
+        {
+            Name = "Options",
+            Type = "json",
+            Required = false,
+            EnumValues = new List<string> { "A", "B", "C" }
+            // No uiHint - should default to multiselect
+        };
+
+        // Act
+        var vm = new ParameterViewModel(definition);
+
+        // Assert
+        vm.IsMultiSelect.Should().BeTrue();
+    }
 }
