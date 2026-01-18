@@ -1065,7 +1065,7 @@
                                             </StackPanel>
                                         </Grid>
                                     </ui:CardExpander.Header>
-                                    <Grid IsEnabled="{Binding IsEditing}">
+                                    <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="240"/>
                                             <RowDefinition Height="16"/>
@@ -1204,7 +1204,8 @@
                                                BorderThickness="1"
                                                CornerRadius="8"
                                                DataContext="{Binding SelectedNode}"
-                                               Visibility="{Binding DataContext.SelectedNode, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource NullToVisibilityConverter}}">
+                                               Visibility="{Binding DataContext.SelectedNode, RelativeSource={RelativeSource AncestorType=StackPanel}, Converter={StaticResource NullToVisibilityConverter}}"
+                                               IsEnabled="{Binding DataContext.IsEditing, RelativeSource={RelativeSource AncestorType=StackPanel}}">
                                             <StackPanel>
                                                 <TextBlock Text="Node Configuration"
                                                           FontSize="{StaticResource FontSizeL}"
@@ -1931,9 +1932,9 @@
                                             </StackPanel>
                                         </Grid>
                                     </ui:CardExpander.Header>
-                                    <Grid IsEnabled="{Binding IsEditing}">
+                                    <Grid>
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="200"/>
+                                            <RowDefinition Height="240"/>
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         
@@ -1988,10 +1989,9 @@
                                                             <Grid.RowDefinitions>
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
-                                                                <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
                                                             
-                                                            <Ellipse Grid.Column="0" Grid.RowSpan="3"
+                                                            <Ellipse Grid.Column="0" Grid.Row="0"
                                                                     Width="6" Height="6"
                                                                     Fill="{StaticResource BrandPrimaryBrush}"
                                                                     VerticalAlignment="Center"
@@ -2052,22 +2052,20 @@
                                                                       Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisibilityConverter}}"
                                                                       ToolTip="Update to latest version"/>
                                                             
-                                                            <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2"
-                                                                      Text="{Binding Id}" 
-                                                                      FontSize="{StaticResource FontSizeXS}"
-                                                                      Foreground="{DynamicResource TextSecondaryBrush}"
-                                                                      Margin="0,2,0,0"
-                                                                      TextTrimming="CharacterEllipsis"/>
-                                                            
-                                                            <StackPanel Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,2,0,0">
-                                                                <Ellipse Width="4" Height="4" 
-                                                                        Fill="{DynamicResource TextTertiaryBrush}"
-                                                                        VerticalAlignment="Center"
-                                                                        Margin="0,0,6,0"/>
-                                                                <TextBlock Foreground="{DynamicResource TextTertiaryBrush}" 
-                                                                          FontSize="{StaticResource FontSizeXS}">
+                                                            <StackPanel Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,2,0,0">
+                                                                <TextBlock FontSize="{StaticResource FontSizeXS}"
+                                                                          Foreground="{DynamicResource TextSecondaryBrush}"
+                                                                          TextTrimming="CharacterEllipsis">
+                                                                    <Run Text="{Binding Id, Mode=OneWay}"/>
+                                                                </TextBlock>
+                                                                <TextBlock Text="    [ " 
+                                                                          FontSize="{StaticResource FontSizeXS}"
+                                                                          Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                          Margin="8,0,0,0"/>
+                                                                <TextBlock FontSize="{StaticResource FontSizeXS}"
+                                                                          Foreground="{DynamicResource TextTertiaryBrush}">
                                                                     <Run Text="{Binding CaseCount, Mode=OneWay}"/>
-                                                                    <Run Text="cases"/>
+                                                                    <Run Text=" cases ]"/>
                                                                 </TextBlock>
                                                             </StackPanel>
                                                         </Grid>
@@ -2084,7 +2082,8 @@
                                                CornerRadius="8"
                                                Margin="0,12,0,0"
                                                Padding="16,12"
-                                               Visibility="{Binding SelectedSuiteReference, Converter={StaticResource NullToVisibilityConverter}}">
+                                               Visibility="{Binding SelectedSuiteReference, Converter={StaticResource NullToVisibilityConverter}}"
+                                               IsEnabled="{Binding IsEditing}">
                                             <Grid>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="Auto"/>
