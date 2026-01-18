@@ -1391,9 +1391,15 @@
                                             <ui:NumberBox Value="{Binding RetryOnError}" Minimum="0" Maximum="10"/>
                                         </StackPanel>
                                         
-                                        <CheckBox Grid.Row="2" Grid.Column="0" 
-                                                 Content="Continue on Failure" 
-                                                 IsChecked="{Binding ContinueOnFailure}"/>
+                                        <StackPanel Grid.Row="2" Grid.Column="0">
+                                            <TextBlock Text="Continue on Failure" 
+                                                      FontSize="{StaticResource FontSizeXS}"
+                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                      Margin="0,0,0,4"/>
+                                            <ui:ToggleSwitch IsChecked="{Binding ContinueOnFailure}"
+                                                            OnContent="Yes"
+                                                            OffContent="No"/>
+                                        </StackPanel>
                                     </Grid>
                                 </ui:CardExpander>
                                 </StackPanel>

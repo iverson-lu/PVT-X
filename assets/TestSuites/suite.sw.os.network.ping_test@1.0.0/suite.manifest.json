@@ -11,7 +11,7 @@
     "repeat": 2,
     "maxParallel": 1,
     "continueOnFailure": false,
-    "retryOnError": 0,
+    "retryOnError": 1,
     "timeoutPolicy": "AbortOnTimeout"
   },
   "testCases": [
