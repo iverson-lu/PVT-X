@@ -13,6 +13,8 @@
         "Out-File": true,
         "Add-Member": true,
         "New-Item": true,
-        "Out-Null": true
+        "Out-Null": true,
+        ".\\run.ps1": true,
+        "Set-Location": true
     }
 }

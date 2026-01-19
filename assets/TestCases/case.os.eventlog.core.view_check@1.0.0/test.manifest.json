@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.os.eventlog.core.view_check",
+  "name": "Event View Check",
+  "description": "Checks Windows System and Application Event Logs in a relative time window. Fails on Blocklist matches or when the remaining event count exceeds a threshold. Produces report.json plus CSV summaries.",
+  "version": "1.0.0",
+  "category": "OS",
+  "owner": "PVT-X",
+  "privilege": "AdminPreferred",
+  "timeoutSec": 120,
+  "parameters": [
+    {
+      "name": "WindowMinutes",
+      "type": "int",
+      "required": false,
+      "default": 60,
+      "help": "Relative time window (minutes) to look back from now."
+    },
+    {
+      "name": "LogNames",
+      "type": "json",
+      "required": false,
+      "default": "[\"System\",\"Application\"]",
+      "uiHint": "textarea",
+      "help": "JSON array of log names to query. Only \"System\" and \"Application\" are supported."
+    },
+    {
+      "name": "MinLevel",
+      "type": "enum",
+      "required": false,
+      "default": "Warning",
+      "enumValues": [
+        "Critical",
+        "Error",
+        "Warning",
+        "Information",
+        "None"
+      ],
+      "help": "Minimum event severity to include. None disables level filtering."
+    },
+    {
+      "name": "AllowlistCsv",
+      "type": "path",
+      "required": false,
+      "default": "rules/allowlist.csv",
+      "help": "Allowlist rules CSV (relative to test case directory)."
+    },
+    {
+      "name": "BlocklistCsv",
+      "type": "path",
+      "required": false,
+      "default": "rules/blocklist.csv",
+      "help": "Blocklist rules CSV (relative to test case directory)."
+    },
+    {
+      "name": "FailThreshold",
+      "type": "int",
+      "required": false,
+      "default": 10,
+      "help": "Fail if the count of non-allowlisted events (and not blocklisted) is >= this threshold."
+    },
+    {
+      "name": "MaxEventsPerLog",
+      "type": "int",
+      "required": false,
+      "default": 5000,
+      "help": "Max events to read per log to avoid long runtimes."
+    },
+    {
+      "name": "TruncateMessageChars",
+      "type": "int",
+      "required": false,
+      "default": 300,
+      "help": "Max characters of event message written to outputs (0 = no truncation)."
+    },
+    {
+      "name": "CaptureEventsToFile",
+      "type": "enum",
+      "required": false,
+      "default": "Disable",
+      "enumValues": [
+        "Disable",
+        "Enable"
+      ],
+      "help": "When Enable, writes artifacts/events_detail.csv with all retrieved events."
+    }
+  ],
+  "tags": [
+    "eventlog",
+    "stability",
+    "reliability",
+    "health"
+  ]
+}
