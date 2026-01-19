@@ -6,8 +6,8 @@
   "version": "1.0.0",
   "category": "OS",
   "owner": "PVT-X",
-  "privilege": "AdminPreferred",
-  "timeoutSec": 120,
+  "privilege": "User",
+  "timeoutSec": 60,
   "parameters": [
     {
       "name": "WindowMinutes",
@@ -37,8 +37,7 @@
         "Critical",
         "Error",
         "Warning",
-        "Information",
-        "None"
+        "Information"
       ],
       "help": "Minimum event severity to include. None disables level filtering."
     },
@@ -60,7 +59,7 @@
       "name": "FailThreshold",
       "type": "int",
       "required": false,
-      "default": 10,
+      "default": 1,
       "help": "Fail if the count of non-allowlisted events (and not blocklisted) is >= this threshold."
     },
     {

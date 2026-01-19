@@ -201,16 +201,12 @@ $sw2 = [Diagnostics.Stopwatch]::StartNew()
 
 $allEvents = @()
 $rawCountsByLog = @{}
-$filteredCountsByLog = @{}
 $startTime = $null
 $endTime = $null
 
 try {
   $endTime = Get-Date
   $startTime = $endTime.AddMinutes(-1 * $WindowMinutes)
-
-  $minRank = 99
-  if ($MinLevel -ne 'None') { $minRank = Level-Rank $MinLevel }
 
   $logList = (ConvertFrom-Json -InputObject $LogNames)
 
@@ -222,21 +218,26 @@ try {
       EndTime = $endTime
     }
 
-    $raw = Get-WinEvent -FilterHashtable $fh -ErrorAction Stop
+    $raw = @()
+    try {
+      $raw = Get-WinEvent -FilterHashtable $fh -ErrorAction Stop
+    }
+    catch {
+      # No events found is not an error - it means the log is clean
+      if ($_.Exception.Message -like "*No events were found*") {
+        $raw = @()
+      }
+      else {
+        throw
+      }
+    }
     $rawCountsByLog[$logName] = $raw.Count
 
-    # Apply level filter + cap
-    $selected = @()
+    # Convert all events (no level filter yet - rules need to check all events)
+    # Apply MaxEventsPerLog cap only
+    $count = 0
     foreach ($e in $raw) {
-      $lvl = Convert-LevelName $e
-      if ($MinLevel -eq 'None' -or (Level-Rank $lvl) -le $minRank) {
-        $selected += $e
-      }
-      if ($selected.Count -ge $MaxEventsPerLog) { break }
-    }
-    $filteredCountsByLog[$logName] = $selected.Count
-
-    foreach ($e in $selected) {
+      if ($count -ge $MaxEventsPerLog) { break }
       $lvl = Convert-LevelName $e
       $msg = Truncate-Message -S ([string]$e.Message) -MaxChars $TruncateMessageChars
       $allEvents += [pscustomobject]@{
@@ -248,6 +249,7 @@ try {
         message      = (Normalize-Text $msg)
         record_id    = $e.RecordId
       }
+      $count++
     }
   }
 
@@ -289,6 +291,9 @@ try {
   $blockRules = Read-RulesCsv $blockPath
   $allowRules = Read-RulesCsv $allowPath
 
+  $minRank = 99
+  if ($MinLevel -ne 'None') { $minRank = Level-Rank $MinLevel }
+
   foreach ($evt in $allEvents) {
     $evt | Add-Member -NotePropertyName block_hit -NotePropertyValue $false -Force
     $evt | Add-Member -NotePropertyName block_rule_id -NotePropertyValue '' -Force
@@ -329,7 +334,11 @@ try {
       continue
     }
 
-    $thresholdPool += $evt
+    # Apply MinLevel filter for threshold pool
+    # Events below MinLevel are not counted in threshold pool
+    if ($MinLevel -eq 'None' -or (Level-Rank $evt.level) -le $minRank) {
+      $thresholdPool += $evt
+    }
   }
 
   $poolCount = $thresholdPool.Count
@@ -342,20 +351,21 @@ try {
     allow_hits  = $allowHitCount
     threshold_pool_count = $poolCount
     fail_threshold = $FailThreshold
+    min_level = $MinLevel
   }
 
   if ($blockCount -gt 0) {
     $overall = 'FAIL'
     $exitCode = 1
     $details.Add("Blocklist hit: $blockCount event(s).") | Out-Null
-    $step3.status = 'PASS'
+    $step3.status = 'FAIL'
     $step3.message = 'Blocklist hit detected (overall FAIL).'
   }
   elseif ($poolCount -ge $FailThreshold) {
     $overall = 'FAIL'
     $exitCode = 1
     $details.Add("FailThreshold exceeded: pool=$poolCount threshold=$FailThreshold.") | Out-Null
-    $step3.status = 'PASS'
+    $step3.status = 'FAIL'
     $step3.message = 'Threshold exceeded (overall FAIL).'
   }
   else {
@@ -387,11 +397,11 @@ try {
   $rows = @()
 
   foreach ($k in @('System','Application')) {
-    if ($rawCountsByLog.ContainsKey($k) -or $filteredCountsByLog.ContainsKey($k)) {
+    if ($rawCountsByLog.ContainsKey($k)) {
       $rows += [pscustomobject]@{
         scope = $k
         raw_events = ($rawCountsByLog[$k] ?? 0)
-        selected_events = ($filteredCountsByLog[$k] ?? 0)
+        collected_events = ($allEvents | Where-Object { $_.log_name -eq $k }).Count
         blocklist_hits = ($allEvents | Where-Object { $_.log_name -eq $k -and $_.block_hit }).Count
         allowlist_hits = ($allEvents | Where-Object { $_.log_name -eq $k -and $_.allow_hit }).Count
         threshold_pool = ($thresholdPool | Where-Object { $_.log_name -eq $k }).Count
@@ -402,7 +412,7 @@ try {
   $rows += [pscustomobject]@{
     scope = 'TOTAL'
     raw_events = ($rawCountsByLog.Values | Measure-Object -Sum).Sum
-    selected_events = $allEvents.Count
+    collected_events = $allEvents.Count
     blocklist_hits = ($allEvents | Where-Object { $_.block_hit }).Count
     allowlist_hits = ($allEvents | Where-Object { $_.allow_hit }).Count
     threshold_pool = $thresholdPool.Count
@@ -447,9 +457,9 @@ catch {
 finally {
   $swTotal.Stop()
 
-  $passCount = ($steps | Where-Object status -EQ 'PASS').Count
-  $failCount = ($steps | Where-Object status -EQ 'FAIL').Count
-  $skipCount = ($steps | Where-Object status -EQ 'SKIP').Count
+  $passCount = @($steps | Where-Object { $_.status -eq 'PASS' }).Count
+  $failCount = @($steps | Where-Object { $_.status -eq 'FAIL' }).Count
+  $skipCount = @($steps | Where-Object { $_.status -eq 'SKIP' }).Count
 
   $report = @{
     schema  = @{ version = '1.0' }

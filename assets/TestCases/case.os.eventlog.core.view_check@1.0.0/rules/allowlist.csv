@@ -1,1 +1,2 @@
-rule_id,owner,comment,log,provider,event_id,level,message,match_mode
+rule_id,log,level,provider,event_id,message,match_mode,owner,comment
+AL-001,System,Warning, Microsoft-Windows-DNS-Client ,1014,,,iverson,

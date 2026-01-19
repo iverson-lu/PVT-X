@@ -16,6 +16,7 @@
         "Out-Null": true,
         ".\\run.ps1": true,
         "Set-Location": true,
-        "Import-Module": true
+        "Import-Module": true,
+        "Import-Csv": true
     }
 }
