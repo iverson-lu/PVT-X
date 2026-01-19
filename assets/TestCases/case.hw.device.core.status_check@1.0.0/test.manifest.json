@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.5.0",
-  "id": "case.hw.device.core.health_check",
+  "id": "case.hw.device.core.status_check",
   "name": "Device Manager Status Check",
   "description": "Scans all devices in Device Manager and fails if any device is in an abnormal state (not covered by allowlist).",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "category": "Hardware",
   "owner": "PVT-X",
   "privilege": "User",
