@@ -7,7 +7,7 @@
   "category": "Hardware",
   "owner": "PVT-X",
   "privilege": "User",
-  "timeoutSec": 120,
+  "timeoutSec": 15,
   "parameters": [
     {
       "name": "FailOnStatus",

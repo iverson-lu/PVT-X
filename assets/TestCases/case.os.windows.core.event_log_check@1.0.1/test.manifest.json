@@ -7,7 +7,7 @@
   "category": "OS",
   "owner": "PVT-X",
   "privilege": "User",
-  "timeoutSec": 60,
+  "timeoutSec": 15,
   "parameters": [
     {
       "name": "WindowMinutes",
