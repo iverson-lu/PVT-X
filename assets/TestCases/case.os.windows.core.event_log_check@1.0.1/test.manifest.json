@@ -85,9 +85,7 @@
     }
   ],
   "tags": [
-    "eventlog",
-    "stability",
-    "reliability",
-    "health"
+    "event",
+    "log"
   ]
 }
