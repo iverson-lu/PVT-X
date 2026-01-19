@@ -420,7 +420,24 @@ try {
 
   $rows | Export-Csv -LiteralPath $SummaryCsvPath -NoTypeInformation -Encoding utf8NoBOM
 
-  # events_detail.csv (optional)
+  # failed_events.csv (automatic when FAIL - blocklist hits or threshold exceeded)
+  if ($overall -eq 'FAIL') {
+    $failedCsvPath = Join-Path $ArtifactsRoot 'failed_events.csv'
+    if ($blockCount -gt 0) {
+      # Save blocklist hits with rule info
+      $blockHits |
+        Select-Object rule_id, owner, comment, log_name, level, provider, event_id, time_created, message |
+        Export-Csv -LiteralPath $failedCsvPath -NoTypeInformation -Encoding utf8NoBOM
+    }
+    elseif ($poolCount -ge $FailThreshold) {
+      # Save threshold pool events (no rule info)
+      $thresholdPool |
+        Select-Object log_name, level, provider, event_id, time_created, message |
+        Export-Csv -LiteralPath $failedCsvPath -NoTypeInformation -Encoding utf8NoBOM
+    }
+  }
+
+  # events_detail.csv (optional full event list when CaptureEventsToFile=true)
   if ($CaptureEventsToFile) {
     $allEvents |
       Select-Object time_created, log_name, level, provider, event_id, record_id, block_hit, block_rule_id, allow_hit, allow_rule_id, message |

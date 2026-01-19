@@ -1,2 +1,2 @@
 rule_id,log,level,provider,event_id,message,match_mode,owner,comment
-BL-001,System,Information,Microsoft-Windows-Kernel-General,999,,,iverson,
+BL-001,System,Information,Microsoft-Windows-Kernel-General,17,,,TestTeam,Test block

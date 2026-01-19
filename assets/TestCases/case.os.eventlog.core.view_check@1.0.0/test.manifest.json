@@ -81,7 +81,7 @@
       "type": "boolean",
       "required": false,
       "default": false,
-      "help": "When true, writes artifacts/events_detail.csv with all retrieved events."
+      "help": "When true, writes artifacts/events_detail.csv with all collected events (time window filtered only). Failed events are always saved to artifacts/failed_events.csv on FAIL."
     }
   ],
   "tags": [

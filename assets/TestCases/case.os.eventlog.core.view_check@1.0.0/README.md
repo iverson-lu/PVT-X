@@ -69,7 +69,11 @@ flowchart TD
    - **Allowlist next**: matching events are excluded from threshold counting (checks all collected events).
 3. Apply `MinLevel` filter **only to threshold pool**: remaining events below `MinLevel` are not counted toward threshold.
 4. Count the threshold pool. If `poolCount >= FailThreshold`, the test **FAILS**; otherwise **PASS**.
-5. Always write `artifacts/report.json` and `artifacts/events_summary.csv`. Optionally write `artifacts/events_detail.csv`.
+5. Write artifacts:
+   - `artifacts/report.json` (always)
+   - `artifacts/events_summary.csv` (always)
+   - `artifacts/failed_events.csv` (automatic when FAIL due to blocklist hits)
+   - `artifacts/events_detail.csv` (only when `CaptureEventsToFile=true`)
 
 ## Parameters
 - **WindowMinutes**: Lookback window in minutes.
@@ -80,7 +84,7 @@ flowchart TD
 - **FailThreshold**: Fail if the threshold pool count is >= this value.
 - **MaxEventsPerLog**: Maximum number of events read per log.
 - **TruncateMessageChars**: Max message length written to outputs (0 = no truncation).
-- **CaptureEventsToFile**: `Enable` writes `artifacts/events_detail.csv` with per-event details.
+- **CaptureEventsToFile**: When `true`, writes `artifacts/events_detail.csv` with all collected events from the time window. Failed events (blocklist hits) are automatically saved to `artifacts/failed_events.csv` on FAIL.
 
 ## Rule Files (Allowlist/Blocklist CSV)
 
@@ -146,6 +150,7 @@ pwsh -File .\run.ps1 -WindowMinutes 120 -MinLevel Error -FailThreshold 5 -Captur
 - **FAIL (exit 1)**: Any Blocklist match, or `threshold_pool_count >= FailThreshold`.
 - **ERROR (exit >= 2)**: Script/environment error (e.g., invalid parameters, CSV parse error).
 Artifacts are written to `artifacts/`:
-- `report.json` (required)
+- `report.json` (always)
 - `events_summary.csv` (always)
-- `events_detail.csv` (only when `CaptureEventsToFile=Enable`)
+- `failed_events.csv` (automatic when FAIL due to blocklist hits)
+- `events_detail.csv` (only when `CaptureEventsToFile=true` - full event list from time window)
