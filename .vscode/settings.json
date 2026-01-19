@@ -15,6 +15,7 @@
         "New-Item": true,
         "Out-Null": true,
         ".\\run.ps1": true,
-        "Set-Location": true
+        "Set-Location": true,
+        "Import-Module": true
     }
 }

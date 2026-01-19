@@ -20,9 +20,13 @@
       "name": "LogNames",
       "type": "json",
       "required": false,
-      "default": "[\"System\",\"Application\"]",
-      "uiHint": "textarea",
-      "help": "JSON array of log names to query. Only \"System\" and \"Application\" are supported."
+      "enumValues": [
+        "System",
+        "Application"
+      ],
+      "default": "[\"System\"]",
+      "uiHint": "multiselect",
+      "help": "Log names to query. Select one or more."
     },
     {
       "name": "MinLevel",
@@ -75,14 +79,10 @@
     },
     {
       "name": "CaptureEventsToFile",
-      "type": "enum",
+      "type": "boolean",
       "required": false,
-      "default": "Disable",
-      "enumValues": [
-        "Disable",
-        "Enable"
-      ],
-      "help": "When Enable, writes artifacts/events_detail.csv with all retrieved events."
+      "default": false,
+      "help": "When true, writes artifacts/events_detail.csv with all retrieved events."
     }
   ],
   "tags": [

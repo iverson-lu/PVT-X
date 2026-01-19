@@ -1,6 +1,6 @@
 param(
   [int]$WindowMinutes = 60,
-  [string]$LogNames = '["System","Application"]',
+  [string]$LogNames = '["System"]',
   [ValidateSet('Critical','Error','Warning','Information','None')]
   [string]$MinLevel = 'Warning',
   [string]$AllowlistCsv = 'rules/allowlist.csv',
@@ -8,8 +8,7 @@ param(
   [int]$FailThreshold = 10,
   [int]$MaxEventsPerLog = 5000,
   [int]$TruncateMessageChars = 300,
-  [ValidateSet('Disable','Enable')]
-  [string]$CaptureEventsToFile = 'Disable'
+  [bool]$CaptureEventsToFile = $false
 )
 
 $ErrorActionPreference = 'Stop'
@@ -362,6 +361,7 @@ try {
   else {
     $overall = 'PASS'
     $exitCode = 0
+    $details.Add("All checks passed: events=$($allEvents.Count) pool=$poolCount threshold=$FailThreshold block=$blockCount allow=$allowHitCount") | Out-Null
     $step3.status = 'PASS'
     $step3.message = 'No blocklist hits and threshold not exceeded.'
   }
@@ -411,7 +411,7 @@ try {
   $rows | Export-Csv -LiteralPath $SummaryCsvPath -NoTypeInformation -Encoding utf8NoBOM
 
   # events_detail.csv (optional)
-  if ($CaptureEventsToFile -eq 'Enable') {
+  if ($CaptureEventsToFile) {
     $allEvents |
       Select-Object time_created, log_name, level, provider, event_id, record_id, block_hit, block_rule_id, allow_hit, allow_rule_id, message |
       Export-Csv -LiteralPath $DetailCsvPath -NoTypeInformation -Encoding utf8NoBOM
@@ -419,7 +419,7 @@ try {
 
   $step4.metrics = @{
     summary_csv = $SummaryCsvPath
-    detail_csv  = ($(if ($CaptureEventsToFile -eq 'Enable') { $DetailCsvPath } else { '' }))
+    detail_csv  = ($(if ($CaptureEventsToFile) { $DetailCsvPath } else { '' }))
     block_hits = $blockHits.Count
   }
 
@@ -508,7 +508,7 @@ finally {
     -ExitCode $exitCode `
     -TsUtc $Ts `
     -StepLine ($stepLines -join "`n") `
-    -StepDetails $details.ToArray() `
+    -StepDetails (@() + $details.ToArray()) `
     -Total $steps.Count `
     -Passed $passCount `
     -Failed $failCount `
