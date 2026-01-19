@@ -1,38 +1,93 @@
 {
   "schemaVersion": "1.5.0",
   "id": "case.os.windows.core.event_log_check",
-  "name": "Event Viewer Level Check",
-  "description": "Checks the most recent N events in Event Viewer to ensure none have a specified severity level.",
+  "name": "Event Log Check",
+  "description": "Checks Windows System and Application Event Logs in a relative time window. Fails on Blocklist matches or when the remaining event count exceeds a threshold. Produces report.json plus CSV summaries.",
   "version": "1.0.1",
-  "category": "System",
+  "category": "OS",
   "owner": "PVT-X",
   "privilege": "User",
   "timeoutSec": 60,
   "parameters": [
     {
-      "name": "EventCount",
+      "name": "WindowMinutes",
       "type": "int",
       "required": false,
-      "default": 100,
-      "min": 1,
-      "max": 10000,
-      "help": "Number of recent events to check"
+      "default": 60,
+      "help": "Relative time window (minutes) to look back from now."
     },
     {
-      "name": "ProhibitedLevel",
+      "name": "LogNames",
+      "type": "json",
+      "required": false,
+      "enumValues": [
+        "System",
+        "Application"
+      ],
+      "default": "[\"System\"]",
+      "uiHint": "multiselect",
+      "help": "Log names to query. Select one or more."
+    },
+    {
+      "name": "MinLevel",
       "type": "enum",
       "required": false,
-      "default": "Error",
-      "enumValues": ["Critical", "Error", "Warning", "Information", "Verbose"],
-      "help": "Event level to check for"
+      "default": "Warning",
+      "enumValues": [
+        "Critical",
+        "Error",
+        "Warning",
+        "Information"
+      ],
+      "help": "Minimum event severity to include. None disables level filtering."
     },
     {
-      "name": "LogName",
-      "type": "string",
+      "name": "AllowlistCsv",
+      "type": "path",
       "required": false,
-      "default": "System",
-      "help": "Event log name to check (System, Application, Security, etc.)"
+      "default": "rules/allowlist.csv",
+      "help": "Allowlist rules CSV (relative to test case directory)."
+    },
+    {
+      "name": "BlocklistCsv",
+      "type": "path",
+      "required": false,
+      "default": "rules/blocklist.csv",
+      "help": "Blocklist rules CSV (relative to test case directory)."
+    },
+    {
+      "name": "FailThreshold",
+      "type": "int",
+      "required": false,
+      "default": 1,
+      "help": "Fail if the count of non-allowlisted events (and not blocklisted) is >= this threshold."
+    },
+    {
+      "name": "MaxEventsPerLog",
+      "type": "int",
+      "required": false,
+      "default": 5000,
+      "help": "Max events to read per log to avoid long runtimes."
+    },
+    {
+      "name": "TruncateMessageChars",
+      "type": "int",
+      "required": false,
+      "default": 300,
+      "help": "Max characters of event message written to outputs (0 = no truncation)."
+    },
+    {
+      "name": "CaptureEventsToFile",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "When true, writes artifacts/events_detail.csv with all collected events (time window filtered only). Failed events are always saved to artifacts/failed_events.csv on FAIL."
     }
   ],
-  "tags": ["eventviewer", "system", "logs", "events"]
+  "tags": [
+    "eventlog",
+    "stability",
+    "reliability",
+    "health"
+  ]
 }
