@@ -13,13 +13,6 @@
   },
   "testCases": [
     {
-      "nodeId": "case.hw.device.core.health_check@1.0.0",
-      "ref": "Device Health Check",
-      "inputs": {
-        "RestrictedMode": false
-      }
-    },
-    {
       "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
       "ref": "Timezone Verification",
       "inputs": {

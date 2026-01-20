@@ -205,9 +205,24 @@ Injected automatically by Runner:
 
 Shared PowerShell utilities are maintained under `assets/PowerShell/Modules/` and automatically injected by Runner:
 
-- Common helper modules SHOULD be placed under `assets/PowerShell/Modules/`
+- Common helper modules are placed under `assets/PowerShell/Modules/`
 - Runner computes `PVTX_MODULES_ROOT` from `PVTX_ASSETS_ROOT` and prepends it to `PSModulePath`
-- Test Cases MAY import modules using standard PowerShell syntax: `Import-Module <ModuleName>`
+- Test Cases import modules using standard PowerShell syntax: `Import-Module <ModuleName>`
+
+**Best Practice**:
+- ✅ Use existing shared modules (e.g., `Pvtx.Core`) for common operations
+- ❌ Do NOT create custom helper functions within test cases for reusable logic
+- If a new reusable function is needed, add it to shared modules instead
+
+Example:
+```powershell
+# ✅ Correct - use shared module
+Import-Module Pvtx.Core
+$step = New-Step 'validate' 1 'Validate configuration'
+
+# ❌ Wrong - custom helper in test case
+function New-CustomStep { ... }
+```
 - Modules are auto-discovered; no explicit path specification required
 - Shared modules provide reusable utilities for:
   - Hardware information collection
@@ -284,14 +299,34 @@ exit 0
 
 ---
 
-## 5. Template Positioning
+## 5. PowerShell Best Practices
+
+### 5.1 Array Counting
+
+**Problem**: PowerShell's `Where-Object` returns a single object (not an array) when only one match exists, causing `.Count` to behave incorrectly.
+
+**Solution**: Always wrap filtering expressions in `@()` to force array conversion:
+
+```powershell
+# ❌ Wrong - fails when only 1 match
+$passCount = ($steps | Where-Object { $_.status -eq 'PASS' }).Count
+
+# ✅ Correct - always returns array
+$passCount = @($steps | Where-Object { $_.status -eq 'PASS' }).Count
+```
+
+**Why**: Without `@()`, a single match returns the object itself, and `.Count` may return 1 (the property count) or fail entirely.
+
+---
+
+## 6. Template Positioning
 
 - **TemplateCase**: full-featured reference
 - **TemplateCaseMinimal**: recommended starting point
 
 ---
 
-## 6. Design Principles
+## 7. Design Principles
 
 - ID defines **identity**
 - Manifest defines **structure**

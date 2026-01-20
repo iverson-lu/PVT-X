@@ -42,11 +42,23 @@ Do NOT generate `raw/` or `attachments/` by default.
 ### Script language
 - PowerShell scripts (including comments and output) are **always in English**
 - Keep scripts readable and structured (setup → validation → output)
+- When counting filtered results, always wrap in `@()` to force array conversion:
+  ```powershell
+  # ✅ Correct
+  $passCount = @($steps | Where-Object { $_.status -eq 'PASS' }).Count
+  # ❌ Wrong - fails when single match
+  $passCount = ($steps | Where-Object { $_.status -eq 'PASS' }).Count
+  ```
 
 ### Parameters
 When creating/modifying a case, explicitly list parameters:
 - name, required/optional, type, default
 For complex cases, briefly describe the execution flow and what capability is validated.
+
+### Modules
+- Use existing shared modules from `assets/PowerShell/Modules/` (e.g., `Pvtx.Core`)
+- Do NOT create custom helper functions within test cases
+- Runner automatically injects `PVTX_MODULES_ROOT` into `PSModulePath`
 
 ---
 

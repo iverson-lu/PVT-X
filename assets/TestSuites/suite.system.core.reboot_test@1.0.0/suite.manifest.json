@@ -13,10 +13,12 @@
   },
   "testCases": [
     {
-      "nodeId": "case.hw.device.core.health_check@1.0.0",
-      "ref": "Device Health Check",
+      "nodeId": "case.hw.device.core.status_check@1.0.0",
+      "ref": "Device Status Check",
       "inputs": {
-        "RestrictedMode": false
+        "FailOnStatus": "[\u0022Error\u0022, \u0022DriverMissing\u0022]",
+        "IgnoreDevices": "[{\u0022device_name\u0022: \u0022VB-Audio Virtual Cable\u0022}]",
+        "AlwaysCollectDeviceList": false
       }
     },
     {
@@ -29,10 +31,18 @@
       }
     },
     {
-      "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
-      "ref": "Timezone Verification",
+      "nodeId": "case.os.windows.core.event_log_check@1.0.1",
+      "ref": "Event Log Check",
       "inputs": {
-        "ExpectedUtcOffset": "\u002B08:00"
+        "WindowMinutes": "60",
+        "LogNames": "[\u0022System\u0022]",
+        "MinLevel": "Warning",
+        "AllowlistCsv": "rules/allowlist.csv",
+        "BlocklistCsv": "rules/blocklist.csv",
+        "FailThreshold": "1",
+        "MaxEventsPerLog": "5000",
+        "TruncateMessageChars": "300",
+        "CaptureEventsToFile": false
       }
     }
   ]

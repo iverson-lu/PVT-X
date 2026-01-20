@@ -45,11 +45,15 @@ try {
                 throw 'PVTX_CONTROL_DIR is required for reboot control.'
             }
 
+            # Generate unique RunId for tracking reboot in Event Log
+            $runId = $env:PVTX_RUN_ID ?? (New-Guid).ToString()
+            $reasonWithRunId = "$reason [RunId: $runId]"
+
             # Prepare reboot request payload
             $payload = @{
                 type = 'control.reboot_required'
                 nextPhase = 1
-                reason = $reason
+                reason = $reasonWithRunId
                 reboot = @{ delaySec = $delaySec }
             } | ConvertTo-Json -Depth 5
 
@@ -62,11 +66,12 @@ try {
 
             $step1.metrics = @{
                 delay_sec = $delaySec
-                reason = $reason
+                reason = $reasonWithRunId
+                run_id = $runId
                 control_dir = $controlDir
             }
             $step1.status = 'PASS'
-            $step1.message = "Reboot request written successfully (delay: ${delaySec}s)."
+            $step1.message = "Reboot request written successfully (delay: ${delaySec}s, RunId: $runId)."
         }
         catch {
             $step1.status = 'FAIL'
@@ -94,18 +99,77 @@ try {
         $sw2 = [System.Diagnostics.Stopwatch]::StartNew()
         
         try {
+            $runId = $env:PVTX_RUN_ID ?? ''
             $step2.metrics = @{
                 phase = $phase
-                run_id = $env:PVTX_RUN_ID
+                run_id = $runId
                 verify_reboot_enabled = $verifyReboot
             }
 
-            # TODO: Implement verifyReboot logic when parameter is true
             if ($verifyReboot) {
-                $step2.message = 'Resume successful. verifyReboot enabled but not yet implemented.'
+                $details.Add("verifyReboot: ENABLED - checking Event Log for RunId: $runId")
+                
+                # Verify reboot occurred by checking Windows Event Log
+                $verificationErrors = @()
+                
+                # Get system boot time
+                $os = Get-CimInstance Win32_OperatingSystem
+                $lastBootTime = $os.LastBootUpTime
+                $step2.metrics['last_boot_time'] = $lastBootTime.ToString('yyyy-MM-ddTHH:mm:ssZ')
+                $details.Add("lastBootTime: $lastBootTime")
+                
+                # Search time range: last 10 minutes before boot to now
+                $searchStart = $lastBootTime.AddMinutes(-10)
+                $searchEnd = Get-Date
+                
+                # Check Event ID 1074 (Reboot initiated)
+                $event1074 = Get-WinEvent -FilterHashtable @{
+                    LogName = 'System'
+                    Id = 1074
+                    StartTime = $searchStart
+                    EndTime = $searchEnd
+                } -ErrorAction SilentlyContinue | Where-Object {
+                    $_.Message.Contains("[RunId: $runId]")
+                } | Select-Object -First 1
+                
+                if ($event1074) {
+                    $step2.metrics['event_1074_found'] = $true
+                    $step2.metrics['event_1074_time'] = $event1074.TimeCreated.ToString('yyyy-MM-ddTHH:mm:ssZ')
+                    $details.Add("Event 1074: FOUND at $($event1074.TimeCreated)")
+                } else {
+                    $verificationErrors += "Event ID 1074 with RunId '$runId' not found"
+                    $step2.metrics['event_1074_found'] = $false
+                    $details.Add("Event 1074: NOT FOUND")
+                }
+                
+                # Check Event ID 6005 (EventLog service started = boot completed)
+                $event6005 = Get-WinEvent -FilterHashtable @{
+                    LogName = 'System'
+                    Id = 6005
+                    StartTime = $lastBootTime
+                    EndTime = $searchEnd
+                } -ErrorAction SilentlyContinue | Select-Object -First 1
+                
+                if ($event6005) {
+                    $details.Add("Event 6005: FOUND at $($event6005.TimeCreated)")
+                } else {
+                    $verificationErrors += "Event ID 6005 (boot completion) not found after $lastBootTime"
+                    $step2.metrics['event_6005_found'] = $false
+                    $details.Add("Event 6005: NOT FOUND")
+                    $verificationErrors += "Event ID 6005 (boot completion) not found after $lastBootTime"
+                    $step2.metrics['event_6005_found'] = $false
+                }
+                
+                if ($verificationErrors.Count -gt 0) {
+                    throw ($verificationErrors -join '; ')
+                }
+                
+                $details.Add("verification: PASSED - reboot confirmed via Event Log")
+                $step2.message = "Resume verified: reboot initiated with RunId $runId, boot completed at $lastBootTime."
             }
             else {
-                $step2.message = 'Resume successful.'
+                $details.Add("verifyReboot: DISABLED - skipping Event Log check")
+                $step2.message = 'Resume successful (verification disabled).'
             }
             
             $step2.status = 'PASS'
@@ -139,9 +203,9 @@ catch {
 finally {
     $swTotal.Stop()
 
-    $passCount = ($steps | Where-Object status -EQ 'PASS').Count
-    $failCount = ($steps | Where-Object status -EQ 'FAIL').Count
-    $skipCount = ($steps | Where-Object status -EQ 'SKIP').Count
+    $passCount = @($steps | Where-Object { $_.status -eq 'PASS' }).Count
+    $failCount = @($steps | Where-Object { $_.status -eq 'FAIL' }).Count
+    $skipCount = @($steps | Where-Object { $_.status -eq 'SKIP' }).Count
 
     $report = @{
         schema = @{ version = '1.0' }
