@@ -376,7 +376,7 @@ public static class ResumeTaskScheduler
 
 public static class RebootExecutor
 {
-    public static void RestartMachine(int? delaySec)
+    public static void RestartMachine(int? delaySec, string? reason = null)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -395,6 +395,12 @@ public static class RebootExecutor
         psi.ArgumentList.Add("/t");
         psi.ArgumentList.Add(delay.ToString());
         psi.ArgumentList.Add("/f");
+
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            psi.ArgumentList.Add("/c");
+            psi.ArgumentList.Add(reason);
+        }
 
         ResumeTaskScheduler.RunProcess(psi, "reboot machine");
     }

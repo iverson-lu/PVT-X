@@ -551,7 +551,7 @@ public sealed class PlanOrchestrator
 
         // Top-level plan orchestrator handles reboot/resume scheduling.
         ResumeTaskScheduler.CreateResumeTask(groupRunId, resumeToken, runnerExecutablePath, _runsRoot);
-        RebootExecutor.RestartMachine(rebootInfo?.DelaySec);
+        RebootExecutor.RestartMachine(rebootInfo?.DelaySec, rebootInfo?.Reason);
         Environment.Exit(0);
     }
 
