@@ -13,32 +13,35 @@ This specification targets **PC stability, reliability, and health validation**,
 
 ## 2. Log Scope
 
-The test case shall support checking events from the following logical log scopes:
+The test case supports checking events from the following Windows Event Logs:
 
-- **System**
+- **System** (default)
 - **Application**
-- **Administrative Events** (strongly recommended as default)
-- Optional extended providers or log sets, such as:
-  - Microsoft-Windows-WHEA-Logger
-  - Diagnostics-Performance
 
-> Log scopes are logical definitions; implementation details of underlying channels are out of scope for this spec.
+Logs can be selected individually or combined. Multiple log selection is supported via UI multiselect.
+
+> Future versions may extend support to additional event logs or custom channels.
 
 ---
 
-## 3. Event Level Threshold
+## 3. Event Level Filtering
 
-The test case shall support filtering events by a minimum severity level:
+The test case supports filtering events by minimum severity level (`MinLevel`):
 
 - Critical
 - Error
 - Warning
-- Information
+- Information (default)
 
-Behavior:
+**Filtering Behavior:**
 
-- Only events with severity **greater than or equal to** the configured threshold are considered
-- An empty threshold means no severity filtering
+- **Collection Phase**: ALL events within the time window are collected regardless of MinLevel
+- **Rule Evaluation**: Blocklist and Allowlist rules are evaluated against ALL collected events
+- **Threshold Pool**: MinLevel filter is applied **only** to threshold pool counting
+  - Events below MinLevel are excluded from threshold pool
+  - This ensures low-severity events can still trigger blocklist rules while not counting toward threshold
+
+**Example**: If MinLevel=Error and a blocklist rule matches Information events, the test will still FAIL even though Information events don't count toward the threshold.
 
 ---
 
@@ -55,20 +58,27 @@ Rules are data-driven and independent of test case logic.
 
 ## 5. CSV Rule Schema
 
-Each rule entry shall contain the following fields:
+Each rule entry contains the following fields:
 
-| Field             | Description                                                  |
-| ----------------- | ------------------------------------------------------------ |
-| rule\_id          | Unique rule identifier; recommended prefixes: `ALW-`, `BLK-` |
-| enabled           | Whether the rule is active (`Y` / `N`)                       |
-| log\_names        | Applicable log scopes (comma-separated)                      |
-| level\_min        | Minimum event level for rule applicability (optional)        |
-| provider          | Event provider / source (optional)                           |
-| event\_ids        | Event IDs (comma-separated, optional)                        |
-| message\_contains | Message matching condition                                   |
-| match\_mode       | Message matching mode                                        |
-| owner             | Rule owner (required)                                        |
-| comment           | Rule description and justification (required for allowlist)  |
+| Field        | Required | Description                                                  |
+| ------------ | -------- | ------------------------------------------------------------ |
+| rule\_id    | No       | Unique rule identifier (e.g., `BL-001`, `AL-001`)           |
+| log          | No       | Log name to match: `System` or `Application` (exact match, case-insensitive) |
+| level        | No       | Event level to match: `Critical`, `Error`, `Warning`, `Information` (exact match, case-insensitive) |
+| provider     | No       | Event provider name (exact match, case-insensitive). **Must use full PowerShell provider name** (e.g., `Microsoft-Windows-Kernel-General`, not `Kernel-General`) |
+| event\_id   | No       | Event ID number (exact match)                               |
+| message      | No       | Text to search in event message (matching mode determined by `match_mode`) |
+| match\_mode | No       | How to match `message` field: `contains` (default), `exact`, or `regex` |
+| owner        | No       | Rule owner/team for tracking purposes                        |
+| comment      | No       | Rule description and justification                           |
+
+**Important Notes:**
+
+- All fields are optional (empty = wildcard)
+- **Provider names**: Use `Get-WinEvent` PowerShell provider names, not Event Viewer display names
+  - ✅ Correct: `Microsoft-Windows-Kernel-General`
+  - ❌ Wrong: `Kernel-General`
+  - To find correct name: `Get-WinEvent -LogName System -MaxEvents 1 | Select-Object ProviderName`
 
 ---
 
@@ -95,47 +105,64 @@ Rules:
 
 ## 7. Rule Matching Semantics
 
-An event matches a rule if and only if:
+An event matches a rule if and only if the event satisfies **all non-empty fields** in the rule.
 
-- The rule is enabled
-- The event satisfies **all non-empty conditions** defined by the rule
+**Matching Logic:**
 
-All conditions within a rule are evaluated using **logical AND**.
+- **AND semantics**: All non-empty columns must match
+- **Empty columns**: Act as wildcards (ignored)
+- **Field matching modes**:
+  - `log`, `level`, `provider`, `event_id`: **Exact match** (case-insensitive for text fields)
+  - `message`: Supports flexible matching via `match_mode` (contains/exact/regex)
+- **First match wins**: Rules are evaluated in CSV file order
+
+**Example:**
+```csv
+rule_id,log,level,provider,event_id,message,match_mode,owner,comment
+BL-001,System,,,16,,,,Matches any event_id=16 in System log
+BL-002,,Error,Microsoft-Windows-Disk,,,,,Matches any Error from specific provider
+BL-003,,,,,failed,contains,,Matches any event with "failed" in message
+```
 
 ---
 
 ## 8. Allowlist Behavior
 
 - Events matching an allowlist rule:
-  - Are excluded from further evaluation
-  - Do not participate in blocklist checks or threshold statistics
-- Allowlist rules must clearly document the reason for exclusion in `comment`
+  - Are **not counted** toward threshold pool
+  - Are **not** evaluated against blocklist (blocklist has higher priority)
+  - Are marked with `allow_hit=true` and `allow_rule_id` in detailed output
+- Allowlist evaluation occurs **after** blocklist evaluation
+- Best practice: Document reason for exclusion in `comment` field
 
 ---
 
 ## 9. Blocklist (Hard Fail) Behavior
 
 - Events matching a blocklist rule:
-  - Cause the test result to be **Fail**
-  - Must still be recorded and reported for traceability
-- Blocklist evaluation has the **highest priority**
+  - Cause the test result to be **FAIL** immediately
+  - Are marked with `block_hit=true` and `block_rule_id` in output
+  - Are automatically saved to `artifacts/failed_events.csv` with rule metadata
+- Blocklist evaluation has the **highest priority** (evaluated before allowlist)
+- Any blocklist match causes FAIL regardless of MinLevel filter or threshold settings
 
 ---
 
 ## 10. Threshold-Based Evaluation
 
-The test case shall support evaluating event frequency trends, including:
+After blocklist and allowlist evaluation, remaining events form the **threshold pool**.
 
-- Aggregation of identical events (e.g., same Provider + Event ID)
-- Configurable thresholds such as:
-  - Occurrence count ≥ N → Fail
-  - Occurrence count ≥ M → Warn
+**Threshold Pool Rules:**
 
-Threshold evaluation applies only to events that:
+- Includes only events that:
+  - Are **not** blocklist matches
+  - Are **not** allowlist matches
+  - Meet or exceed `MinLevel` severity filter
+- Configurable threshold: `FailThreshold` (default: 1)
+  - If `threshold_pool_count >= FailThreshold` → **FAIL**
+  - Events in threshold pool are automatically saved to `artifacts/failed_events.csv`
 
-- Pass severity filtering
-- Are not allowlisted
-- Do not trigger blocklist rules
+**Note**: Current implementation supports FAIL only (no WARN threshold).
 
 ---
 
@@ -143,35 +170,69 @@ Threshold evaluation applies only to events that:
 
 Test result determination follows this priority order:
 
-1. Blocklist match → **Fail**
-2. Threshold-based failure → **Fail**
-3. Threshold-based warning → **Warn**
-4. No violations → **Pass**
+1. Any blocklist match → **FAIL** (exit code 1)
+2. Threshold pool count >= FailThreshold → **FAIL** (exit code 1)
+3. No violations → **PASS** (exit code 0)
+4. Script/environment error → **ERROR** (exit code >= 2)
+
+**Note**: Current implementation does not support WARN result state.
 
 ---
 
-## 12. Reporting and Traceability Requirements
+## 12. Output Artifacts
 
-The test output shall include at minimum:
+The test produces the following artifacts in `artifacts/` directory:
 
-- Effective time window used for evaluation
-- Triggered rules (rule\_id, owner, comment)
-- Summary of events leading to Fail or Warn
-- Event details, including:
-  - Timestamp
-  - Severity level
-  - Log scope
-  - Provider
-  - Event ID
-  - Message (may be truncated)
+### Always Generated:
+
+1. **report.json** - Structured test result with:
+   - Test metadata (name, version, timestamp, duration)
+   - Step-by-step execution details
+   - Metrics: total events, blocklist hits, allowlist hits, threshold pool count
+   - Overall result (PASS/FAIL) and exit code
+
+2. **events_summary.csv** - Event statistics per log:
+   - Scope (System/Application/TOTAL)
+   - Raw events collected
+   - Events after filtering
+   - Blocklist hits count
+   - Allowlist hits count
+   - Threshold pool count
+
+### Conditionally Generated:
+
+3. **failed_events.csv** - Automatically created on FAIL:
+   - **If blocklist hit**: Contains matched events with rule metadata (rule_id, owner, comment)
+   - **If threshold exceeded**: Contains all threshold pool events
+   - Fields: log_name, level, provider, event_id, time_created, message
+
+4. **events_detail.csv** - Created when `CaptureEventsToFile=true`:
+   - Full list of ALL collected events (time window filtered only)
+   - Fields: time_created, log_name, level, provider, event_id, record_id, block_hit, block_rule_id, allow_hit, allow_rule_id, message
+   - Useful for debugging and detailed analysis
 
 ---
 
-## 13. Non-Goals
+## 13. Implementation Details
+
+**Technology Stack:**
+- PowerShell 7+ with `Get-WinEvent` cmdlet
+- CSV-based rule management
+- JSON output format for structured reporting
+
+**Limitations:**
+- Maximum events per log: 5000 (configurable via `MaxEventsPerLog`)
+- Message truncation: 300 characters (configurable via `TruncateMessageChars`)
+- Time window: Relative minutes from current time (configurable via `WindowMinutes`)
+
+## 14. Non-Goals
 
 This specification does **not** define:
 
-- Event log collection or access mechanisms
+- Extended event log channels beyond System and Application
+- WARN result state (only PASS/FAIL)
+- Event aggregation or deduplication
+- Real-time event monitoring
 - Automatic generation of rule content
 - Causal linkage between specific test actions and events
 
