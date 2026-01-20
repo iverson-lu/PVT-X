@@ -197,6 +197,10 @@ public sealed class PowerShellExecutor
             startInfo.Environment[key] = val;
         }
 
+
+        // Explicitly disable PSStyle for PowerShell 7.2+ to avoid garbled output
+        startInfo.Environment["TERM"] = "dumb";
+
         // Add system environment variables that might be needed
         foreach (var key in new[] { "PATH", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE", "HOMEDRIVE", "HOMEPATH" })
         {
