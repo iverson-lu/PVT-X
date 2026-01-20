@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.os.windows.core.reboot",
+  "name": "Reboot Resume Test",
+  "description": "Validates system reboot and resume capability with configurable delay and reason.",
+  "version": "1.0.0",
+  "category": "System",
+  "owner": "PVT-X",
+  "privilege": "AdminRequired",
+  "timeoutSec": 300,
+  "tags": ["reboot", "resume", "system"],
+  "parameters": [
+    {
+      "name": "delaySec",
+      "type": "int",
+      "required": false,
+      "default": 10,
+      "help": "Delay in seconds before initiating reboot."
+    },
+    {
+      "name": "reason",
+      "type": "string",
+      "required": false,
+      "default": "Reboot requested by test case",
+      "help": "Reason message for the reboot request."
+    },
+    {
+      "name": "verifyReboot",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "Whether to verify reboot completion (future implementation)."
+    }
+  ]
+}

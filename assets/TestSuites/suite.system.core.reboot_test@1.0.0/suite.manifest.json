@@ -20,8 +20,13 @@
       }
     },
     {
-      "nodeId": "case.system.reboot_resume.mini@1.0.0",
-      "ref": "Reboot Resume MVP"
+      "nodeId": "case.os.windows.core.reboot@1.0.0",
+      "ref": "Reboot Resume Test",
+      "inputs": {
+        "delaySec": "10",
+        "reason": "Reboot requested by test case",
+        "verifyReboot": false
+      }
     },
     {
       "nodeId": "case.os.windows.core.timezone_verify@1.0.0",
