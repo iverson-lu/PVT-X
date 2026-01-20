@@ -83,10 +83,12 @@ Specs are authoritative. If spec conflicts with these instructions, **ask**—do
 Spec locations:
 - Core (engine/runner/contracts): `docs/pvtx-core-spec.md`
 - UI (design/UX): `docs/pvtx-ui-spec.md`
+- Case authoring (manifest/script/structure): `docs/pvtx-test-authoring_rules.md`
 
 Update specs when:
 - Core behavior/contracts/artifacts change → update Core spec
 - UI workflows/structure/terminology change → update UI spec
+- Case structure/manifest/script rules change → update Case authoring rules
 Pure visual polish/refactors with no behavior change → spec update not required
 
 ---

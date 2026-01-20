@@ -103,6 +103,20 @@ Rules:
 - ResolvedTestSuiteRoot contains standalone Suite definitions and is independent of ResolvedTestPlanRoot.
 - Engine and Runner MUST NOT assume other fixed locations at runtime.
 
+### 3.4 Shared PowerShell Modules
+
+Common PowerShell utilities for Test Cases are maintained under `assets/PowerShell/Modules/`.
+
+- Engine computes AssetsRoot from Discovery (parent of ResolvedTestCaseRoot) and passes to Runner
+- Runner derives `PVTX_MODULES_ROOT` as `<AssetsRoot>/PowerShell/Modules` and injects into environment
+- Runner prepends `PVTX_MODULES_ROOT` to `PSModulePath` before Test Case execution
+- Test Cases import modules via standard PowerShell syntax: `Import-Module <ModuleName>`
+- Modules are auto-discovered; no explicit path specification required
+
+Shared modules provide reusable utilities for hardware info, validation, logging, and common test operations.
+
+See `pvtx-test-authoring_rules.md` for Test Case usage patterns.
+
 ---
 
 ## 4. System Architecture

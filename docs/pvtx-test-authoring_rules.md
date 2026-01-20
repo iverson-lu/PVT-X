@@ -203,13 +203,13 @@ Injected automatically by Runner:
 
 ### 4.1 Shared PowerShell Modules
 
-Runner automatically configures PowerShell module discovery to enable Test Cases to use shared helper modules:
+Shared PowerShell utilities are maintained under `assets/PowerShell/Modules/` and automatically injected by Runner:
 
-- Shared PowerShell modules SHOULD be placed under `assets/PowerShell/Modules/`
-- Runner prepends `PVTX_MODULES_ROOT` to the `PSModulePath` environment variable
-- Test Cases MAY import shared modules using standard PowerShell syntax: `Import-Module <ModuleName>`
-- Modules are auto-discovered; no explicit path specification is required
-- Shared modules MAY provide utilities for:
+- Common helper modules SHOULD be placed under `assets/PowerShell/Modules/`
+- Runner computes `PVTX_MODULES_ROOT` from `PVTX_ASSETS_ROOT` and prepends it to `PSModulePath`
+- Test Cases MAY import modules using standard PowerShell syntax: `Import-Module <ModuleName>`
+- Modules are auto-discovered; no explicit path specification required
+- Shared modules provide reusable utilities for:
   - Hardware information collection
   - System state validation
   - Logging and output formatting
@@ -218,15 +218,14 @@ Runner automatically configures PowerShell module discovery to enable Test Cases
 
 Example usage in run.ps1:
 ```powershell
-# Import a shared helper module
-Import-Module PvtxCommon
+# Import shared modules (e.g., Pvtx.Core)
+Import-Module Pvtx.Core
 
 # Use module functions
-$hwInfo = Get-HardwareInfo
-Write-TestLog "Hardware detected: $($hwInfo.Model)"
+Write-JsonFile -Path "artifacts/data.json" -Obj @{ result = "Pass" }
 ```
 
-> Note: The specific modules and functions available will evolve over time. Refer to the modules under `assets/PowerShell/Modules/` for current offerings.
+> Note: Current modules include `Pvtx.Core` for common file/JSON operations. Refer to `assets/PowerShell/Modules/` for available modules and functions.
 
 ---
 

@@ -1,6 +1,6 @@
 param(
     [string]$FailOnStatus = '["Error"]',
-    [string]$Allowlist = '[]',
+    [string]$IgnoreDevices = '[]',
     [bool]$AlwaysCollectDeviceList = $false
 )
 
@@ -27,7 +27,7 @@ $swTotal = [Diagnostics.Stopwatch]::StartNew()
 # Parse parameters
 # ----------------------------
 $failStatuses = @()
-$allowlistRules = @()
+$ignoreRules = @()
 
 try {
     $failStatuses = $FailOnStatus | ConvertFrom-Json -ErrorAction Stop
@@ -42,16 +42,16 @@ catch {
 }
 
 try {
-    $allowlistRules = $Allowlist | ConvertFrom-Json -AsHashtable -ErrorAction Stop
-    if ($null -eq $allowlistRules) {
-        $allowlistRules = @()
+    $ignoreRules = $IgnoreDevices | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+    if ($null -eq $ignoreRules) {
+        $ignoreRules = @()
     }
-    elseif ($allowlistRules -isnot [object[]]) {
-        $allowlistRules = @($allowlistRules)
+    elseif ($ignoreRules -isnot [object[]]) {
+        $ignoreRules = @($ignoreRules)
     }
 }
 catch {
-    Write-Error "Failed to parse Allowlist: $($_.Exception.Message)"
+    Write-Error "Failed to parse IgnoreDevices: $($_.Exception.Message)"
     exit 2
 }
 
@@ -89,9 +89,9 @@ function Get-NormalizedStatus {
 }
 
 # ----------------------------
-# Allowlist matching function
+# Ignore device matching function
 # ----------------------------
-function Test-AllowlistMatch {
+function Test-IgnoreMatch {
     param(
         [hashtable]$Device,
         [array]$Rules
@@ -203,15 +203,15 @@ finally {
 $step2 = New-Step 'evaluate_device_status' 2 'Evaluate Device Status'
 $sw2 = [Diagnostics.Stopwatch]::StartNew()
 $failedDevices = @()
-$allowlistedDevices = @()
+$ignoredDevices = @()
 
 try {
     foreach ($device in $allDevices) {
         # Check if device status is in fail list
         if ($device.status -in $failStatuses) {
-            # Check if allowlisted
-            if (Test-AllowlistMatch -Device $device -Rules $allowlistRules) {
-                $allowlistedDevices += $device
+            # Check if ignored
+            if (Test-IgnoreMatch -Device $device -Rules $ignoreRules) {
+                $ignoredDevices += $device
             }
             else {
                 $failedDevices += $device
@@ -222,13 +222,13 @@ try {
     $step2.metrics = @{
         total_devices      = $allDevices.Count
         failed_devices     = $failedDevices.Count
-        allowlisted        = $allowlistedDevices.Count
+        ignored            = $ignoredDevices.Count
         fail_on_statuses   = ($failStatuses -join ', ')
     }
 
     if ($failedDevices.Count -eq 0) {
         $step2.status = 'PASS'
-        $step2.message = "No devices in abnormal state (or all allowlisted)."
+        $step2.message = "No devices in abnormal state (or all ignored)."
         $overall = 'PASS'
         $exitCode = 0
     }
@@ -252,7 +252,7 @@ finally {
 # ----------------------------
 # Prepare output details
 # ----------------------------
-$details.Add("total_devices=$($allDevices.Count) failed_devices=$($failedDevices.Count) allowlisted=$($allowlistedDevices.Count)")
+$details.Add("total_devices=$($allDevices.Count) failed_devices=$($failedDevices.Count) ignored=$($ignoredDevices.Count)")
 
 if ($failedDevices.Count -gt 0) {
     $details.Add("--- Failed Devices ---")
@@ -297,10 +297,10 @@ if ($exitCode -ne 0 -or $AlwaysCollectDeviceList) {
     Export-DevicesToCsv -Devices $allDevices -Path $allDevicesPath
 }
 
-# Output allowlisted devices if any exist
-if ($allowlistedDevices.Count -gt 0) {
-    $allowlistedPath = Join-Path $ArtifactsRoot 'allowlisted_devices.csv'
-    Export-DevicesToCsv -Devices $allowlistedDevices -Path $allowlistedPath
+# Output ignored devices if any exist
+if ($ignoredDevices.Count -gt 0) {
+    $ignoredPath = Join-Path $ArtifactsRoot 'ignored_devices.csv'
+    Export-DevicesToCsv -Devices $ignoredDevices -Path $ignoredPath
 }
 
 # ----------------------------
@@ -322,8 +322,8 @@ if ($exitCode -ne 0 -or $AlwaysCollectDeviceList) {
     $evidence.all_devices = $allDevices
 }
 
-if ($allowlistedDevices.Count -gt 0) {
-    $evidence.allowlisted_devices = $allowlistedDevices
+if ($ignoredDevices.Count -gt 0) {
+    $evidence.ignored_devices = $ignoredDevices
 }
 
 $report = @{

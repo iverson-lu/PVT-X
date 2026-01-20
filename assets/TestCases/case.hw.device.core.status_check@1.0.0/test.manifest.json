@@ -2,7 +2,7 @@
   "schemaVersion": "1.5.0",
   "id": "case.hw.device.core.status_check",
   "name": "Device Status Check",
-  "description": "Scans all devices in Device Manager and fails if any device is in an abnormal state (not covered by allowlist).",
+  "description": "Scans all devices in Device Manager and fails if any device is in an abnormal state (not covered by ignore rules).",
   "version": "1.0.0",
   "category": "Hardware",
   "owner": "PVT-X",
@@ -16,15 +16,15 @@
       "enumValues": ["Error", "DriverMissing","Disabled", "Unknown", "NotStarted"],
       "default": "[\"Error\", \"DriverMissing\"]",
       "uiHint": "multiselect",
-      "help": "Device statuses that trigger failure (unless allowlisted). Multi-select from: Error, Disabled, Unknown, NotStarted, DriverMissing."
+      "help": "Device statuses that trigger failure (unless ignored). Multi-select from: Error, Disabled, Unknown, NotStarted, DriverMissing."
     },
     {
-      "name": "Allowlist",
+      "name": "IgnoreDevices",
       "type": "json",
       "required": false,
-      "default": "[]",
+      "default": "[{\"device_name\": \"VB-Audio Virtual Cable\"}]",
       "uiHint": "textarea",
-      "help": "JSON array of allowlist rules. Each rule can match: device_name, hardware_id, class, status, note. Multiple fields in one rule use AND logic; multiple rules use OR logic. Example: [{\"device_name\": \"Logitech BRIO\"}, {\"class\": \"Bluetooth\"}]"
+      "help": "JSON array of device ignore rules. Each rule can match: device_name, hardware_id, class, status, note. Multiple fields in one rule use AND logic; multiple rules use OR logic. Example: [{\"device_name\": \"Logitech BRIO\"}, {\"class\": \"Bluetooth\"}]"
     },
     {
       "name": "AlwaysCollectDeviceList",
