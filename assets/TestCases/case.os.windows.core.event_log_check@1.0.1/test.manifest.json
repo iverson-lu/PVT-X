@@ -2,7 +2,7 @@
   "schemaVersion": "1.5.0",
   "id": "case.os.windows.core.event_log_check",
   "name": "Event Log Check",
-  "description": "Checks Windows System and Application Event Logs in a relative time window. Fails on Blocklist matches or when the remaining event count exceeds a threshold. Produces report.json plus CSV summaries.",
+  "description": "Checks Windows System and Application Event Logs in a relative time window. Fails on Blocklist matches, missing MustHaveList events, or when the remaining event count exceeds a threshold. Produces report.json plus CSV summaries.",
   "version": "1.0.1",
   "category": "OS",
   "owner": "PVT-X",
@@ -54,6 +54,13 @@
       "required": false,
       "default": "rules/blocklist.csv",
       "help": "Blocklist rules CSV (relative to test case directory)."
+    },
+    {
+      "name": "MustHaveListCsv",
+      "type": "path",
+      "required": false,
+      "default": "rules/musthavelist.csv",
+      "help": "MustHaveList rules CSV (relative to test case directory). All specified events must exist in the time window."
     },
     {
       "name": "FailThreshold",

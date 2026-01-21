@@ -1,7 +1,7 @@
 # Event View Check
 
 ## Purpose
-Validate PC stability and health by checking Windows **System** and **Application** Event Logs within a relative time window. The test fails immediately on **Blocklist** matches, or fails when the remaining event count (after Allowlist exclusion) exceeds a simple threshold.
+Validate PC stability and health by checking Windows **System** and **Application** Event Logs within a relative time window. The test fails immediately on **Blocklist** matches, fails if required events in **MustHaveList** are missing, or fails when the remaining event count (after Allowlist exclusion) exceeds a simple threshold.
 
 ## Test Flow
 
@@ -26,23 +26,40 @@ flowchart TD
     Loop2 --> CheckBlock{Match<br/>Blocklist?}
     CheckBlock -->|Yes| AddBlock[Mark as Blocklist Hit]
     AddBlock --> NextEvent
-    CheckBlock -->|No| CheckAllow{Match<br/>Allowlist?}
-    CheckAllow -->|Yes| AddAllow[Mark as Allowlist Hit]
-    AddAllow --> NextEvent
-    CheckAllow -->|No| CheckMinLevel{Event >= MinLevel?}
-    CheckMinLevel -->|Yes| AddPool[Add to Threshold Pool]
-    CheckMinLevel -->|No| SkipEvent[Skip Event]
-    AddPool --> NextEvent[Continue to Next Event]
-    SkipEvent --> NextEvent
+    CheckBlock -->|No| NextEvent[Continue to Next Event]
     NextEvent --> Loop2
     
-    Loop2 -->|All Events Done| Evaluate{Evaluation}
+    Loop2 -->|All Events Done| CheckMustHave[Step 3b: Validate MustHaveList]
+    CheckMustHave --> Loop3{For Each<br/>MustHave Rule}
+    Loop3 --> FindMatch{Rule Matches<br/>Any Event?}
+    FindMatch -->|No| AddMissing[Add to Missing List]
+    FindMatch -->|Yes| NextRule[Continue to Next Rule]
+    AddMissing --> NextRule
+    NextRule --> Loop3
+    
+    Loop3 -->|All Rules Done| CheckAllow[Step 3c: Apply Allowlist]
+    CheckAllow --> Loop4{For Each Event}
+    Loop4 --> SkipBlock{Already<br/>Blocklist Hit?}
+    SkipBlock -->|Yes| NextEvent2[Continue to Next Event]
+    SkipBlock -->|No| CheckAllowMatch{Match<br/>Allowlist?}
+    CheckAllowMatch -->|Yes| AddAllow[Mark as Allowlist Hit]
+    AddAllow --> NextEvent2
+    CheckAllowMatch -->|No| CheckMinLevel{Event >= MinLevel?}
+    CheckMinLevel -->|Yes| AddPool[Add to Threshold Pool]
+    CheckMinLevel -->|No| SkipEvent[Skip Event]
+    AddPool --> NextEvent2
+    SkipEvent --> NextEvent2
+    NextEvent2 --> Loop4
+    
+    Loop4 -->|All Events Done| Evaluate{Evaluation}
     Evaluate -->|Blocklist Hits > 0| Fail1[Overall: FAIL<br/>Reason: Blocklist Hit]
-    Evaluate -->|Pool >= FailThreshold| Fail2[Overall: FAIL<br/>Reason: Threshold Exceeded]
+    Evaluate -->|MustHave Missing > 0| Fail2[Overall: FAIL<br/>Reason: Required Events Missing]
+    Evaluate -->|Pool >= FailThreshold| Fail3[Overall: FAIL<br/>Reason: Threshold Exceeded]
     Evaluate -->|Otherwise| Pass[Overall: PASS<br/>No Issues Found]
     
     Fail1 --> Step4[Step 4: Write Artifacts]
     Fail2 --> Step4
+    Fail3 --> Step4
     Pass --> Step4
     
     Step4 --> WriteSummary[Write events_summary.csv]
@@ -59,6 +76,7 @@ flowchart TD
     style Pass fill:#90EE90
     style Fail1 fill:#FFB6C1
     style Fail2 fill:#FFB6C1
+    style Fail3 fill:#FFB6C1
     style Error1 fill:#FF6B6B
 ```
 
@@ -66,13 +84,14 @@ flowchart TD
 1. Read **ALL** events from `System` and `Application` within the last `WindowMinutes` (no level filtering yet).
 2. Evaluate rules with priority:
    - **Blocklist first**: any match causes **FAIL** (checks all collected events).
+   - **MustHaveList second**: all specified events must exist; if any are missing, causes **FAIL**.
    - **Allowlist next**: matching events are excluded from threshold counting (checks all collected events).
 3. Apply `MinLevel` filter **only to threshold pool**: remaining events below `MinLevel` are not counted toward threshold.
 4. Count the threshold pool. If `poolCount >= FailThreshold`, the test **FAILS**; otherwise **PASS**.
 5. Write artifacts:
    - `artifacts/report.json` (always)
    - `artifacts/events_summary.csv` (always)
-   - `artifacts/failed_events.csv` (automatic when FAIL due to blocklist hits)
+   - `artifacts/failed_events.csv` (automatic when FAIL due to blocklist hits or missing required events)
    - `artifacts/events_detail.csv` (only when `CaptureEventsToFile=true`)
 
 ## Parameters
@@ -81,14 +100,15 @@ flowchart TD
 - **MinLevel**: Minimum severity to include (`Critical`, `Error`, `Warning`, `Information`, `None`).
 - **AllowlistCsv**: Allowlist rules CSV path (relative to the test case directory by default).
 - **BlocklistCsv**: Blocklist rules CSV path (relative to the test case directory by default).
+- **MustHaveListCsv**: MustHaveList rules CSV path (relative to the test case directory by default).
 - **FailThreshold**: Fail if the threshold pool count is >= this value.
 - **MaxEventsPerLog**: Maximum number of events read per log.
 - **TruncateMessageChars**: Max message length written to outputs (0 = no truncation).
-- **CaptureEventsToFile**: When `true`, writes `artifacts/events_detail.csv` with all collected events from the time window. Failed events (blocklist hits) are automatically saved to `artifacts/failed_events.csv` on FAIL.
+- **CaptureEventsToFile**: When `true`, writes `artifacts/events_detail.csv` with all collected events from the time window. Failed events (blocklist hits or missing required events) are automatically saved to `artifacts/failed_events.csv` on FAIL.
 
-## Rule Files (Allowlist/Blocklist CSV)
+## Rule Files (Allowlist/Blocklist/MustHaveList CSV)
 
-Both allowlist and blocklist rules use the same CSV format with the following columns:
+All three rule files (allowlist, blocklist, and musthavelist) use the same CSV format with the following columns:
 
 | Column | Required | Description |
 |--------|----------|-------------|
@@ -129,10 +149,18 @@ AL001,DevTeam,Known VSCode restart,Application,VSCode,1001,Warning,normal shutdo
 AL002,NetTeam,Expected network timeout,System,,1014,Warning,timeout,regex
 ```
 
+### Example: musthavelist.csv
+```csv
+rule_id,owner,comment,log,provider,event_id,level,message,match_mode
+MH001,SecurityTeam,Windows Defender started,System,Microsoft-Windows-Windows Defender,1000,Information,,
+MH002,OpsTeam,System boot event,System,Microsoft-Windows-Kernel-General,12,Information,,
+```
+
 ### Rule Priority
 1. **Blocklist checked first**: Any match causes immediate FAIL
-2. **Allowlist checked second**: Matched events are excluded from threshold counting
-3. **Remaining events**: Go into threshold pool and counted against `FailThreshold`
+2. **MustHaveList checked second**: All rules must match at least one event; any missing rule causes FAIL
+3. **Allowlist checked third**: Matched events are excluded from threshold counting
+4. **Remaining events**: Go into threshold pool and counted against `FailThreshold`
 
 ## How to Run Manually
 From the case directory:
@@ -146,11 +174,11 @@ pwsh -File .\run.ps1 -WindowMinutes 120 -MinLevel Error -FailThreshold 5 -Captur
 ```
 
 ## Expected Result
-- **PASS (exit 0)**: No Blocklist match and `threshold_pool_count < FailThreshold`.
-- **FAIL (exit 1)**: Any Blocklist match, or `threshold_pool_count >= FailThreshold`.
+- **PASS (exit 0)**: No Blocklist match, all MustHaveList events present, and `threshold_pool_count < FailThreshold`.
+- **FAIL (exit 1)**: Any Blocklist match, any MustHaveList event missing, or `threshold_pool_count >= FailThreshold`.
 - **ERROR (exit >= 2)**: Script/environment error (e.g., invalid parameters, CSV parse error).
 Artifacts are written to `artifacts/`:
 - `report.json` (always)
 - `events_summary.csv` (always)
-- `failed_events.csv` (automatic when FAIL due to blocklist hits)
+- `failed_events.csv` (automatic when FAIL due to blocklist hits or missing required events)
 - `events_detail.csv` (only when `CaptureEventsToFile=true` - full event list from time window)

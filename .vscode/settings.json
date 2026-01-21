@@ -17,6 +17,22 @@
         ".\\run.ps1": true,
         "Set-Location": true,
         "Import-Module": true,
-        "Import-Csv": true
+        "Import-Csv": true,
+        "/^cd d:\\\\Dev\\\\PVT-X-1\\\\assets\\\\TestCases\\\\case\\.os\\.windows\\.core\\.event_log_check@1\\.0\\.1; pwsh -File \\.\\\\run\\.ps1 -WindowMinutes 1440$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^pwsh -File \\.\\\\check_event\\.ps1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^pwsh -File \"d:\\\\Dev\\\\PVT-X-1\\\\assets\\\\TestCases\\\\case\\.os\\.windows\\.core\\.event_log_check@1\\.0\\.1\\\\debug_match\\.ps1\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^pwsh -File \"d:\\\\Dev\\\\PVT-X-1\\\\assets\\\\TestCases\\\\case\\.os\\.windows\\.core\\.event_log_check@1\\.0\\.1\\\\debug_match_detailed\\.ps1\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

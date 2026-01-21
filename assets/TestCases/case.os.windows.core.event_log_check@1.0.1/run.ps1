@@ -5,6 +5,7 @@ param(
   [string]$MinLevel = 'Warning',
   [string]$AllowlistCsv = 'rules/allowlist.csv',
   [string]$BlocklistCsv = 'rules/blocklist.csv',
+  [string]$MustHaveListCsv = 'rules/musthavelist.csv',
   [int]$FailThreshold = 10,
   [int]$MaxEventsPerLog = 5000,
   [int]$TruncateMessageChars = 300,
@@ -167,6 +168,7 @@ try {
 
   $allowPath = Resolve-UnderTestPath $AllowlistCsv
   $blockPath = Resolve-UnderTestPath $BlocklistCsv
+  $mustHavePath = Resolve-UnderTestPath $MustHaveListCsv
 
   $step1.metrics = @{
     window_minutes = $WindowMinutes
@@ -174,6 +176,7 @@ try {
     min_level = $MinLevel
     allowlist_csv = $allowPath
     blocklist_csv = $blockPath
+    musthavelist_csv = $mustHavePath
     fail_threshold = $FailThreshold
     max_events_per_log = $MaxEventsPerLog
     truncate_message_chars = $TruncateMessageChars
@@ -279,21 +282,26 @@ $step3 = New-Step 'evaluate_rules' 3 'Evaluate rules and threshold'
 $sw3 = [Diagnostics.Stopwatch]::StartNew()
 
 $blockRules = @()
+$mustHaveRules = @()
 $allowRules = @()
 $blockHits = @()
+$mustHaveMissing = @()
 $thresholdPool = @()
 $allowHitCount = 0
 
 try {
   $allowPath = Resolve-UnderTestPath $AllowlistCsv
   $blockPath = Resolve-UnderTestPath $BlocklistCsv
+  $mustHavePath = Resolve-UnderTestPath $MustHaveListCsv
 
   $blockRules = Read-RulesCsv $blockPath
+  $mustHaveRules = Read-RulesCsv $mustHavePath
   $allowRules = Read-RulesCsv $allowPath
 
   $minRank = 99
   if ($MinLevel -ne 'None') { $minRank = Level-Rank $MinLevel }
 
+  # First pass: check blocklist
   foreach ($evt in $allEvents) {
     $evt | Add-Member -NotePropertyName block_hit -NotePropertyValue $false -Force
     $evt | Add-Member -NotePropertyName block_rule_id -NotePropertyValue '' -Force
@@ -319,8 +327,36 @@ try {
         time_created = $evt.time_created
         message  = $evt.message
       }
-      continue
     }
+  }
+
+  # Second pass: check musthavelist
+  foreach ($rule in $mustHaveRules) {
+    $found = $false
+    foreach ($evt in $allEvents) {
+      if (Match-Rule $rule $evt) {
+        $found = $true
+        break
+      }
+    }
+    if (-not $found) {
+      $mustHaveMissing += [pscustomobject]@{
+        rule_id = (Normalize-Text ([string]$rule.rule_id))
+        owner   = (Normalize-Text ([string]$rule.owner))
+        comment = (Normalize-Text ([string]$rule.comment))
+        log     = (Normalize-Text ([string]$rule.log))
+        provider = (Normalize-Text ([string]$rule.provider))
+        event_id = (Normalize-Text ([string]$rule.event_id))
+        level    = (Normalize-Text ([string]$rule.level))
+        message  = (Normalize-Text ([string]$rule.message))
+      }
+    }
+  }
+
+  # Third pass: check allowlist and build threshold pool
+  foreach ($evt in $allEvents) {
+    # Skip events already marked as blocklist hits
+    if ($evt.block_hit) { continue }
 
     $matchedAllow = $null
     foreach ($r in $allowRules) {
@@ -343,11 +379,14 @@ try {
 
   $poolCount = $thresholdPool.Count
   $blockCount = $blockHits.Count
+  $mustHaveMissingCount = $mustHaveMissing.Count
 
   $step3.metrics = @{
     block_rules = $blockRules.Count
+    musthave_rules = $mustHaveRules.Count
     allow_rules = $allowRules.Count
     block_hits  = $blockCount
+    musthave_missing = $mustHaveMissingCount
     allow_hits  = $allowHitCount
     threshold_pool_count = $poolCount
     fail_threshold = $FailThreshold
@@ -361,6 +400,13 @@ try {
     $step3.status = 'FAIL'
     $step3.message = 'Blocklist hit detected (overall FAIL).'
   }
+  elseif ($mustHaveMissingCount -gt 0) {
+    $overall = 'FAIL'
+    $exitCode = 1
+    $details.Add("MustHaveList missing: $mustHaveMissingCount required event(s) not found.") | Out-Null
+    $step3.status = 'FAIL'
+    $step3.message = 'MustHaveList validation failed (overall FAIL).'
+  }
   elseif ($poolCount -ge $FailThreshold) {
     $overall = 'FAIL'
     $exitCode = 1
@@ -371,9 +417,9 @@ try {
   else {
     $overall = 'PASS'
     $exitCode = 0
-    $details.Add("All checks passed: events=$($allEvents.Count) pool=$poolCount threshold=$FailThreshold block=$blockCount allow=$allowHitCount") | Out-Null
+    $details.Add("All checks passed: events=$($allEvents.Count) pool=$poolCount threshold=$FailThreshold block=$blockCount musthave=$($mustHaveRules.Count) allow=$allowHitCount") | Out-Null
     $step3.status = 'PASS'
-    $step3.message = 'No blocklist hits and threshold not exceeded.'
+    $step3.message = 'All validations passed: no blocklist hits, all required events present, threshold not exceeded.'
   }
 }
 catch {
@@ -420,13 +466,19 @@ try {
 
   $rows | Export-Csv -LiteralPath $SummaryCsvPath -NoTypeInformation -Encoding utf8NoBOM
 
-  # failed_events.csv (automatic when FAIL - blocklist hits or threshold exceeded)
+  # failed_events.csv (automatic when FAIL - blocklist hits, musthavelist missing, or threshold exceeded)
   if ($overall -eq 'FAIL') {
     $failedCsvPath = Join-Path $ArtifactsRoot 'failed_events.csv'
     if ($blockCount -gt 0) {
       # Save blocklist hits with rule info
       $blockHits |
         Select-Object rule_id, owner, comment, log_name, level, provider, event_id, time_created, message |
+        Export-Csv -LiteralPath $failedCsvPath -NoTypeInformation -Encoding utf8NoBOM
+    }
+    elseif ($mustHaveMissingCount -gt 0) {
+      # Save missing required events with rule info
+      $mustHaveMissing |
+        Select-Object rule_id, owner, comment, log, provider, event_id, level, message |
         Export-Csv -LiteralPath $failedCsvPath -NoTypeInformation -Encoding utf8NoBOM
     }
     elseif ($poolCount -ge $FailThreshold) {
@@ -489,12 +541,14 @@ finally {
         min_level = $MinLevel
         allowlist_csv = $AllowlistCsv
         blocklist_csv = $BlocklistCsv
+        musthavelist_csv = $MustHaveListCsv
         fail_threshold = $FailThreshold
         max_events_per_log = $MaxEventsPerLog
         truncate_message_chars = $TruncateMessageChars
         capture_events_to_file = $CaptureEventsToFile
       }
       blocklist_hits = $blockHits
+      musthavelist_missing = $mustHaveMissing
     }
     summary = @{
       status      = $overall
@@ -508,6 +562,7 @@ finally {
       metrics = @{
         total_events = $allEvents.Count
         blocklist_hits = $blockHits.Count
+        musthavelist_missing = $mustHaveMissing.Count
         allowlist_hits = $allowHitCount
         threshold_pool_count = $thresholdPool.Count
         fail_threshold = $FailThreshold
