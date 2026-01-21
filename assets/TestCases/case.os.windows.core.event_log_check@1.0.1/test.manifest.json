@@ -46,14 +46,14 @@
       "type": "path",
       "required": false,
       "default": "rules/allowlist.csv",
-      "help": "Allowlist rules CSV (relative to test case directory)."
+      "help": "Allowlist rules CSV (relative to test case directory). Matching events are excluded from threshold counting."
     },
     {
       "name": "BlocklistCsv",
       "type": "path",
       "required": false,
       "default": "rules/blocklist.csv",
-      "help": "Blocklist rules CSV (relative to test case directory)."
+      "help": "Blocklist rules CSV (relative to test case directory). Any matching event causes immediate FAIL."
     },
     {
       "name": "MustHaveListCsv",
