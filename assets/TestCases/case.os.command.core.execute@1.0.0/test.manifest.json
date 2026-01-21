@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.os.command.core.execute",
+  "name": "Execute Command or Script",
+  "description": "Executes a command or script using PowerShell as the execution environment. Overall result is determined by exit code: 0=Pass, non-zero=Fail.",
+  "version": "1.0.0",
+  "category": "OS",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "Mode",
+      "type": "enum",
+      "required": true,
+      "enumValues": ["inline", "ps1", "bat"],
+      "help": "Execution mode: inline (PowerShell command), ps1 (PowerShell script), bat/cmd (batch script)"
+    },
+    {
+      "name": "Command",
+      "type": "string",
+      "required": false,
+      "help": "Inline PowerShell command text (required when Mode=inline)"
+    },
+    {
+      "name": "ScriptPath",
+      "type": "path",
+      "required": false,
+      "help": "Path to script file (required when Mode=ps1 or Mode=bat). Eg. scripts/test-script.ps1"
+    },
+    {
+      "name": "Args",
+      "type": "string",
+      "required": false,
+      "default": "",
+      "help": "Arguments passed to the script (used when Mode=ps1 or Mode=bat)"
+    }
+  ],
+  "tags": ["command", "execute", "script", "powershell", "bat", "cmd"]
+}
