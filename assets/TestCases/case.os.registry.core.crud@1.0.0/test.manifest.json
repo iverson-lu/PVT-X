@@ -6,43 +6,15 @@
   "version": "1.0.0",
   "category": "Software",
   "owner": "PVT-X",
-  "privilege": "User",
+  "privilege": "AdminPreferred",
   "timeoutSec": 30,
   "parameters": [
     {
       "name": "Mode",
       "type": "enum",
       "required": true,
-      "enumValues": ["execute_reg", "verify_value"],
-      "help": "Operation mode: execute_reg applies .reg file changes, verify_value checks registry values"
-    },
-    {
-      "name": "RegFilePath",
-      "type": "path",
-      "required": false,
-      "help": "Path to .reg file to execute (required when Mode=execute_reg)"
-    },
-    {
-      "name": "RequireAdmin",
-      "type": "boolean",
-      "required": false,
-      "default": false,
-      "help": "If true, verify administrator privileges before execution (Mode=execute_reg only)"
-    },
-    {
-      "name": "ArtifactCopyReg",
-      "type": "boolean",
-      "required": false,
-      "default": true,
-      "help": "If true, copy the input .reg file to artifacts (Mode=execute_reg only)"
-    },
-    {
-      "name": "ArtifactExportScope",
-      "type": "json",
-      "required": false,
-      "default": "{\"enabled\": false}",
-      "uiHint": "textarea",
-      "help": "Registry export configuration: {\"enabled\": true, \"keys\": [\"HKLM\\\\Software\\\\Example\"], \"format\": \"reg\"}. Supported in both execute_reg and verify_value modes"
+      "enumValues": ["set_reg", "verify_reg"],
+      "help": "Operation mode: set_reg applies registry changes (add/update/delete) via .reg file, verify_reg checks registry values"
     },
     {
       "name": "VerifySpec",
@@ -50,7 +22,22 @@
       "required": false,
       "default": "[{\"path\":\"HKCU\\\\Control Panel\\\\International\",\"name\":\"CurrentuserLang\",\"expected\":{\"type\":\"String\", \"data\": \"en-US\"}}]",
       "uiHint": "textarea",
-      "help": "Array of registry value verification specs (required when Mode=verify_value): [{\"path\":\"HKCU\\\\Software\\\\International\",\"name\":\"CurrentuserLang\",\"expected\":{\"type\":\"String\",\"data\":\"en-US\"}}]. Actual registry values are always included in report.json results"
+      "help": "Array of registry value verification specs (required when Mode=verify_reg): [{\"path\":\"HKCU\\\\Software\\\\International\",\"name\":\"CurrentuserLang\",\"expected\":{\"type\":\"String\",\"data\":\"en-US\"}}]. Actual registry values are always included in report.json results"
+    },
+    {
+      "name": "RegFilePath",
+      "type": "path",
+      "required": false,
+      "help": "Path to .reg file to execute (required when Mode=set_reg)"
+    },
+    {
+
+      "name": "ArtifactExportScope",
+      "type": "json",
+      "required": false,
+      "default": "{\"enabled\": false}",
+      "uiHint": "textarea",
+      "help": "Registry export configuration: {\"enabled\": true, \"keys\": [\"HKLM\\\\Software\\\\Example\"], \"format\": \"reg\"}. Supported in both set_reg and verify_reg modes"
     }
   ],
   "tags": ["registry", "windows", "configuration", "crud", "verification"]

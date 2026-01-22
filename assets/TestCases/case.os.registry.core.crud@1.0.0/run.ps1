@@ -1,10 +1,8 @@
 param(
   [Parameter(Mandatory)]
-  [ValidateSet('execute_reg','verify_value')]
+  [ValidateSet('set_reg','verify_reg')]
   [string]$Mode,
   [string]$RegFilePath = '',
-  [bool]$RequireAdmin = $false,
-  [bool]$ArtifactCopyReg = $true,
   [string]$ArtifactExportScope = '{"enabled": false}',
   [string]$VerifySpec = '[]'
 )
@@ -104,11 +102,17 @@ function Export-RegistrySnapshots {
         return $null
     }
     
+    # Ensure keys is an array
+    $keys = $exportConfig.keys
+    if ($keys -isnot [array]) {
+        $keys = @($keys)
+    }
+    
     $exportDir = Join-Path $ArtifactsRoot 'registry_export'
     Ensure-Dir $exportDir
     
     $exportedKeys = @()
-    foreach ($keyPath in $exportConfig.keys) {
+    foreach ($keyPath in $keys) {
         $fileName = ($keyPath -replace '\\', '_') + '.' + ($exportConfig.format ?? 'reg')
         $exportPath = Join-Path $exportDir $fileName
         
@@ -133,10 +137,10 @@ function Export-RegistrySnapshots {
 }
 
 # ----------------------------
-# Mode: execute_reg
+# Mode: set_reg
 # ----------------------------
-if ($Mode -eq 'execute_reg') {
-    $step = New-Step 'execute_registry_file' 1 'Execute registry file'
+if ($Mode -eq 'set_reg') {
+    $step = New-Step 'set_registry_file' 1 'Set registry via .reg file'
     $sw = [Diagnostics.Stopwatch]::StartNew()
     
     try {
@@ -159,18 +163,9 @@ if ($Mode -eq 'execute_reg') {
             throw "File must have .reg extension: $resolvedPath"
         }
         
-        # Check admin privilege if required
-        if ($RequireAdmin) {
-            if (-not (Test-IsAdmin)) {
-                throw 'Administrator privileges required but not available'
-            }
-        }
-        
-        # Copy .reg file to artifacts if requested
-        if ($ArtifactCopyReg) {
-            $regCopyPath = Join-Path $ArtifactsRoot ([IO.Path]::GetFileName($resolvedPath))
-            Copy-Item -LiteralPath $resolvedPath -Destination $regCopyPath -Force
-        }
+        # Copy .reg file to artifacts
+        $regCopyPath = Join-Path $ArtifactsRoot ([IO.Path]::GetFileName($resolvedPath))
+        Copy-Item -LiteralPath $resolvedPath -Destination $regCopyPath -Force
         
         # Execute registry import
         $result = & reg.exe import $resolvedPath 2>&1
@@ -182,7 +177,6 @@ if ($Mode -eq 'execute_reg') {
         
         $step.metrics = @{
             reg_file_path = $resolvedPath
-            require_admin = $RequireAdmin
             is_admin = (Test-IsAdmin)
             execution_result = 'success'
             execution_message = $result -join '; '
@@ -212,15 +206,20 @@ if ($Mode -eq 'execute_reg') {
 }
 
 # ----------------------------
-# Mode: verify_value
+# Mode: verify_reg
 # ----------------------------
-elseif ($Mode -eq 'verify_value') {
+elseif ($Mode -eq 'verify_reg') {
     $step = New-Step 'verify_registry_values' 1 'Verify registry values'
     $sw = [Diagnostics.Stopwatch]::StartNew()
     
     try {
         # Parse verification spec
         $verifyList = ParseJson $VerifySpec 'VerifySpec'
+        
+        # Ensure $verifyList is an array (ConvertFrom-Json -AsHashtable returns hashtable for single-item arrays)
+        if ($verifyList -isnot [array]) {
+            $verifyList = @($verifyList)
+        }
         
         if ($verifyList.Count -eq 0) {
             throw 'VerifySpec cannot be empty when Mode=verify_value'
@@ -342,8 +341,7 @@ $report = @{
         params = @{
             mode = $Mode
             reg_file_path = $RegFilePath
-            require_admin = $RequireAdmin
-            verify_spec_count = ($VerifySpec | ConvertFrom-Json -AsHashtable -ErrorAction SilentlyContinue).Count
+            verify_spec_count = if ($Mode -eq 'verify_reg' -and $steps[0].metrics.total_count) { $steps[0].metrics.total_count } else { 0 }
         }
     }
     execution = @{
@@ -369,7 +367,7 @@ $stepLine = ($steps | ForEach-Object {
 }) -join "`n"
 
 $detailLines = @()
-if ($Mode -eq 'execute_reg') {
+if ($Mode -eq 'set_reg') {
     $detailLines += "mode: $Mode"
     $detailLines += "executed: $RegFilePath"
     if ($steps[0].metrics.execution_result) {
@@ -388,7 +386,7 @@ if ($Mode -eq 'execute_reg') {
         }
     }
 }
-elseif ($Mode -eq 'verify_value') {
+elseif ($Mode -eq 'verify_reg') {
     $detailLines += "mode: $Mode"
     $detailLines += "verified: $($steps[0].metrics.pass_count)/$($steps[0].metrics.total_count) registry values"
     
@@ -396,6 +394,10 @@ elseif ($Mode -eq 'verify_value') {
     foreach ($result in $steps[0].metrics.results) {
         $status = if ($result.passed) { "✓" } else { "✗" }
         $detailLines += "  $status $($result.path)\$($result.name)"
+        if ($result.actual) {
+            $dataStr = if ($result.actual.data -is [array]) { "[$($result.actual.data -join ', ')]" } else { $result.actual.data }
+            $detailLines += "    type: $($result.actual.type), data: $dataStr"
+        }
         if (-not $result.passed -and $result.reason) {
             $detailLines += "    reason: $($result.reason)"
         }
