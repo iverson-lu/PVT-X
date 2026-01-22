@@ -3,7 +3,7 @@
   "id": "case.network.core.connectivity.ping",
   "name": "Network Ping Connectivity",
   "description": "Checks basic network reachability by pinging a target address (ICMP). Optionally enforces a maximum reply time in milliseconds.",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "category": "Network",
   "owner": "PVT-X",
   "entry": {

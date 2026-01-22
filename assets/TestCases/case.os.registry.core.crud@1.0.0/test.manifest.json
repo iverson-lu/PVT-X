@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.5.0",
   "id": "case.os.registry.core.crud",
-  "name": "Windows Registry CRUD",
+  "name": "Windows Registry Verification",
   "description": "Unified Windows registry test case supporting registry file execution and value verification",
   "version": "1.0.0",
   "category": "Software",
