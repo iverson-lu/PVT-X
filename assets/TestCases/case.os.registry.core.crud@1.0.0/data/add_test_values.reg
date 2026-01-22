@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Software\PVT-X\TestCase]
+"TestString"="Sample Test Value"
+"TestNumber"=dword:0000002a
+"TestPath"="C:\\Program Files\\Example"
