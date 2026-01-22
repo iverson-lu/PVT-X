@@ -7,7 +7,7 @@
   "category": "OS",
   "owner": "PVT-X",
   "privilege": "User",
-  "timeoutSec": 15,
+  "timeoutSec": 30,
   "parameters": [
     {
       "name": "WindowMinutes",
@@ -32,7 +32,7 @@
       "name": "MinLevel",
       "type": "enum",
       "required": false,
-      "default": "Warning",
+      "default": "Error",
       "enumValues": [
         "Critical",
         "Error",
