@@ -170,20 +170,20 @@ The following environment variables are **automatically injected by the Runner**
 
 - Shared modules are located under `assets/PowerShell/Modules/`
 - Runner automatically prepends `PVTX_MODULES_ROOT` to `PSModulePath`
-- Import modules using standard syntax: `Import-Module <ModuleName>`
+- **Runner auto-imports all shared modules** - test cases should NOT include `Import-Module` statements
 - **Current available modules:**
   - `Pvtx.Core`: Common file/JSON operations, step creation, output helpers
 - **Best Practice:**
   - ✅ Use existing shared modules for common operations
   - ❌ Do NOT create custom helper functions within test cases
+  - ❌ Do NOT include `Import-Module` statements (auto-imported by runner)
   - If new reusable logic is needed, add to shared modules instead
 
 Example:
 ```powershell
-# Import shared module
-Import-Module Pvtx.Core
+# Modules are auto-imported by runner - no Import-Module needed
 
-# Use module functions
+# Use module functions directly
 $step = New-Step 'validate' 1 'Validate configuration'
 Write-JsonFile -Path "artifacts/report.json" -Obj $result
 ```

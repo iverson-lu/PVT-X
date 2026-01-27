@@ -207,23 +207,27 @@ Shared PowerShell utilities are maintained under `assets/PowerShell/Modules/` an
 
 - Common helper modules are placed under `assets/PowerShell/Modules/`
 - Runner computes `PVTX_MODULES_ROOT` from `PVTX_ASSETS_ROOT` and prepends it to `PSModulePath`
-- Test Cases import modules using standard PowerShell syntax: `Import-Module <ModuleName>`
+- **Runner auto-imports all shared modules before executing test cases**
+- **Test cases should NOT include `Import-Module` statements**
 
 **Best Practice**:
 - ✅ Use existing shared modules (e.g., `Pvtx.Core`) for common operations
 - ❌ Do NOT create custom helper functions within test cases for reusable logic
+- ❌ Do NOT include `Import-Module` statements in test cases (auto-imported by runner)
 - If a new reusable function is needed, add it to shared modules instead
 
 Example:
 ```powershell
-# ✅ Correct - use shared module
-Import-Module Pvtx.Core
+# ✅ Correct - modules are auto-imported by runner
 $step = New-Step 'validate' 1 'Validate configuration'
 
 # ❌ Wrong - custom helper in test case
 function New-CustomStep { ... }
+
+# ❌ Wrong - explicit import (runner handles this)
+Import-Module Pvtx.Core
 ```
-- Modules are auto-discovered; no explicit path specification required
+- Modules are auto-discovered and auto-imported; no explicit import required
 - Shared modules provide reusable utilities for:
   - Hardware information collection
   - System state validation
@@ -233,11 +237,9 @@ function New-CustomStep { ... }
 
 Example usage in run.ps1:
 ```powershell
-# Import shared modules (e.g., Pvtx.Core)
-Import-Module Pvtx.Core
-
-# Use module functions
+# Modules are auto-imported - use functions directly
 Write-JsonFile -Path "artifacts/data.json" -Obj @{ result = "Pass" }
+$step = New-Step 'validate' 1 'Validate configuration'
 ```
 
 > Note: Current modules include `Pvtx.Core` for common file/JSON operations. Refer to `assets/PowerShell/Modules/` for available modules and functions.

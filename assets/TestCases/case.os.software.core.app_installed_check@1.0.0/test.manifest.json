@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.5.0",
+  "id": "case.os.software.core.app_installed_check",
+  "name": "Application Installed Check",
+  "description": "Verifies that a specific application is installed on the system by checking registry and installed packages.",
+  "version": "1.0.0",
+  "category": "Software",
+  "owner": "PVT-X",
+  "privilege": "User",
+  "timeoutSec": 60,
+  "parameters": [
+    {
+      "name": "appName",
+      "type": "string",
+      "required": true,
+      "help": "The name of the application to check (supports partial match, case-insensitive)."
+    },
+    {
+      "name": "exactMatch",
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "help": "If true, requires exact name match (case-insensitive). If false, allows partial match."
+    },
+    {
+      "name": "checkRegistry",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "If true, checks Windows registry for installed applications."
+    },
+    {
+      "name": "checkPackages",
+      "type": "boolean",
+      "required": false,
+      "default": true,
+      "help": "If true, checks installed packages using Get-Package."
+    }
+  ],
+  "tags": [
+    "software",
+    "application",
+    "installed",
+    "verify"
+  ]
+}
