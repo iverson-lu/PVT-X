@@ -33,6 +33,8 @@
         "/^pwsh -File \"d:\\\\Dev\\\\PVT-X-1\\\\assets\\\\TestCases\\\\case\\.os\\.windows\\.core\\.event_log_check@1\\.0\\.1\\\\debug_match_detailed\\.ps1\"$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "Resolve-Path": true,
+        "Get-Module": true
     }
 }
