@@ -1568,17 +1568,40 @@
                                         <Setter Property="Padding" Value="20,10,16,10"/>
                                         <Setter Property="Margin" Value="2,0,12,2"/>
                                         <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="BorderThickness" Value="1"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="ListBoxItem">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                           BorderBrush="{TemplateBinding BorderBrush}"
-                                                           BorderThickness="{TemplateBinding BorderThickness}"
-                                                           Padding="{TemplateBinding Padding}"
-                                                           CornerRadius="6">
-                                                        <ContentPresenter/>
-                                                    </Border>
+                                                    <Grid>
+                                                        <Border x:Name="OuterBorder"
+                                                               Background="{TemplateBinding Background}"
+                                                               BorderBrush="{TemplateBinding BorderBrush}"
+                                                               BorderThickness="{TemplateBinding BorderThickness}"
+                                                               Padding="{TemplateBinding Padding}"
+                                                               CornerRadius="6">
+                                                            <Grid>
+                                                                <Border x:Name="InsetShadow"
+                                                                       Background="{DynamicResource PlanListSelectedInsetShadowBrush}"
+                                                                       CornerRadius="5"
+                                                                       Opacity="0"
+                                                                       IsHitTestVisible="False"/>
+                                                                <ContentPresenter Panel.ZIndex="1"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <Border x:Name="TopHighlight"
+                                                               BorderBrush="{DynamicResource PlanListSelectedTopHighlightBrush}"
+                                                               BorderThickness="0,1,0,0"
+                                                               CornerRadius="6"
+                                                               Opacity="0"
+                                                               IsHitTestVisible="False"/>
+                                                        <Border x:Name="LeftAccent"
+                                                               BorderBrush="{DynamicResource PlanListSelectedAccentBrush}"
+                                                               BorderThickness="2,0,0,0"
+                                                               CornerRadius="6"
+                                                               Opacity="0"
+                                                               IsHitTestVisible="False"/>
+                                                    </Grid>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
@@ -1587,7 +1610,11 @@
                                                 <Setter Property="Background" Value="{DynamicResource InteractiveHoverBrush}"/>
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource InteractiveSelectedBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource PlanListSelectedBackgroundBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{DynamicResource PlanListSelectedBorderBrush}"/>
+                                                <Setter TargetName="InsetShadow" Property="Opacity" Value="0.7"/>
+                                                <Setter TargetName="TopHighlight" Property="Opacity" Value="1"/>
+                                                <Setter TargetName="LeftAccent" Property="Opacity" Value="1"/>
                                             </Trigger>
                                         </Style.Triggers>
                                     </Style>

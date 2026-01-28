@@ -73,6 +73,14 @@
     <Color x:Key="InteractiveHoverColor">#E5E7EB</Color>
     <Color x:Key="InteractivePressedColor">#CED4DA</Color>
     <Color x:Key="InteractiveSelectedColor">#E7F1FF</Color>
+
+    <!-- Plan List Selected Item Colors -->
+    <Color x:Key="PlanListSelectedBackgroundTopColor">#E6EDF6</Color>
+    <Color x:Key="PlanListSelectedBackgroundBottomColor">#D9E2EE</Color>
+    <Color x:Key="PlanListSelectedBorderColor">#C3CCD8</Color>
+    <Color x:Key="PlanListSelectedTopHighlightColor">#66FFFFFF</Color>
+    <Color x:Key="PlanListSelectedAccentColor">#4D3B82F6</Color>
+    <Color x:Key="PlanListSelectedInsetShadowColor">#1F000000</Color>
     
     <!-- Badge Colors (for parameter type badges) -->
     <Color x:Key="BadgeBackgroundColor">#EFF4FF</Color>
@@ -216,6 +224,19 @@
     <SolidColorBrush x:Key="InteractiveHoverBrush" Color="{StaticResource InteractiveHoverColor}"/>
     <SolidColorBrush x:Key="InteractivePressedBrush" Color="{StaticResource InteractivePressedColor}"/>
     <SolidColorBrush x:Key="InteractiveSelectedBrush" Color="{StaticResource InteractiveSelectedColor}"/>
+
+    <!-- Plan List Selected Item Brushes -->
+    <LinearGradientBrush x:Key="PlanListSelectedBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="{StaticResource PlanListSelectedBackgroundTopColor}" Offset="0"/>
+        <GradientStop Color="{StaticResource PlanListSelectedBackgroundBottomColor}" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="PlanListSelectedBorderBrush" Color="{StaticResource PlanListSelectedBorderColor}"/>
+    <SolidColorBrush x:Key="PlanListSelectedTopHighlightBrush" Color="{StaticResource PlanListSelectedTopHighlightColor}"/>
+    <SolidColorBrush x:Key="PlanListSelectedAccentBrush" Color="{StaticResource PlanListSelectedAccentColor}"/>
+    <LinearGradientBrush x:Key="PlanListSelectedInsetShadowBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#00000000" Offset="0"/>
+        <GradientStop Color="{StaticResource PlanListSelectedInsetShadowColor}" Offset="1"/>
+    </LinearGradientBrush>
     
     <!-- Badge Brushes -->
     <SolidColorBrush x:Key="BadgeBackgroundBrush" Color="{StaticResource BadgeBackgroundColor}"/>
