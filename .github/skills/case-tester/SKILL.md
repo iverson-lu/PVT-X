@@ -191,13 +191,14 @@ dotnet run --project src/PcTest.Cli -- run `
 
 ### Step 3: Run via CLI with Custom Parameters
 
-Pass inputs as JSON:
+Pass inputs as JSON using a variable (recommended to avoid escaping issues):
 
 ```powershell
+$inputs = '{"MinPhysicalCores": 4, "MinLogicalProcessors": 8}'
 dotnet run --project src/PcTest.Cli -- run `
   --target testcase `
   --id "<case-id>@<version>" `
-  --inputs '{"MinPhysicalCores": 4, "MinLogicalProcessors": 8}'
+  --inputs $inputs
 ```
 
 ### Step 4: Inspect Case Run Folder
@@ -205,8 +206,8 @@ dotnet run --project src/PcTest.Cli -- run `
 After CLI execution, inspect the Case Run Folder:
 
 ```powershell
-# Find the latest run
-$latestRun = Get-ChildItem "Runs/" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+# Find the latest Case run (filter R-* to exclude Plan runs P-*)
+$latestRun = Get-ChildItem -Path "Runs" -Directory | Where-Object { $_.Name -match '^R-' } | Sort-Object Name -Descending | Select-Object -First 1
 cd $latestRun.FullName
 
 # Inspect structure
@@ -228,7 +229,9 @@ Runs/{runId}/
 ├── env.json            # Environment snapshot (secrets redacted)
 ├── result.json         # Status, exitCode, duration
 ├── stdout.log          # PowerShell stdout
-├── stderr.log          # PowerShell stderr
+├── stderr.log          # PowerShell stderr (optional, only if errors occurred)
+├── events.jsonl        # Event log
+├── control/            # Control directory for runner
 └── artifacts/          # Test case artifacts
     └── report.json
 ```
@@ -265,7 +268,7 @@ dotnet run --project src/PcTest.Cli -- run `
   --inputs '{"DurationSec": 60}'  # Longer than timeout
 ```
 
-Check `result.json` for `status: "TimedOut"` or similar.
+Check `result.json` for `"status": "timeout"`.
 
 ### Step 7: Test Secret Redaction (If Applicable)
 
@@ -375,7 +378,7 @@ if (-not (Test-Path $artifactsDir)) {
 Here's a complete example of testing a new CPU test case:
 
 ```powershell
-# Setup
+# Setup - navigate to workspace root
 cd c:\Dev\PVT-X
 $env:PSModulePath = "$(Resolve-Path 'assets/PowerShell/Modules');$env:PSModulePath"
 
@@ -409,8 +412,15 @@ dotnet run --project src/PcTest.Cli -- run `
   --target testcase `
   --id "case.hw.cpu.core.params_verify@1.0.0"
 
+# Run with custom inputs
+$inputs = '{"MinPhysicalCores": 2, "MinLogicalProcessors": 4}'
+dotnet run --project src/PcTest.Cli -- run `
+  --target testcase `
+  --id "case.hw.cpu.core.params_verify@1.0.0" `
+  --inputs $inputs
+
 # Inspect results
-$latestRun = Get-ChildItem "Runs/" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$latestRun = Get-ChildItem -Path "Runs" -Directory | Where-Object { $_.Name -match '^R-' } | Sort-Object Name -Descending | Select-Object -First 1
 Get-Content "$($latestRun.FullName)/result.json" | ConvertFrom-Json | Format-List
 Get-Content "$($latestRun.FullName)/artifacts/report.json" | ConvertFrom-Json | Format-List
 ```
